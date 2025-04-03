@@ -1,0 +1,14 @@
+FROM rust:latest
+
+WORKDIR /usr/local/app
+
+# Install the application dependencies
+COPY ./backend/controlplane-api/ ./src/
+
+RUN mkdir build/
+RUN cargo build --manifest-path ./src/Cargo.toml --target-dir ./build/
+RUN cp ./build/debug/controlplane-api ./
+
+# Setup an app user so the container doesn't run as the root user
+RUN addgroup appgroup && adduser --ingroup appgroup appuser
+USER appuser

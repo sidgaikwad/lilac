@@ -1,0 +1,36 @@
+services:
+  controlplane:
+    build:
+      context: ../
+      dockerfile: ./docker/controlplane/Dockerfile.alpine
+    command: /usr/local/app/controlplane-api
+    depends_on:
+      - db
+    env_file:
+      - ../.env
+    environment:
+      - DATABASE_URL=postgres://postgres:12345@db/database
+    ports:
+      - '3000:3000'
+    networks:
+      - default
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      PGDATA: /var/lib/postgresql/data
+    env_file:
+      - ../.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    networks:
+      - default
+
+volumes:
+  pgdata: {}
+
+networks:
+  network: {}
