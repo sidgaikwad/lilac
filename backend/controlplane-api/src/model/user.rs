@@ -4,6 +4,8 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::ServiceError;
+
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct UserId(Uuid);
 
@@ -32,7 +34,6 @@ impl Default for UserId {
     }
 }
 
-
 impl From<Uuid> for UserId {
     fn from(value: Uuid) -> Self {
         Self(value)
@@ -40,9 +41,10 @@ impl From<Uuid> for UserId {
 }
 
 impl TryFrom<String> for UserId {
-    type Error = uuid::Error;
+    type Error = ServiceError;
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        Ok(Self(Uuid::try_parse(&value)?))
+        let id = Uuid::try_parse(&value).map_err(|_| ServiceError::ParseError("UserId".into()))?;
+        Ok(Self(id))
     }
 }
 

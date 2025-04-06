@@ -1,6 +1,5 @@
 use serde::Serialize;
 
-
 #[derive(Debug, Serialize)]
 pub struct AuthBody {
     access_token: String,

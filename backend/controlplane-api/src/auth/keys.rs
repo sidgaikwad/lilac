@@ -1,9 +1,10 @@
+use std::env;
+
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use once_cell::sync::Lazy;
-use rand::distr::{Alphanumeric, SampleString};
 
 pub(crate) static KEYS: Lazy<Keys> = Lazy::new(|| {
-    let secret = Alphanumeric.sample_string(&mut rand::rng(), 60);
+    let secret = env::var("SECRET_KEY").expect("secret key to be set");
     Keys::new(secret.as_bytes())
 });
 

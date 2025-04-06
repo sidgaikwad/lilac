@@ -1,11 +1,12 @@
 use axum::{
-    routing::{get, post}, Extension, Router
+    routing::{get, post},
+    Extension, Router,
 };
 use controlplane_api::routes;
+use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
-use dotenv::dotenv;
 
 #[tokio::main]
 async fn main() {
@@ -26,12 +27,11 @@ async fn main() {
     tracing::info!("database url: {}", db_url);
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&db_url).await
+        .connect(&db_url)
+        .await
         .expect("database to connect");
 
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await.unwrap();
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
     // build our application with a route
     let app = Router::new()
@@ -39,12 +39,13 @@ async fn main() {
         .route("/users", post(routes::create_user))
         .route("/users/{user_id}", get(routes::get_user))
         .route("/auth/login", post(routes::authorize))
+        .route("/organization", get(routes::list_organizations))
+        .route("/organization/{organization_id}", get(routes::get_organization))
+        .route("/organization", post(routes::create_organization))
         .layer(Extension(pool));
 
     // run our app with hyper
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     tracing::info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }

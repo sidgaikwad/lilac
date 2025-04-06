@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO \"pipelines\" (pipeline_id, pipeline_name, description, organization_id, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING pipeline_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pipeline_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2e7f704530e0dff350b273a4b0f46e18812341fa422b519300b987aca37f12d0"
+}
