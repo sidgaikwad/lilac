@@ -5,10 +5,13 @@ use sqlx::PgPool;
 use tracing::instrument;
 
 use crate::{
-    auth::claims::Claims, database, model::organization::{Organization, OrganizationId}, ServiceError
+    auth::claims::Claims,
+    database,
+    model::organization::{Organization, OrganizationId},
+    ServiceError,
 };
 
-#[instrument(skip(db))]
+#[instrument(level = "info", skip(db), ret, err)]
 pub async fn create_organization(
     claims: Claims,
     db: Extension<PgPool>,
@@ -34,7 +37,7 @@ pub struct CreateOrganizationResponse {
     id: OrganizationId,
 }
 
-#[instrument(skip(db))]
+#[instrument(level = "info", skip(db), ret, err)]
 pub async fn get_organization(
     _claims: Claims,
     db: Extension<PgPool>,

@@ -1,12 +1,16 @@
 use axum::{
+    body::Body,
+    extract::Request,
     routing::{get, post},
     Extension, Router,
 };
 use controlplane_api::routes;
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
+use tower_http::trace::TraceLayer;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
+use uuid::Uuid;
 
 #[tokio::main]
 async fn main() {
@@ -18,7 +22,7 @@ async fn main() {
 
     // initialize tracing
     tracing_subscriber::fmt()
-        .json()
+        .pretty()
         .with_env_filter(EnvFilter::from_default_env().add_directive(LevelFilter::INFO.into()))
         .init();
 
@@ -40,9 +44,20 @@ async fn main() {
         .route("/users/{user_id}", get(routes::get_user))
         .route("/auth/login", post(routes::authorize))
         .route("/organization", get(routes::list_organizations))
-        .route("/organization/{organization_id}", get(routes::get_organization))
+        .route(
+            "/organization/{organization_id}",
+            get(routes::get_organization),
+        )
         .route("/organization", post(routes::create_organization))
-        .layer(Extension(pool));
+        .route("/pipeline", post(routes::create_pipeline))
+        .route("/pipeline/{pipeline_id}", get(routes::get_pipeline))
+        .layer(Extension(pool))
+        .layer(
+            TraceLayer::new_for_http().make_span_with(|_request: &Request<Body>| {
+                let request_id = Uuid::new_v4().to_string();
+                tracing::info_span!("http-request", %request_id)
+            }),
+        );
 
     // run our app with hyper
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
