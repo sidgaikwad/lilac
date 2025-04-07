@@ -6,7 +6,8 @@ use crate::ServiceError;
 
 use super::user::UserId;
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(transparent)]
 pub struct OrganizationId(Uuid);
 
 impl OrganizationId {

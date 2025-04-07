@@ -6,7 +6,8 @@ use uuid::Uuid;
 
 use crate::ServiceError;
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(transparent)]
 pub struct UserId(Uuid);
 
 impl UserId {

@@ -51,6 +51,7 @@ async fn main() {
         .route("/organization", post(routes::create_organization))
         .route("/pipeline", post(routes::create_pipeline))
         .route("/pipeline/{pipeline_id}", get(routes::get_pipeline))
+        .route("/pipeline/{pipeline_id}/step", post(routes::create_pipeline_step))
         .layer(Extension(pool))
         .layer(
             TraceLayer::new_for_http().make_span_with(|_request: &Request<Body>| {

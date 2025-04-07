@@ -10,6 +10,7 @@ use crate::{
     model::{
         organization::OrganizationId,
         pipeline::{Pipeline, PipelineId},
+        step::StepInstance,
     },
     ServiceError,
 };
@@ -58,6 +59,7 @@ pub struct GetPipelineResponse {
     description: Option<String>,
     organization_id: OrganizationId,
     created_at: DateTime<Utc>,
+    steps: Vec<StepInstance>,
 }
 
 impl From<Pipeline> for GetPipelineResponse {
@@ -68,6 +70,7 @@ impl From<Pipeline> for GetPipelineResponse {
             organization_id: pipeline.organization_id,
             description: pipeline.description,
             created_at: pipeline.created_at,
+            steps: pipeline.steps,
         }
     }
 }

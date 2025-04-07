@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT * FROM \"pipelines\" WHERE organization_id = $1\n        ",
+  "query": "\n            SELECT p.*, ARRAY_AGG((s.step_instance_id, s.step_id, s.pipeline_id, s.previous_step, s.next_step, s.step_parameters)) as \"steps: Vec<StepInstance>\" \n            FROM \"pipelines\" p\n            RIGHT JOIN \"step_instances\" s USING (pipeline_id)\n            WHERE p.pipeline_id = $1\n            GROUP BY p.pipeline_id\n        ",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,11 @@
         "ordinal": 4,
         "name": "created_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "steps: Vec<StepInstance>",
+        "type_info": "RecordArray"
       }
     ],
     "parameters": {
@@ -39,8 +44,9 @@
       false,
       true,
       false,
-      false
+      false,
+      null
     ]
   },
-  "hash": "9da308d644b830e47a53f3e9e95f2a061bb0b52e086bed488cfa6ed6050890b3"
+  "hash": "939ca5cce663f2c147f8fb1510679e86e2b27814ade1e863db50f70a07ba1d1a"
 }

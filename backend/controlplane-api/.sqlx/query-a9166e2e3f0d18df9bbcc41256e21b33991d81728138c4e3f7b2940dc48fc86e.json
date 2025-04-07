@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT *\n            FROM \"step_instances\"\n            WHERE step_instance_id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "step_instance_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "pipeline_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "step_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "previous_step",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "next_step",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "step_parameters",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "a9166e2e3f0d18df9bbcc41256e21b33991d81728138c4e3f7b2940dc48fc86e"
+}

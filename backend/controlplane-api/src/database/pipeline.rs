@@ -4,20 +4,32 @@ use crate::{
     model::{
         organization::OrganizationId,
         pipeline::{Pipeline, PipelineId},
+        step::StepInstance,
     },
     ServiceError,
 };
 
 pub async fn get_pipeline(db: &PgPool, pipeline_id: &PipelineId) -> Result<Pipeline, ServiceError> {
     let id = pipeline_id.inner();
-    let pipeline = sqlx::query_as!(
-        Pipeline,
+    let pipeline = sqlx::query!(
         // language=PostgreSQL
         r#"
-            SELECT * FROM "pipelines" WHERE pipeline_id = $1
+            SELECT p.*, ARRAY_AGG((s.step_instance_id, s.step_id, s.pipeline_id, s.previous_step, s.next_step, s.step_parameters)) as "steps: Vec<StepInstance>" 
+            FROM "pipelines" p
+            RIGHT JOIN "step_instances" s USING (pipeline_id)
+            WHERE p.pipeline_id = $1
+            GROUP BY p.pipeline_id
         "#,
         id
     )
+    .map(|row| Pipeline {
+        pipeline_id: row.pipeline_id.into(),
+        pipeline_name: row.pipeline_name,
+        description: row.description,
+        organization_id: row.organization_id.into(),
+        steps: row.steps.unwrap_or(Vec::new()),
+        created_at: row.created_at,
+    })
     .fetch_one(db)
     .await?;
     Ok(pipeline)
@@ -28,14 +40,25 @@ pub async fn list_pipelines(
     organization_id: &OrganizationId,
 ) -> Result<Vec<Pipeline>, ServiceError> {
     let id = organization_id.inner();
-    let pipelines = sqlx::query_as!(
-        Pipeline,
+    let pipelines = sqlx::query!(
         // language=PostgreSQL
         r#"
-            SELECT * FROM "pipelines" WHERE organization_id = $1
+            SELECT p.*, ARRAY_AGG((s.*)) as "steps: Vec<StepInstance>" 
+            FROM "pipelines" p
+            LEFT JOIN "step_instances" s USING (pipeline_id)
+            WHERE p.organization_id = $1
+            GROUP BY p.pipeline_id
         "#,
         id
     )
+    .map(|row| Pipeline {
+        pipeline_id: row.pipeline_id.into(),
+        pipeline_name: row.pipeline_name,
+        description: row.description,
+        organization_id: row.organization_id.into(),
+        steps: row.steps.unwrap_or(Vec::new()),
+        created_at: row.created_at,
+    })
     .fetch_all(db)
     .await?;
     Ok(pipelines)
