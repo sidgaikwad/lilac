@@ -38,8 +38,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let res_config = PipeConfig {
         parameters: HashMap::from([
-            ("target_width".to_string(), json!(3000)),
-            ("target_height".to_string(), json!(2000)),
+            ("target_width".to_string(), json!(300)),
+            ("target_height".to_string(), json!(200)),
             ("filter_type".to_string(), json!("Lanczos3")),
         ]),
     };
