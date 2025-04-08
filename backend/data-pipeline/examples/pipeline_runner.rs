@@ -17,6 +17,7 @@ use data_pipeline::pipeline::{
     ImagePipe, PipeImageData, PipeResult, PipeConfig, ImageMetadata,
 };
 use data_pipeline::pipes::resolution::ResolutionStandardizerPipe;
+use data_pipeline::pipes::blur::BlurDetectorPipe;
 use data_pipeline::utils::log_pipe_event;
 
 use image::{ImageFormat, DynamicImage, ImageReader};
@@ -41,6 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // --- Define the Pipeline ---
     let res_pipe = Arc::new(ResolutionStandardizerPipe);
+    let blur_pipe = Arc::new(BlurDetectorPipe);
     // TODO: Instantiate other pipes here (use Arc)
 
     let res_config = Arc::new(PipeConfig {
@@ -50,9 +52,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ("filter_type".to_string(), json!("Lanczos3")),
         ]),
     });
+    let blur_config = Arc::new(PipeConfig { // <-- Define Blur Config
+        parameters: HashMap::from([
+            ("detection_method".to_string(), json!("edge_count")),
+            ("edge_count_threshold".to_string(), json!(18000.0)),
+            ("edge_magnitude_threshold".to_string(), json!(100)),
+        ]),
+    });
     // TODO: Define configs for other pipes here (use Arc)
 
     let pipeline_stages: Arc<Vec<(Arc<dyn ImagePipe>, Arc<PipeConfig>)>> = Arc::new(vec![
+        (blur_pipe.clone(), blur_config.clone()),
         (res_pipe.clone(), res_config.clone()),
         // TODO: Add other Arc'd pipes and configs here
     ]);
