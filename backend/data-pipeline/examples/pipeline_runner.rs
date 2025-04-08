@@ -29,6 +29,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::time::Instant;
 
 // --- Configuration ---
 const INPUT_DIR: &str = "test_images";
@@ -84,6 +85,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Get the handle to the current Tokio runtime *before* the parallel iteration
     let rt = Handle::current();
+
+    // Start timer
+    let start_time = Instant::now();
 
     image_paths.par_iter().for_each(|path| {
         // Clone the handle for use in this specific Rayon task
@@ -186,13 +190,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }); // End of par_iter().for_each()
 
+    let duration = start_time.elapsed();
+
     // --- Summary ---
     println!("\n--- Pipeline Run Summary ---");
     println!("Processed and Saved: {}", processed_count.load(Ordering::Relaxed));
     println!("Discarded:           {}", discarded_count.load(Ordering::Relaxed));
     println!("Errors:              {}", error_count.load(Ordering::Relaxed));
     println!("--------------------------");
+    println!("Parallel processing finished in: {:?}", duration);
+    println!("--------------------------");
 
     Ok(())
 }
-

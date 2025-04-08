@@ -120,4 +120,179 @@
             PipeResult::Modified(data)
         }
     }
+
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use crate::pipeline::{PipeImageData, PipeConfig, PipeResult, ImageMetadata};
+        use image::{DynamicImage, RgbImage, ImageFormat};
+        use serde_json::json;
+        use std::collections::HashMap;
+    
+        // Helper function to create a simple PipeImageData for testing
+        fn create_test_data(width: u32, height: u32) -> PipeImageData {
+            let img: DynamicImage = DynamicImage::ImageRgb8(RgbImage::new(width, height));
+            let metadata: ImageMetadata = HashMap::new();
+            PipeImageData {
+                id: format!("test_{}x{}", width, height),
+                image: img,
+                metadata,
+                original_format: ImageFormat::Png,
+            }
+        }
+    
+        // Helper function to create a PipeConfig
+        fn create_test_config(params: HashMap<String, serde_json::Value>) -> PipeConfig {
+            PipeConfig { parameters: params }
+        }
+    
+        #[tokio::test]
+        async fn test_resize_down_valid() {
+            let pipe = ResolutionStandardizerPipe;
+            let data = create_test_data(200, 200); // Initial size 200x200
+            let config = create_test_config(HashMap::from([
+                ("target_width".to_string(), json!(100)),
+                ("target_height".to_string(), json!(50)),
+            ]));
+    
+            let result = pipe.process(data, &config).await;
+    
+            assert!(matches!(result, PipeResult::Modified(_)), "Expected Modified result");
+            if let PipeResult::Modified(output_data) = result {
+                assert_eq!(output_data.image.width(), 100, "Width should be 100");
+                assert_eq!(output_data.image.height(), 50, "Height should be 50");
+                assert_eq!(output_data.metadata.get("resized_width"), Some(&json!(100)));
+                assert_eq!(output_data.metadata.get("resized_height"), Some(&json!(50)));
+                assert_eq!(output_data.metadata.get("original_width_before_resize"), Some(&json!(200)));
+            }
+        }
+    
+        #[tokio::test]
+        async fn test_resize_up_valid() {
+            let pipe = ResolutionStandardizerPipe;
+            let data = create_test_data(50, 50); // Initial size 50x50
+            let config = create_test_config(HashMap::from([
+                ("target_width".to_string(), json!(100)),
+                ("target_height".to_string(), json!(150)),
+            ]));
+    
+            let result = pipe.process(data, &config).await;
+    
+            assert!(matches!(result, PipeResult::Modified(_)), "Expected Modified result");
+            if let PipeResult::Modified(output_data) = result {
+                assert_eq!(output_data.image.width(), 100, "Width should be 100");
+                assert_eq!(output_data.image.height(), 150, "Height should be 150");
+            }
+        }
+    
+        #[tokio::test]
+        async fn test_already_correct_size() {
+            let pipe = ResolutionStandardizerPipe;
+            let data = create_test_data(100, 100); // Initial size 100x100
+            let config = create_test_config(HashMap::from([
+                ("target_width".to_string(), json!(100)),
+                ("target_height".to_string(), json!(100)),
+            ]));
+    
+            let result = pipe.process(data, &config).await;
+    
+            assert!(matches!(result, PipeResult::Unchanged(_)), "Expected Unchanged result");
+             if let PipeResult::Unchanged(output_data) = result {
+                assert_eq!(output_data.image.width(), 100); // Dimensions remain the same
+                assert_eq!(output_data.image.height(), 100);
+                assert!(output_data.metadata.get("resized_width").is_none(), "Metadata should not be added if unchanged");
+            }
+        }
+    
+        #[tokio::test]
+        async fn test_missing_parameters() {
+            let pipe = ResolutionStandardizerPipe;
+            let data = create_test_data(100, 100);
+            // Config missing target_height
+            let config = create_test_config(HashMap::from([
+                ("target_width".to_string(), json!(50)),
+            ]));
+    
+            let result = pipe.process(data, &config).await;
+    
+            assert!(matches!(result, PipeResult::Error { .. }), "Expected Error result for missing params");
+             if let PipeResult::Error { message } = result {
+                assert!(message.contains("Missing or invalid 'target_height' parameter"));
+            }
+        }
+    
+         #[tokio::test]
+        async fn test_invalid_parameters_zero_width() {
+            let pipe = ResolutionStandardizerPipe;
+            let data = create_test_data(100, 100);
+            let config = create_test_config(HashMap::from([
+                ("target_width".to_string(), json!(0)), // Invalid width
+                ("target_height".to_string(), json!(50)),
+            ]));
+    
+            let result = pipe.process(data, &config).await;
+    
+            assert!(matches!(result, PipeResult::Error { .. }), "Expected Error result for zero width");
+             if let PipeResult::Error { message } = result {
+                assert!(message.contains("Target width and height must be greater than 0"));
+            }
+        }
+    
+         #[tokio::test]
+        async fn test_invalid_parameters_wrong_type() {
+            let pipe = ResolutionStandardizerPipe;
+            let data = create_test_data(100, 100);
+            let config = create_test_config(HashMap::from([
+                ("target_width".to_string(), json!("not a number")), // Invalid type
+                ("target_height".to_string(), json!(50)),
+            ]));
+    
+            let result = pipe.process(data, &config).await;
+    
+            assert!(matches!(result, PipeResult::Error { .. }), "Expected Error result for wrong type");
+             if let PipeResult::Error { message } = result {
+                assert!(message.contains("Missing or invalid 'target_width' parameter"));
+            }
+        }
+    
+         #[tokio::test]
+        async fn test_different_filter_type() {
+            let pipe = ResolutionStandardizerPipe;
+            let data = create_test_data(200, 200);
+            let config = create_test_config(HashMap::from([
+                ("target_width".to_string(), json!(100)),
+                ("target_height".to_string(), json!(100)),
+                ("filter_type".to_string(), json!("Nearest")), // Use different filter
+            ]));
+    
+            let result = pipe.process(data, &config).await;
+    
+            // Just check it runs and modifies, doesn't necessarily check pixel differences
+            assert!(matches!(result, PipeResult::Modified(_)), "Expected Modified result with Nearest filter");
+            if let PipeResult::Modified(output_data) = result {
+                assert_eq!(output_data.image.width(), 100);
+                assert_eq!(output_data.image.height(), 100);
+            }
+        }
+    
+         #[tokio::test]
+        async fn test_default_filter_type() {
+            let pipe = ResolutionStandardizerPipe;
+            let data = create_test_data(200, 200);
+             // Config missing filter_type, should default to Lanczos3
+            let config = create_test_config(HashMap::from([
+                ("target_width".to_string(), json!(100)),
+                ("target_height".to_string(), json!(100)),
+            ]));
+    
+            let result = pipe.process(data, &config).await;
+    
+            assert!(matches!(result, PipeResult::Modified(_)), "Expected Modified result with default filter");
+             if let PipeResult::Modified(output_data) = result {
+                assert_eq!(output_data.image.width(), 100);
+                assert_eq!(output_data.image.height(), 100);
+            }
+        }
+    }
     
