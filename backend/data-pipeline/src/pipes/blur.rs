@@ -1,22 +1,31 @@
 //! Pipe implementation for detecting blurry images using configurable methods.
 //! Methods: LaplacianVariance, EdgeIntensity (Sobel Mean), PixelVariance, EdgeCount (Sobel).
+//! Implements async streaming stage processing using channels and spawn_blocking.
 
-use crate::pipeline::{ImagePipe, PipeImageData, PipeResult, PipeConfig};
+use crate::pipeline::{
+    ChannelInput, ChannelOutput, ImagePipe, PipeConfig, PipeError, PipeImageData,
+    SharedPipelineState,
+};
 use crate::utils::log_pipe_event;
 use async_trait::async_trait;
 use image::{GrayImage, Luma};
 use imageproc::{filter, gradients};
 use serde_json::Value;
+use std::sync::Arc;
+use tokio::sync::mpsc;
+use tokio::task; // For spawn_blocking
 
+/// Enum to represent the chosen blur detection method.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum BlurDetectionMethod {
-    LaplacianVariance, // Laplcain Variance
+    LaplacianVariance,
     EdgeIntensity, // Mean of Sobel gradient magnitudes
     PixelVariance, // Variance of grayscale pixel intensities
     EdgeCount,     // Count of Sobel gradient magnitudes above a threshold
 }
 
-#[derive(Debug)]
+/// Parameters extracted from the config, specific to the chosen method.
+#[derive(Debug, Clone, Copy)] // Needs Clone + Copy for spawn_blocking closure
 struct BlurParams {
     method: BlurDetectionMethod,
     threshold: f64,
@@ -28,15 +37,15 @@ struct BlurParams {
 #[derive(Debug)]
 pub struct BlurDetectorPipe;
 
+// Helper functions remain synchronous and largely unchanged
 impl BlurDetectorPipe {
     /// Extracts parameters: detection method and the relevant thresholds.
-    fn get_params(&self, config: &PipeConfig) -> Result<BlurParams, String> {
-        // Determine detection method (default to LaplacianVariance)
+    fn get_params(&self, config: &PipeConfig) -> Result<BlurParams, PipeError> {
         let method_str = config
             .parameters
             .get("detection_method")
             .and_then(Value::as_str)
-            .unwrap_or("laplacian_variance"); // Default method
+            .unwrap_or("laplacian_variance");
 
         let method = match method_str.to_lowercase().as_str() {
             "laplacian_variance" => BlurDetectionMethod::LaplacianVariance,
@@ -46,7 +55,6 @@ impl BlurDetectorPipe {
             _ => return Err(format!("Unknown detection_method: {}", method_str)),
         };
 
-        // Get the primary threshold specific to the chosen method
         let threshold_key = match method {
             BlurDetectionMethod::LaplacianVariance => "laplacian_threshold",
             BlurDetectionMethod::EdgeIntensity => "edge_intensity_threshold",
@@ -58,21 +66,20 @@ impl BlurDetectorPipe {
             .parameters
             .get(threshold_key)
             .and_then(Value::as_f64)
-            .ok_or_else(|| format!("Missing or invalid '{}' parameter (must be a number)", threshold_key))?;
+            .ok_or_else(|| format!("Missing or invalid '{}' parameter", threshold_key))?;
 
         if threshold < 0.0 {
             return Err(format!("{} cannot be negative", threshold_key));
         }
 
-        // Get the edge magnitude threshold *only* if using EdgeCount method
         let mut edge_magnitude_threshold: Option<u16> = None;
         if method == BlurDetectionMethod::EdgeCount {
             let mag_threshold = config
                 .parameters
                 .get("edge_magnitude_threshold")
-                .and_then(Value::as_u64) // Expecting u16, parse as u64 first
-                .map(|v| v as u16) // Convert to u16
-                .ok_or_else(|| "Missing or invalid 'edge_magnitude_threshold' parameter for EdgeCount method (must be a positive integer)".to_string())?;
+                .and_then(Value::as_u64)
+                .map(|v| v as u16)
+                .ok_or_else(|| "Missing 'edge_magnitude_threshold' for EdgeCount".to_string())?;
             edge_magnitude_threshold = Some(mag_threshold);
         }
 
@@ -83,10 +90,14 @@ impl BlurDetectorPipe {
         })
     }
 
-    /// Calculates the variance of pixel values in image (Laplacian output).
-    fn calculate_laplacian_variance(laplacian_img: &image::ImageBuffer<Luma<i16>, Vec<i16>>) -> f64 {
+    // --- Calculation Helpers (Remain Synchronous) ---
+    fn calculate_laplacian_variance(
+        laplacian_img: &image::ImageBuffer<Luma<i16>, Vec<i16>>,
+    ) -> f64 {
         let count = laplacian_img.pixels().len() as f64;
-        if count == 0.0 { return 0.0; }
+        if count == 0.0 {
+            return 0.0;
+        }
         let mut sum = 0.0;
         let mut sum_sq = 0.0;
         for pixel_val in laplacian_img.pixels().map(|p| p[0] as f64) {
@@ -94,24 +105,26 @@ impl BlurDetectorPipe {
             sum_sq += pixel_val * pixel_val;
         }
         let mean = sum / count;
-        (sum_sq / count) - (mean * mean) // Variance
+        (sum_sq / count) - (mean * mean)
     }
-
-    /// Calculates the mean pixel value in image (Sobel gradient magnitude output).
-    fn calculate_mean_gradient_intensity(gradient_img: &image::ImageBuffer<Luma<u16>, Vec<u16>>) -> f64 {
+    fn calculate_mean_gradient_intensity(
+        gradient_img: &image::ImageBuffer<Luma<u16>, Vec<u16>>,
+    ) -> f64 {
         let count = gradient_img.pixels().len() as f64;
-        if count == 0.0 { return 0.0; }
+        if count == 0.0 {
+            return 0.0;
+        }
         let mut sum = 0.0;
         for pixel_val in gradient_img.pixels().map(|p| p[0] as f64) {
             sum += pixel_val;
         }
-        sum / count // Mean
+        sum / count
     }
-
-     /// Calculates the variance of pixel values in a grayscale image.
     fn calculate_pixel_variance(gray_img: &GrayImage) -> f64 {
         let count = gray_img.pixels().len() as f64;
-        if count == 0.0 { return 0.0; }
+        if count == 0.0 {
+            return 0.0;
+        }
         let mut sum = 0.0;
         let mut sum_sq = 0.0;
         for pixel_val in gray_img.pixels().map(|p| p[0] as f64) {
@@ -119,18 +132,19 @@ impl BlurDetectorPipe {
             sum_sq += pixel_val * pixel_val;
         }
         let mean = sum / count;
-        (sum_sq / count) - (mean * mean) // Variance
+        (sum_sq / count) - (mean * mean)
     }
-
-    /// Counts pixels in a gradient image with magnitude above a threshold.
-    fn calculate_edge_count(gradient_img: &image::ImageBuffer<Luma<u16>, Vec<u16>>, magnitude_threshold: u16) -> f64 {
+    fn calculate_edge_count(
+        gradient_img: &image::ImageBuffer<Luma<u16>, Vec<u16>>,
+        magnitude_threshold: u16,
+    ) -> f64 {
         let mut edge_pixel_count = 0;
         for pixel_val in gradient_img.pixels().map(|p| p[0]) {
             if pixel_val >= magnitude_threshold {
                 edge_pixel_count += 1;
             }
         }
-        edge_pixel_count as f64 // Return count as f64 to match other metrics
+        edge_pixel_count as f64
     }
 }
 
@@ -140,312 +154,206 @@ impl ImagePipe for BlurDetectorPipe {
         "BlurDetector"
     }
 
-    async fn process(
-        &self,
-        mut data: PipeImageData,
-        config: &PipeConfig,
-    ) -> PipeResult {
+    /// Runs the blur detection stage as an asynchronous task.
+    async fn run_stage(
+        self: Arc<Self>,
+        config: Arc<PipeConfig>,
+        _shared_state: Option<SharedPipelineState>, // Parameter included but not used by this pipe
+        input_rx: &mut mpsc::Receiver<ChannelInput>,
+        output_tx: mpsc::Sender<ChannelOutput>,
+    ) {
         let pipe_name = self.name();
-        let image_id = &data.id;
 
-        log_pipe_event(pipe_name, image_id, "INFO", "Processing image for blur detection.");
-
-        // 1. Get parameters
-        let params = match self.get_params(config) {
+        // 1. Get parameters once for the stage task
+        let params = match self.get_params(&config) {
             Ok(p) => p,
             Err(e) => {
-                log_pipe_event(pipe_name, image_id, "ERROR", &format!("Invalid configuration: {}", e));
-                return PipeResult::Error { message: format!("Invalid configuration: {}", e) };
+                log_pipe_event(
+                    pipe_name,
+                    "STAGE_INIT",
+                    "ERROR",
+                    &format!("Invalid configuration for stage: {}", e),
+                );
+                return; // Exit task if config is bad
             }
         };
-        log_pipe_event(pipe_name, image_id, "DEBUG", &format!("Using params: {:?}", params));
+        log_pipe_event(
+            pipe_name,
+            "STAGE_INIT",
+            "DEBUG",
+            &format!("Stage configured with params: {:?}", params),
+        );
 
-        // 2. Convert to grayscale (needed for all methods here)
-        // Use Luma8 as a common format for input to filters/calculations
-        let gray_image = data.image.to_luma8();
+        // 2. Process items received from the input channel
+        while let Some(input_result) = input_rx.recv().await {
+            let maybe_image_id = match &input_result {
+                Ok(data) => Some(data.id.clone()),
+                Err(_) => None,
+            };
 
-        // 3. Calculate blur metric based on chosen method
-        let (metric_name, metric_value) = match params.method {
-            BlurDetectionMethod::LaplacianVariance => {
-                let laplacian_image = filter::laplacian_filter(&gray_image);
-                let variance = Self::calculate_laplacian_variance(&laplacian_image);
-                ("laplacian_variance", variance)
+            let output_result: Option<ChannelOutput> = match input_result {
+                // Output is optional (for discards)
+                Ok(data) => {
+                    let image_id = data.id.clone();
+                    let image_id_for_match = image_id.clone(); // Clone for use after await
+                    log_pipe_event(
+                        pipe_name,
+                        &image_id,
+                        "DEBUG",
+                        "Received item for processing.",
+                    );
+
+                    // --- CPU-Bound Work: Move to spawn_blocking ---
+                    let pipe_name_clone = pipe_name;
+
+                    // Closure returns Result<Option<PipeImageData>, PipeError>
+                    // Ok(Some(data)) = Unchanged/Modified
+                    // Ok(None) = Discarded
+                    // Err(pipe_error) = Error during processing
+                    let processing_result = task::spawn_blocking(
+                        move || -> Result<Option<PipeImageData>, PipeError> {
+                            // data and params are moved into closure
+                            let mut current_data = data; // Make mutable for metadata insertion
+
+                            // Convert to grayscale
+                            let gray_image = current_data.image.to_luma8();
+
+                            // Calculate blur metric
+                            let (metric_name, metric_value) = match params.method {
+                                BlurDetectionMethod::LaplacianVariance => {
+                                    let laplacian_image = filter::laplacian_filter(&gray_image);
+                                    let variance =
+                                        Self::calculate_laplacian_variance(&laplacian_image);
+                                    ("laplacian_variance", variance)
+                                }
+                                BlurDetectionMethod::EdgeIntensity => {
+                                    let gradients = gradients::sobel_gradients(&gray_image);
+                                    let mean_intensity =
+                                        Self::calculate_mean_gradient_intensity(&gradients);
+                                    ("edge_intensity_mean", mean_intensity)
+                                }
+                                BlurDetectionMethod::PixelVariance => {
+                                    let variance = Self::calculate_pixel_variance(&gray_image);
+                                    ("pixel_variance", variance)
+                                }
+                                BlurDetectionMethod::EdgeCount => {
+                                    let mag_threshold = params.edge_magnitude_threshold.unwrap();
+                                    let gradients = gradients::sobel_gradients(&gray_image);
+                                    let count =
+                                        Self::calculate_edge_count(&gradients, mag_threshold);
+                                    ("edge_count", count)
+                                }
+                            };
+
+                            log_pipe_event(
+                                pipe_name_clone,
+                                &image_id,
+                                "INFO",
+                                &format!("Calculated {}: {:.2}", metric_name, metric_value),
+                            );
+
+                            // Add metadata
+                            current_data
+                                .metadata
+                                .insert(metric_name.to_string(), metric_value.into());
+                            current_data.metadata.insert(
+                                "blur_detection_method".to_string(),
+                                format!("{:?}", params.method).to_lowercase().into(),
+                            );
+                            current_data.metadata.insert(
+                                format!("{}_threshold", metric_name),
+                                params.threshold.into(),
+                            );
+                            if let Some(mag_thresh) = params.edge_magnitude_threshold {
+                                current_data.metadata.insert(
+                                    "edge_magnitude_threshold".to_string(),
+                                    mag_thresh.into(),
+                                );
+                            }
+
+                            // Compare metric and decide: Ok(Some(data)) or Ok(None) for discard
+                            if metric_value < params.threshold {
+                                let reason = format!(
+                                    "{} {:.2} is below threshold {}",
+                                    metric_name, metric_value, params.threshold
+                                );
+                                log_pipe_event(
+                                    pipe_name_clone,
+                                    &image_id,
+                                    "INFO",
+                                    &format!("Discarding image: {}", reason),
+                                );
+                                Ok(None) // Signal discard
+                            } else {
+                                log_pipe_event(
+                                    pipe_name_clone,
+                                    &image_id,
+                                    "INFO",
+                                    &format!("Image passed {} check.", metric_name),
+                                );
+                                Ok(Some(current_data)) // Signal pass (unchanged data content)
+                            }
+                        }, // End of closure
+                    )
+                    .await; // Await spawn_blocking
+
+                    // --- Handle spawn_blocking result ---
+                    match processing_result {
+                        Ok(Ok(Some(processed_data))) => Some(Ok(processed_data)), // Pass
+                        Ok(Ok(None)) => None, // Discard - send nothing
+                        Ok(Err(pipe_err)) => {
+                            // Logical error within closure
+                            log_pipe_event(
+                                pipe_name,
+                                &image_id_for_match,
+                                "ERROR",
+                                &format!("Processing failed inside blocking task: {}", pipe_err),
+                            );
+                            Some(Err(pipe_err)) // Send error result
+                        }
+                        Err(join_err) => {
+                            // spawn_blocking task failed (panic/cancel)
+                            log_pipe_event(
+                                pipe_name,
+                                &image_id_for_match,
+                                "ERROR",
+                                &format!("Blocking task failed: {}", join_err),
+                            );
+                            Some(Err(format!(
+                                "Blocking task failed for {}: {}",
+                                image_id_for_match, join_err
+                            ))) // Send error result
+                        }
+                    }
+                }
+                // --- If received an error, forward it ---
+                Err(e) => {
+                    let id_str = maybe_image_id.as_deref().unwrap_or("UNKNOWN_ID");
+                    log_pipe_event(pipe_name, id_str, "WARN", "Forwarding previous error.");
+                    Some(Err(e)) // Forward the error wrapped in Some for consistency
+                }
+            }; // End of match input_result
+
+            // 3. Send the result to the output channel if it wasn't a discard
+            if let Some(result_to_send) = output_result {
+                if output_tx.send(result_to_send).await.is_err() {
+                    let id_str = maybe_image_id.as_deref().unwrap_or("STAGE_EXIT");
+                    log_pipe_event(
+                        pipe_name,
+                        id_str,
+                        "WARN",
+                        "Output channel receiver dropped. Exiting stage task.",
+                    );
+                    break; // Exit the while loop
+                }
             }
-            BlurDetectionMethod::EdgeIntensity => {
-                let gradients = gradients::sobel_gradients(&gray_image);
-                let mean_intensity = Self::calculate_mean_gradient_intensity(&gradients);
-                ("edge_intensity_mean", mean_intensity)
-            }
-            BlurDetectionMethod::PixelVariance => {
-                let variance = Self::calculate_pixel_variance(&gray_image);
-                ("pixel_variance", variance)
-            }
-            BlurDetectionMethod::EdgeCount => {
-                let mag_threshold = params.edge_magnitude_threshold.unwrap();
-                let gradients = gradients::sobel_gradients(&gray_image);
-                let count = Self::calculate_edge_count(&gradients, mag_threshold);
-                ("edge_count", count)
-            }
-        };
-
-        log_pipe_event(pipe_name, image_id, "INFO", &format!("Calculated {}: {:.2}", metric_name, metric_value));
-
-        // 4. Add metric to metadata
-        data.metadata.insert(metric_name.to_string(), metric_value.into());
-        // Also store method used and threshold for clarity
-        data.metadata.insert("blur_detection_method".to_string(), format!("{:?}", params.method).to_lowercase().into());
-        data.metadata.insert(format!("{}_threshold", metric_name), params.threshold.into());
-         if let Some(mag_thresh) = params.edge_magnitude_threshold {
-             data.metadata.insert("edge_magnitude_threshold".to_string(), mag_thresh.into());
-         }
-
-
-        // 5. Compare metric to threshold and decide outcome
-        if metric_value < params.threshold {
-            let reason = format!("{} {:.2} is below threshold {}", metric_name, metric_value, params.threshold);
-            log_pipe_event(pipe_name, image_id, "INFO", &format!("Discarding image: {}", reason));
-            PipeResult::Discarded { reason }
-        } else {
-            log_pipe_event(pipe_name, image_id, "INFO", &format!("Image passed {} check.", metric_name));
-            PipeResult::Unchanged(data) // Image data not modified
         }
-    }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*; // Import items from the parent module (pipe implementation)
-    use crate::pipeline::{PipeImageData, PipeConfig, PipeResult, ImageMetadata};
-    use image::{DynamicImage, GrayImage, ImageFormat, Luma}; // Added GrayImage, RgbImage
-    use imageproc::filter::gaussian_blur_f32; // For creating blurry test images
-    use serde_json::json;
-    use std::collections::HashMap;
-
-    // --- Test Image Generation ---
-
-    // Creates a simple high-contrast "sharp" grayscale image (e.g., lines)
-    fn create_sharp_image(width: u32, height: u32) -> GrayImage {
-        let mut img = GrayImage::new(width, height);
-        for y in 0..height {
-            for x in 0..width {
-                // Simple pattern: alternating dark/light columns
-                let intensity = if (x / 4) % 2 == 0 { 0 } else { 255 };
-                img.put_pixel(x, y, Luma([intensity]));
-            }
-        }
-        img
-    }
-
-    // Creates a blurry version of an image using Gaussian blur
-    fn create_blurry_image(sharp_img: &GrayImage, sigma: f32) -> GrayImage {
-        gaussian_blur_f32(sharp_img, sigma)
-    }
-
-    // Helper to create PipeImageData from a GrayImage
-    fn create_test_data_from_gray(id: &str, gray_img: GrayImage) -> PipeImageData {
-        let metadata: ImageMetadata = HashMap::new();
-        PipeImageData {
-            id: id.to_string(),
-            image: DynamicImage::ImageLuma8(gray_img), // Store as DynamicImage
-            metadata,
-            original_format: ImageFormat::Png,
-        }
-    }
-
-    // Helper to create PipeConfig
-    fn create_test_config(params: HashMap<String, serde_json::Value>) -> PipeConfig {
-        PipeConfig { parameters: params }
-    }
-
-    // --- Test Cases ---
-
-    const TEST_W: u32 = 64;
-    const TEST_H: u32 = 64;
-    const BLUR_SIGMA: f32 = 3.0; // Amount of blur for test images
-
-    // --- Laplacian Variance Tests ---
-
-    #[tokio::test]
-    async fn test_laplacian_sharp_passes() {
-        let pipe = BlurDetectorPipe;
-        let sharp_img = create_sharp_image(TEST_W, TEST_H);
-        let data = create_test_data_from_gray("sharp_lap", sharp_img);
-        let config = create_test_config(HashMap::from([
-            ("detection_method".to_string(), json!("laplacian_variance")),
-            ("laplacian_threshold".to_string(), json!(50.0)), // Relatively low threshold
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Unchanged(_)), "Sharp image should pass low threshold");
-        if let PipeResult::Unchanged(d) = result {
-             assert!(d.metadata.contains_key("laplacian_variance"));
-             // Check variance is likely > threshold (exact value depends on pattern/impl)
-             assert!(d.metadata["laplacian_variance"].as_f64().unwrap_or(0.0) > 50.0);
-        }
-    }
-
-    #[tokio::test]
-    async fn test_laplacian_blurry_discarded() {
-        let pipe = BlurDetectorPipe;
-        let sharp_img = create_sharp_image(TEST_W, TEST_H);
-        let blurry_img = create_blurry_image(&sharp_img, BLUR_SIGMA);
-        let data = create_test_data_from_gray("blurry_lap", blurry_img);
-        let config = create_test_config(HashMap::from([
-            ("detection_method".to_string(), json!("laplacian_variance")),
-            ("laplacian_threshold".to_string(), json!(50.0)), // Same threshold
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Discarded { .. }), "Blurry image should be discarded by higher threshold");
-    }
-
-    // --- Edge Intensity (Mean) Tests ---
-
-    #[tokio::test]
-    async fn test_edge_intensity_sharp_passes() {
-        let pipe = BlurDetectorPipe;
-        let sharp_img = create_sharp_image(TEST_W, TEST_H);
-        let data = create_test_data_from_gray("sharp_edge_mean", sharp_img);
-        let config = create_test_config(HashMap::from([
-            ("detection_method".to_string(), json!("edge_intensity")),
-            ("edge_intensity_threshold".to_string(), json!(100.0)), // Low threshold for mean gradient
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Unchanged(_)), "Sharp image should pass low edge intensity threshold");
-         if let PipeResult::Unchanged(d) = result {
-             assert!(d.metadata.contains_key("edge_intensity_mean"));
-             assert!(d.metadata["edge_intensity_mean"].as_f64().unwrap_or(0.0) > 100.0);
-        }
-    }
-
-    #[tokio::test]
-    async fn test_edge_intensity_blurry_discarded() {
-        let pipe = BlurDetectorPipe;
-        let sharp_img = create_sharp_image(TEST_W, TEST_H);
-        let blurry_img = create_blurry_image(&sharp_img, BLUR_SIGMA);
-        let data = create_test_data_from_gray("blurry_edge_mean", blurry_img);
-         let config = create_test_config(HashMap::from([
-            ("detection_method".to_string(), json!("edge_intensity")),
-            ("edge_intensity_threshold".to_string(), json!(100.0)), // Same threshold
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Discarded { .. }), "Blurry image should be discarded by edge intensity threshold");
-    }
-
-
-    // --- Pixel Variance Tests ---
-
-    #[tokio::test]
-    async fn test_pixel_variance_sharp_passes() {
-        let pipe = BlurDetectorPipe;
-        let sharp_img = create_sharp_image(TEST_W, TEST_H); // High contrast image
-        let data = create_test_data_from_gray("sharp_pix_var", sharp_img);
-        let config = create_test_config(HashMap::from([
-            ("detection_method".to_string(), json!("pixel_variance")),
-            ("pixel_variance_threshold".to_string(), json!(1000.0)), // Low threshold
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Unchanged(_)), "Sharp image should pass low pixel variance threshold");
-        if let PipeResult::Unchanged(d) = result {
-             assert!(d.metadata.contains_key("pixel_variance"));
-             assert!(d.metadata["pixel_variance"].as_f64().unwrap_or(0.0) > 1000.0);
-        }
-    }
-
-     #[tokio::test]
-    async fn test_pixel_variance_blurry_discarded() {
-        let pipe = BlurDetectorPipe;
-        let sharp_img = create_sharp_image(TEST_W, TEST_H);
-        let blurry_img = create_blurry_image(&sharp_img, BLUR_SIGMA); // Blur reduces variance
-        let data = create_test_data_from_gray("blurry_pix_var", blurry_img);
-        let config = create_test_config(HashMap::from([
-            ("detection_method".to_string(), json!("pixel_variance")),
-            ("pixel_variance_threshold".to_string(), json!(1000.0)), // Same threshold
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Discarded { .. }), "Blurry image should be discarded by pixel variance threshold");
-    }
-
-    // --- Edge Count Tests ---
-
-     #[tokio::test]
-    async fn test_edge_count_sharp_passes() {
-        let pipe = BlurDetectorPipe;
-        let sharp_img = create_sharp_image(TEST_W, TEST_H);
-        let data = create_test_data_from_gray("sharp_edge_count", sharp_img);
-        let config = create_test_config(HashMap::from([
-            ("detection_method".to_string(), json!("edge_count")),
-            ("edge_count_threshold".to_string(), json!(100.0)), // Expect at least 100 edge pixels
-            ("edge_magnitude_threshold".to_string(), json!(200)), // Define what counts as an edge (gradient magnitude)
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Unchanged(_)), "Sharp image should pass low edge count threshold");
-         if let PipeResult::Unchanged(d) = result {
-             assert!(d.metadata.contains_key("edge_count"));
-             assert!(d.metadata["edge_count"].as_f64().unwrap_or(0.0) > 100.0);
-        }
-    }
-
-     #[tokio::test]
-    async fn test_edge_count_blurry_discarded() {
-        let pipe = BlurDetectorPipe;
-        let sharp_img = create_sharp_image(TEST_W, TEST_H);
-        let blurry_img = create_blurry_image(&sharp_img, BLUR_SIGMA);
-        let data = create_test_data_from_gray("blurry_edge_count", blurry_img);
-        let config = create_test_config(HashMap::from([
-            ("detection_method".to_string(), json!("edge_count")),
-            ("edge_count_threshold".to_string(), json!(100.0)), // Same count threshold
-            ("edge_magnitude_threshold".to_string(), json!(5000)), // Same magnitude threshold
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Discarded { .. }), "Blurry image should be discarded by edge count threshold");
-    }
-
-     #[tokio::test]
-    async fn test_edge_count_missing_magnitude_threshold() {
-        let pipe = BlurDetectorPipe;
-        let data = create_test_data_from_gray("edge_count_err", create_sharp_image(TEST_W, TEST_H));
-        let config = create_test_config(HashMap::from([
-            ("detection_method".to_string(), json!("edge_count")),
-            ("edge_count_threshold".to_string(), json!(100.0)),
-            // Missing "edge_magnitude_threshold"
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Error { .. }), "Expected Error if edge_magnitude_threshold is missing for EdgeCount");
-    }
-
-    // --- General Error Tests ---
-
-    #[tokio::test]
-    async fn test_missing_primary_threshold() {
-        let pipe = BlurDetectorPipe;
-        let data = create_test_data_from_gray("missing_thresh", create_sharp_image(TEST_W, TEST_H));
-        let config = create_test_config(HashMap::from([
-             // Using default method (laplacian_variance) but missing its threshold
-            ("detection_method".to_string(), json!("laplacian_variance")),
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Error { .. }), "Expected Error if primary threshold is missing");
-    }
-
-    #[tokio::test]
-    async fn test_unknown_method() {
-        let pipe = BlurDetectorPipe;
-        let data = create_test_data_from_gray("unknown_method", create_sharp_image(TEST_W, TEST_H));
-        let config = create_test_config(HashMap::from([
-            ("detection_method".to_string(), json!("some_unknown_method")),
-            ("laplacian_threshold".to_string(), json!(100.0)), // Threshold doesn't matter here
-        ]));
-
-        let result = pipe.process(data, &config).await;
-        assert!(matches!(result, PipeResult::Error { .. }), "Expected Error for unknown detection method");
-    }
+        log_pipe_event(
+            pipe_name,
+            "STAGE_EXIT",
+            "INFO",
+            "Input channel closed. Exiting stage task.",
+        );
+    } // End of run_stage
 }

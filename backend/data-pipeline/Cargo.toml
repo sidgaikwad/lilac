@@ -17,4 +17,5 @@ img_hash = "3.2"
 thiserror = "1.0"
 rayon = "1.10.0"
 imageproc = "0.25.0"
+futures = "0.3.31"
 

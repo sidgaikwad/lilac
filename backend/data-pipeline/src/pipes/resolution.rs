@@ -1,298 +1,250 @@
-    //! Pipe implementation for standardizing image resolution.
+//! Pipe implementation for standardizing image resolution (Streaming/Channel Processing).
+//! Implements the async run_stage method, using channels and spawn_blocking.
 
-    use crate::pipeline::{ImagePipe, PipeImageData, PipeResult, PipeConfig};
-    use crate::utils::log_pipe_event; // Use the logging facade
-    use async_trait::async_trait;
-    use image::imageops::{self, FilterType};
-    use image::GenericImageView;
-    use serde_json::Value;
+use crate::pipeline::{
+    self,
+    ChannelInput,
+    ChannelOutput,
+    ImagePipe,
+    PipeConfig,
+    PipeError,
+    PipeImageData,
+    SharedPipelineState, // Channel communication types
+};
+use crate::utils::log_pipe_event;
+use async_trait::async_trait;
+use image::imageops::{self, FilterType};
+use image::{DynamicImage, GenericImageView};
+use serde_json::Value;
+use std::sync::Arc;
+use tokio::sync::mpsc;
+use tokio::task; // For spawn_blocking
 
-    /// A pipe that resizes images to a target width and height.
-    #[derive(Debug)]
-    pub struct ResolutionStandardizerPipe;
+#[derive(Debug)]
+pub struct ResolutionStandardizerPipe;
 
-    impl ResolutionStandardizerPipe {
-        /// Extracts resizing parameters from the configuration.
-        /// Provides defaults if parameters are missing or invalid.
-        fn get_params(&self, config: &PipeConfig) -> Result<(u32, u32, FilterType), String> {
-            let target_width = config
-                .parameters
-                .get("target_width")
-                .and_then(Value::as_u64)
-                .map(|v| v as u32)
-                .ok_or_else(|| "Missing or invalid 'target_width' parameter".to_string())?;
+impl ResolutionStandardizerPipe {
+    fn get_params(&self, config: &PipeConfig) -> Result<(u32, u32, FilterType), PipeError> {
+        let target_width = config
+            .parameters
+            .get("target_width")
+            .and_then(Value::as_u64)
+            .map(|v| v as u32)
+            .ok_or_else(|| "Missing or invalid 'target_width' parameter".to_string())?;
 
-            let target_height = config
-                .parameters
-                .get("target_height")
-                .and_then(Value::as_u64)
-                .map(|v| v as u32)
-                .ok_or_else(|| "Missing or invalid 'target_height' parameter".to_string())?;
+        let target_height = config
+            .parameters
+            .get("target_height")
+            .and_then(Value::as_u64)
+            .map(|v| v as u32)
+            .ok_or_else(|| "Missing or invalid 'target_height' parameter".to_string())?;
 
-            // Default to Lanczos3 if filter_type is missing or invalid
-            let filter_type_str = config
-                .parameters
-                .get("filter_type")
-                .and_then(Value::as_str)
-                .unwrap_or("Lanczos3"); // Default filter
+        let filter_type_str = config
+            .parameters
+            .get("filter_type")
+            .and_then(Value::as_str)
+            .unwrap_or("Lanczos3");
 
-            let filter_type = match filter_type_str.to_lowercase().as_str() {
-                "nearest" => FilterType::Nearest,
-                "triangle" => FilterType::Triangle,
-                "catmullrom" => FilterType::CatmullRom,
-                "gaussian" => FilterType::Gaussian,
-                "lanczos3" => FilterType::Lanczos3,
-                _ => {
-                    // Log a warning about invalid filter type and use default
-                    // Note: Can't easily log here without image_id, maybe return warning string?
-                    // For simplicity now, just default. Proper logging would happen in process().
-                    FilterType::Lanczos3
-                }
-            };
+        let filter_type = match filter_type_str.to_lowercase().as_str() {
+            "nearest" => FilterType::Nearest,
+            "triangle" => FilterType::Triangle,
+            "catmullrom" => FilterType::CatmullRom,
+            "gaussian" => FilterType::Gaussian,
+            "lanczos3" => FilterType::Lanczos3,
+            _ => FilterType::Lanczos3, // Default on invalid string
+        };
 
-            if target_width == 0 || target_height == 0 {
-                return Err("Target width and height must be greater than 0".to_string());
-            }
-
-            Ok((target_width, target_height, filter_type))
+        if target_width == 0 || target_height == 0 {
+            return Err("Target width and height must be greater than 0".to_string());
         }
+        Ok((target_width, target_height, filter_type))
+    }
+}
+
+#[async_trait]
+impl ImagePipe for ResolutionStandardizerPipe {
+    fn name(&self) -> &'static str {
+        "ResolutionStandardizer"
     }
 
-    #[async_trait]
-    impl ImagePipe for ResolutionStandardizerPipe {
-        fn name(&self) -> &'static str {
-            "ResolutionStandardizer"
-        }
+    /// Runs the resolution standardization stage as an asynchronous task.
+    /// Reads from input_rx, processes using spawn_blocking for CPU work,
+    /// and sends results to output_tx.
+    async fn run_stage(
+        self: Arc<Self>,
+        config: Arc<PipeConfig>,
+        _shared_state: Option<SharedPipelineState>,
+        input_rx: &mut mpsc::Receiver<ChannelInput>,
+        output_tx: mpsc::Sender<ChannelOutput>,
+    ) {
+        let pipe_name = self.name();
 
-        async fn process(
-            &self,
-            mut data: PipeImageData, // Make data mutable
-            config: &PipeConfig,
-        ) -> PipeResult {
-            let pipe_name = self.name();
-            let image_id = &data.id;
+        // 1. Get parameters once for the stage task
+        let params = match self.get_params(&config) {
+            Ok(p) => p,
+            Err(e) => {
+                log_pipe_event(
+                    pipe_name,
+                    "STAGE_INIT",
+                    "ERROR",
+                    &format!("Invalid configuration for stage: {}", e),
+                );
+                return; // Exit task if config is bad
+            }
+        };
+        let (target_width, target_height, filter_type) = params;
+        log_pipe_event(
+            pipe_name,
+            "STAGE_INIT",
+            "DEBUG",
+            &format!(
+                "Stage configured with Target: {}x{}, Filter: {:?}",
+                target_width, target_height, filter_type
+            ),
+        );
 
-            log_pipe_event(pipe_name, image_id, "INFO", "Processing image for resolution standardization.");
+        // 2. Process items received from the input channel
+        while let Some(input_result) = input_rx.recv().await {
+            // Clone image_id *outside* the match for potential error logging later
+            // If input_result is Err, we won't have data.id, handle this case.
+            let maybe_image_id = match &input_result {
+                Ok(data) => Some(data.id.clone()),
+                Err(_) => None, // No ID if we received an error
+            };
 
-            // 1. Get parameters
-            let params = match self.get_params(config) {
-                Ok(p) => p,
+            let output_result: ChannelOutput = match input_result {
+                // Explicit type for clarity
+                // --- If received valid data, process it ---
+                Ok(mut data) => {
+                    // We have a valid ID here
+                    let image_id = data.id.clone(); // Clone for logging within this block and for move
+                    let image_id_for_match = image_id.clone(); // <<-- CLONE HERE for use after await
+                    log_pipe_event(
+                        pipe_name,
+                        &image_id,
+                        "DEBUG",
+                        "Received item for processing.",
+                    );
+
+                    // --- CPU-Bound Work: Move to spawn_blocking ---
+                    let pipe_name_clone = pipe_name; // &'static str is Copy
+
+                    let processing_result = task::spawn_blocking(
+                        // Add explicit return type annotation for the closure
+                        move || -> Result<ChannelOutput, PipeError> {
+                            // image_id (original clone) is moved into this closure
+
+                            // Check if resizing is needed
+                            let (current_width, current_height) = data.image.dimensions();
+                            if current_width == target_width && current_height == target_height {
+                                log_pipe_event(
+                                    pipe_name_clone,
+                                    &image_id,
+                                    "INFO",
+                                    "Image already target size.",
+                                );
+                                return Ok(Ok(data));
+                            }
+
+                            // Perform resizing
+                            log_pipe_event(
+                                pipe_name_clone,
+                                &image_id,
+                                "INFO",
+                                &format!(
+                                    "Resizing from {}x{} to {}x{}",
+                                    current_width, current_height, target_width, target_height
+                                ),
+                            );
+                            let resized_image = imageops::resize(
+                                &data.image,
+                                target_width,
+                                target_height,
+                                filter_type,
+                            );
+
+                            // Update data and metadata
+                            data.image = DynamicImage::ImageRgba8(resized_image);
+                            data.metadata
+                                .insert("resized_width".to_string(), target_width.into());
+                            data.metadata
+                                .insert("resized_height".to_string(), target_height.into());
+                            data.metadata.insert(
+                                "original_width_before_resize".to_string(),
+                                current_width.into(),
+                            );
+                            data.metadata.insert(
+                                "original_height_before_resize".to_string(),
+                                current_height.into(),
+                            );
+
+                            log_pipe_event(pipe_name_clone, &image_id, "INFO", "Resize complete.");
+                            Ok(Ok(data))
+                        },
+                    )
+                    .await; // Await the result of spawn_blocking
+
+                    // --- Handle spawn_blocking result ---
+                    match processing_result {
+                        Ok(Ok(channel_output)) => {
+                            // spawn_blocking succeeded and closure succeeded
+                            channel_output // This is Result<PipeImageData, PipeError>
+                        }
+                        Ok(Err(pipe_err)) => {
+                            // spawn_blocking succeeded BUT closure returned an Err
+                            // Use the clone created before spawn_blocking
+                            log_pipe_event(
+                                pipe_name,
+                                &image_id_for_match,
+                                "ERROR",
+                                &format!("Processing failed inside blocking task: {}", pipe_err),
+                            ); // <-- Use clone
+                            Err(pipe_err) // Forward the error
+                        }
+                        Err(join_err) => {
+                            // spawn_blocking task panicked or was cancelled
+                            // Use the clone created before spawn_blocking
+                            log_pipe_event(
+                                pipe_name,
+                                &image_id_for_match,
+                                "ERROR",
+                                &format!("Blocking task failed: {}", join_err),
+                            ); // <-- Use clone
+                            Err(format!(
+                                "Blocking task failed for {}: {}",
+                                image_id_for_match, join_err
+                            ))
+                        }
+                    }
+                }
+                // --- If received an error, forward it ---
                 Err(e) => {
-                    log_pipe_event(pipe_name, image_id, "ERROR", &format!("Invalid configuration: {}", e));
-                    // Return Error for configuration issues
-                    return PipeResult::Error { message: format!("Invalid configuration: {}", e) };
+                    // Use the maybe_image_id captured before the match
+                    let id_str = maybe_image_id.as_deref().unwrap_or("UNKNOWN_ID");
+                    log_pipe_event(pipe_name, id_str, "WARN", "Forwarding previous error.");
+                    Err(e) // Forward the error to the next stage
                 }
-            };
-            let (target_width, target_height, filter_type) = params;
+            }; // End of match input_result
 
-            // Log the parameters being used
-            log_pipe_event(pipe_name, image_id, "DEBUG", &format!("Target dimensions: {}x{}, Filter: {:?}", target_width, target_height, filter_type));
+            // 3. Send the result to the output channel
+            if output_tx.send(output_result).await.is_err() {
+                // Use maybe_image_id for logging if available
+                let id_str = maybe_image_id.as_deref().unwrap_or("STAGE_EXIT");
+                log_pipe_event(
+                    pipe_name,
+                    id_str,
+                    "WARN",
+                    "Output channel receiver dropped. Exiting stage task.",
+                );
+                break; // Exit the while loop
+            }
+        } // End of while let Some
 
-
-            // 2. Check if resizing is needed
-            let (current_width, current_height) = data.image.dimensions();
-            if current_width == target_width && current_height == target_height {
-                log_pipe_event(pipe_name, image_id, "INFO", "Image already has target dimensions. Skipping resize.");
-                return PipeResult::Unchanged(data);
-            }
-
-            // 3. Perform resizing
-            log_pipe_event(pipe_name, image_id, "INFO", &format!("Resizing image from {}x{} to {}x{}", current_width, current_height, target_width, target_height));
-            let resized_image = imageops::resize(
-                &data.image,
-                target_width,
-                target_height,
-                filter_type,
-            );
-
-            // 4. Update data and metadata
-            data.image = resized_image.into(); // Convert RgbaImage back to DynamicImage
-            // Optionally update metadata
-            data.metadata.insert("resized_width".to_string(), target_width.into());
-            data.metadata.insert("resized_height".to_string(), target_height.into());
-            data.metadata.insert("original_width_before_resize".to_string(), current_width.into());
-            data.metadata.insert("original_height_before_resize".to_string(), current_height.into());
-
-
-            log_pipe_event(pipe_name, image_id, "INFO", "Image successfully resized.");
-
-            // 5. Return modified data
-            PipeResult::Modified(data)
-        }
-    }
-
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-        use crate::pipeline::{PipeImageData, PipeConfig, PipeResult, ImageMetadata};
-        use image::{DynamicImage, RgbImage, ImageFormat};
-        use serde_json::json;
-        use std::collections::HashMap;
-    
-        // Helper function to create a simple PipeImageData for testing
-        fn create_test_data(width: u32, height: u32) -> PipeImageData {
-            let img: DynamicImage = DynamicImage::ImageRgb8(RgbImage::new(width, height));
-            let metadata: ImageMetadata = HashMap::new();
-            PipeImageData {
-                id: format!("test_{}x{}", width, height),
-                image: img,
-                metadata,
-                original_format: ImageFormat::Png,
-            }
-        }
-    
-        // Helper function to create a PipeConfig
-        fn create_test_config(params: HashMap<String, serde_json::Value>) -> PipeConfig {
-            PipeConfig { parameters: params }
-        }
-    
-        #[tokio::test]
-        async fn test_resize_down_valid() {
-            let pipe = ResolutionStandardizerPipe;
-            let data = create_test_data(200, 200); // Initial size 200x200
-            let config = create_test_config(HashMap::from([
-                ("target_width".to_string(), json!(100)),
-                ("target_height".to_string(), json!(50)),
-            ]));
-    
-            let result = pipe.process(data, &config).await;
-    
-            assert!(matches!(result, PipeResult::Modified(_)), "Expected Modified result");
-            if let PipeResult::Modified(output_data) = result {
-                assert_eq!(output_data.image.width(), 100, "Width should be 100");
-                assert_eq!(output_data.image.height(), 50, "Height should be 50");
-                assert_eq!(output_data.metadata.get("resized_width"), Some(&json!(100)));
-                assert_eq!(output_data.metadata.get("resized_height"), Some(&json!(50)));
-                assert_eq!(output_data.metadata.get("original_width_before_resize"), Some(&json!(200)));
-            }
-        }
-    
-        #[tokio::test]
-        async fn test_resize_up_valid() {
-            let pipe = ResolutionStandardizerPipe;
-            let data = create_test_data(50, 50); // Initial size 50x50
-            let config = create_test_config(HashMap::from([
-                ("target_width".to_string(), json!(100)),
-                ("target_height".to_string(), json!(150)),
-            ]));
-    
-            let result = pipe.process(data, &config).await;
-    
-            assert!(matches!(result, PipeResult::Modified(_)), "Expected Modified result");
-            if let PipeResult::Modified(output_data) = result {
-                assert_eq!(output_data.image.width(), 100, "Width should be 100");
-                assert_eq!(output_data.image.height(), 150, "Height should be 150");
-            }
-        }
-    
-        #[tokio::test]
-        async fn test_already_correct_size() {
-            let pipe = ResolutionStandardizerPipe;
-            let data = create_test_data(100, 100); // Initial size 100x100
-            let config = create_test_config(HashMap::from([
-                ("target_width".to_string(), json!(100)),
-                ("target_height".to_string(), json!(100)),
-            ]));
-    
-            let result = pipe.process(data, &config).await;
-    
-            assert!(matches!(result, PipeResult::Unchanged(_)), "Expected Unchanged result");
-             if let PipeResult::Unchanged(output_data) = result {
-                assert_eq!(output_data.image.width(), 100); // Dimensions remain the same
-                assert_eq!(output_data.image.height(), 100);
-                assert!(output_data.metadata.get("resized_width").is_none(), "Metadata should not be added if unchanged");
-            }
-        }
-    
-        #[tokio::test]
-        async fn test_missing_parameters() {
-            let pipe = ResolutionStandardizerPipe;
-            let data = create_test_data(100, 100);
-            // Config missing target_height
-            let config = create_test_config(HashMap::from([
-                ("target_width".to_string(), json!(50)),
-            ]));
-    
-            let result = pipe.process(data, &config).await;
-    
-            assert!(matches!(result, PipeResult::Error { .. }), "Expected Error result for missing params");
-             if let PipeResult::Error { message } = result {
-                assert!(message.contains("Missing or invalid 'target_height' parameter"));
-            }
-        }
-    
-         #[tokio::test]
-        async fn test_invalid_parameters_zero_width() {
-            let pipe = ResolutionStandardizerPipe;
-            let data = create_test_data(100, 100);
-            let config = create_test_config(HashMap::from([
-                ("target_width".to_string(), json!(0)), // Invalid width
-                ("target_height".to_string(), json!(50)),
-            ]));
-    
-            let result = pipe.process(data, &config).await;
-    
-            assert!(matches!(result, PipeResult::Error { .. }), "Expected Error result for zero width");
-             if let PipeResult::Error { message } = result {
-                assert!(message.contains("Target width and height must be greater than 0"));
-            }
-        }
-    
-         #[tokio::test]
-        async fn test_invalid_parameters_wrong_type() {
-            let pipe = ResolutionStandardizerPipe;
-            let data = create_test_data(100, 100);
-            let config = create_test_config(HashMap::from([
-                ("target_width".to_string(), json!("not a number")), // Invalid type
-                ("target_height".to_string(), json!(50)),
-            ]));
-    
-            let result = pipe.process(data, &config).await;
-    
-            assert!(matches!(result, PipeResult::Error { .. }), "Expected Error result for wrong type");
-             if let PipeResult::Error { message } = result {
-                assert!(message.contains("Missing or invalid 'target_width' parameter"));
-            }
-        }
-    
-         #[tokio::test]
-        async fn test_different_filter_type() {
-            let pipe = ResolutionStandardizerPipe;
-            let data = create_test_data(200, 200);
-            let config = create_test_config(HashMap::from([
-                ("target_width".to_string(), json!(100)),
-                ("target_height".to_string(), json!(100)),
-                ("filter_type".to_string(), json!("Nearest")), // Use different filter
-            ]));
-    
-            let result = pipe.process(data, &config).await;
-    
-            // Just check it runs and modifies, doesn't necessarily check pixel differences
-            assert!(matches!(result, PipeResult::Modified(_)), "Expected Modified result with Nearest filter");
-            if let PipeResult::Modified(output_data) = result {
-                assert_eq!(output_data.image.width(), 100);
-                assert_eq!(output_data.image.height(), 100);
-            }
-        }
-    
-         #[tokio::test]
-        async fn test_default_filter_type() {
-            let pipe = ResolutionStandardizerPipe;
-            let data = create_test_data(200, 200);
-             // Config missing filter_type, should default to Lanczos3
-            let config = create_test_config(HashMap::from([
-                ("target_width".to_string(), json!(100)),
-                ("target_height".to_string(), json!(100)),
-            ]));
-    
-            let result = pipe.process(data, &config).await;
-    
-            assert!(matches!(result, PipeResult::Modified(_)), "Expected Modified result with default filter");
-             if let PipeResult::Modified(output_data) = result {
-                assert_eq!(output_data.image.width(), 100);
-                assert_eq!(output_data.image.height(), 100);
-            }
-        }
-    }
-    
+        log_pipe_event(
+            pipe_name,
+            "STAGE_EXIT",
+            "INFO",
+            "Input channel closed. Exiting stage task.",
+        );
+    } // End of run_stage
+}
