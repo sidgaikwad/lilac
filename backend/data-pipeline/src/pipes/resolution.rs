@@ -6,6 +6,7 @@ use crate::utils::log_pipe_event;
 use async_trait::async_trait;
 use image::imageops::{self, FilterType};
 use image::DynamicImage;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde_json::json;
 
 #[derive(Debug)]
@@ -78,7 +79,7 @@ impl ImagePipe for ResolutionStandardizerPipe {
         );
 
         let output = image_batch
-            .into_iter()
+            .into_par_iter()
             .map(|mut img_data| {
                 img_data.image = self.resize_image(img_data.image);
                 img_data

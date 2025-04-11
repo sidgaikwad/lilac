@@ -7,6 +7,7 @@ use crate::utils::log_pipe_event;
 use async_trait::async_trait;
 use image::{DynamicImage, GrayImage, Luma};
 use imageproc::{filter, gradients};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde_json::json;
 
 /// Enum to represent the chosen blur detection method.
@@ -157,7 +158,7 @@ impl ImagePipe for BlurDetectorPipe {
         // 2. Process items received from the input channel
 
         let output = image_batch
-            .into_iter()
+            .into_par_iter()
             .filter(|img| {
                 log_pipe_event(pipe_name, &img.id, "DEBUG", "Received item for processing.");
                 // TODO: avoid cloning
