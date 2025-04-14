@@ -1,16 +1,21 @@
-CREATE TABLE steps (
-    step_id uuid PRIMARY KEY,
+CREATE TABLE step_definitions (
+    step_definition_id uuid PRIMARY KEY,
     step_type text NOT NULL,
     parameter_definitions jsonb[] NOT NULL DEFAULT array[]::jsonb[]
 );
-CREATE TABLE step_instances (
-    step_instance_id uuid PRIMARY KEY,
+
+CREATE TABLE steps (
+    step_id uuid PRIMARY KEY,
     pipeline_id uuid NOT NULL REFERENCES pipelines(pipeline_id),
-    step_id uuid NOT NULL REFERENCES steps(step_id),
-    previous_step uuid REFERENCES step_instances(step_instance_id),
-    next_step uuid REFERENCES step_instances(step_instance_id),
+    step_definition_id uuid NOT NULL REFERENCES step_definitions(step_definition_id),
     step_parameters jsonb NOT NULL DEFAULT '{}'::jsonb
 );
--- register the first step type
-INSERT INTO steps(step_id, step_type, parameter_definitions)
-    VALUES ('4607fc3c-a6ed-4e72-9849-d5b6713cc346', 'NoOp', array[]::jsonb[]);
+CREATE INDEX idx_steps_pipeline_id ON steps (pipeline_id);
+
+CREATE TABLE step_connections (
+    pipeline_id uuid NOT NULL REFERENCES pipelines(pipeline_id),
+    from_step_id uuid NOT NULL REFERENCES steps(step_id),
+    to_step_id uuid NOT NULL REFERENCES steps(step_id),
+    PRIMARY KEY (from_step_id, to_step_id)
+);
+CREATE INDEX idx_step_connections_pipeline_id ON steps (pipeline_id);

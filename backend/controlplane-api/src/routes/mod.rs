@@ -12,3 +12,6 @@ pub use pipeline::*;
 
 mod steps;
 pub use steps::*;
+
+mod step_definitions;
+pub use step_definitions::*;

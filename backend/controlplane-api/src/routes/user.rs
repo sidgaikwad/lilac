@@ -1,6 +1,10 @@
 use axum::{extract::Path, Extension, Json};
 use chrono::{DateTime, Utc};
-use common::{database::Database, model::user::{User, UserId}, ServiceError};
+use common::{
+    database::Database,
+    model::user::{User, UserId},
+    ServiceError,
+};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 

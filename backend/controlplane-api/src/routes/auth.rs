@@ -21,7 +21,8 @@ pub async fn authorize(
         return Err(AuthError::MissingCredentials);
     }
 
-    let user = db.get_user_by_email(&request.email)
+    let user = db
+        .get_user_by_email(&request.email)
         .await
         .map_err(|_| AuthError::WrongCredentials)?;
     if verify_password(request.password, &user.password_hash.expose_secret()).is_err() {

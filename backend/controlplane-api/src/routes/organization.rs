@@ -1,6 +1,10 @@
 use axum::{extract::Path, Extension, Json};
 use chrono::{DateTime, Utc};
-use common::{database::Database, model::organization::{Organization, OrganizationId}, ServiceError};
+use common::{
+    database::Database,
+    model::organization::{Organization, OrganizationId},
+    ServiceError,
+};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
@@ -39,9 +43,7 @@ pub async fn get_organization(
     Path(organization_id): Path<String>,
 ) -> Result<Json<GetOrganizationResponse>, ServiceError> {
     let organization_id = OrganizationId::try_from(organization_id)?;
-    let organization = db.get_organization(&organization_id)
-        .await?
-        .into();
+    let organization = db.get_organization(&organization_id).await?.into();
     Ok(Json(organization))
 }
 
@@ -67,7 +69,8 @@ pub async fn list_organizations(
     claims: Claims,
     db: Extension<Database>,
 ) -> Result<Json<ListOrganizationsResponse>, ServiceError> {
-    let organizations = db.list_organizations(&claims.sub)
+    let organizations = db
+        .list_organizations(&claims.sub)
         .await?
         .into_iter()
         .map(|org| org.into())

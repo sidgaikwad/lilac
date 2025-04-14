@@ -18,7 +18,7 @@ impl Database {
             Organization,
             // language=PostgreSQL
             r#"
-                SELECT * FROM "organizations" WHERE organization_id = $1
+                SELECT organization_id, organization_name, created_at FROM "organizations" WHERE organization_id = $1
             "#,
             id
         )

@@ -5,3 +5,4 @@ CREATE TABLE pipelines (
     organization_id uuid NOT NULL REFERENCES organizations(organization_id),
     created_at timestamptz NOT NULL default (now() at time zone 'UTC')
 );
+CREATE INDEX idx_pipelines_organization_id ON pipelines(organization_id);

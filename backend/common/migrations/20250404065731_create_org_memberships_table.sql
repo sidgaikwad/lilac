@@ -4,3 +4,4 @@ CREATE TABLE organization_memberships (
     joined_at timestamptz NOT NULL default (now() at time zone 'UTC'),
     PRIMARY KEY (organization_id, user_id)
 );
+CREATE INDEX idx_organization_memberships_user_id ON organization_memberships(user_id);

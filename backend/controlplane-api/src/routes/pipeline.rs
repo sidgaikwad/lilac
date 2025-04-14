@@ -1,6 +1,14 @@
 use axum::{extract::Path, Extension, Json};
 use chrono::{DateTime, Utc};
-use common::{database::Database, model::{organization::OrganizationId, pipeline::{Pipeline, PipelineId}, step::StepInstance}, ServiceError};
+use common::{
+    database::Database,
+    model::{
+        organization::OrganizationId,
+        pipeline::{Pipeline, PipelineId},
+        step::Step,
+    },
+    ServiceError,
+};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
@@ -50,7 +58,7 @@ pub struct GetPipelineResponse {
     description: Option<String>,
     organization_id: OrganizationId,
     created_at: DateTime<Utc>,
-    steps: Vec<StepInstance>,
+    steps: Vec<Step>,
 }
 
 impl From<Pipeline> for GetPipelineResponse {

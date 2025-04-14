@@ -2,7 +2,7 @@ use crate::{
     model::{
         organization::OrganizationId,
         pipeline::{Pipeline, PipelineId},
-        step::StepInstance,
+        step::Step,
     },
     ServiceError,
 };
@@ -15,9 +15,10 @@ impl Database {
         let pipeline = sqlx::query!(
         // language=PostgreSQL
         r#"
-            SELECT p.*, ARRAY_AGG((s.step_instance_id, s.step_id, s.pipeline_id, s.previous_step, s.next_step, s.step_parameters)) as "steps: Vec<StepInstance>" 
+            SELECT p.pipeline_id, p.pipeline_name, p.description, p.organization_id, p.created_at,
+                ARRAY_AGG((s.step_id, s.step_definition_id, s.pipeline_id, s.step_parameters)) as "steps: Vec<Step>" 
             FROM "pipelines" p
-            RIGHT JOIN "step_instances" s USING (pipeline_id)
+            RIGHT JOIN "steps" s USING (pipeline_id)
             WHERE p.pipeline_id = $1
             GROUP BY p.pipeline_id
         "#,
@@ -44,9 +45,10 @@ impl Database {
         let pipelines = sqlx::query!(
             // language=PostgreSQL
             r#"
-            SELECT p.*, ARRAY_AGG((s.*)) as "steps: Vec<StepInstance>" 
+            SELECT p.pipeline_id, p.pipeline_name, p.description, p.organization_id, p.created_at,
+                ARRAY_AGG((s.step_id, s.step_definition_id, s.pipeline_id, s.step_parameters)) as "steps: Vec<Step>"
             FROM "pipelines" p
-            LEFT JOIN "step_instances" s USING (pipeline_id)
+            LEFT JOIN "steps" s USING (pipeline_id)
             WHERE p.organization_id = $1
             GROUP BY p.pipeline_id
         "#,

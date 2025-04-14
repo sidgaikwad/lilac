@@ -17,7 +17,7 @@ pub enum ServiceError {
     DatabaseError(#[from] sqlx::Error),
 
     #[error("{id} not found")]
-    NotFound{ id: String },
+    NotFound { id: String },
 
     #[error("unauthorized")]
     Unauthorized,
@@ -29,7 +29,10 @@ impl IntoResponse for ServiceError {
             ServiceError::ParseError(_) => (StatusCode::BAD_REQUEST, "bad request".to_string()),
             ServiceError::NotFound { id } => (StatusCode::NOT_FOUND, format!("{id} not found")),
             ServiceError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized".to_string()),
-            ServiceError::DatabaseError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "something went wrong".to_string()),
+            ServiceError::DatabaseError(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "something went wrong".to_string(),
+            ),
         };
         let body = Json(json!({
             "error": error_message,
