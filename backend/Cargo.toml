@@ -5,6 +5,7 @@ members = [ "common", "controlplane-api","data-pipeline"]
 
 [workspace.dependencies]
 common = { path = "./common" }
+data-pipeline = { path = "./data-pipeline" }
 argon2 = "0.5"
 aws-lc-rs = "1"
 axum = "0.8"

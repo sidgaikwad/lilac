@@ -8,15 +8,17 @@ publish = false
 path = "src/lib.rs"
 
 [dependencies]
-image = "0.25"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tokio = { version = "1", features = ["sync", "rt-multi-thread", "macros"] }
+common.workspace = true
 async-trait = "0.1"
-img_hash = "3.2" 
-thiserror = "1.0"
-rayon = "1.10.0"
-imageproc = "0.25.0"
 futures = "0.3.31"
-strum = { version = "0.27.1", features = ["derive"] }
+image = "0.25"
+imageproc = "0.25.0"
+img_hash = "3.2" 
+rayon = "1.10.0"
+serde_json.workspace = true
+serde.workspace = true
+strum.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+uuid.workspace = true
 

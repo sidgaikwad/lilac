@@ -5,10 +5,12 @@
 use crate::pipe_core::{ImagePipe, PipeError, PipeImageData};
 use crate::utils::log_pipe_event;
 use async_trait::async_trait;
+use common::model::step_definition::{StepDefinition, StepType};
 use image::{DynamicImage, GrayImage, Luma};
 use imageproc::{filter, gradients};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde_json::json;
+use uuid::uuid;
 
 /// Enum to represent the chosen blur detection method.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, strum::Display)]
@@ -116,26 +118,29 @@ impl BlurDetectorPipe {
 
 #[async_trait]
 impl ImagePipe for BlurDetectorPipe {
-    fn name(&self) -> &'static str {
-        "BlurDetector"
+    fn step_definition() -> StepDefinition {
+        StepDefinition {
+            step_definition_id: uuid!("039fddf8-72c1-4598-875c-36f40d4fcf84").into(),
+            step_type: StepType::BlurDetector,
+            parameter_definitions: vec![
+                json!({
+                    "parameter_name": "method",
+                    "parameter_type": "enum"
+                }),
+                json!({
+                    "parameter_name": "threshold",
+                    "parameter_type": "float"
+                }),
+                json!({
+                    "parameter_name": "method_params",
+                    "parameter_type": "enum"
+                }),
+            ],
+        }
     }
 
-    fn param_definitions(&self) -> Vec<serde_json::Value> {
-        // TODO: return a proper jsonschema instead
-        vec![
-            json!({
-                "parameter_name": "method",
-                "parameter_type": "enum"
-            }),
-            json!({
-                "parameter_name": "threshold",
-                "parameter_type": "float"
-            }),
-            json!({
-                "parameter_name": "method_params",
-                "parameter_type": "enum"
-            }),
-        ]
+    fn name(&self) -> &'static str {
+        "BlurDetector"
     }
 
     /// Runs the blur detection stage as an asynchronous task.

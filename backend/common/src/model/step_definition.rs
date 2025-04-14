@@ -8,8 +8,8 @@ use crate::ServiceError;
 pub struct StepDefinitionId(Uuid);
 
 impl StepDefinitionId {
-    pub fn new(pipeline_id: Uuid) -> Self {
-        Self(pipeline_id)
+    pub fn new(step_definition_id: Uuid) -> Self {
+        Self(step_definition_id)
     }
 
     pub fn generate() -> Self {
@@ -59,9 +59,11 @@ pub struct StepDefinition {
     pub parameter_definitions: Vec<serde_json::Value>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, strum::Display)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, strum::Display, strum::EnumString)]
 pub enum StepType {
     NoOp,
+    BlurDetector,
+    ResolutionStandardizer,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

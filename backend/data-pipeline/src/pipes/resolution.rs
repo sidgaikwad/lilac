@@ -4,10 +4,12 @@
 use crate::pipe_core::{ImagePipe, PipeError, PipeImageData};
 use crate::utils::log_pipe_event;
 use async_trait::async_trait;
+use common::model::step_definition::{StepDefinition, StepType};
 use image::imageops::{self, FilterType};
 use image::DynamicImage;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde_json::json;
+use uuid::uuid;
 
 #[derive(Debug)]
 pub struct ResolutionStandardizerPipe {
@@ -38,26 +40,29 @@ impl ResolutionStandardizerPipe {
 
 #[async_trait]
 impl ImagePipe for ResolutionStandardizerPipe {
-    fn name(&self) -> &'static str {
-        "ResolutionStandardizer"
+    fn step_definition() -> StepDefinition {
+        StepDefinition {
+            step_definition_id: uuid!("9a3601dd-d335-4cf9-99e0-01e928a3eec4").into(),
+            step_type: StepType::ResolutionStandardizer,
+            parameter_definitions: vec![
+                json!({
+                    "parameter_name": "target_width",
+                    "parameter_type": "number"
+                }),
+                json!({
+                    "parameter_name": "target_height",
+                    "parameter_type": "number"
+                }),
+                json!({
+                    "parameter_name": "filter_type",
+                    "parameter_type": "enum"
+                }),
+            ],
+        }
     }
 
-    fn param_definitions(&self) -> Vec<serde_json::Value> {
-        // TODO: return a proper jsonschema instead
-        vec![
-            json!({
-                "parameter_name": "target_width",
-                "parameter_type": "number"
-            }),
-            json!({
-                "parameter_name": "target_height",
-                "parameter_type": "number"
-            }),
-            json!({
-                "parameter_name": "filter_type",
-                "parameter_type": "enum"
-            }),
-        ]
+    fn name(&self) -> &'static str {
+        "ResolutionStandardizer"
     }
 
     /// Runs the resolution standardization stage as an asynchronous task.
