@@ -1,7 +1,7 @@
 //! Pipe implementation for standardizing image resolution (Streaming/Channel Processing).
 //! Implements the async run_stage method, using channels and spawn_blocking.
 
-use crate::pipeline::{ImagePipe, PipeError, PipeImageData};
+use crate::pipe_core::{ImagePipe, PipeError, PipeImageData};
 use crate::utils::log_pipe_event;
 use async_trait::async_trait;
 use image::imageops::{self, FilterType};

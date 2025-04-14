@@ -2,7 +2,7 @@
 //! Methods: LaplacianVariance, EdgeIntensity (Sobel Mean), PixelVariance, EdgeCount (Sobel).
 //! Implements async streaming stage processing using channels and spawn_blocking.
 
-use crate::pipeline::{ImagePipe, PipeError, PipeImageData};
+use crate::pipe_core::{ImagePipe, PipeError, PipeImageData};
 use crate::utils::log_pipe_event;
 use async_trait::async_trait;
 use image::{DynamicImage, GrayImage, Luma};
