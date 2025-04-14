@@ -8,7 +8,7 @@ use jsonwebtoken::{decode, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::model::user::UserId;
+use common::model::user::UserId;
 
 use super::{error::AuthError, keys::KEYS};
 

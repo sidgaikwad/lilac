@@ -1,29 +1,20 @@
 use axum::{extract::Path, Extension, Json};
 use chrono::{DateTime, Utc};
+use common::{database::Database, model::{organization::OrganizationId, pipeline::{Pipeline, PipelineId}, step::StepInstance}, ServiceError};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use tracing::instrument;
 
-use crate::{
-    auth::claims::Claims,
-    database,
-    model::{
-        organization::OrganizationId,
-        pipeline::{Pipeline, PipelineId},
-        step::StepInstance,
-    },
-    ServiceError,
-};
+use crate::auth::claims::Claims;
 
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn create_pipeline(
     claims: Claims,
-    db: Extension<PgPool>,
+    db: Extension<Database>,
     Json(request): Json<CreatePipelineRequest>,
 ) -> Result<Json<CreatePipelineResponse>, ServiceError> {
     let pipeline = Pipeline::create(request.name, request.description, request.organization_id);
 
-    let pipeline_id = database::create_pipeline(&db, pipeline).await?;
+    let pipeline_id = db.create_pipeline(pipeline).await?;
 
     Ok(Json(CreatePipelineResponse { id: pipeline_id }))
 }
@@ -43,11 +34,11 @@ pub struct CreatePipelineResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn get_pipeline(
     claims: Claims,
-    db: Extension<PgPool>,
+    db: Extension<Database>,
     Path(pipeline_id): Path<String>,
 ) -> Result<Json<GetPipelineResponse>, ServiceError> {
     let pipeline_id = PipelineId::try_from(pipeline_id)?;
-    let pipeline = database::get_pipeline(&db, &pipeline_id).await?;
+    let pipeline = db.get_pipeline(&pipeline_id).await?;
 
     Ok(Json(pipeline.into()))
 }

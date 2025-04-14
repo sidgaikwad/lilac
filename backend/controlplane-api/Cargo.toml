@@ -7,28 +7,27 @@ edition = "2021"
 name = "controlplane-api"
 
 [dependencies]
-argon2 = "0.5"
-aws-lc-rs = "1"
-axum = "0.8"
-http-body-util = "0.1"
-hyper = { version = "1", features = ["full"] }
-hyper-util = { version = "0.1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-password-auth = "1.0.0"
-tokio = { version = "1", features = ["full"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
-nanoid = "0.4.0"
-secrecy = { version = "0.10.3", features = ["serde"] }
-uuid = { version = "1.16.0", features = ["serde", "v4"] }
-sqlx = { version = "0.8", features = [ "runtime-tokio", "postgres", "uuid", "derive", "chrono" ] }
-thiserror = "2.0.12"
-chrono = { version = "0.4.40", features = ["serde"] }
-dotenv = "0.15.0"
-jsonwebtoken = "9.3.1"
-once_cell = "1.21.3"
-rand = { version = "0.9.0", features = ["serde"] }
-axum-extra = { version = "0.10.1", features = ["typed-header", "cookie"] }
-tower-http = { version = "0.6.2", features = ["trace"] }
-# sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-rustls-aws-lc-rs", "postgres", "uuid", "time", "derive", "chrono ] }
+common.workspace = true
+argon2.workspace = true
+aws-lc-rs.workspace = true
+axum-extra.workspace = true
+axum.workspace = true
+chrono.workspace = true
+dotenv.workspace = true
+http-body-util.workspace = true
+hyper-util.workspace = true
+hyper.workspace = true
+jsonwebtoken.workspace = true
+nanoid.workspace = true
+once_cell.workspace = true
+password-auth.workspace = true
+rand.workspace = true
+secrecy.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tower-http.workspace = true
+tracing-subscriber.workspace = true
+tracing.workspace = true
+uuid.workspace = true

@@ -4,9 +4,9 @@ use axum::{
     routing::{get, post},
     Extension, Router,
 };
+use common::database::Database;
 use controlplane_api::routes;
 use dotenv::dotenv;
-use sqlx::postgres::PgPoolOptions;
 use tower_http::trace::TraceLayer;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
@@ -29,13 +29,8 @@ async fn main() {
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL to be set");
 
     tracing::info!("database url: {}", db_url);
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&db_url)
-        .await
-        .expect("database to connect");
-
-    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    let db = Database::new(&db_url).await.expect("database to connect");
+    db.migrate().await.expect("migrations to complete");
 
     // build our application with a route
     let app = Router::new()
@@ -52,7 +47,7 @@ async fn main() {
         .route("/pipeline", post(routes::create_pipeline))
         .route("/pipeline/{pipeline_id}", get(routes::get_pipeline))
         .route("/pipeline/{pipeline_id}/step", post(routes::create_pipeline_step))
-        .layer(Extension(pool))
+        .layer(Extension(db))
         .layer(
             TraceLayer::new_for_http().make_span_with(|_request: &Request<Body>| {
                 let request_id = Uuid::new_v4().to_string();

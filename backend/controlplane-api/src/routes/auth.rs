@@ -1,15 +1,11 @@
 use axum::{Extension, Json};
+use common::{database::Database, model::auth::AuthBody};
 use jsonwebtoken::{encode, Header};
 use password_auth::verify_password;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
-use sqlx::PgPool;
 
-use crate::{
-    auth::{claims::Claims, error::AuthError, keys::KEYS},
-    database,
-    model::auth::AuthBody,
-};
+use crate::auth::{claims::Claims, error::AuthError, keys::KEYS};
 
 #[derive(Debug, Deserialize)]
 pub struct AuthPayload {
@@ -18,14 +14,14 @@ pub struct AuthPayload {
 }
 
 pub async fn authorize(
-    Extension(db): Extension<PgPool>,
+    Extension(db): Extension<Database>,
     Json(request): Json<AuthPayload>,
 ) -> Result<Json<AuthBody>, AuthError> {
     if request.email.is_empty() || request.password.is_empty() {
         return Err(AuthError::MissingCredentials);
     }
 
-    let user = database::get_user_by_email(&db, &request.email)
+    let user = db.get_user_by_email(&request.email)
         .await
         .map_err(|_| AuthError::WrongCredentials)?;
     if verify_password(request.password, &user.password_hash.expose_secret()).is_err() {

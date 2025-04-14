@@ -1,5 +1,3 @@
-use sqlx::PgPool;
-
 use crate::{
     model::{
         organization::OrganizationId,
@@ -9,9 +7,12 @@ use crate::{
     ServiceError,
 };
 
-pub async fn get_pipeline(db: &PgPool, pipeline_id: &PipelineId) -> Result<Pipeline, ServiceError> {
-    let id = pipeline_id.inner();
-    let pipeline = sqlx::query!(
+use super::Database;
+
+impl Database {
+    pub async fn get_pipeline(&self, pipeline_id: &PipelineId) -> Result<Pipeline, ServiceError> {
+        let id = pipeline_id.inner();
+        let pipeline = sqlx::query!(
         // language=PostgreSQL
         r#"
             SELECT p.*, ARRAY_AGG((s.step_instance_id, s.step_id, s.pipeline_id, s.previous_step, s.next_step, s.step_parameters)) as "steps: Vec<StepInstance>" 
@@ -30,42 +31,42 @@ pub async fn get_pipeline(db: &PgPool, pipeline_id: &PipelineId) -> Result<Pipel
         steps: row.steps.unwrap_or(Vec::new()),
         created_at: row.created_at,
     })
-    .fetch_one(db)
+    .fetch_one(&self.pool)
     .await?;
-    Ok(pipeline)
-}
+        Ok(pipeline)
+    }
 
-pub async fn list_pipelines(
-    db: &PgPool,
-    organization_id: &OrganizationId,
-) -> Result<Vec<Pipeline>, ServiceError> {
-    let id = organization_id.inner();
-    let pipelines = sqlx::query!(
-        // language=PostgreSQL
-        r#"
+    pub async fn list_pipelines(
+        &self,
+        organization_id: &OrganizationId,
+    ) -> Result<Vec<Pipeline>, ServiceError> {
+        let id = organization_id.inner();
+        let pipelines = sqlx::query!(
+            // language=PostgreSQL
+            r#"
             SELECT p.*, ARRAY_AGG((s.*)) as "steps: Vec<StepInstance>" 
             FROM "pipelines" p
             LEFT JOIN "step_instances" s USING (pipeline_id)
             WHERE p.organization_id = $1
             GROUP BY p.pipeline_id
         "#,
-        id
-    )
-    .map(|row| Pipeline {
-        pipeline_id: row.pipeline_id.into(),
-        pipeline_name: row.pipeline_name,
-        description: row.description,
-        organization_id: row.organization_id.into(),
-        steps: row.steps.unwrap_or(Vec::new()),
-        created_at: row.created_at,
-    })
-    .fetch_all(db)
-    .await?;
-    Ok(pipelines)
-}
+            id
+        )
+        .map(|row| Pipeline {
+            pipeline_id: row.pipeline_id.into(),
+            pipeline_name: row.pipeline_name,
+            description: row.description,
+            organization_id: row.organization_id.into(),
+            steps: row.steps.unwrap_or(Vec::new()),
+            created_at: row.created_at,
+        })
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(pipelines)
+    }
 
-pub async fn create_pipeline(db: &PgPool, pipeline: Pipeline) -> Result<PipelineId, ServiceError> {
-    let pipeline_id = sqlx::query!(
+    pub async fn create_pipeline(&self, pipeline: Pipeline) -> Result<PipelineId, ServiceError> {
+        let pipeline_id = sqlx::query!(
         // language=PostgreSQL
         r#"
             INSERT INTO "pipelines" (pipeline_id, pipeline_name, description, organization_id, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING pipeline_id
@@ -77,7 +78,8 @@ pub async fn create_pipeline(db: &PgPool, pipeline: Pipeline) -> Result<Pipeline
         &pipeline.created_at,
     )
     .map(|row| PipelineId::new(row.pipeline_id))
-    .fetch_one(db)
+    .fetch_one(&self.pool)
     .await?;
-    Ok(pipeline_id)
+        Ok(pipeline_id)
+    }
 }

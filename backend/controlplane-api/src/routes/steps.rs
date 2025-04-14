@@ -1,28 +1,20 @@
 use axum::{extract::Path, Extension, Json};
+use common::{database::Database, model::{pipeline::PipelineId, step::{StepId, StepInstance, StepInstanceId}}, ServiceError};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use tracing::instrument;
 
-use crate::{
-    auth::claims::Claims,
-    database,
-    model::{
-        pipeline::PipelineId,
-        step::{StepId, StepInstance, StepInstanceId},
-    },
-    ServiceError,
-};
+use crate::auth::claims::Claims;
 
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn create_pipeline_step(
     claims: Claims,
-    db: Extension<PgPool>,
+    db: Extension<Database>,
     Path(pipeline_id): Path<PipelineId>,
     Json(request): Json<CreateStepInstanceRequest>,
 ) -> Result<Json<CreateStepInstanceResponse>, ServiceError> {
     let step_instance = StepInstance::create(request.step_id, pipeline_id, request.step_parameters);
 
-    let step_instance_id = database::create_step_instance(&db, step_instance).await?;
+    let step_instance_id = db.create_step_instance(step_instance).await?;
 
     Ok(Json(CreateStepInstanceResponse {
         id: step_instance_id,
