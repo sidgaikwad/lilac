@@ -1,14 +1,17 @@
-// src/App.tsx
-import PipelineEditor from './components/PipelineEditor';
-import 'reactflow/dist/style.css'; // Ensure React Flow styles are imported
+    // src/App.tsx (Using Sonner Toaster)
+    import React from 'react';
+    import PipelineEditorPage from './pages/PipelineEditorPage';
+    import { Toaster } from "sonner"; // Import Sonner Toaster
+    import 'reactflow/dist/style.css';
 
-function App() {
-  return (
-    <main className="h-screen w-screen overflow-hidden"> {/* Prevent scrolling on main page */}
-      {/* You could add a Header/Navbar here above the editor */}
-      <PipelineEditor />
-    </main>
-  );
-}
+    function App() {
+      return (
+        <React.Fragment>
+          <PipelineEditorPage />
+          <Toaster position="bottom-left" richColors closeButton />
+        </React.Fragment>
+      );
+    }
 
-export default App;
+    export default App;
+    
