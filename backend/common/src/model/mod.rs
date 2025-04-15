@@ -4,3 +4,4 @@ pub mod pipeline;
 pub mod step;
 pub mod step_definition;
 pub mod user;
+pub mod jobs;

@@ -6,7 +6,6 @@ use axum::{
 };
 use common::database::Database;
 use controlplane_api::routes;
-use data_pipeline::get_steps_to_register;
 use dotenv::dotenv;
 use tower_http::trace::TraceLayer;
 use tracing::level_filters::LevelFilter;
@@ -32,11 +31,6 @@ async fn main() {
     tracing::info!("database url: {}", db_url);
     let db = Database::new(&db_url).await.expect("database to connect");
     db.migrate().await.expect("migrations to complete");
-
-    let step_definitions = get_steps_to_register();
-    for step_definition in step_definitions {
-        db.register_step_definition(step_definition).await.expect("step to be registered");
-    }
 
     // build our application with a route
     let app = Router::new()

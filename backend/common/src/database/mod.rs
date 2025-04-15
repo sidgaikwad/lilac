@@ -5,6 +5,7 @@ mod pipeline;
 mod step_definitions;
 mod steps;
 mod user;
+mod jobs;
 
 #[derive(Clone, Debug)]
 pub struct Database {
