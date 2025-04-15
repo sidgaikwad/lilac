@@ -1,7 +1,7 @@
 //! Pipe implementation for standardizing image resolution (Streaming/Channel Processing).
 //! Implements the async run_stage method, using channels and spawn_blocking.
 
-use crate::pipe_core::{ImagePipe, PipeError, PipeImageData};
+use crate::pipeline::{ImagePipe, PipeDefinition, PipeError, PipeImageData};
 use crate::utils::log_pipe_event;
 use async_trait::async_trait;
 use common::model::step_definition::{StepDefinition, StepType};
@@ -38,8 +38,7 @@ impl ResolutionStandardizerPipe {
     }
 }
 
-#[async_trait]
-impl ImagePipe for ResolutionStandardizerPipe {
+impl PipeDefinition for ResolutionStandardizerPipe {
     fn step_definition() -> StepDefinition {
         StepDefinition {
             step_definition_id: uuid!("9a3601dd-d335-4cf9-99e0-01e928a3eec4").into(),
@@ -60,7 +59,10 @@ impl ImagePipe for ResolutionStandardizerPipe {
             ],
         }
     }
+}
 
+#[async_trait]
+impl ImagePipe for ResolutionStandardizerPipe {
     fn name(&self) -> &'static str {
         "ResolutionStandardizer"
     }

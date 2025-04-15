@@ -11,13 +11,13 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum DestinationError {
     #[error("I/O Error interacting with destination: {0}")]
-    Io(#[from] std::io::Error), 
+    Io(#[from] std::io::Error),
     #[error("Image saving error: {0}")]
-    ImageSaveError(String), 
+    ImageSaveError(String),
     #[error("Unsupported data destination type specified")]
     UnsupportedDestination,
     #[error("Failed to save {count} images to destination")]
-    PartialSave { count: u32 }, 
+    PartialSave { count: u32 },
 }
 
 pub fn save_batch(batch: &[PipeImageData], dest: &DataDestination) -> Result<(), DestinationError> {
@@ -32,7 +32,12 @@ pub fn save_batch(batch: &[PipeImageData], dest: &DataDestination) -> Result<(),
 
 fn save_to_local_path(batch: &[PipeImageData], path: &Path) -> Result<(), DestinationError> {
     let destination_id = path.display().to_string();
-    log_pipe_event("Destination", &destination_id, "INFO", &format!("Starting save to local path: {:?}", path));
+    log_pipe_event(
+        "Destination",
+        &destination_id,
+        "INFO",
+        &format!("Starting save to local path: {:?}", path),
+    );
 
     fs::create_dir_all(path)?;
 
@@ -51,9 +56,7 @@ fn save_to_local_path(batch: &[PipeImageData], path: &Path) -> Result<(), Destin
             .image
             .save_with_format(&output_filepath, img_data.original_format)
         {
-            Ok(_) => {
-               
-            }
+            Ok(_) => {}
             Err(e) => {
                 log_pipe_event(
                     "Destination",
@@ -66,7 +69,16 @@ fn save_to_local_path(batch: &[PipeImageData], path: &Path) -> Result<(), Destin
         }
     }
 
-    log_pipe_event("Destination", &destination_id, "INFO", &format!("Finished saving. Success: {}, Errors: {}", batch.len() as u32 - save_errors, save_errors));
+    log_pipe_event(
+        "Destination",
+        &destination_id,
+        "INFO",
+        &format!(
+            "Finished saving. Success: {}, Errors: {}",
+            batch.len() as u32 - save_errors,
+            save_errors
+        ),
+    );
 
     if save_errors > 0 {
         Err(DestinationError::PartialSave { count: save_errors })

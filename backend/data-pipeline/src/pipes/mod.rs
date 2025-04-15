@@ -1,3 +1,3 @@
 pub mod blur;
-pub mod resolution;
 pub mod noop;
+pub mod resolution;

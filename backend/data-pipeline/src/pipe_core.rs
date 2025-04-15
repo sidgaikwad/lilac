@@ -4,13 +4,13 @@
 //! and the central ImagePipe trait that all processing pipes must implement.
 
 use async_trait::async_trait;
+use common::model::step_definition::StepDefinition;
 use image::{DynamicImage, ImageFormat};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use thiserror::Error;
-use std::sync::Arc;
 
 pub type ImageMetadata = HashMap<String, Value>;
 
@@ -23,11 +23,10 @@ pub struct PipeImageData {
 }
 
 #[derive(Error, Debug, Clone)]
-#[error("Pipe Error in {pipe_name}: {message}")] 
+#[error("Pipe Error in {pipe_name}: {message}")]
 pub struct PipeError {
-    pub pipe_name: String, 
+    pub pipe_name: String,
     pub message: String,
-    
 }
 
 //
@@ -41,9 +40,12 @@ pub struct PipelineStageConfig {
 #[async_trait]
 pub trait ImagePipe: Send + Sync {
     fn name(&self) -> &'static str;
-    fn param_definitions(&self) -> Vec<Value>;
     async fn run_stage(
         &self,
         image_batch: Vec<PipeImageData>,
     ) -> Result<Vec<PipeImageData>, PipeError>;
+}
+
+pub trait PipeDefinition {
+    fn step_definition() -> StepDefinition;
 }

@@ -2,12 +2,11 @@
 //! Orchestrates the execution of a defined pipeline by calling
 //! abstracted data source/destination functions and executing pre-instantiated pipe stages.
 
-use crate::pipe_core::{ImagePipe, PipeImageData, PipeError}; // Core trait and data
+use crate::pipe_core::PipeError; // Core trait and data
 use crate::pipeline_definition::Pipeline; // Pipeline definition struct
-use crate::{datasource, destination}; // Import the I/O modules
-use crate::utils::log_pipe_event; // Logging utility
+use crate::utils::log_pipe_event;
+use crate::{datasource, destination}; // Import the I/O modules // Logging utility
 
-use std::sync::Arc; // Although runner doesn't use Arc directly, pipes are Arc'd
 use std::time::Instant;
 use thiserror::Error; // For structured errors
 
@@ -31,11 +30,21 @@ pub enum RunnerError {
 /// Output: Result indicating overall success or the first encountered RunnerError.
 pub async fn run_pipeline(pipeline: &Pipeline) -> Result<(), RunnerError> {
     let run_id = &pipeline.id; // Use pipeline ID for context if available
-    log_pipe_event("Runner", run_id, "INFO", &format!("Starting pipeline run: {}", pipeline.name));
+    log_pipe_event(
+        "Runner",
+        run_id,
+        "INFO",
+        &format!("Starting pipeline run: {}", pipeline.name),
+    );
     let overall_start_time = Instant::now();
 
     // --- 1. Load Input Images ---
-    log_pipe_event("Runner", run_id, "INFO", &format!("Loading data from source: {:?}", pipeline.input_source));
+    log_pipe_event(
+        "Runner",
+        run_id,
+        "INFO",
+        &format!("Loading data from source: {:?}", pipeline.input_source),
+    );
     let load_start_time = Instant::now();
 
     // Call generic load function from the datasource module
@@ -43,25 +52,55 @@ pub async fn run_pipeline(pipeline: &Pipeline) -> Result<(), RunnerError> {
 
     let load_duration = load_start_time.elapsed();
     let initial_count = current_batch.len();
-    log_pipe_event("Runner", run_id, "INFO", &format!("Loaded {} images in {:?}", initial_count, load_duration));
+    log_pipe_event(
+        "Runner",
+        run_id,
+        "INFO",
+        &format!("Loaded {} images in {:?}", initial_count, load_duration),
+    );
 
     if current_batch.is_empty() {
-        log_pipe_event("Runner", run_id, "WARN", "Input batch is empty. Pipeline run will complete without processing.");
+        log_pipe_event(
+            "Runner",
+            run_id,
+            "WARN",
+            "Input batch is empty. Pipeline run will complete without processing.",
+        );
         // Decide if this should be an error or just finish successfully
     }
 
     // --- 2. Execute Pipeline Stages Sequentially ---
-    log_pipe_event("Runner", run_id, "INFO", &format!("Executing {} pipeline stages...", pipeline.stages.len()));
+    log_pipe_event(
+        "Runner",
+        run_id,
+        "INFO",
+        &format!("Executing {} pipeline stages...", pipeline.stages.len()),
+    );
     let processing_start_time = Instant::now();
     let mut images_in_stage = initial_count; // Track count entering each stage
 
-    for pipe_instance in &pipeline.stages { // Iterate Vec<Arc<dyn ImagePipe>>
+    for pipe_instance in &pipeline.stages {
+        // Iterate Vec<Arc<dyn ImagePipe>>
         let stage_name = pipe_instance.name();
         if current_batch.is_empty() {
-            log_pipe_event("Runner", run_id, "WARN", &format!("Skipping stage '{}' - input batch is empty.", stage_name));
+            log_pipe_event(
+                "Runner",
+                run_id,
+                "WARN",
+                &format!("Skipping stage '{}' - input batch is empty.", stage_name),
+            );
             continue;
         }
-        log_pipe_event("Runner", run_id, "INFO", &format!("Running stage '{}' on {} images...", stage_name, current_batch.len()));
+        log_pipe_event(
+            "Runner",
+            run_id,
+            "INFO",
+            &format!(
+                "Running stage '{}' on {} images...",
+                stage_name,
+                current_batch.len()
+            ),
+        );
 
         // No factory needed - just call run_stage on the trait object
         let stage_start_time = Instant::now();
@@ -76,15 +115,36 @@ pub async fn run_pipeline(pipeline: &Pipeline) -> Result<(), RunnerError> {
         let images_out_stage = current_batch.len();
         let discarded = images_in_stage.saturating_sub(images_out_stage); // Use saturating_sub
 
-        log_pipe_event("Runner", run_id, "INFO", &format!("Finished stage '{}' in {:?}. Output: {} images ({} discarded)", stage_name, stage_duration, images_out_stage, discarded));
+        log_pipe_event(
+            "Runner",
+            run_id,
+            "INFO",
+            &format!(
+                "Finished stage '{}' in {:?}. Output: {} images ({} discarded)",
+                stage_name, stage_duration, images_out_stage, discarded
+            ),
+        );
         images_in_stage = images_out_stage; // Update count for next stage input
     }
     let processing_duration = processing_start_time.elapsed();
-    log_pipe_event("Runner", run_id, "INFO", &format!("Finished all stages in {:?}", processing_duration));
-
+    log_pipe_event(
+        "Runner",
+        run_id,
+        "INFO",
+        &format!("Finished all stages in {:?}", processing_duration),
+    );
 
     // --- 3. Save Output Images ---
-    log_pipe_event("Runner", run_id, "INFO", &format!("Saving {} processed images to: {:?}", current_batch.len(), pipeline.output_destination));
+    log_pipe_event(
+        "Runner",
+        run_id,
+        "INFO",
+        &format!(
+            "Saving {} processed images to: {:?}",
+            current_batch.len(),
+            pipeline.output_destination
+        ),
+    );
     let save_start_time = Instant::now();
 
     // Call generic save function from the destination module
@@ -92,12 +152,24 @@ pub async fn run_pipeline(pipeline: &Pipeline) -> Result<(), RunnerError> {
 
     let save_duration = save_start_time.elapsed();
     let saved_count = current_batch.len(); // All remaining images were intended for saving
-    log_pipe_event("Runner", run_id, "INFO", &format!("Saved {} images in {:?}", saved_count, save_duration));
-
+    log_pipe_event(
+        "Runner",
+        run_id,
+        "INFO",
+        &format!("Saved {} images in {:?}", saved_count, save_duration),
+    );
 
     // --- Finish ---
     let overall_duration = overall_start_time.elapsed();
-    log_pipe_event("Runner", run_id, "INFO", &format!("Pipeline run finished successfully in {:?}.", overall_duration));
+    log_pipe_event(
+        "Runner",
+        run_id,
+        "INFO",
+        &format!(
+            "Pipeline run finished successfully in {:?}.",
+            overall_duration
+        ),
+    );
     println!("\n--- Pipeline Run Summary ---"); // Keep simple summary for example runner
     println!("Initial Images (Loaded): {}", initial_count);
     println!("Final Images (Saved): {}", saved_count);

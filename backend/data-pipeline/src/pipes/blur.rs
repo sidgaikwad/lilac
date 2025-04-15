@@ -2,7 +2,7 @@
 //! Methods: LaplacianVariance, EdgeIntensity (Sobel Mean), PixelVariance, EdgeCount (Sobel).
 //! Implements async streaming stage processing using channels and spawn_blocking.
 
-use crate::pipe_core::{ImagePipe, PipeError, PipeImageData};
+use crate::pipe_core::{ImagePipe, PipeDefinition, PipeError, PipeImageData};
 use crate::utils::log_pipe_event;
 use async_trait::async_trait;
 use common::model::step_definition::{StepDefinition, StepType};
@@ -116,8 +116,7 @@ impl BlurDetectorPipe {
     }
 }
 
-#[async_trait]
-impl ImagePipe for BlurDetectorPipe {
+impl PipeDefinition for BlurDetectorPipe {
     fn step_definition() -> StepDefinition {
         StepDefinition {
             step_definition_id: uuid!("039fddf8-72c1-4598-875c-36f40d4fcf84").into(),
@@ -138,7 +137,10 @@ impl ImagePipe for BlurDetectorPipe {
             ],
         }
     }
+}
 
+#[async_trait]
+impl ImagePipe for BlurDetectorPipe {
     fn name(&self) -> &'static str {
         "BlurDetector"
     }
@@ -170,10 +172,10 @@ impl ImagePipe for BlurDetectorPipe {
                 let blur = self.calculate_blur(img.image.clone());
 
                 log_pipe_event(
-                    &pipe_name,
+                    pipe_name,
                     &img.id,
                     "INFO",
-                    &format!("Calculated {}: {:.2}", self.method.to_string(), blur),
+                    &format!("Calculated {}: {:.2}", self.method, blur),
                 );
                 blur < self.threshold
             })
