@@ -1,54 +1,65 @@
-# React + TypeScript + Vite
+Project Goal:To create a platform that simplifies and accelerates the process of cleaning and preparing image datasets for Machine Learning models. The MVP focuses on providing a visual, collaborative environment for building data processing pipelines specifically for images, moving away from purely manual Python scripting. Key goals include ease of use, collaboration, and versioning (though versioning UI might be post-MVP).Current Backend Architecture (MVP Focus: Simplicity & Modularity):Core Modules: The data-pipeline library is structured into modules with distinct responsibilities:pipe_core.rs: Defines the core ImagePipe trait (async fn run_stage(batch)), data structures (PipeImageData), error types (PipeError), and the configuration structure used for defining stages (PipelineStageConfig).pipeline_definition.rs: Defines the structure of a runnable pipeline (Pipeline struct holding Vec<Arc>), and data source/destination types (DataSource, DataDestination). Note: Pipeline struct isn't easily serializable.loader.rs / destination.rs: Encapsulate logic for loading data from sources and saving to destinations. Contain functions like load_batch/save_batch that internally handle different types (e.g., LocalPath).runner.rs: Contains the run_pipeline function responsible for orchestrating pipeline execution. It takes a Pipeline object, calls the generic load/save functions, and sequentially executes the run_stage method of each pre-instantiated pipe in the Pipeline.stages vector. It does not contain pipe instantiation logic.pipes/*.rs: Implementations of the ImagePipe trait (e.g., ResolutionStandardizerPipe, BlurDetectorPipe). These structs store their configuration internally (set via a ::new(params) constructor) and handle their own internal parallelism (using Rayon) within the run_stage method.utils.rs: Common utilities like logging.lib.rs: Declares library modules.Execution Flow: A separate piece of code (like examples/pipeline_loader.rs or an API handler) is responsible for:Defining the pipeline using PipelineStageConfig (potentially loaded from config/DB).Using factory logic (e.g., a match statement) to instantiate the required pipes (PipeType::new(params)), wrap them in Arc, and collect them into a Vec.Creating the Pipeline struct, including the Vec<Arc> and DataSource/DataDestination info.Calling runner::run_pipeline(&pipeline) to execute it.Parallelism: The runner executes stages sequentially on the entire batch. Parallelism occurs within each pipe's run_stage implementation using Rayon.Data Handling: The current runner loads the entire dataset into memory as one batch before starting processing. Saving also happens after all stages complete. (Acknowledged as an MVP limitation).State Management: No mechanism currently exists in the ImagePipe trait for handling state shared across the entire dataset run (e.g., for deduplication). Stateful pipes would need internal mechanisms, which is problematic for parallel correctness across the dataset.Control Plane API (controlplane-api based on provided main.rs):An Axum-based web service provides HTTP endpoints for managing pipeline definitions and related entities. Key routes defined:Users: POST /users, GET /users/{user_id}Auth: POST /auth/loginOrganizations: GET /organization, POST /organization, GET /organization/{organization_id}Step Definitions: GET /step_definitions (Likely returns info about available pipe types like "BlurDetector", possibly including param_definitions).Pipelines: POST /pipeline, GET /pipeline/{pipeline_id} (Likely deals with saving/loading PipelineStageConfig definitions, not the runnable Pipeline instance).Pipeline Steps/Structure: POST /pipeline/{pipeline_id}/step/, GET /pipeline/{pipeline_id}/step/{step_id}, POST/DELETE /pipeline/{pipeline_id}/connection/{from_step_id}/{to_step_id} (Suggests pipelines are stored as graphs of steps/connections in the DB).Database:PostgreSQL is used via sqlx.Migrations exist for users, organizations, memberships, pipelines, and steps (likely storing PipelineStageConfig-like data).Current Status:Core backend architecture for defining and running pipelines (sequentially batch-wise) is established.Two example pipes (Resolution, Blur) are implemented.A basic control plane API exists for managing pipeline definitions and related entities in a Postgres database.An example runner (examples/pipeline_loader.rs) exists for local testing, containing the necessary factory logic.Key limitations for MVP: single large batch loading, no shared state mechanism, runner/pipe interaction model chosen for simplicity over maximum streaming performance/scalability for now.Project: ML Data Pipeline Builder (MVP)Target Agent: Frontend AI Developer (React, Vite, Tailwind CSS)Project Vision & Goal:We are building a web application to drastically simplify the process of cleaning and preparing image datasets for Machine Learning. Currently, this is a time-consuming, manual process often involving complex Python scripts. Our solution is a visual, collaborative, near-no-code pipeline builder.The core idea is to allow users (Data Scientists, ML Engineers) to define a sequence of processing steps (e.g., resize, detect blur, remove duplicates) by connecting "pipes" visually on a canvas. The backend (written in Rust) executes these pipelines on image datasets (initially loaded from local paths, later S3).The MVP focuses on image datasets and establishing the core pipeline building and management interface with collaboration as a key design pillar from the start.Backend Context & API:Backend: Rust, PostgreSQL database.Core Concepts: Pipelines are defined as a sequence of "pipes" (also called "steps"). Each pipe performs a specific task (e.g., resize, blur detection). Pipes have configurable parameters.API: A RESTful API (built with Axum) is available (details below) to manage users, organizations, pipeline definitions, step types, and the structure of pipelines (connecting steps).Data Flow: The frontend will primarily interact with the API to:Fetch available pipe types/step definitions (GET /step_definitions).Fetch user/organization data.Create, read, update, delete pipeline definitions (likely stored as sequences or graphs of PipelineStageConfig including pipe identifiers and parameters).Manage the structure of pipelines (adding/removing steps, connecting them).(Future) Trigger pipeline runs and monitor their status (APIs TBD).Key API Endpoints (from controlplane-api):GET /step_definitions: Get list of available pipe types and potentially their parameter definitions.GET /organization: List user's organizations.POST /pipeline: Create a new pipeline definition.GET /pipeline/{pipeline_id}: Get details of a specific pipeline definition (likely its stages/steps and their configs).POST /pipeline/{pipeline_id}/step/: Add a new step (pipe instance) to a pipeline.GET /pipeline/{pipeline_id}/step/{step_id}: Get details/config of a specific step instance.POST /pipeline/{pipeline_id}/connection/{from_step_id}/{to_step_id}: Define data flow between steps.DELETE /pipeline/{pipeline_id}/connection/{from_step_id}/{to_step_id}: Remove data flow connection.(Others for User/Auth/Org management).Frontend Goal & Core Features:Create a modern, intuitive, performant, and collaborative React web application using Vite for building and managing image processing pipelines.A. Dashboard / Pipeline Management:Display a list of pipelines accessible to the user (likely within an organization context).Allow creating new, empty pipelines.Allow opening existing pipelines in the editor.(Future) Display status of running/completed pipelines.B. Visual Pipeline Editor (Primary Focus):Canvas: An interactive canvas (using libraries like react-flow or potentially building a custom solution) where the pipeline is visualized.Available Pipes Panel: A sidebar listing available pipe types fetched from GET /step_definitions.Drag and Drop: Users drag pipe types from the panel onto the canvas to create nodes (pipeline steps/stages). Backend call: POST /pipeline/{pipeline_id}/step/.Node Representation: Each node visually represents a pipe instance. Display its type and potentially key parameters or status.Connections: Users draw connections (edges) between nodes (output of one to input of another) to define the execution order/data flow. Backend calls: POST/DELETE /pipeline/.../connection/.... Visualize data flow direction.Parameter Configuration: Clicking a node opens a configuration panel (e.g., a sidebar or modal). This panel should dynamically display input fields based on the selected pipe's param_definitions (fetched via API). Changes are saved via API calls (likely updating the step's configuration).Layout: Provide auto-layout capabilities or allow manual arrangement of nodes. Ensure clarity for complex pipelines.(Future) Versioning UI: Elements to view history, switch versions (API support needed).C. Collaboration (CRITICAL REQUIREMENT):Real-time Updates: Multiple users viewing the same pipeline should see changes made by others in near real-time (adding nodes, moving nodes, changing connections, updating parameters).Presence Indicators: Show which users are currently viewing/editing the pipeline.Implementation Strategy: This requires careful design. Evaluate and propose solutions:WebSockets: Backend needs to push updates to connected clients.Conflict Resolution: How are simultaneous edits handled? (e.g., Last-write-wins, Operational Transforms (OT), Conflict-free Replicated Data Types (CRDTs)). CRDTs (e.g., using yjs) are often preferred for complex state like graph structures but add complexity. OT can also work.Locking (MVP?): A simpler MVP approach might involve locking a pipeline when one user edits, preventing concurrent edits but allowing concurrent viewing. Discuss trade-offs.Design from the start for collaboration. State management and component updates need to handle incoming real-time events gracefully.D. User/Org Context:Basic login/authentication flow (interacting with /auth/login).Display relevant organization context.Tech Stack & Implementation Details:Framework: React (latest stable). Use Functional Components and Hooks.Build Tool: Vite.Language: TypeScript. Use strong typing throughout.Styling: Tailwind CSS. Ensure responsiveness (desktop and potentially tablet). Consider using Shadcn/UI (or similar Tailwind-based libraries like Headless UI + Tailwind) for pre-built, accessible components (buttons, forms, modals, etc.) to accelerate development and ensure consistency.State Management: Evaluate options based on application complexity. Start with React Context/Zustand for simplicity, consider Redux Toolkit if global state becomes very complex or if required by chosen collaboration library.API Communication: Use fetch API or libraries like axios. Strongly consider using data fetching/caching libraries like react-query (TanStack Query) or SWR to simplify server state management, caching, and background updates.Visual Editor Library: Evaluate react-flow as a primary candidate for the node-based editor canvas. Assess its suitability for collaboration features.Collaboration Library: Research and propose options (e.g., yjs for CRDTs, Liveblocks, PartyKit, socket.io for basic WebSockets). Requires corresponding backend support.Routing: Use a standard router like react-router.Design Principles & Expectations:Clean, Maintainable Code: Write well-structured, documented, and testable TypeScript/React code. Follow standard React best practices.Excellent User Experience (UX): The interface must be intuitive, especially the drag-and-drop editor. Provide clear visual feedback, smooth transitions, and handle edge cases gracefully. Minimize user friction.Modern & Professional UI: Implement a clean, aesthetically pleasing design using Tailwind CSS. Pay attention to layout, typography, spacing, and consistency. Use icons effectively (e.g., lucide-react).Performance: Optimize frontend performance. Ensure fast load times and smooth interactions, especially on the canvas.Collaboration-First: This is not an afterthought. Design data structures, state management, and component interactions with the assumption that multiple users will be interacting concurrently.This briefing outlines the vision and requirements for the frontend. We expect high-quality, well-engineered code that delivers an intuitive and powerful user experience, laying the foundation for a scalable collaborative platform.
+----
+MVP Frontend Application Structure Plan
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+I. Core Goal & MVP
+The MVP aims to provide a functional, collaborative environment for users to visually define, save, version, and manage image processing pipelines (reading from/writing to S3) within an organizational context. We prioritize the core pipeline building experience, simple versioning, basic S3 connectivity, and essential user/org management. Features like advanced analytics, pipeline execution monitoring, complex versioning UI (diffing, merging), advanced data source management, and extensive integrations are post-MVP.
 
-Currently, two official plugins are available:
+II. Comparison & Common SaaS Patterns
+Similar SaaS tools (workflow automation like Zapier/Make, visual builders, some MLOps platforms) typically launch MVPs with:
+Authentication: Secure login/signup is fundamental.
+Dashboard/List View: A central hub to see existing items (pipelines, workflows, projects) and create new ones. This is often the default view after login.
+Core Editor: The primary interface for creating/editing the main resource (in our case, the pipeline).
+Basic Settings: User profile management (password, email) and, for collaborative tools, rudimentary organization/workspace settings (viewing members, maybe inviting).
+Clear Navigation: Simple and consistent way to move between the main sections (Dashboard, Editor, Settings).
+Basic Input/Output: A way to define where data comes from and goes (like S3 paths).
+Save Mechanism: Ability to persist the created work.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+III. Proposed MVP Frontend Pages/Components
+Here are the essential pieces for our frontend MVP:
+Authentication Flow:
+Login Page: Allows existing users to sign in (interacts with /auth/login API). Requires email/password fields, submit button, error handling, link to password reset (if implemented).
+Signup Page (Optional but Recommended for Self-Serve): Allows new users to register (interacts with /users API). Requires name, email, password fields, submit button, error handling.
+Password Reset Flow (Optional MVP): Basic forgot/reset password functionality if login is critical.
+Main Application Layout (Post-Login):
+Persistent Navigation:
+Sidebar Navigation containing links to Dashboard/Pipelines, Settings. Could also include organization switching if applicable.
+Content Area: The main section where the content of the selected page (Dashboard, Editor, Settings) is rendered.
+Dashboard / Pipeline List Page (/pipelines or /dashboard)
+Functionality:
+Displays a list ( using shadcn/ui Table or Cards) of pipelines accessible to the user within their currently selected organization. Fetches data via API (GET /pipeline potentially filtered by org).
+Displays key info per pipeline (Name, Last Modified/Version, Status - if available).
+Prominent "Create New Pipeline" button (calls POST /pipeline and navigates to the new editor instance).
+Links/Actions to open an existing pipeline in the editor (navigates to /pipelines/{pipeline_id}, likely loading the latest version by default).
+Links/Actions for basic management (Rename, Delete - requires API support).
+This serves as the main landing page after login.
+Pipeline Editor Page (/pipelines/{pipeline_id} or /pipelines/{pipeline_id}/versions/{version_id})
+Functionality:
+Renders the main visual editor component (PipelineEditorPage containing PipelineEditorFlow that we've built).
+Loads Pipeline Definition: Loads a specific pipeline definition (nodes, edges, parameters) based on the pipeline_id and potentially a version_id from the URL (GET /pipeline/{pipeline_id}/versions/{version_id} or GET /pipeline/{pipeline_id} for latest).
+S3 Input/Output (MVP): Handles S3 paths via parameters within relevant nodes (an "S3 Input" node type or parameters on generic Input/Output nodes). Users provide bucket/path details directly. Assumption: Users pre-configure AWS IAM permissions manually to allow the backend service access.
+Save Button: Includes an explicit "Save" button. Clicking "Save" creates a new version of the pipeline definition in the backend (e.g., via POST /pipeline/{pipeline_id}/versions API, potentially passing the current definition).
+Version Selection: Includes a dropdown or similar UI element to list saved versions (e.g., by timestamp or simple version ID fetched from API like GET /pipeline/{pipeline_id}/versions). Selecting a version reloads the editor with that version's definition (as a starting point for new changes/saves).
+Available Pipes Sidebar: Includes the RightSidebar component, fetching pipe types from GET /step_definitions.
+Displays the pipeline name, potentially allows renaming (which might apply to all versions or create a new branch depending on backend logic).
+Settings Section (/settings/...)
+Account Settings Page (/settings/account)
+Functionality: View/edit user profile information (Name, Email), Change Password form. Requires API endpoints for fetching user data and updating profile/password.
+Organization Settings Page (/settings/organization)
+Functionality (MVP Scope):
+Display current organization name.
+List organization members (requires API).
+(If multi-org supported) Mechanism to switch between organizations the user belongs to.
+(Potential MVP Add) Invite new members form (requires API).
+(Post-MVP) Roles, billing, advanced settings.
 
-## Expanding the ESLint configuration
+IV. Features Deferred (Post-MVP)
+Advanced Pipeline Versioning UI: Diffing between versions, merging, branching, named versions.
+Pipeline Execution: Triggering runs from the UI, monitoring status visually, viewing results/logs.
+Advanced Org Management: Roles, permissions, detailed settings.
+Advanced Data Source Management: UI for creating/managing credentials, browsing S3 buckets, connecting to databases etc.
+Collaboration Features (Beyond Basic Definition Sync): Explicit commenting, review workflows, presence indicators beyond basic editor view.
+In-App Tutorials / Help: Onboarding flows.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+V. Summary
+The MVP frontend focuses on the core loop: Login -> View Pipeline List (Dashboard) -> Create/Open Pipeline -> Edit Visually (Editor) -> Configure Basic S3 I/O -> Save New Version -> Switch Between Versions -> Manage basic User/Org Settings. This provides immediate value by enabling the visual pipeline construction, persistence, versioning, and basic data connectivity.
