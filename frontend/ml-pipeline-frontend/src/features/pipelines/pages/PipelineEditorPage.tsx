@@ -9,11 +9,9 @@ import { getPipelineEntry, addPipelineVersion, renamePipeline, PipelineVersion, 
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PlayIcon } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Import cn
+import { cn } from '@/lib/utils';
 
-// Consistent focus style for buttons
 const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
-
 
 const createDefaultNodes = (): Node[] => {
   const inputDef = hardcodedStepDefinitions.find(def => def.category === 'Input');
@@ -43,11 +41,20 @@ const PipelineEditorPage: React.FC = () => {
 
   useEffect(() => {
     if (!pipelineId) { navigate('/pipelines'); return; }
+    // TODO: API Call - GET /pipeline/{pipelineId} (replace getPipelineEntry)
+    // This API should return the pipeline details including all versions or just the latest?
+    // Assuming for now it returns the entry structure similar to localStorageUtils
     const entry = getPipelineEntry(pipelineId);
-    if (!entry) { navigate('/pipelines'); return; }
+    if (!entry) {
+        toast.error("Pipeline not found.");
+        navigate('/pipelines');
+        return;
+    }
+
     setPipelineEntry(entry);
     const latestVersion = entry.versions[0];
     setCurrentVersionId(latestVersion?.versionId);
+
     if (latestVersion?.flowData) {
       setDisplayNodes(latestVersion.flowData.nodes);
       setDisplayEdges(latestVersion.flowData.edges);
@@ -58,6 +65,7 @@ const PipelineEditorPage: React.FC = () => {
       setDisplayViewport(undefined);
     }
     setIsLoading(false);
+
   }, [pipelineId, navigate]);
 
   const handleSave = useCallback(() => {
@@ -68,11 +76,12 @@ const PipelineEditorPage: React.FC = () => {
       viewport: reactFlowInstanceRef.current.getViewport(),
     };
     const newVersion: PipelineVersion = {
-      versionId: Date.now().toString(),
+      versionId: Date.now().toString(), // API should generate version ID
       timestamp: new Date().toISOString(),
       flowData: currentFlowData,
     };
-    addPipelineVersion(pipelineId, newVersion);
+    // TODO: API Call - POST /pipeline/{pipelineId}/version (or similar endpoint) with currentFlowData
+    addPipelineVersion(pipelineId, newVersion); // Save locally for now
     const updatedEntry = getPipelineEntry(pipelineId);
     setPipelineEntry(updatedEntry || null);
     setDisplayNodes(newVersion.flowData.nodes);
@@ -83,13 +92,15 @@ const PipelineEditorPage: React.FC = () => {
   }, [pipelineId, pipelineEntry, reactFlowInstanceRef]);
 
   const handleRename = useCallback((id: string, newName: string): boolean => {
-    const success = renamePipeline(id, newName);
+    // TODO: API Call - PUT/PATCH /pipeline/{id} with { name: newName }
+    const success = renamePipeline(id, newName); // Rename locally for now
     if (success) setPipelineEntry(prev => prev ? { ...prev, name: newName } : null);
     return success;
   }, []);
 
   const handleSelectVersion = useCallback((versionId: string) => {
     if (!pipelineEntry) return;
+    // TODO: API Call - GET /pipeline/{pipelineId}/version/{versionId} (if versions aren't loaded initially)
     const selectedVersion = pipelineEntry.versions.find(v => v.versionId === versionId);
     if (selectedVersion?.flowData) {
       setIsLoading(true);
@@ -109,7 +120,7 @@ const PipelineEditorPage: React.FC = () => {
   }, []);
 
   const handleRun = useCallback(() => {
-    if (!reactFlowInstanceRef.current) return;
+    if (!reactFlowInstanceRef.current || !pipelineId) return;
     const nodes = reactFlowInstanceRef.current.getNodes();
     const edges = reactFlowInstanceRef.current.getEdges();
     const edgeSources = new Set(edges.map(e => e.source));
@@ -122,16 +133,16 @@ const PipelineEditorPage: React.FC = () => {
     if (inputNodes.length === 0) { isValid = false; errorMessage = "Pipeline must have at least one Input node."; }
     else if (outputNodes.length === 0) { isValid = false; errorMessage = "Pipeline must have at least one Output node."; }
     else {
-      for (const node of processingNodes) {
-        if (!edgeTargets.has(node.id) || !edgeSources.has(node.id)) { isValid = false; errorMessage = `Node '${node.data.label}' is not fully connected.`; break; }
-      }
+      for (const node of processingNodes) { if (!edgeTargets.has(node.id) || !edgeSources.has(node.id)) { isValid = false; errorMessage = `Node '${node.data.label}' is not fully connected.`; break; } }
       if (isValid) { for (const node of inputNodes) { if (node.data?.stepDefinition?.category !== 'Output' && !edgeSources.has(node.id)) { isValid = false; errorMessage = `Input node '${node.data.label}' must have an outgoing connection.`; break; } } }
       if (isValid) { for (const node of outputNodes) { if (node.data?.stepDefinition?.category !== 'Input' && !edgeTargets.has(node.id)) { isValid = false; errorMessage = `Output node '${node.data.label}' must have an incoming connection.`; break; } } }
     }
     if (!isValid) { toast.error("Invalid Pipeline", { description: errorMessage }); return; }
     console.log("Simulating pipeline run with:", { nodes, edges });
     toast.info("Pipeline validation passed! Simulating run... (check console)");
-  }, []);
+    // TODO: API Call - POST /pipeline/{pipelineId}/run (or similar) with nodes/edges definition
+  }, [pipelineId]);
+
 
   if (isLoading || !pipelineEntry) {
     return <div className="p-6">Loading pipeline data...</div>;
@@ -149,9 +160,7 @@ const PipelineEditorPage: React.FC = () => {
           selectedVersionId={currentVersionId}
           onSelectVersion={handleSelectVersion}
         />
-         {/* Use theme colors for Run area */}
          <div className="p-2 border-b border-border bg-card flex justify-end">
-             {/* Use default button variant + focus style */}
              <Button onClick={handleRun} size="sm" className={cn(buttonFocusStyle)}>
                  <PlayIcon className="mr-2 h-4 w-4" /> Run Pipeline (Simulated)
              </Button>

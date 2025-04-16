@@ -25,24 +25,33 @@ const DashboardPage: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [renamingPipelineId, setRenamingPipelineId] = useState<string | null>(null);
   const [currentNameValue, setCurrentNameValue] = useState("");
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
-  const loadPipelines = useCallback(() => {
+  const loadPipelines = useCallback(async () => {
+    setIsLoading(true);
+    // TODO: API Call - GET /pipeline (potentially with org filter)
+    // Replace localStorage call with API fetch
+    await new Promise(res => setTimeout(res, 300)); // Simulate API delay
     setPipelines(listStoredPipelines());
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
     loadPipelines();
   }, [loadPipelines]);
 
-  const handleCreatePipeline = () => {
-    const newPipelineId = uuidv4();
+  const handleCreatePipeline = async () => {
     const newPipelineName = `New Pipeline ${new Date().toLocaleTimeString()}`;
+    // TODO: API Call - POST /pipeline with { name: newPipelineName, organization_id: currentOrgId }
+    // Use the ID returned from the API
+    const newPipelineId = uuidv4(); // Placeholder ID generation
     const newEntry: PipelineStorageEntry = { id: newPipelineId, name: newPipelineName, versions: [] };
-    savePipelineEntry(newEntry);
-    loadPipelines();
+    savePipelineEntry(newEntry); // Save locally for now
+    await loadPipelines(); // Refresh list after mock save
     navigate(`/pipelines/${newPipelineId}`);
   };
 
+  // --- Delete Logic ---
   const openDeleteDialog = (pipeline: DashboardPipelineItem) => {
     setPipelineToDelete(pipeline);
     setIsDeleteDialogOpen(true);
@@ -53,18 +62,20 @@ const DashboardPage: React.FC = () => {
     setPipelineToDelete(null);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (pipelineToDelete) {
-      const success = deletePipelineEntry(pipelineToDelete.id);
+      // TODO: API Call - DELETE /pipeline/{pipelineToDelete.id}
+      const success = deletePipelineEntry(pipelineToDelete.id); // Delete locally for now
       if (success) {
         toast.success(`Pipeline "${pipelineToDelete.name}" deleted.`);
-        loadPipelines();
+        await loadPipelines(); // Refresh the list
       } else {
         toast.error(`Failed to delete pipeline "${pipelineToDelete.name}".`);
       }
     }
   };
 
+  // --- Rename Logic ---
   const startRename = (pipeline: DashboardPipelineItem) => {
     setRenamingPipelineId(pipeline.id);
     setCurrentNameValue(pipeline.name);
@@ -75,12 +86,13 @@ const DashboardPage: React.FC = () => {
     setCurrentNameValue("");
   };
 
-  const saveRename = () => {
+  const saveRename = async () => {
     if (renamingPipelineId && currentNameValue.trim()) {
-      const success = renamePipeline(renamingPipelineId, currentNameValue.trim());
+      // TODO: API Call - PUT/PATCH /pipeline/{renamingPipelineId} with { name: currentNameValue.trim() }
+      const success = renamePipeline(renamingPipelineId, currentNameValue.trim()); // Rename locally for now
       if (success) {
         toast.success("Pipeline renamed.");
-        loadPipelines();
+        await loadPipelines(); // Refresh list
       } else {
         toast.error("Failed to rename pipeline.");
       }
@@ -107,20 +119,21 @@ const DashboardPage: React.FC = () => {
         <h1 className="text-3xl font-bold">Pipelines</h1>
         <Button
           onClick={handleCreatePipeline}
-          className={cn(buttonFocusStyle)} // Use default variant + focus
+          className={cn(buttonFocusStyle)}
         >
           Create New Pipeline
         </Button>
       </div>
 
-      {pipelines.length === 0 ? (
-        // Use theme card/muted colors for empty state
+      {isLoading ? (
+        <div className="text-center py-10">Loading pipelines...</div> // Basic loading state
+      ) : pipelines.length === 0 ? (
         <div className="text-center py-10 border rounded-lg bg-card">
           <h3 className="text-xl font-semibold mb-2">No Pipelines Yet</h3>
           <p className="text-muted-foreground mb-4">Get started by creating your first pipeline.</p>
           <Button
             onClick={handleCreatePipeline}
-             className={cn(buttonFocusStyle)} // Use default variant + focus
+             className={cn(buttonFocusStyle)}
           >
             Create Pipeline
           </Button>
@@ -128,7 +141,6 @@ const DashboardPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pipelines.map(p => (
-            // Card uses theme variables internally
             <Card key={p.id} className="flex flex-col">
               <CardHeader className="flex-grow">
                 {renamingPipelineId === p.id ? (
@@ -138,25 +150,21 @@ const DashboardPage: React.FC = () => {
                       onChange={handleRenameInputChange}
                       onKeyDown={handleRenameInputKeyDown}
                       onBlur={saveRename}
-                      className="text-lg h-8 flex-grow" // Input uses theme variables
+                      className="text-lg h-8 flex-grow"
                       autoFocus
                     />
-                    {/* Buttons use theme variables via variants */}
                     <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-green-600 hover:bg-green-100", buttonFocusStyle)} onClick={saveRename}><CheckIcon className="h-4 w-4"/></Button>
                     <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-red-600 hover:bg-red-100", buttonFocusStyle)} onClick={cancelRename}><XIcon className="h-4 w-4"/></Button>
                   </div>
                 ) : (
-                  // Use theme primary color for link
                   <Link to={`/pipelines/${p.id}`} className="text-primary hover:underline">
                     <CardTitle className="text-lg">{p.name}</CardTitle>
                   </Link>
                 )}
-                {/* CardDescription uses theme muted foreground */}
                 <CardDescription>
                   Last Modified: {new Date(p.lastModified).toLocaleString()}
                 </CardDescription>
               </CardHeader>
-              {/* CardFooter uses theme border */}
               <CardFooter className="border-t pt-4 flex justify-end gap-2">
                 <Button variant="ghost" size="icon" title="Rename" onClick={() => startRename(p)} disabled={renamingPipelineId === p.id} className={cn(buttonFocusStyle)}>
                   <PencilIcon className="h-4 w-4" />
@@ -164,7 +172,6 @@ const DashboardPage: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  // Use theme destructive text color and hover
                   className={cn("text-destructive hover:bg-destructive/10 hover:text-destructive", buttonFocusStyle)}
                   title="Delete Pipeline"
                   onClick={() => openDeleteDialog(p)}

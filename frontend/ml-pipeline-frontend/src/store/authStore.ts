@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 
-// TODO: Define a proper User type based on API response
+interface LoginCredentials {
+  email: string;
+  password?: string;
+}
+
 interface User {
   id: string;
   name: string;
   email: string;
-  // Add other relevant user fields
 }
 
 interface AuthState {
@@ -14,66 +17,71 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: string | null;
-  login: (/* credentials */) => Promise<void>; // Placeholder for login action
+  login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
-  checkAuthStatus: () => Promise<void>; // Placeholder for checking token validity
+  checkAuthStatus: () => Promise<void>;
+  setLoading: (loading: boolean) => void;
 }
+
+const MOCK_USER: User = { id: 'user-admin', name: 'Admin User', email: 'admin@example.com' };
+const MOCK_TOKEN = 'mock-jwt-token-12345';
 
 const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
   user: null,
-  token: localStorage.getItem('authToken'), // Initialize token from storage
-  isLoading: false, // Initially not loading
+  token: localStorage.getItem('authToken'),
+  isLoading: true,
   error: null,
 
-  // Example Login Action (replace with actual API call)
-  login: async (/* credentials */) => {
+  login: async (credentials: LoginCredentials) => {
     set({ isLoading: true, error: null });
-    try {
-      // const response = await apiClient.post('/auth/login', credentials);
-      // const { token, user } = response.data;
-      const token = 'fake-jwt-token'; // Replace with actual token
-      const user: User = { id: '1', name: 'Test User', email: 'test@example.com' }; // Replace with actual user
-
-      localStorage.setItem('authToken', token);
-      set({ isAuthenticated: true, user, token, isLoading: false });
-    } catch (err) {
-      const errorMessage = (err as Error).message || 'Login failed';
-      set({ error: errorMessage, isLoading: false });
-      console.error('Login error:', err);
-    }
+    // TODO: API Call - POST /auth/login with credentials
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (credentials.email === 'admin@example.com' && credentials.password === 'admin') {
+          localStorage.setItem('authToken', MOCK_TOKEN);
+          // TODO: Set user/token based on actual API response
+          set({ isAuthenticated: true, user: MOCK_USER, token: MOCK_TOKEN, isLoading: false });
+          console.log("Mock login successful");
+          resolve();
+        } else {
+          const errorMsg = "Invalid email or password";
+          set({ error: errorMsg, isLoading: false, isAuthenticated: false, user: null, token: null });
+          console.error("Mock login failed");
+          reject(new Error(errorMsg));
+        }
+      }, 500);
+    });
   },
 
-  // Logout Action
   logout: () => {
+    // TODO: API Call - POST /auth/logout (optional, if backend needs session invalidation)
     localStorage.removeItem('authToken');
-    set({ isAuthenticated: false, user: null, token: null });
+    set({ isAuthenticated: false, user: null, token: null, error: null, isLoading: false });
   },
 
-  // Example Check Auth Status Action (e.g., on app load)
   checkAuthStatus: async () => {
     const token = get().token;
-    if (!token) {
-      set({ isAuthenticated: false, user: null, isLoading: false });
+    if (!token) { // Removed mock token check for simplicity, rely on API validation
+      get().logout();
+      set({ isLoading: false }); // Ensure loading is false if no token
       return;
     }
-    set({ isLoading: true });
+    // Don't set isLoading: true here, let ProtectedRoute handle initial loading state
     try {
-      // TODO: Add an API endpoint to validate the token (e.g., GET /users/me)
-      // const response = await apiClient.get('/users/me'); // Assuming token is sent via interceptor
-      // const user = response.data;
-      const user: User = { id: '1', name: 'Test User', email: 'test@example.com' }; // Replace with actual user from validation
-      set({ isAuthenticated: true, user, isLoading: false });
+      // TODO: API Call - GET /users/me (or similar validation endpoint) using the token
+      // If valid, set user from response and isAuthenticated: true
+      await new Promise(res => setTimeout(res, 200)); // Simulate API call
+      set({ isAuthenticated: true, user: MOCK_USER, isLoading: false }); // Assume success for now
     } catch (err) {
       console.error('Auth status check failed:', err);
-      get().logout(); // Log out if token is invalid
-      set({ isLoading: false });
+      get().logout(); // Logout if token validation fails
     }
   },
-}));
 
-// Call checkAuthStatus on initial load (outside the store definition)
-// This might be better placed in your main App component's useEffect
-// useAuthStore.getState().checkAuthStatus();
+  setLoading: (loading: boolean) => {
+    set({ isLoading: loading });
+  },
+}));
 
 export default useAuthStore;
