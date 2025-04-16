@@ -9,6 +9,11 @@ import { getPipelineEntry, addPipelineVersion, renamePipeline, PipelineVersion, 
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PlayIcon } from 'lucide-react';
+import { cn } from '@/lib/utils'; // Import cn
+
+// Consistent focus style for buttons
+const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
+
 
 const createDefaultNodes = (): Node[] => {
   const inputDef = hardcodedStepDefinitions.find(def => def.category === 'Input');
@@ -103,71 +108,30 @@ const PipelineEditorPage: React.FC = () => {
     reactFlowInstanceRef.current = instance;
   }, []);
 
-  // --- Run Validation Logic ---
   const handleRun = useCallback(() => {
     if (!reactFlowInstanceRef.current) return;
-
     const nodes = reactFlowInstanceRef.current.getNodes();
     const edges = reactFlowInstanceRef.current.getEdges();
     const edgeSources = new Set(edges.map(e => e.source));
     const edgeTargets = new Set(edges.map(e => e.target));
-
     let isValid = true;
     let errorMessage = "";
-
     const inputNodes = nodes.filter(n => n.data?.stepDefinition?.category === 'Input');
     const outputNodes = nodes.filter(n => n.data?.stepDefinition?.category === 'Output');
     const processingNodes = nodes.filter(n => n.data?.stepDefinition?.category !== 'Input' && n.data?.stepDefinition?.category !== 'Output');
-
-    if (inputNodes.length === 0) {
-      isValid = false;
-      errorMessage = "Pipeline must have at least one Input node.";
-    } else if (outputNodes.length === 0) {
-      isValid = false;
-      errorMessage = "Pipeline must have at least one Output node.";
-    } else {
-      // Check if all processing nodes are fully connected
+    if (inputNodes.length === 0) { isValid = false; errorMessage = "Pipeline must have at least one Input node."; }
+    else if (outputNodes.length === 0) { isValid = false; errorMessage = "Pipeline must have at least one Output node."; }
+    else {
       for (const node of processingNodes) {
-        const hasIncomingEdge = edgeTargets.has(node.id);
-        const hasOutgoingEdge = edgeSources.has(node.id);
-        if (!hasIncomingEdge || !hasOutgoingEdge) {
-          isValid = false;
-          errorMessage = `Node '${node.data.label}' is not fully connected. All processing nodes must have both an input and an output connection.`;
-          break; // Stop checking after first dangling node
-        }
+        if (!edgeTargets.has(node.id) || !edgeSources.has(node.id)) { isValid = false; errorMessage = `Node '${node.data.label}' is not fully connected.`; break; }
       }
-      // Check if Input nodes have outgoing connections (if not also output nodes)
-      if (isValid) {
-          for (const node of inputNodes) {
-              if (node.data?.stepDefinition?.category !== 'Output' && !edgeSources.has(node.id)) {
-                  isValid = false;
-                  errorMessage = `Input node '${node.data.label}' must have an outgoing connection.`;
-                  break;
-              }
-          }
-      }
-       // Check if Output nodes have incoming connections (if not also input nodes)
-      if (isValid) {
-          for (const node of outputNodes) {
-              if (node.data?.stepDefinition?.category !== 'Input' && !edgeTargets.has(node.id)) {
-                  isValid = false;
-                  errorMessage = `Output node '${node.data.label}' must have an incoming connection.`;
-                  break;
-              }
-          }
-      }
+      if (isValid) { for (const node of inputNodes) { if (node.data?.stepDefinition?.category !== 'Output' && !edgeSources.has(node.id)) { isValid = false; errorMessage = `Input node '${node.data.label}' must have an outgoing connection.`; break; } } }
+      if (isValid) { for (const node of outputNodes) { if (node.data?.stepDefinition?.category !== 'Input' && !edgeTargets.has(node.id)) { isValid = false; errorMessage = `Output node '${node.data.label}' must have an incoming connection.`; break; } } }
     }
-
-    if (!isValid) {
-      toast.error("Invalid Pipeline", { description: errorMessage });
-      return;
-    }
-
+    if (!isValid) { toast.error("Invalid Pipeline", { description: errorMessage }); return; }
     console.log("Simulating pipeline run with:", { nodes, edges });
     toast.info("Pipeline validation passed! Simulating run... (check console)");
-    // TODO: Send pipeline definition to backend run endpoint
   }, []);
-
 
   if (isLoading || !pipelineEntry) {
     return <div className="p-6">Loading pipeline data...</div>;
@@ -185,8 +149,10 @@ const PipelineEditorPage: React.FC = () => {
           selectedVersionId={currentVersionId}
           onSelectVersion={handleSelectVersion}
         />
-         <div className="p-2 border-b bg-gray-50 dark:bg-gray-800 flex justify-end">
-             <Button onClick={handleRun} size="sm" variant="secondary">
+         {/* Use theme colors for Run area */}
+         <div className="p-2 border-b border-border bg-card flex justify-end">
+             {/* Use default button variant + focus style */}
+             <Button onClick={handleRun} size="sm" className={cn(buttonFocusStyle)}>
                  <PlayIcon className="mr-2 h-4 w-4" /> Run Pipeline (Simulated)
              </Button>
          </div>

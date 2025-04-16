@@ -1,16 +1,19 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 
 const Sidebar: React.FC = () => (
-  <aside className="w-64 bg-gray-100 p-4 border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 shrink-0">
+  // Use theme variables for sidebar background and border
+  <aside className="w-64 bg-card p-4 border-r border-border shrink-0 flex flex-col">
     <h2 className="text-lg font-semibold mb-4">ML Pipeline</h2>
-    <nav>
+    <nav className="flex-grow">
       <ul className="space-y-2">
         <li>
           <NavLink
             to="/pipelines"
             className={({ isActive }) =>
-              `block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 ${isActive ? 'bg-gray-300 dark:bg-gray-600 font-semibold' : ''}`
+              // Use theme variables for hover and active states
+              `block px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground ${isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-foreground/80'}`
             }
           >
             Dashboard
@@ -20,7 +23,8 @@ const Sidebar: React.FC = () => (
           <NavLink
             to="/settings"
             className={({ isActive }) =>
-              `block px-3 py-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 ${isActive ? 'bg-gray-300 dark:bg-gray-600 font-semibold' : ''}`
+              // Use theme variables for hover and active states
+              `block px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground ${isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-foreground/80'}`
             }
           >
             Settings
@@ -30,13 +34,18 @@ const Sidebar: React.FC = () => (
         <li className="pt-4">
            <NavLink
             to="/login"
-            className="block px-3 py-2 rounded text-sm text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700"
+            // Use theme variables for hover state
+            className="block px-3 py-2 rounded text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           >
             (Temp Login Link)
           </NavLink>
         </li>
       </ul>
     </nav>
+    {/* Use theme border color */}
+    <div className="mt-auto pt-4 border-t border-border">
+        <ThemeToggle />
+    </div>
   </aside>
 );
 

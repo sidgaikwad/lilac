@@ -4,11 +4,12 @@ import Sidebar from './Sidebar';
 
 const MainLayout: React.FC = () => {
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    // Use theme variables for background and text
+    <div className="flex h-screen bg-background text-foreground">
       <Sidebar />
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Optional Top Bar Placeholder */}
-        {/* <header className="h-16 bg-gray-50 border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">Top Bar</header> */}
+        {/* Optional Top Bar Placeholder - If added, style with theme colors */}
+        {/* <header className="h-16 bg-card border-b border-border">Top Bar</header> */}
         <div className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </div>

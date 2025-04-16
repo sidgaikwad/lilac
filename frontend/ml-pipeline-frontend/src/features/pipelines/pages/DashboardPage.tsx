@@ -8,7 +8,7 @@ import { listStoredPipelines, savePipelineEntry, renamePipeline, deletePipelineE
 import { PencilIcon, Trash2Icon, CheckIcon, XIcon } from 'lucide-react';
 import DestructiveActionDialog from '@/components/common/DestructiveActionDialog';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils'; // Import cn
+import { cn } from '@/lib/utils';
 
 interface DashboardPipelineItem {
   id: string;
@@ -16,7 +16,6 @@ interface DashboardPipelineItem {
   lastModified: string;
 }
 
-// Consistent focus style for buttons on this page
 const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
 
 const DashboardPage: React.FC = () => {
@@ -44,7 +43,6 @@ const DashboardPage: React.FC = () => {
     navigate(`/pipelines/${newPipelineId}`);
   };
 
-  // --- Delete Logic ---
   const openDeleteDialog = (pipeline: DashboardPipelineItem) => {
     setPipelineToDelete(pipeline);
     setIsDeleteDialogOpen(true);
@@ -67,7 +65,6 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // --- Rename Logic ---
   const startRename = (pipeline: DashboardPipelineItem) => {
     setRenamingPipelineId(pipeline.id);
     setCurrentNameValue(pipeline.name);
@@ -108,28 +105,22 @@ const DashboardPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Pipelines</h1>
-        {/* Apply explicit solid colors and focus style */}
         <Button
           onClick={handleCreatePipeline}
-          className={cn(
-            "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600", // Example solid colors
-            buttonFocusStyle
-          )}
+          className={cn(buttonFocusStyle)} // Use default variant + focus
         >
           Create New Pipeline
         </Button>
       </div>
 
       {pipelines.length === 0 ? (
-        <div className="text-center py-10 border rounded-lg bg-gray-50 dark:bg-gray-800">
+        // Use theme card/muted colors for empty state
+        <div className="text-center py-10 border rounded-lg bg-card">
           <h3 className="text-xl font-semibold mb-2">No Pipelines Yet</h3>
           <p className="text-muted-foreground mb-4">Get started by creating your first pipeline.</p>
           <Button
             onClick={handleCreatePipeline}
-             className={cn(
-                "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600",
-                buttonFocusStyle
-             )}
+             className={cn(buttonFocusStyle)} // Use default variant + focus
           >
             Create Pipeline
           </Button>
@@ -137,6 +128,7 @@ const DashboardPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pipelines.map(p => (
+            // Card uses theme variables internally
             <Card key={p.id} className="flex flex-col">
               <CardHeader className="flex-grow">
                 {renamingPipelineId === p.id ? (
@@ -146,21 +138,25 @@ const DashboardPage: React.FC = () => {
                       onChange={handleRenameInputChange}
                       onKeyDown={handleRenameInputKeyDown}
                       onBlur={saveRename}
-                      className="text-lg h-8 flex-grow"
+                      className="text-lg h-8 flex-grow" // Input uses theme variables
                       autoFocus
                     />
+                    {/* Buttons use theme variables via variants */}
                     <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-green-600 hover:bg-green-100", buttonFocusStyle)} onClick={saveRename}><CheckIcon className="h-4 w-4"/></Button>
                     <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-red-600 hover:bg-red-100", buttonFocusStyle)} onClick={cancelRename}><XIcon className="h-4 w-4"/></Button>
                   </div>
                 ) : (
-                  <Link to={`/pipelines/${p.id}`} className="hover:underline">
+                  // Use theme primary color for link
+                  <Link to={`/pipelines/${p.id}`} className="text-primary hover:underline">
                     <CardTitle className="text-lg">{p.name}</CardTitle>
                   </Link>
                 )}
+                {/* CardDescription uses theme muted foreground */}
                 <CardDescription>
                   Last Modified: {new Date(p.lastModified).toLocaleString()}
                 </CardDescription>
               </CardHeader>
+              {/* CardFooter uses theme border */}
               <CardFooter className="border-t pt-4 flex justify-end gap-2">
                 <Button variant="ghost" size="icon" title="Rename" onClick={() => startRename(p)} disabled={renamingPipelineId === p.id} className={cn(buttonFocusStyle)}>
                   <PencilIcon className="h-4 w-4" />
@@ -168,10 +164,10 @@ const DashboardPage: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  // Use theme destructive text color and hover
                   className={cn("text-destructive hover:bg-destructive/10 hover:text-destructive", buttonFocusStyle)}
                   title="Delete Pipeline"
                   onClick={() => openDeleteDialog(p)}
-                  // disabled // Keep enabled for testing delete dialog
                 >
                   <Trash2Icon className="h-4 w-4" />
                 </Button>
@@ -181,7 +177,6 @@ const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
       {pipelineToDelete && (
         <DestructiveActionDialog
           isOpen={isDeleteDialogOpen}

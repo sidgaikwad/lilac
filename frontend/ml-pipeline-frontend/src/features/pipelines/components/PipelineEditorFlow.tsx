@@ -8,7 +8,7 @@ import ReactFlow, {
   ReactFlowInstance,
   NodeTypes,
   Viewport,
-  useReactFlow, // Keep useReactFlow here at the top level
+  useReactFlow,
 } from 'reactflow';
 import PipelineNode from './PipelineNode';
 import ParameterEditDialog from './ParameterEditDialog';
@@ -38,13 +38,12 @@ const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = ({
 }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
-  // Call useReactFlow at the top level of the component
   const { project } = useReactFlow();
 
   const {
     nodes,
     edges,
-    setNodes, // Get setNodes from the state hook
+    setNodes,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -52,22 +51,20 @@ const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = ({
     addNode,
   } = usePipelineEditorState(initialNodes, initialEdges);
 
-  // Pass the required 'project' function to the drop handling hook
   const { onDragOver, onDrop } = usePipelineDropHandling({
     reactFlowWrapperRef: reactFlowWrapper,
     reactFlowInstance,
     addNode,
-    project, // Pass project down
+    project,
   });
 
-  // Pass the required 'setNodes' function to the dialog hook
   const {
     isDialogOpen,
     configuringNode,
     openDialog,
     closeDialog,
     handleSaveParameters,
-  } = useParameterDialog({ setNodes }); // Pass setNodes down
+  } = useParameterDialog({ setNodes });
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     openDialog(node);
@@ -88,7 +85,8 @@ const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = ({
 
 
   return (
-    <div className="flex-grow h-full bg-gray-100 dark:bg-gray-900 relative" ref={reactFlowWrapper}>
+    // Use theme background color
+    <div className="flex-grow h-full bg-background relative" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -105,6 +103,7 @@ const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = ({
         proOptions={{ hideAttribution: true }}
       >
         <Controls />
+        {/* Background component might need theme adjustments if default dots are hard to see */}
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
         <Toaster position="bottom-left" richColors />
       </ReactFlow>

@@ -11,45 +11,43 @@ interface PipelineNodeData {
   stepDefinition: StepDefinition;
 }
 
-/**
- * Custom React Flow node component for displaying pipeline steps.
- * Includes input (left) and output (right) handles, with restrictions
- * for Input/Output category nodes.
- */
 const PipelineNode: React.FC<NodeProps<PipelineNodeData>> = ({ data, selected }) => {
   const isInputNode = data.stepDefinition?.category === 'Input';
   const isOutputNode = data.stepDefinition?.category === 'Output';
 
   return (
+    // Use theme variables for card background and border
+    // Use primary color for selection border/ring
     <Card className={cn(
-      "w-48 border-2 shadow-md rounded-lg bg-white dark:bg-gray-800",
-      selected ? "border-blue-500 ring-2 ring-blue-300 dark:border-blue-400 dark:ring-blue-600" : "border-gray-300 dark:border-gray-600"
+      "w-48 border-2 shadow-md rounded-lg bg-card", // Use bg-card
+      selected
+        ? "border-primary ring-2 ring-primary/50" // Use primary for selection
+        : "border-border" // Use theme border
     )}>
-      {/* Render Target Handle only if NOT an Input node */}
       {!isInputNode && (
         <Handle
           type="target"
           position={Position.Left}
           id="input"
-          className="!bg-blue-500 w-3 h-3 border-2 border-white dark:border-gray-800"
+          // Use theme colors for handle, maybe accent or primary? Let's try accent
+          className="!bg-accent w-3 h-3 border-2 border-card" // Border matches card bg
           isConnectable={true}
         />
       )}
 
       <CardHeader className="p-3">
         <CardTitle className="text-sm font-medium text-center truncate" title={data.label}>
-          {/* TODO: Add Icon */}
           {data.label || 'Pipeline Step'}
         </CardTitle>
       </CardHeader>
 
-      {/* Render Source Handle only if NOT an Output node */}
       {!isOutputNode && (
         <Handle
           type="source"
           position={Position.Right}
           id="output"
-          className="!bg-green-500 w-3 h-3 border-2 border-white dark:border-gray-800"
+           // Use theme colors for handle, maybe secondary or primary? Let's try secondary
+          className="!bg-secondary w-3 h-3 border-2 border-card" // Border matches card bg
           isConnectable={true}
         />
       )}

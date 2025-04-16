@@ -49,12 +49,15 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
     }
   };
 
+  const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader className="flex flex-row items-center gap-3">
-          <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full"> {/* Adjusted icon background */}
-             <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" /> {/* Adjusted icon color */}
+          {/* Use theme destructive color for icon and background */}
+          <div className="p-2 bg-destructive/10 rounded-full">
+             <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
           <div>
             <DialogTitle className="text-lg">{title}</DialogTitle>
@@ -65,36 +68,34 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
         </DialogHeader>
         <div className="py-4 space-y-2">
            <Label htmlFor="confirmation-input" className="font-semibold">
-             To confirm, type "<span className="text-red-600 dark:text-red-400 font-bold">{confirmationText}</span>" in the box below:
+             To confirm, type "<span className="text-destructive font-bold">{confirmationText}</span>" in the box below:
            </Label>
            <Input
              id="confirmation-input"
              value={inputText}
              onChange={(e) => setInputText(e.target.value)}
              placeholder={confirmationText}
+             // Use aria-invalid which applies border-destructive via theme/input component styles
+             aria-invalid={!isMatch && inputText.length > 0}
              className={cn(
-                "focus-visible:ring-offset-2",
-                isMatch
-                 ? "border-green-500 focus-visible:ring-green-500/50"
-                 // Use explicit red border color
-                 : "border-red-500 dark:border-red-600 focus-visible:ring-red-500/50 dark:focus-visible:ring-red-600/50"
+                // Only add green border manually when matched
+                isMatch && "border-green-500 focus-visible:ring-green-500/50"
              )}
            />
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">Cancel</Button>
+            <Button type="button" variant="outline" className={cn(buttonFocusStyle)}>Cancel</Button>
           </DialogClose>
           <Button
             type="button"
+            variant="destructive" // Use destructive variant from theme
             onClick={handleConfirm}
             disabled={!isMatch}
             className={cn(
-                "text-white",
-                !isMatch
-                 // Use solid red background when disabled, ensure opacity is 1
-                 ? "bg-red-600/70 dark:bg-red-700/70 opacity-100 cursor-not-allowed" // Slightly dimmed solid red
-                 : "bg-green-600 hover:bg-green-700" // Green when enabled
+                buttonFocusStyle,
+                // Override background only when enabled and matched
+                isMatch && "bg-green-600 hover:bg-green-700 border-green-600"
             )}
           >
             {confirmButtonText}

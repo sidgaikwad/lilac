@@ -103,19 +103,14 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline" className={cn(buttonFocusStyle)}>Cancel</Button>
+            <Button type="button" className={cn(buttonFocusStyle)}>Cancel</Button>
           </DialogClose>
-           {/* Apply standard focus ring AND make it look more like the outline button */}
+           {/* Revert to default variant, rely on theme + focus style */}
           <Button
              type="button"
              onClick={handleSave}
              disabled={!hasParameters}
-             // Use default variant for primary action color on text/hover, but add border/bg like outline
-             className={cn(
-                "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50", // Mimic outline structure
-                "text-primary", // Keep primary text color if possible (might be overridden by hover)
-                buttonFocusStyle // Apply consistent focus
-             )}
+             className={cn(buttonFocusStyle)} // Only apply consistent focus
            >
              Save Parameters
            </Button>
