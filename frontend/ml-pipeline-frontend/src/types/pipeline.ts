@@ -25,7 +25,7 @@ export interface PipelineNodeData {
   label: string;
   type: string; // Corresponds to StepDefinition.type
   parameters: Record<string, any>; // User-configured parameters
-  // Add any other node-specific data needed by the frontend
+  stepDefinition: StepDefinition; // Store the definition for easy access
 }
 
 // Simplified representation for API (align with backend)
@@ -33,14 +33,12 @@ export interface PipelineStepConfig {
   id: string; // Unique ID for this step *instance* within the pipeline
   step_type: string; // Matches StepDefinition.type
   parameters: Record<string, any>;
-  // Position/layout info might be stored separately or here
   position?: { x: number; y: number };
 }
 
 export interface PipelineConnectionConfig {
   from_step_id: string;
   to_step_id: string;
-  // Potentially handle IDs if multiple inputs/outputs exist
   // from_handle?: string;
   // to_handle?: string;
 }
@@ -49,10 +47,8 @@ export interface PipelineDefinition {
   id: string;
   name: string;
   organization_id: string;
-  // Representation of the pipeline structure
   steps: PipelineStepConfig[];
   connections: PipelineConnectionConfig[];
-  // Add versioning info
   version_id?: string;
   created_at?: string;
   updated_at?: string;
@@ -62,6 +58,5 @@ export interface PipelineDefinition {
 export interface PipelineListItem {
   id: string;
   name: string;
-  last_modified: string; // Or Date object
-  // status?: string; // If available
+  lastModified: string; // Use camelCase to match localStorageUtils return type
 }

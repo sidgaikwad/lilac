@@ -1,86 +1,51 @@
 import { create } from 'zustand';
+import { User } from '@/types'; // Import User type
 
-interface LoginCredentials {
-  email: string;
-  password?: string;
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
+// Define the shape of the authentication state
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   token: string | null;
-  isLoading: boolean;
-  error: string | null;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => void;
-  checkAuthStatus: () => Promise<void>;
+  isLoading: boolean; // Tracks initial auth check loading
+  error: string | null; // Stores login errors
+  // Actions to update the state
+  setAuthState: (isAuthenticated: boolean, user: User | null, token: string | null) => void;
   setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  logout: () => void;
 }
 
-const MOCK_USER: User = { id: 'user-admin', name: 'Admin User', email: 'admin@example.com' };
-const MOCK_TOKEN = 'mock-jwt-token-12345';
-
-const useAuthStore = create<AuthState>((set, get) => ({
+const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   user: null,
-  token: localStorage.getItem('authToken'),
-  isLoading: true,
+  token: localStorage.getItem('authToken'), // Initialize token from storage
+  isLoading: true, // Start loading until initial check completes
   error: null,
 
-  login: async (credentials: LoginCredentials) => {
-    set({ isLoading: true, error: null });
-    // TODO: API Call - POST /auth/login with credentials
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (credentials.email === 'admin@example.com' && credentials.password === 'admin') {
-          localStorage.setItem('authToken', MOCK_TOKEN);
-          // TODO: Set user/token based on actual API response
-          set({ isAuthenticated: true, user: MOCK_USER, token: MOCK_TOKEN, isLoading: false });
-          console.log("Mock login successful");
-          resolve();
-        } else {
-          const errorMsg = "Invalid email or password";
-          set({ error: errorMsg, isLoading: false, isAuthenticated: false, user: null, token: null });
-          console.error("Mock login failed");
-          reject(new Error(errorMsg));
-        }
-      }, 500);
-    });
+  // Action to update the entire auth state, typically after login or auth check
+  setAuthState: (isAuthenticated, user, token) => {
+    if (isAuthenticated && token) {
+      localStorage.setItem('authToken', token);
+    } else {
+      localStorage.removeItem('authToken');
+    }
+    set({ isAuthenticated, user, token, isLoading: false, error: null });
   },
 
+  // Action to explicitly set loading state
+  setLoading: (loading) => {
+    set({ isLoading: loading });
+  },
+
+  // Action to set login errors
+  setError: (error) => {
+    set({ error });
+  },
+
+  // Action for logging out
   logout: () => {
-    // TODO: API Call - POST /auth/logout (optional, if backend needs session invalidation)
     localStorage.removeItem('authToken');
     set({ isAuthenticated: false, user: null, token: null, error: null, isLoading: false });
-  },
-
-  checkAuthStatus: async () => {
-    const token = get().token;
-    if (!token) { // Removed mock token check for simplicity, rely on API validation
-      get().logout();
-      set({ isLoading: false }); // Ensure loading is false if no token
-      return;
-    }
-    // Don't set isLoading: true here, let ProtectedRoute handle initial loading state
-    try {
-      // TODO: API Call - GET /users/me (or similar validation endpoint) using the token
-      // If valid, set user from response and isAuthenticated: true
-      await new Promise(res => setTimeout(res, 200)); // Simulate API call
-      set({ isAuthenticated: true, user: MOCK_USER, isLoading: false }); // Assume success for now
-    } catch (err) {
-      console.error('Auth status check failed:', err);
-      get().logout(); // Logout if token validation fails
-    }
-  },
-
-  setLoading: (loading: boolean) => {
-    set({ isLoading: loading });
   },
 }));
 

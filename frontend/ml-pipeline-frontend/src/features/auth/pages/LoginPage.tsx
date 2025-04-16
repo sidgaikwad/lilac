@@ -9,6 +9,8 @@ import useAuthStore from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AlertCircle } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query'; // Import useMutation
+import { loginUser } from '../services/authService'; // Import the API call function
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -19,23 +21,36 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  // Select state and actions individually
-  const login = useAuthStore((state) => state.login);
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const authError = useAuthStore((state) => state.error);
+  // Get state setters from Zustand store
+  const setAuthState = useAuthStore((state) => state.setAuthState);
+  const setError = useAuthStore((state) => state.setError);
+  const authError = useAuthStore((state) => state.error); // Still need error for display
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormInputs) => {
-    try {
-      await login(data);
+  // Setup mutation using React Query
+  const loginMutation = useMutation({
+    mutationFn: loginUser, // Function that performs the API call
+    onSuccess: (data) => {
+      // On successful API call, update Zustand store
+      setAuthState(true, data.user, data.token);
+      setError(null); // Clear any previous errors
       navigate('/pipelines'); // Redirect on success
-    } catch (err) {
-      // Error state is handled by the authError variable below
-      console.error("Login Page Submit Error:", err);
-    }
+    },
+    onError: (error) => {
+      // On API error, update Zustand error state
+      const errorMsg = error instanceof Error ? error.message : "Login failed";
+      setError(errorMsg);
+      toast.error("Login Failed", { description: errorMsg });
+    },
+  });
+
+  // Form submission handler now calls the mutation
+  const onSubmit = (data: LoginFormInputs) => {
+    setError(null); // Clear previous errors before submitting
+    loginMutation.mutate(data); // Execute the mutation
   };
 
   return (
@@ -58,6 +73,7 @@ const LoginPage: React.FC = () => {
               placeholder="Enter your email"
               {...register("email")}
               aria-invalid={errors.email ? "true" : "false"}
+              disabled={loginMutation.isPending} // Disable while logging in
             />
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
@@ -69,12 +85,13 @@ const LoginPage: React.FC = () => {
               placeholder="Enter your password"
               {...register("password")}
               aria-invalid={errors.password ? "true" : "false"}
+              disabled={loginMutation.isPending} // Disable while logging in
             />
             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Login'}
+          <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+            {loginMutation.isPending ? 'Logging in...' : 'Login'}
           </Button>
         </form>
       </div>
