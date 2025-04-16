@@ -21,6 +21,9 @@ pub enum ServiceError {
 
     #[error("unauthorized")]
     Unauthorized,
+
+    #[error("schema validation failed")]
+    SchemaError,
 }
 
 impl IntoResponse for ServiceError {
@@ -33,6 +36,7 @@ impl IntoResponse for ServiceError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "something went wrong".to_string(),
             ),
+            ServiceError::SchemaError => (StatusCode::BAD_REQUEST, "schema validation failed".to_string())
         };
         let body = Json(json!({
             "error": error_message,
