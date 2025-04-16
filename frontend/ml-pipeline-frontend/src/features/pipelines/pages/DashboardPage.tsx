@@ -1,44 +1,203 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { v4 as uuidv4 } from 'uuid';
+import { listStoredPipelines, savePipelineEntry, renamePipeline, deletePipelineEntry, PipelineStorageEntry } from '@/lib/localStorageUtils';
+import { PencilIcon, Trash2Icon, CheckIcon, XIcon } from 'lucide-react';
+import DestructiveActionDialog from '@/components/common/DestructiveActionDialog';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils'; // Import cn
+
+interface DashboardPipelineItem {
+  id: string;
+  name: string;
+  lastModified: string;
+}
+
+// Consistent focus style for buttons on this page
+const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const [pipelines, setPipelines] = useState<DashboardPipelineItem[]>([]);
+  const [pipelineToDelete, setPipelineToDelete] = useState<DashboardPipelineItem | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [renamingPipelineId, setRenamingPipelineId] = useState<string | null>(null);
+  const [currentNameValue, setCurrentNameValue] = useState("");
+
+  const loadPipelines = useCallback(() => {
+    setPipelines(listStoredPipelines());
+  }, []);
+
+  useEffect(() => {
+    loadPipelines();
+  }, [loadPipelines]);
 
   const handleCreatePipeline = () => {
-    // TODO: Call POST /pipeline API to create a new pipeline definition
-    // TODO: Get the new pipeline ID from the API response
-    const newPipelineId = 'new'; // Placeholder ID
+    const newPipelineId = uuidv4();
+    const newPipelineName = `New Pipeline ${new Date().toLocaleTimeString()}`;
+    const newEntry: PipelineStorageEntry = { id: newPipelineId, name: newPipelineName, versions: [] };
+    savePipelineEntry(newEntry);
+    loadPipelines();
     navigate(`/pipelines/${newPipelineId}`);
   };
 
-  // TODO: Fetch pipeline list from API (e.g., GET /pipeline?org_id=...)
-  const pipelines = [
-    // Dummy data for now
-    { id: '123', name: 'My First Image Pipeline', last_modified: '2025-04-15' },
-    { id: '456', name: 'Preprocessing Experiment', last_modified: '2025-04-14' },
-  ];
+  // --- Delete Logic ---
+  const openDeleteDialog = (pipeline: DashboardPipelineItem) => {
+    setPipelineToDelete(pipeline);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+    setPipelineToDelete(null);
+  };
+
+  const confirmDelete = () => {
+    if (pipelineToDelete) {
+      const success = deletePipelineEntry(pipelineToDelete.id);
+      if (success) {
+        toast.success(`Pipeline "${pipelineToDelete.name}" deleted.`);
+        loadPipelines();
+      } else {
+        toast.error(`Failed to delete pipeline "${pipelineToDelete.name}".`);
+      }
+    }
+  };
+
+  // --- Rename Logic ---
+  const startRename = (pipeline: DashboardPipelineItem) => {
+    setRenamingPipelineId(pipeline.id);
+    setCurrentNameValue(pipeline.name);
+  };
+
+  const cancelRename = () => {
+    setRenamingPipelineId(null);
+    setCurrentNameValue("");
+  };
+
+  const saveRename = () => {
+    if (renamingPipelineId && currentNameValue.trim()) {
+      const success = renamePipeline(renamingPipelineId, currentNameValue.trim());
+      if (success) {
+        toast.success("Pipeline renamed.");
+        loadPipelines();
+      } else {
+        toast.error("Failed to rename pipeline.");
+      }
+    }
+    cancelRename();
+  };
+
+  const handleRenameInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentNameValue(event.target.value);
+  };
+
+   const handleRenameInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      saveRename();
+    } else if (event.key === 'Escape') {
+      cancelRename();
+    }
+  };
+
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Pipelines Dashboard</h1>
-        <Button onClick={handleCreatePipeline}>Create New Pipeline</Button>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Pipelines</h1>
+        {/* Apply explicit solid colors and focus style */}
+        <Button
+          onClick={handleCreatePipeline}
+          className={cn(
+            "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600", // Example solid colors
+            buttonFocusStyle
+          )}
+        >
+          Create New Pipeline
+        </Button>
       </div>
 
-      {/* TODO: Replace with actual pipeline list rendering (e.g., Table or Cards) */}
-      <div className="p-4 border rounded bg-gray-50 dark:bg-gray-800">
-        <h2 className="font-semibold mb-2">Existing Pipelines:</h2>
-        <ul>
+      {pipelines.length === 0 ? (
+        <div className="text-center py-10 border rounded-lg bg-gray-50 dark:bg-gray-800">
+          <h3 className="text-xl font-semibold mb-2">No Pipelines Yet</h3>
+          <p className="text-muted-foreground mb-4">Get started by creating your first pipeline.</p>
+          <Button
+            onClick={handleCreatePipeline}
+             className={cn(
+                "bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600",
+                buttonFocusStyle
+             )}
+          >
+            Create Pipeline
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pipelines.map(p => (
-            <li key={p.id} className="py-1">
-              {/* TODO: Make these links: navigate(`/pipelines/${p.id}`) */}
-              {p.name} - (Last Modified: {p.last_modified})
-            </li>
+            <Card key={p.id} className="flex flex-col">
+              <CardHeader className="flex-grow">
+                {renamingPipelineId === p.id ? (
+                  <div className="flex gap-1 items-center">
+                    <Input
+                      value={currentNameValue}
+                      onChange={handleRenameInputChange}
+                      onKeyDown={handleRenameInputKeyDown}
+                      onBlur={saveRename}
+                      className="text-lg h-8 flex-grow"
+                      autoFocus
+                    />
+                    <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-green-600 hover:bg-green-100", buttonFocusStyle)} onClick={saveRename}><CheckIcon className="h-4 w-4"/></Button>
+                    <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-red-600 hover:bg-red-100", buttonFocusStyle)} onClick={cancelRename}><XIcon className="h-4 w-4"/></Button>
+                  </div>
+                ) : (
+                  <Link to={`/pipelines/${p.id}`} className="hover:underline">
+                    <CardTitle className="text-lg">{p.name}</CardTitle>
+                  </Link>
+                )}
+                <CardDescription>
+                  Last Modified: {new Date(p.lastModified).toLocaleString()}
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="border-t pt-4 flex justify-end gap-2">
+                <Button variant="ghost" size="icon" title="Rename" onClick={() => startRename(p)} disabled={renamingPipelineId === p.id} className={cn(buttonFocusStyle)}>
+                  <PencilIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn("text-destructive hover:bg-destructive/10 hover:text-destructive", buttonFocusStyle)}
+                  title="Delete Pipeline"
+                  onClick={() => openDeleteDialog(p)}
+                  // disabled // Keep enabled for testing delete dialog
+                >
+                  <Trash2Icon className="h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
           ))}
-        </ul>
-        {pipelines.length === 0 && <p className="text-muted-foreground">No pipelines found.</p>}
-      </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {pipelineToDelete && (
+        <DestructiveActionDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={closeDeleteDialog}
+          onConfirm={confirmDelete}
+          title={`Delete Pipeline: ${pipelineToDelete.name}`}
+          description={
+            <>
+              Are you sure you want to permanently delete this pipeline and all its versions?
+              <strong className="block mt-2 text-destructive">This action cannot be undone.</strong>
+            </>
+          }
+          confirmationText="DELETE"
+          confirmButtonText="Delete Pipeline"
+        />
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -7,6 +7,8 @@ import ReactFlow, {
   BackgroundVariant,
   ReactFlowInstance,
   NodeTypes,
+  Viewport,
+  useReactFlow, // Keep useReactFlow here at the top level
 } from 'reactflow';
 import PipelineNode from './PipelineNode';
 import ParameterEditDialog from './ParameterEditDialog';
@@ -21,36 +23,69 @@ const nodeTypes: NodeTypes = {
   pipelineNode: PipelineNode,
 };
 
-const PipelineEditorFlow: React.FC = () => {
+interface PipelineEditorFlowProps {
+  initialNodes?: Node[];
+  initialEdges?: Edge[];
+  initialViewport?: Viewport;
+  onFlowInit?: (instance: ReactFlowInstance) => void;
+}
+
+const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = ({
+  initialNodes = [],
+  initialEdges = [],
+  initialViewport,
+  onFlowInit,
+}) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  // Call useReactFlow at the top level of the component
+  const { project } = useReactFlow();
 
   const {
     nodes,
     edges,
+    setNodes, // Get setNodes from the state hook
     onNodesChange,
     onEdgesChange,
     onConnect,
+    isValidConnection,
     addNode,
-  } = usePipelineEditorState();
+  } = usePipelineEditorState(initialNodes, initialEdges);
 
+  // Pass the required 'project' function to the drop handling hook
   const { onDragOver, onDrop } = usePipelineDropHandling({
     reactFlowWrapperRef: reactFlowWrapper,
     reactFlowInstance,
     addNode,
+    project, // Pass project down
   });
 
+  // Pass the required 'setNodes' function to the dialog hook
   const {
     isDialogOpen,
     configuringNode,
     openDialog,
     closeDialog,
     handleSaveParameters,
-  } = useParameterDialog();
+  } = useParameterDialog({ setNodes }); // Pass setNodes down
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     openDialog(node);
   }, [openDialog]);
+
+  const handleInit = (instance: ReactFlowInstance) => {
+    setReactFlowInstance(instance);
+    if (onFlowInit) {
+      onFlowInit(instance);
+    }
+  };
+
+  useEffect(() => {
+    if (reactFlowInstance && initialViewport) {
+      reactFlowInstance.setViewport(initialViewport, { duration: 0 });
+    }
+  }, [reactFlowInstance, initialViewport]);
+
 
   return (
     <div className="flex-grow h-full bg-gray-100 dark:bg-gray-900 relative" ref={reactFlowWrapper}>
@@ -61,11 +96,12 @@ const PipelineEditorFlow: React.FC = () => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onInit={setReactFlowInstance}
+        isValidConnection={isValidConnection}
+        onInit={handleInit}
         onDrop={onDrop}
         onDragOver={onDragOver}
         onNodeClick={onNodeClick}
-        fitView
+        defaultViewport={initialViewport}
         proOptions={{ hideAttribution: true }}
       >
         <Controls />

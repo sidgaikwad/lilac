@@ -37,10 +37,31 @@ export function usePipelineEditorState(
     [setEdges]
   );
 
+  // Simplified validation: Only prevent connecting to the *same* node.
+  // Allow multiple connections per handle temporarily, cleanup happens in onConnect.
+  const isValidConnection = useCallback(
+    (connection: Connection): boolean => {
+      // Basic check: prevent self-connections (can be enhanced)
+      return connection.source !== connection.target;
+    },
+    [] // No dependencies needed for this simple check
+  );
+
   const onConnect: OnConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
+    (connection: Connection) => {
+      // Remove any existing edge connected to the same target handle or source handle
+      setEdges((prevEdges) => {
+        const edgesToRemove = prevEdges.filter(
+          edge => (edge.target === connection.target && edge.targetHandle === connection.targetHandle) ||
+                  (edge.source === connection.source && edge.sourceHandle === connection.sourceHandle)
+        );
+        const updatedEdges = applyEdgeChanges(edgesToRemove.map(edge => ({ id: edge.id, type: 'remove' })), prevEdges);
+        return addEdge({ ...connection, animated: true }, updatedEdges);
+      });
+    },
     [setEdges]
   );
+
 
   const addNode = useCallback((newNode: Node) => {
     setNodes((nds) => nds.concat(newNode));
@@ -49,11 +70,12 @@ export function usePipelineEditorState(
   return {
     nodes,
     edges,
-    setNodes, // Needed for direct updates like parameter changes
+    setNodes,
     setEdges,
     onNodesChange,
     onEdgesChange,
     onConnect,
+    isValidConnection,
     addNode,
   };
 }

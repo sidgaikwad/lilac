@@ -1,15 +1,20 @@
-import { useState, useCallback } from 'react';
-import { Node, useReactFlow } from 'reactflow';
+import React, { useState, useCallback } from 'react';
+import { Node } from 'reactflow';
 import { toast } from "sonner";
+
+// Correct type for the setNodes function from useState<Node[]>
+type SetNodesAction = React.Dispatch<React.SetStateAction<Node[]>>;
+
+interface UseParameterDialogProps {
+  setNodes: SetNodesAction; // Use the correct type
+}
 
 /**
  * Custom hook to manage the state and actions for the parameter editing dialog.
  */
-export function useParameterDialog() {
+export function useParameterDialog({ setNodes }: UseParameterDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [configuringNode, setConfiguringNode] = useState<Node | null>(null);
-  // Get setNodes directly from React Flow context to update node data
-  const { setNodes } = useReactFlow();
 
   const openDialog = useCallback((node: Node) => {
     setConfiguringNode(node);
@@ -24,10 +29,9 @@ export function useParameterDialog() {
   const handleSaveParameters = useCallback((updatedParams: Record<string, any>) => {
     if (!configuringNode) return;
 
-    setNodes((nds) =>
-      nds.map((node) => {
+    setNodes((nds: Node[]) => // Add type for nds
+      nds.map((node: Node) => { // Add type for node
         if (node.id === configuringNode.id) {
-          // Preserve existing data and only update parameters
           const originalData = node.data || {};
           return {
             ...node,
@@ -45,7 +49,6 @@ export function useParameterDialog() {
       description: `Parameters for '${configuringNode.data.label}' updated.`,
     });
 
-    // Dialog is closed by its own internal actions (Save/Cancel buttons)
   }, [configuringNode, setNodes]);
 
   return {

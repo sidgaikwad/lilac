@@ -2,54 +2,59 @@ import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { StepDefinition } from '@/types'; // Import StepDefinition type
+import { StepDefinition } from '@/types';
 
-// Define the expected structure of the data prop for this node type
 interface PipelineNodeData {
   label: string;
   stepType: string;
   parameters: Record<string, any>;
-  stepDefinition: StepDefinition; // Used by the parameter dialog
+  stepDefinition: StepDefinition;
 }
 
 /**
  * Custom React Flow node component for displaying pipeline steps.
- * Includes input (left) and output (right) handles.
+ * Includes input (left) and output (right) handles, with restrictions
+ * for Input/Output category nodes.
  */
 const PipelineNode: React.FC<NodeProps<PipelineNodeData>> = ({ data, selected }) => {
+  const isInputNode = data.stepDefinition?.category === 'Input';
+  const isOutputNode = data.stepDefinition?.category === 'Output';
+
   return (
     <Card className={cn(
       "w-48 border-2 shadow-md rounded-lg bg-white dark:bg-gray-800",
-      // Apply distinct styling when the node is selected
       selected ? "border-blue-500 ring-2 ring-blue-300 dark:border-blue-400 dark:ring-blue-600" : "border-gray-300 dark:border-gray-600"
     )}>
-      <Handle
-        type="target" // Input handle
-        position={Position.Left}
-        id="input" // Unique ID for the handle
-        className="!bg-blue-500 w-3 h-3 border-2 border-white dark:border-gray-800"
-        isConnectable={true} // TODO: Add connection validation logic
-      />
+      {/* Render Target Handle only if NOT an Input node */}
+      {!isInputNode && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="input"
+          className="!bg-blue-500 w-3 h-3 border-2 border-white dark:border-gray-800"
+          isConnectable={true}
+        />
+      )}
 
       <CardHeader className="p-3">
         <CardTitle className="text-sm font-medium text-center truncate" title={data.label}>
-          {/* TODO: Add Icon based on data.stepDefinition.category or data.stepType */}
+          {/* TODO: Add Icon */}
           {data.label || 'Pipeline Step'}
         </CardTitle>
-        {/* Optionally display stepType or other info here */}
-        {/* <p className="text-xs text-muted-foreground text-center">{data.stepType}</p> */}
       </CardHeader>
 
-      <Handle
-        type="source" // Output handle
-        position={Position.Right}
-        id="output" // Unique ID for the handle
-        className="!bg-green-500 w-3 h-3 border-2 border-white dark:border-gray-800"
-        isConnectable={true} // TODO: Add connection validation logic
-      />
+      {/* Render Source Handle only if NOT an Output node */}
+      {!isOutputNode && (
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="output"
+          className="!bg-green-500 w-3 h-3 border-2 border-white dark:border-gray-800"
+          isConnectable={true}
+        />
+      )}
     </Card>
   );
 };
 
-// Memoize the component for performance optimization, preventing unnecessary re-renders
 export default memo(PipelineNode);

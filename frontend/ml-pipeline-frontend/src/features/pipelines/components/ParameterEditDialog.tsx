@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { StepDefinition, ParameterDefinition } from '@/types';
+import { cn } from '@/lib/utils';
 
 interface ParameterEditDialogProps {
   isOpen: boolean;
@@ -30,10 +31,8 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
   stepDefinition,
   initialParamValues,
 }) => {
-  // Internal state to manage form values during editing
   const [currentParams, setCurrentParams] = useState(initialParamValues);
 
-  // Reset internal state when the dialog is opened for a new node
   useEffect(() => {
     if (isOpen) {
       setCurrentParams(initialParamValues);
@@ -44,31 +43,30 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
     const paramDef = stepDefinition?.parameters.find(p => p.name === paramName);
     let finalValue = value;
 
-    // Basic type coercion based on definition
     if (paramDef?.type === 'number') {
       finalValue = parseFloat(value as string) || 0;
     } else if (paramDef?.type === 'boolean') {
       // TODO: Implement proper boolean input (e.g., Checkbox, Switch)
       finalValue = value === 'true' || value === true;
     }
-    // TODO: Handle 'enum' type (e.g., Select dropdown)
-    // TODO: Handle 's3_path' type (potentially custom input or validation)
+    // TODO: Handle 'enum', 's3_path' types
 
     setCurrentParams(prev => ({ ...prev, [paramName]: finalValue }));
   };
 
   const handleSave = () => {
     onSave(currentParams);
-    onClose(); // Close dialog after saving
+    onClose();
   };
 
-  // Don't render the dialog content if there's no step definition
-  // This prevents errors if the dialog tries to render before node data is ready
   if (!stepDefinition) {
     return null;
   }
 
   const hasParameters = stepDefinition.parameters.length > 0;
+
+  // Standard focus visible styling
+  const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -105,9 +103,22 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">Cancel</Button>
+            <Button type="button" variant="outline" className={cn(buttonFocusStyle)}>Cancel</Button>
           </DialogClose>
-          <Button type="button" onClick={handleSave} disabled={!hasParameters}>Save Parameters</Button>
+           {/* Apply standard focus ring AND make it look more like the outline button */}
+          <Button
+             type="button"
+             onClick={handleSave}
+             disabled={!hasParameters}
+             // Use default variant for primary action color on text/hover, but add border/bg like outline
+             className={cn(
+                "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50", // Mimic outline structure
+                "text-primary", // Keep primary text color if possible (might be overridden by hover)
+                buttonFocusStyle // Apply consistent focus
+             )}
+           >
+             Save Parameters
+           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

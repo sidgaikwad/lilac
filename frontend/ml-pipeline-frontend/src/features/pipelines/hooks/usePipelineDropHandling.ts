@@ -1,8 +1,7 @@
 import { useCallback, RefObject } from 'react';
-import { Node, ReactFlowInstance, useReactFlow } from 'reactflow';
+import { Node, ReactFlowInstance, Project } from 'reactflow'; // Import Project type
 import { hardcodedStepDefinitions } from '@/config/stepDefinitions';
 
-// TODO: Replace simple counter with a more robust ID generation strategy (e.g., uuid)
 let idCounter = 0;
 const getNewNodeId = () => `dndnode_${idCounter++}`;
 
@@ -10,6 +9,7 @@ interface UsePipelineDropHandlingProps {
   reactFlowWrapperRef: RefObject<HTMLDivElement | null>;
   reactFlowInstance: ReactFlowInstance | null;
   addNode: (node: Node) => void;
+  project: Project; // Accept project function as prop
 }
 
 /**
@@ -19,8 +19,9 @@ export function usePipelineDropHandling({
   reactFlowWrapperRef,
   reactFlowInstance,
   addNode,
+  project, // Use project from props
 }: UsePipelineDropHandlingProps) {
-  const { project } = useReactFlow();
+  // Removed internal useReactFlow call
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -52,12 +53,11 @@ export function usePipelineDropHandling({
         return;
       }
 
-      const position = project({
+      const position = project({ // Use project from props
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       });
 
-      // Extract default parameters from the step definition
       const defaultParams = stepDef.parameters.reduce((acc, param) => {
         if (param.defaultValue !== undefined) acc[param.name] = param.defaultValue;
         return acc;
@@ -65,15 +65,14 @@ export function usePipelineDropHandling({
 
       const newNode: Node = {
         id: getNewNodeId(),
-        type: 'pipelineNode', // Matches the key in nodeTypes map
+        type: 'pipelineNode',
         position,
-        // Store relevant data for the node and parameter editor
         data: { label, stepType: type, parameters: defaultParams, stepDefinition: stepDef },
       };
 
       addNode(newNode);
     },
-    [reactFlowInstance, project, addNode, reactFlowWrapperRef]
+    [reactFlowInstance, project, addNode, reactFlowWrapperRef] // Add project to dependencies
   );
 
   return { onDragOver, onDrop };

@@ -1,36 +1,204 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import { ReactFlowProvider } from 'reactflow';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ReactFlowProvider, ReactFlowInstance, Node, Edge, Viewport } from 'reactflow';
 import { hardcodedStepDefinitions } from '@/config/stepDefinitions';
 import PipelineSidebar from '../components/PipelineSidebar';
 import PipelineEditorFlow from '../components/PipelineEditorFlow';
 import PipelineEditorTopBar from '../components/PipelineEditorTopBar';
+import { getPipelineEntry, addPipelineVersion, renamePipeline, PipelineVersion, FlowData, PipelineStorageEntry } from '@/lib/localStorageUtils';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { PlayIcon } from 'lucide-react';
+
+const createDefaultNodes = (): Node[] => {
+  const inputDef = hardcodedStepDefinitions.find(def => def.category === 'Input');
+  const outputDef = hardcodedStepDefinitions.find(def => def.category === 'Output');
+  const nodes: Node[] = [];
+  if (inputDef) {
+    const defaultParams = inputDef.parameters.reduce((acc, param) => { if (param.defaultValue !== undefined) acc[param.name] = param.defaultValue; return acc; }, {} as Record<string, any>);
+    nodes.push({ id: 'input_node', type: 'pipelineNode', position: { x: 50, y: 150 }, data: { label: inputDef.label, stepType: inputDef.type, parameters: defaultParams, stepDefinition: inputDef } });
+  } else { console.warn("Default 'Input' step definition not found."); }
+  if (outputDef) {
+     const defaultParams = outputDef.parameters.reduce((acc, param) => { if (param.defaultValue !== undefined) acc[param.name] = param.defaultValue; return acc; }, {} as Record<string, any>);
+    nodes.push({ id: 'output_node', type: 'pipelineNode', position: { x: 650, y: 150 }, data: { label: outputDef.label, stepType: outputDef.type, parameters: defaultParams, stepDefinition: outputDef } });
+  } else { console.warn("Default 'Output' step definition not found."); }
+  return nodes;
+};
 
 const PipelineEditorPage: React.FC = () => {
   const { pipelineId } = useParams<{ pipelineId: string }>();
-  // TODO: Fetch pipeline definition based on pipelineId using TanStack Query/SWR
-  // TODO: Implement actual save functionality (API call)
+  const navigate = useNavigate();
+  const [pipelineEntry, setPipelineEntry] = useState<PipelineStorageEntry | null>(null);
+  const [currentVersionId, setCurrentVersionId] = useState<string | undefined>(undefined);
+  const [displayNodes, setDisplayNodes] = useState<Node[] | undefined>(undefined);
+  const [displayEdges, setDisplayEdges] = useState<Edge[] | undefined>(undefined);
+  const [displayViewport, setDisplayViewport] = useState<Viewport | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+  const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
 
-  // Using hardcoded steps for now
-  const availableSteps = hardcodedStepDefinitions;
-  const pipelineName = `Pipeline ${pipelineId || 'New'}`; // Example name, fetch real name later
+  useEffect(() => {
+    if (!pipelineId) { navigate('/pipelines'); return; }
+    const entry = getPipelineEntry(pipelineId);
+    if (!entry) { navigate('/pipelines'); return; }
+    setPipelineEntry(entry);
+    const latestVersion = entry.versions[0];
+    setCurrentVersionId(latestVersion?.versionId);
+    if (latestVersion?.flowData) {
+      setDisplayNodes(latestVersion.flowData.nodes);
+      setDisplayEdges(latestVersion.flowData.edges);
+      setDisplayViewport(latestVersion.flowData.viewport);
+    } else {
+      setDisplayNodes(createDefaultNodes());
+      setDisplayEdges([]);
+      setDisplayViewport(undefined);
+    }
+    setIsLoading(false);
+  }, [pipelineId, navigate]);
 
-  const handleSave = () => {
-    console.log("Save action triggered for pipeline:", pipelineId);
-    // TODO: Gather nodes/edges state and send to backend API
-    // Consider using React Flow's toObject() method
-  };
+  const handleSave = useCallback(() => {
+    if (!pipelineId || !reactFlowInstanceRef.current || !pipelineEntry) return;
+    const currentFlowData: FlowData = {
+      nodes: reactFlowInstanceRef.current.getNodes(),
+      edges: reactFlowInstanceRef.current.getEdges(),
+      viewport: reactFlowInstanceRef.current.getViewport(),
+    };
+    const newVersion: PipelineVersion = {
+      versionId: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      flowData: currentFlowData,
+    };
+    addPipelineVersion(pipelineId, newVersion);
+    const updatedEntry = getPipelineEntry(pipelineId);
+    setPipelineEntry(updatedEntry || null);
+    setDisplayNodes(newVersion.flowData.nodes);
+    setDisplayEdges(newVersion.flowData.edges);
+    setDisplayViewport(newVersion.flowData.viewport);
+    setCurrentVersionId(newVersion.versionId);
+    toast.success(`Pipeline '${pipelineEntry.name}' saved successfully!`);
+  }, [pipelineId, pipelineEntry, reactFlowInstanceRef]);
+
+  const handleRename = useCallback((id: string, newName: string): boolean => {
+    const success = renamePipeline(id, newName);
+    if (success) setPipelineEntry(prev => prev ? { ...prev, name: newName } : null);
+    return success;
+  }, []);
+
+  const handleSelectVersion = useCallback((versionId: string) => {
+    if (!pipelineEntry) return;
+    const selectedVersion = pipelineEntry.versions.find(v => v.versionId === versionId);
+    if (selectedVersion?.flowData) {
+      setIsLoading(true);
+      setCurrentVersionId(selectedVersion.versionId);
+      setDisplayNodes(selectedVersion.flowData.nodes);
+      setDisplayEdges(selectedVersion.flowData.edges);
+      setDisplayViewport(selectedVersion.flowData.viewport);
+      setIsLoading(false);
+      toast.info(`Loaded version from ${new Date(selectedVersion.timestamp).toLocaleString()}`);
+    } else {
+      toast.error("Selected version data not found.");
+    }
+  }, [pipelineEntry]);
+
+  const handleFlowInit = useCallback((instance: ReactFlowInstance) => {
+    reactFlowInstanceRef.current = instance;
+  }, []);
+
+  // --- Run Validation Logic ---
+  const handleRun = useCallback(() => {
+    if (!reactFlowInstanceRef.current) return;
+
+    const nodes = reactFlowInstanceRef.current.getNodes();
+    const edges = reactFlowInstanceRef.current.getEdges();
+    const edgeSources = new Set(edges.map(e => e.source));
+    const edgeTargets = new Set(edges.map(e => e.target));
+
+    let isValid = true;
+    let errorMessage = "";
+
+    const inputNodes = nodes.filter(n => n.data?.stepDefinition?.category === 'Input');
+    const outputNodes = nodes.filter(n => n.data?.stepDefinition?.category === 'Output');
+    const processingNodes = nodes.filter(n => n.data?.stepDefinition?.category !== 'Input' && n.data?.stepDefinition?.category !== 'Output');
+
+    if (inputNodes.length === 0) {
+      isValid = false;
+      errorMessage = "Pipeline must have at least one Input node.";
+    } else if (outputNodes.length === 0) {
+      isValid = false;
+      errorMessage = "Pipeline must have at least one Output node.";
+    } else {
+      // Check if all processing nodes are fully connected
+      for (const node of processingNodes) {
+        const hasIncomingEdge = edgeTargets.has(node.id);
+        const hasOutgoingEdge = edgeSources.has(node.id);
+        if (!hasIncomingEdge || !hasOutgoingEdge) {
+          isValid = false;
+          errorMessage = `Node '${node.data.label}' is not fully connected. All processing nodes must have both an input and an output connection.`;
+          break; // Stop checking after first dangling node
+        }
+      }
+      // Check if Input nodes have outgoing connections (if not also output nodes)
+      if (isValid) {
+          for (const node of inputNodes) {
+              if (node.data?.stepDefinition?.category !== 'Output' && !edgeSources.has(node.id)) {
+                  isValid = false;
+                  errorMessage = `Input node '${node.data.label}' must have an outgoing connection.`;
+                  break;
+              }
+          }
+      }
+       // Check if Output nodes have incoming connections (if not also input nodes)
+      if (isValid) {
+          for (const node of outputNodes) {
+              if (node.data?.stepDefinition?.category !== 'Input' && !edgeTargets.has(node.id)) {
+                  isValid = false;
+                  errorMessage = `Output node '${node.data.label}' must have an incoming connection.`;
+                  break;
+              }
+          }
+      }
+    }
+
+    if (!isValid) {
+      toast.error("Invalid Pipeline", { description: errorMessage });
+      return;
+    }
+
+    console.log("Simulating pipeline run with:", { nodes, edges });
+    toast.info("Pipeline validation passed! Simulating run... (check console)");
+    // TODO: Send pipeline definition to backend run endpoint
+  }, []);
+
+
+  if (isLoading || !pipelineEntry) {
+    return <div className="p-6">Loading pipeline data...</div>;
+  }
 
   return (
     <ReactFlowProvider>
       <div className="flex flex-col h-full">
         <PipelineEditorTopBar
-          pipelineName={pipelineName}
+          pipelineId={pipelineId}
+          pipelineName={pipelineEntry.name}
           onSave={handleSave}
+          onRename={handleRename}
+          versions={pipelineEntry.versions}
+          selectedVersionId={currentVersionId}
+          onSelectVersion={handleSelectVersion}
         />
+         <div className="p-2 border-b bg-gray-50 dark:bg-gray-800 flex justify-end">
+             <Button onClick={handleRun} size="sm" variant="secondary">
+                 <PlayIcon className="mr-2 h-4 w-4" /> Run Pipeline (Simulated)
+             </Button>
+         </div>
         <div className="flex flex-grow overflow-hidden">
-          <PipelineEditorFlow />
-          <PipelineSidebar availableSteps={availableSteps} />
+          <PipelineEditorFlow
+            key={currentVersionId || 'initial'}
+            initialNodes={displayNodes}
+            initialEdges={displayEdges}
+            initialViewport={displayViewport}
+            onFlowInit={handleFlowInit}
+          />
+          <PipelineSidebar availableSteps={hardcodedStepDefinitions} />
         </div>
       </div>
     </ReactFlowProvider>
