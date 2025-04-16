@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT p.*, ARRAY_AGG((s.step_instance_id, s.step_id, s.pipeline_id, s.previous_step, s.next_step, s.step_parameters)) as \"steps: Vec<StepInstance>\" \n            FROM \"pipelines\" p\n            RIGHT JOIN \"step_instances\" s USING (pipeline_id)\n            WHERE p.pipeline_id = $1\n            GROUP BY p.pipeline_id\n        ",
+  "query": "\n            SELECT p.pipeline_id, p.pipeline_name, p.description, p.organization_id, p.created_at,\n                ARRAY_AGG((s.step_id, s.step_definition_id, s.pipeline_id, s.step_parameters)) as \"steps: Vec<Step>\" \n            FROM \"pipelines\" p\n            RIGHT JOIN \"steps\" s USING (pipeline_id)\n            WHERE p.pipeline_id = $1\n            GROUP BY p.pipeline_id\n        ",
   "describe": {
     "columns": [
       {
@@ -30,7 +30,7 @@
       },
       {
         "ordinal": 5,
-        "name": "steps: Vec<StepInstance>",
+        "name": "steps: Vec<Step>",
         "type_info": "RecordArray"
       }
     ],
@@ -48,5 +48,5 @@
       null
     ]
   },
-  "hash": "939ca5cce663f2c147f8fb1510679e86e2b27814ade1e863db50f70a07ba1d1a"
+  "hash": "e20599929b46527707fb6026a96d227f9413348c5186de450fd7f27aa3de554b"
 }

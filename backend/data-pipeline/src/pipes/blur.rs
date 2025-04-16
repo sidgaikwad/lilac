@@ -13,7 +13,7 @@ use serde_json::json;
 use uuid::uuid;
 
 /// Enum to represent the chosen blur detection method.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, strum::Display)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, strum::Display, strum::EnumString)]
 pub enum BlurDetectionMethod {
     LaplacianVariance,
     EdgeIntensity,                               // Mean of Sobel gradient magnitudes
@@ -121,20 +121,27 @@ impl PipeDefinition for BlurDetectorPipe {
         StepDefinition {
             step_definition_id: uuid!("039fddf8-72c1-4598-875c-36f40d4fcf84").into(),
             step_type: StepType::BlurDetector,
-            parameter_definitions: vec![
-                json!({
-                    "parameter_name": "method",
-                    "parameter_type": "enum"
-                }),
-                json!({
-                    "parameter_name": "threshold",
-                    "parameter_type": "float"
-                }),
-                json!({
-                    "parameter_name": "method_params",
-                    "parameter_type": "enum"
-                }),
-            ],
+            schema: json!({
+                "type": "object",
+                "properties": {
+                    "threshold": { "type": "number" },
+                    "method": { "enum": ["LaplacianVariance", "EdgeIntensity", "PixelVariance", "EdgeCount"] }
+                },
+                "allOf": [
+                    {
+                        "if": {
+                            "properties": {
+                                "method": { "const": "EdgeCount" }
+                            }
+                        },
+                        "then": {
+                            "properties": {
+                                "edge_magnitude_threshold": { "type": "integer" }
+                            }
+                        }
+                    }
+                ],
+            }),
         }
     }
 }

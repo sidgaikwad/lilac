@@ -29,7 +29,7 @@ impl Database {
                     "noop" => StepType::NoOp,
                     s => Err(ServiceError::ParseError(format!("invalid step type: {s}")))?,
                 },
-                parameter_definitions: row.parameter_definitions,
+                schema: row.schema,
             })
         })
         .fetch_one(&self.pool)
@@ -49,7 +49,7 @@ impl Database {
             Ok(StepDefinition {
                 step_definition_id: row.step_definition_id.into(),
                 step_type: StepType::from_str(row.step_type.as_str()).map_err(|e| ServiceError::ParseError(format!("invalid step type: {e}")))?,
-                parameter_definitions: row.parameter_definitions,
+                schema: row.schema,
             })
         })
         .fetch_all(&self.pool)
@@ -66,11 +66,16 @@ impl Database {
         let _ = sqlx::query!(
             // language=PostgreSQL
             r#"
-                INSERT INTO "step_definitions" (step_definition_id, step_type, parameter_definitions) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING
+                INSERT INTO "step_definitions" (step_definition_id, step_type, schema)
+                VALUES ($1, $2, $3)
+                ON CONFLICT(step_definition_id)
+                DO UPDATE SET
+                    step_type = EXCLUDED.step_type,
+                    schema = EXCLUDED.schema;
             "#,
             step_definition.step_definition_id.inner(),
             &step_definition.step_type.to_string(),
-            &step_definition.parameter_definitions,
+            &step_definition.schema,
         )
         .execute(&self.pool)
         .await?;

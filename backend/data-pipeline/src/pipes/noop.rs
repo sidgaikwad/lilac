@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use common::model::step_definition::{StepDefinition, StepType};
+use serde_json::json;
 use uuid::uuid;
 
 use crate::pipeline::{ImagePipe, PipeDefinition, PipeError, PipeImageData};
@@ -11,7 +12,7 @@ impl PipeDefinition for NoOpStep {
         StepDefinition {
             step_definition_id: uuid!("6c5d8079-63e9-4396-9369-2a9dda0f3fd9").into(),
             step_type: StepType::NoOp,
-            parameter_definitions: vec![],
+            schema: json!({}),
         }
     }
 }

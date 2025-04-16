@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use chrono::Utc;
 
-use crate::{model::jobs::{Job, JobStatus}, ServiceError};
+use crate::{model::jobs::{Job, JobId, JobStatus}, ServiceError};
 
 use super::Database;
 
@@ -49,4 +49,67 @@ impl Database {
         }
     }
 
+    pub async fn create_job(
+        &self,
+        job: Job,
+    ) -> Result<(), ServiceError> {
+        sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                INSERT INTO pipeline_jobs
+                (job_id, pipeline_id, status, created_at, started_at, ended_at)
+                VALUES
+                ($1, $2, $3, $4, $5, $6)
+            "#,
+            job.job_id.inner(),
+            job.pipeline_id.inner(),
+            job.status.to_string(),
+            job.created_at,
+            job.started_at,
+            job.ended_at,
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn complete_job(
+        &self,
+        job_id: &JobId,
+    ) -> Result<(), ServiceError> {
+        let now = Utc::now();
+        sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                UPDATE pipeline_jobs
+                SET status = 'COMPLETED', ended_at = $1
+                WHERE job_id = $2
+            "#,
+            now,
+            job_id.inner(),
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn fail_job(
+        &self,
+        job_id: &JobId,
+    ) -> Result<(), ServiceError> {
+        let now = Utc::now();
+        sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                UPDATE pipeline_jobs
+                SET status = 'FAILED', ended_at = $1
+                WHERE job_id = $2
+            "#,
+            now,
+            job_id.inner(),
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
 }

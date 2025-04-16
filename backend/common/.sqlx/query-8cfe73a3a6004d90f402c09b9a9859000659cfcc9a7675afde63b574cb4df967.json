@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT p.pipeline_id, p.pipeline_name, p.description, p.organization_id, p.created_at,\n                ARRAY_AGG((s.step_id, s.step_definition_id, s.pipeline_id, s.step_parameters)) as \"steps: Vec<Step>\"\n            FROM \"pipelines\" p\n            LEFT JOIN \"steps\" s USING (pipeline_id)\n            WHERE p.organization_id = $1\n            GROUP BY p.pipeline_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pipeline_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "pipeline_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "steps: Vec<Step>",
+        "type_info": "RecordArray"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "8cfe73a3a6004d90f402c09b9a9859000659cfcc9a7675afde63b574cb4df967"
+}

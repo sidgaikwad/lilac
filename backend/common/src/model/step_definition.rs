@@ -56,7 +56,7 @@ impl TryFrom<String> for StepDefinitionId {
 pub struct StepDefinition {
     pub step_definition_id: StepDefinitionId,
     pub step_type: StepType,
-    pub parameter_definitions: Vec<serde_json::Value>,
+    pub schema: serde_json::Value,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, strum::Display, strum::EnumString)]

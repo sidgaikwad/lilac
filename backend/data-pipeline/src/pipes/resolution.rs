@@ -43,20 +43,21 @@ impl PipeDefinition for ResolutionStandardizerPipe {
         StepDefinition {
             step_definition_id: uuid!("9a3601dd-d335-4cf9-99e0-01e928a3eec4").into(),
             step_type: StepType::ResolutionStandardizer,
-            parameter_definitions: vec![
-                json!({
-                    "parameter_name": "target_width",
-                    "parameter_type": "number"
-                }),
-                json!({
-                    "parameter_name": "target_height",
-                    "parameter_type": "number"
-                }),
-                json!({
-                    "parameter_name": "filter_type",
-                    "parameter_type": "enum"
-                }),
-            ],
+            schema: json!({
+                "type": "object",
+                "properties": {
+                    "target_height": { "type": "integer" },
+                    "target_width": { "type": "integer" },
+                    "filter_type": { "enum": [
+                            "Nearest",
+                            "Triangle",
+                            "CatmullRom",
+                            "Gaussian",
+                            "Lanczos3"
+                        ]
+                    }
+                },
+            }),
         }
     }
 }

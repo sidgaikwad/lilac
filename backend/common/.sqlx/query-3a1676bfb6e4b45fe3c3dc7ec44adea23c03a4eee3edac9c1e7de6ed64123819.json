@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO \"step_connections\" (from_step_id, to_step_id, pipeline_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3a1676bfb6e4b45fe3c3dc7ec44adea23c03a4eee3edac9c1e7de6ed64123819"
+}

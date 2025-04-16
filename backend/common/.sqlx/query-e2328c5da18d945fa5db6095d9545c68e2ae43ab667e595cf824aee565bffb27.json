@@ -1,22 +1,22 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT * FROM \"organizations\" WHERE organization_id = $1\n        ",
+  "query": "\n            SELECT *\n            FROM \"step_definitions\"\n            WHERE step_definition_id = $1\n        ",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "organization_id",
+        "name": "step_definition_id",
         "type_info": "Uuid"
       },
       {
         "ordinal": 1,
-        "name": "organization_name",
+        "name": "step_type",
         "type_info": "Text"
       },
       {
         "ordinal": 2,
-        "name": "created_at",
-        "type_info": "Timestamptz"
+        "name": "schema",
+        "type_info": "Jsonb"
       }
     ],
     "parameters": {
@@ -30,5 +30,5 @@
       false
     ]
   },
-  "hash": "eeecdbf5d10241315da7970cdde4ee5179df982e0af6c629b3929fe35e946b1f"
+  "hash": "e2328c5da18d945fa5db6095d9545c68e2ae43ab667e595cf824aee565bffb27"
 }
