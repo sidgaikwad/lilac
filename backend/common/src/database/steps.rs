@@ -87,15 +87,15 @@ impl Database {
 
     pub async fn disconnect_steps(&self, from: Step, to: Step) -> Result<(), ServiceError> {
         sqlx::query!(
-        // language=PostgreSQL
-        r#"
+            // language=PostgreSQL
+            r#"
             DELETE FROM "step_connections" WHERE from_step_id = $1 AND to_step_id = $2
         "#,
-        from.step_id.inner(),
-        to.step_id.inner(),
-    )
-    .fetch_one(&self.pool)
-    .await?;
+            from.step_id.inner(),
+            to.step_id.inner(),
+        )
+        .fetch_one(&self.pool)
+        .await?;
         Ok(())
     }
 }

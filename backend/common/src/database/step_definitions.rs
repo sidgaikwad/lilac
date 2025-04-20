@@ -25,10 +25,8 @@ impl Database {
         .map(|row| {
             Ok(StepDefinition {
                 step_definition_id: row.step_definition_id.into(),
-                step_type: match row.step_type.as_str() {
-                    "noop" => StepType::NoOp,
-                    s => Err(ServiceError::ParseError(format!("invalid step type: {s}")))?,
-                },
+                step_type: StepType::from_str(row.step_type.as_str())
+                    .map_err(|e| ServiceError::ParseError(format!("invalid step type: {e}")))?,
                 schema: row.schema,
             })
         })
@@ -48,7 +46,8 @@ impl Database {
         .map(|row| {
             Ok(StepDefinition {
                 step_definition_id: row.step_definition_id.into(),
-                step_type: StepType::from_str(row.step_type.as_str()).map_err(|e| ServiceError::ParseError(format!("invalid step type: {e}")))?,
+                step_type: StepType::from_str(row.step_type.as_str())
+                    .map_err(|e| ServiceError::ParseError(format!("invalid step type: {e}")))?,
                 schema: row.schema,
             })
         })

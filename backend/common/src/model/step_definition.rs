@@ -59,7 +59,9 @@ pub struct StepDefinition {
     pub schema: serde_json::Value,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, strum::Display, strum::EnumString)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, Serialize, Deserialize, strum::Display, strum::EnumString,
+)]
 pub enum StepType {
     NoOp,
     BlurDetector,

@@ -51,8 +51,9 @@ async fn main() {
         // pipeline routes
         .route("/pipeline", post(routes::create_pipeline))
         .route("/pipeline/{pipeline_id}", get(routes::get_pipeline))
+        .route("/pipeline/{pipeline_id}/run", post(routes::run_pipeline))
         .route(
-            "/pipeline/{pipeline_id}/step/",
+            "/pipeline/{pipeline_id}/step",
             post(routes::create_pipeline_step),
         )
         .route(

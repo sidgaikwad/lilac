@@ -12,7 +12,6 @@ use image::imageops::FilterType;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Arc;
 use std::time::Instant;
 
 const INPUT_DIR: &str = "test_images";
@@ -20,7 +19,7 @@ const OUTPUT_DIR: &str = "output";
 
 fn build_pipeline_stages(
     stage_configs: &[PipelineStageConfig],
-) -> Result<Vec<Arc<dyn ImagePipe>>, String> {
+) -> Result<Vec<Box<dyn ImagePipe>>, String> {
     let mut stages = Vec::with_capacity(stage_configs.len());
     println!("Building {} pipeline stages...", stage_configs.len());
 
@@ -28,7 +27,7 @@ fn build_pipeline_stages(
         println!("  - Instantiating pipe: {}", config.pipe_identifier);
         let params = &config.parameters; // Alias for convenience
 
-        let pipe_instance: Arc<dyn ImagePipe> = match config.pipe_identifier.as_str() {
+        let pipe_instance: Box<dyn ImagePipe> = match config.pipe_identifier.as_str() {
             "ResolutionStandardizer" => {
                 let target_width = params
                     .get("target_width")
@@ -76,7 +75,7 @@ fn build_pipeline_stages(
 
                 let pipe =
                     ResolutionStandardizerPipe::new(target_width, target_height, filter_type);
-                Arc::new(pipe)
+                Box::new(pipe)
             }
             "BlurDetector" => {
                 let method_str = params
@@ -127,7 +126,7 @@ fn build_pipeline_stages(
                 };
 
                 let pipe = BlurDetectorPipe::new(method, threshold);
-                Arc::new(pipe)
+                Box::new(pipe)
             }
             _ => {
                 return Err(format!(
@@ -166,7 +165,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ];
 
     println!("Building pipeline stages...");
-    let pipeline_stages: Vec<Arc<dyn ImagePipe>> = build_pipeline_stages(&pipeline_config_stages)
+    let pipeline_stages: Vec<Box<dyn ImagePipe>> = build_pipeline_stages(&pipeline_config_stages)
         .map_err(|e| -> Box<dyn std::error::Error> {
         format!("Failed to build pipeline stages: {}", e).into()
     })?;

@@ -577,6 +577,7 @@ dependencies = [
  "http-body-util",
  "hyper",
  "hyper-util",
+ "jsonschema",
  "jsonwebtoken",
  "nanoid",
  "once_cell",

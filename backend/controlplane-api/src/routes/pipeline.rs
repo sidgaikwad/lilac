@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use common::{
     database::Database,
     model::{
+        jobs::{Job, JobId},
         organization::OrganizationId,
         pipeline::{Pipeline, PipelineId},
         step::Step,
@@ -72,4 +73,25 @@ impl From<Pipeline> for GetPipelineResponse {
             steps: pipeline.steps,
         }
     }
+}
+
+#[instrument(level = "info", skip(db), ret, err)]
+pub async fn run_pipeline(
+    claims: Claims,
+    db: Extension<Database>,
+    Path(pipeline_id): Path<String>,
+) -> Result<Json<RunPipelineResponse>, ServiceError> {
+    let pipeline_id = PipelineId::try_from(pipeline_id)?;
+    let pipeline = db.get_pipeline(&pipeline_id).await?;
+
+    let job = Job::create(pipeline.pipeline_id);
+    let job_id = job.job_id.clone();
+    db.create_job(job).await?;
+
+    Ok(Json(RunPipelineResponse { job_id }))
+}
+
+#[derive(Debug, Serialize)]
+pub struct RunPipelineResponse {
+    job_id: JobId,
 }

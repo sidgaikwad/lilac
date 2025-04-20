@@ -13,27 +13,29 @@ impl Database {
     pub async fn get_pipeline(&self, pipeline_id: &PipelineId) -> Result<Pipeline, ServiceError> {
         let id = pipeline_id.inner();
         let pipeline = sqlx::query!(
-        // language=PostgreSQL
-        r#"
+            // language=PostgreSQL
+            r#"
             SELECT p.pipeline_id, p.pipeline_name, p.description, p.organization_id, p.created_at,
-                ARRAY_AGG((s.step_id, s.step_definition_id, s.pipeline_id, s.step_parameters)) as "steps: Vec<Step>" 
+                ARRAY(
+                    SELECT (s.step_id, s.step_definition_id, s.pipeline_id, s.step_parameters)
+                    FROM "steps" s WHERE s.pipeline_id = $1
+                ) as "steps: Vec<Step>"
             FROM "pipelines" p
-            RIGHT JOIN "steps" s USING (pipeline_id)
             WHERE p.pipeline_id = $1
             GROUP BY p.pipeline_id
         "#,
-        id
-    )
-    .map(|row| Pipeline {
-        pipeline_id: row.pipeline_id.into(),
-        pipeline_name: row.pipeline_name,
-        description: row.description,
-        organization_id: row.organization_id.into(),
-        steps: row.steps.unwrap_or(Vec::new()),
-        created_at: row.created_at,
-    })
-    .fetch_one(&self.pool)
-    .await?;
+            id
+        )
+        .map(|row| Pipeline {
+            pipeline_id: row.pipeline_id.into(),
+            pipeline_name: row.pipeline_name,
+            description: row.description,
+            organization_id: row.organization_id.into(),
+            steps: row.steps.unwrap_or(Vec::new()),
+            created_at: row.created_at,
+        })
+        .fetch_one(&self.pool)
+        .await?;
         Ok(pipeline)
     }
 

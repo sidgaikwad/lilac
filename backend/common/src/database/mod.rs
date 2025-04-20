@@ -1,11 +1,11 @@
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
+mod jobs;
 mod organization;
 mod pipeline;
 mod step_definitions;
 mod steps;
 mod user;
-mod jobs;
 
 #[derive(Clone, Debug)]
 pub struct Database {

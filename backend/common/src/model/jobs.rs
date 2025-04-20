@@ -6,8 +6,6 @@ use crate::ServiceError;
 
 use super::pipeline::PipelineId;
 
-
-
 #[derive(Clone, Debug, strum::EnumString, strum::Display)]
 #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
 pub enum JobStatus {
@@ -16,7 +14,6 @@ pub enum JobStatus {
     Completed,
     Failed,
 }
-
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(transparent)]
@@ -62,12 +59,10 @@ impl From<JobId> for Uuid {
 impl TryFrom<String> for JobId {
     type Error = ServiceError;
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let id =
-            Uuid::try_parse(&value).map_err(|_| ServiceError::ParseError("JobId".into()))?;
+        let id = Uuid::try_parse(&value).map_err(|_| ServiceError::ParseError("JobId".into()))?;
         Ok(Self(id))
     }
 }
-
 
 pub struct Job {
     pub job_id: JobId,
@@ -85,7 +80,7 @@ impl Job {
         status: JobStatus,
         created_at: DateTime<Utc>,
         started_at: Option<DateTime<Utc>>,
-        ended_at: Option<DateTime<Utc>>
+        ended_at: Option<DateTime<Utc>>,
     ) -> Self {
         Self {
             job_id,

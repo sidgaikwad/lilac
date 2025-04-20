@@ -2,16 +2,15 @@ use std::str::FromStr;
 
 use chrono::Utc;
 
-use crate::{model::jobs::{Job, JobId, JobStatus}, ServiceError};
+use crate::{
+    model::jobs::{Job, JobId, JobStatus},
+    ServiceError,
+};
 
 use super::Database;
 
-
-
 impl Database {
-    pub async fn get_pending_job(
-        &self,
-    ) -> Result<Option<Job>, ServiceError> {
+    pub async fn get_pending_job(&self) -> Result<Option<Job>, ServiceError> {
         let now = Utc::now();
         let job: Option<Result<Job, ServiceError>> = sqlx::query!(
             // language=PostgreSQL
@@ -31,28 +30,27 @@ impl Database {
             "#,
             now,
         )
-        .map(|row|
+        .map(|row| {
             Ok(Job {
                 job_id: row.job_id.into(),
                 pipeline_id: row.pipeline_id.into(),
-                status: JobStatus::from_str(&row.status).map_err(|_| ServiceError::ParseError(format!("invalid JobStatus {}", &row.status)))?,
+                status: JobStatus::from_str(&row.status).map_err(|_| {
+                    ServiceError::ParseError(format!("invalid JobStatus {}", &row.status))
+                })?,
                 created_at: row.created_at,
                 started_at: row.started_at,
                 ended_at: row.ended_at,
             })
-        )
+        })
         .fetch_optional(&self.pool)
         .await?;
         match job {
             Some(res) => Ok(Some(res?)),
-            None => Ok(None)
+            None => Ok(None),
         }
     }
 
-    pub async fn create_job(
-        &self,
-        job: Job,
-    ) -> Result<(), ServiceError> {
+    pub async fn create_job(&self, job: Job) -> Result<(), ServiceError> {
         sqlx::query!(
             // language=PostgreSQL
             r#"
@@ -73,10 +71,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn complete_job(
-        &self,
-        job_id: &JobId,
-    ) -> Result<(), ServiceError> {
+    pub async fn complete_job(&self, job_id: &JobId) -> Result<(), ServiceError> {
         let now = Utc::now();
         sqlx::query!(
             // language=PostgreSQL
@@ -93,10 +88,7 @@ impl Database {
         Ok(())
     }
 
-    pub async fn fail_job(
-        &self,
-        job_id: &JobId,
-    ) -> Result<(), ServiceError> {
+    pub async fn fail_job(&self, job_id: &JobId) -> Result<(), ServiceError> {
         let now = Utc::now();
         sqlx::query!(
             // language=PostgreSQL

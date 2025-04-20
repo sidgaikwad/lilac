@@ -1,8 +1,23 @@
 use std::{sync::Arc, time::Duration};
 
-use common::{database::Database, model::{jobs::Job, step_definition::StepType}, ServiceError};
-use data_pipeline::{get_steps_to_register, pipe_core::ImagePipe, pipes::{blur::{BlurDetectionMethod, BlurDetectorPipe}, noop::NoOpStep, resolution::ResolutionStandardizerPipe}};
+use common::{
+    database::Database,
+    model::{jobs::Job, step_definition::StepType},
+    ServiceError,
+};
+use data_pipeline::{
+    get_steps_to_register,
+    pipe_core::ImagePipe,
+    pipeline_definition::{DataDestination, DataSource, Pipeline},
+    pipes::{
+        blur::{BlurDetectionMethod, BlurDetectorPipe},
+        noop::NoOpStep,
+        resolution::ResolutionStandardizerPipe,
+    },
+    runner::run_pipeline,
+};
 use dotenv::dotenv;
+use futures::future::join_all;
 use image::imageops::FilterType;
 use jsonschema::validate;
 use tokio::time::sleep;
@@ -37,7 +52,8 @@ async fn main() {
             .expect("step to be registered");
     }
 
-    tokio::spawn(process_jobs(db));
+    let handle = tokio::spawn(process_jobs(db));
+    join_all(vec![handle]).await;
 }
 
 async fn process_jobs(db: Arc<Database>) {
@@ -50,9 +66,15 @@ async fn process_jobs(db: Arc<Database>) {
                     let res = handle_job(db.clone(), &job).await;
                     if let Err(err) = res {
                         tracing::error!("error processing job: {err}");
-                        db.fail_job(&job.job_id).await;
+                        let err = db.fail_job(&job.job_id).await;
+                        if let Err(e) = err {
+                            tracing::error!("error failing job: {e}");
+                        }
                     } else {
-                        db.complete_job(&job.job_id).await;
+                        let err = db.complete_job(&job.job_id).await;
+                        if let Err(e) = err {
+                            tracing::error!("error completing job: {e}");
+                        }
                     }
                 }
             }
@@ -69,30 +91,62 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
         let step_definition = db.get_step_definition(&step.step_definition_id).await?;
         if let Err(err) = validate(&step_definition.schema, &step.step_parameters) {
             tracing::error!("schema validation failed: {err}");
-            return Err(ServiceError::SchemaError)
+            return Err(ServiceError::SchemaError);
         }
         let pipe: Box<dyn ImagePipe> = match step_definition.step_type {
             StepType::NoOp => Box::new(NoOpStep {}),
             StepType::BlurDetector => {
                 // we can unwrap here because we already validated the schema
-                let method = step.step_parameters.get("method").unwrap().as_str().unwrap();
+                let method = step
+                    .step_parameters
+                    .get("method")
+                    .unwrap()
+                    .as_str()
+                    .unwrap();
                 let method = match method {
                     "LaplacianVariance" => BlurDetectionMethod::LaplacianVariance,
                     "PixelVariance" => BlurDetectionMethod::PixelVariance,
                     "EdgeIntensity" => BlurDetectionMethod::EdgeIntensity,
                     "EdgeCount" => {
-                        let emt = step.step_parameters.get("edge_magnitude_threshold").unwrap().as_u64().unwrap();
-                        BlurDetectionMethod::EdgeCount { edge_magnitude_threshold: emt as u16 }
-                    },
+                        let emt = step
+                            .step_parameters
+                            .get("edge_magnitude_threshold")
+                            .unwrap()
+                            .as_u64()
+                            .unwrap();
+                        BlurDetectionMethod::EdgeCount {
+                            edge_magnitude_threshold: emt as u16,
+                        }
+                    }
                     _ => Err(ServiceError::ParseError("method".to_string()))?,
                 };
-                let threshold = step.step_parameters.get("threshold").unwrap().as_f64().unwrap();
+                let threshold = step
+                    .step_parameters
+                    .get("threshold")
+                    .unwrap()
+                    .as_f64()
+                    .unwrap();
                 Box::new(BlurDetectorPipe::new(method, threshold))
-            },
+            }
             StepType::ResolutionStandardizer => {
-                let target_width = step.step_parameters.get("target_width").unwrap().as_u64().unwrap();
-                let target_height = step.step_parameters.get("target_height").unwrap().as_u64().unwrap();
-                let filter_type = step.step_parameters.get("filter_type").unwrap().as_str().unwrap();
+                let target_width = step
+                    .step_parameters
+                    .get("target_width")
+                    .unwrap()
+                    .as_u64()
+                    .unwrap();
+                let target_height = step
+                    .step_parameters
+                    .get("target_height")
+                    .unwrap()
+                    .as_u64()
+                    .unwrap();
+                let filter_type = step
+                    .step_parameters
+                    .get("filter_type")
+                    .unwrap()
+                    .as_str()
+                    .unwrap();
                 let filter_type = match filter_type {
                     "Nearest" => FilterType::Nearest,
                     "Triangle" => FilterType::Triangle,
@@ -101,13 +155,27 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
                     "Lanczos3" => FilterType::Lanczos3,
                     _ => Err(ServiceError::ParseError("filter_type".to_string()))?,
                 };
-                Box::new(ResolutionStandardizerPipe::new(target_width as u32, target_height as u32, filter_type))
-
-            },
+                Box::new(ResolutionStandardizerPipe::new(
+                    target_width as u32,
+                    target_height as u32,
+                    filter_type,
+                ))
+            }
         };
         pipes.push(pipe);
     }
 
-    // TODO: get source and destination from pipeline, and process image batch
+    let pl = Pipeline {
+        id: pipeline.pipeline_id.inner().to_string(),
+        name: pipeline.pipeline_name.clone(),
+        input_source: DataSource::LocalPath("test_images".into()),
+        output_destination: DataDestination::LocalPath("output_images".into()),
+        stages: pipes,
+    };
+
+    run_pipeline(&pl)
+        .await
+        .map_err(|_| ServiceError::PipelineExecutionError)?;
+
     Ok(())
 }

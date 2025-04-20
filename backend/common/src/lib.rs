@@ -24,6 +24,9 @@ pub enum ServiceError {
 
     #[error("schema validation failed")]
     SchemaError,
+
+    #[error("pipeline execution error")]
+    PipelineExecutionError,
 }
 
 impl IntoResponse for ServiceError {
@@ -32,11 +35,17 @@ impl IntoResponse for ServiceError {
             ServiceError::ParseError(_) => (StatusCode::BAD_REQUEST, "bad request".to_string()),
             ServiceError::NotFound { id } => (StatusCode::NOT_FOUND, format!("{id} not found")),
             ServiceError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized".to_string()),
-            ServiceError::DatabaseError(_) => (
+            ServiceError::DatabaseError(sqlx::Error::RowNotFound) => {
+                (StatusCode::NOT_FOUND, "not found".to_string())
+            }
+            ServiceError::DatabaseError(_) | ServiceError::PipelineExecutionError => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "something went wrong".to_string(),
             ),
-            ServiceError::SchemaError => (StatusCode::BAD_REQUEST, "schema validation failed".to_string())
+            ServiceError::SchemaError => (
+                StatusCode::BAD_REQUEST,
+                "schema validation failed".to_string(),
+            ),
         };
         let body = Json(json!({
             "error": error_message,

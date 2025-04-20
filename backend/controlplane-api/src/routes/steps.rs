@@ -8,6 +8,7 @@ use common::{
     },
     ServiceError,
 };
+use jsonschema::is_valid;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
@@ -20,17 +21,21 @@ pub async fn create_pipeline_step(
     Path(pipeline_id): Path<PipelineId>,
     Json(request): Json<CreateStepInstanceRequest>,
 ) -> Result<Json<CreateStepInstanceResponse>, ServiceError> {
+    let step_definition = db.get_step_definition(&request.step_definition_id).await?;
+
+    if !is_valid(&step_definition.schema, &request.step_parameters) {
+        return Err(ServiceError::SchemaError);
+    }
+
     let step = Step::create(
         request.step_definition_id,
         pipeline_id,
         request.step_parameters,
     );
 
-    let step_instance_id = db.create_step(step).await?;
+    let step_id = db.create_step(step).await?;
 
-    Ok(Json(CreateStepInstanceResponse {
-        id: step_instance_id,
-    }))
+    Ok(Json(CreateStepInstanceResponse { id: step_id }))
 }
 
 #[derive(Debug, Deserialize)]

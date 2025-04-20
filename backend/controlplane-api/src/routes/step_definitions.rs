@@ -10,11 +10,7 @@ pub async fn list_step_definitions(
     claims: Claims,
     db: Extension<Database>,
 ) -> Result<Json<ListStepDefinitionsResponse>, ServiceError> {
-    let step_definitions = db
-        .list_step_definitions()
-        .await?
-        .into_iter()
-        .collect();
+    let step_definitions = db.list_step_definitions().await?.into_iter().collect();
 
     Ok(Json(ListStepDefinitionsResponse { step_definitions }))
 }

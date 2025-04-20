@@ -7,7 +7,6 @@ use crate::pipe_core::ImagePipe;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::path::PathBuf;
-use std::sync::Arc;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DataSource {
@@ -21,11 +20,10 @@ pub enum DataDestination {
     // Example: S3Bucket { bucket: String, prefix: String },
 }
 
-#[derive(Clone)]
 pub struct Pipeline {
     pub id: String,
     pub name: String,
     pub input_source: DataSource,
     pub output_destination: DataDestination,
-    pub stages: Vec<Arc<dyn ImagePipe>>,
+    pub stages: Vec<Box<dyn ImagePipe>>,
 }
