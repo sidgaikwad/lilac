@@ -1,9 +1,4 @@
-use axum::{
-    body::Body,
-    extract::Request,
-    routing::{get, post},
-    Extension, Router,
-};
+use axum::{body::Body, extract::Request, Extension, Router};
 use common::database::Database;
 use controlplane_api::routes;
 use dotenv::dotenv;
@@ -32,38 +27,8 @@ async fn main() {
     let db = Database::new(&db_url).await.expect("database to connect");
     db.migrate().await.expect("migrations to complete");
 
-    // build our application with a route
     let app = Router::new()
-        // user routes
-        .route("/users", post(routes::create_user))
-        .route("/users/{user_id}", get(routes::get_user))
-        // auth routes
-        .route("/auth/login", post(routes::authorize))
-        // organizatino routes
-        .route("/organization", get(routes::list_organizations))
-        .route(
-            "/organization/{organization_id}",
-            get(routes::get_organization),
-        )
-        .route("/organization", post(routes::create_organization))
-        // step definitions routes
-        .route("/step_definitions", get(routes::list_step_definitions))
-        // pipeline routes
-        .route("/pipeline", post(routes::create_pipeline))
-        .route("/pipeline/{pipeline_id}", get(routes::get_pipeline))
-        .route("/pipeline/{pipeline_id}/run", post(routes::run_pipeline))
-        .route(
-            "/pipeline/{pipeline_id}/step",
-            post(routes::create_pipeline_step),
-        )
-        .route(
-            "/pipeline/{pipeline_id}/step/{step_id}",
-            get(routes::get_pipeline_step),
-        )
-        .route(
-            "/pipeline/{pipeline_id}/connection/{from_step_id}/{to_step_id}",
-            post(routes::connect_pipeline_step).delete(routes::disconnect_pipeline_step),
-        )
+        .merge(routes::router())
         .layer(Extension(db))
         .layer(
             TraceLayer::new_for_http().make_span_with(|_request: &Request<Body>| {

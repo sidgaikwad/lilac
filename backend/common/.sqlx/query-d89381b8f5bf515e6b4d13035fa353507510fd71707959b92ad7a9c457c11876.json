@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE pipeline_jobs\n                SET status = 'failed', ended_at = now()\n                WHERE job_id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d89381b8f5bf515e6b4d13035fa353507510fd71707959b92ad7a9c457c11876"
+}

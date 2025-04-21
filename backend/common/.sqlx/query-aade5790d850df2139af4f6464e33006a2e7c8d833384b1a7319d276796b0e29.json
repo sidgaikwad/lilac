@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM \"step_connections\" WHERE from_step_id = $1 AND to_step_id = ANY($2)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "aade5790d850df2139af4f6464e33006a2e7c8d833384b1a7319d276796b0e29"
+}

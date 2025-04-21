@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO \"pipelines\" (pipeline_id, pipeline_name, description, organization_id, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING pipeline_id\n        ",
+  "query": "\n            INSERT INTO \"pipelines\" (pipeline_id, pipeline_name, description, project_id, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING pipeline_id\n        ",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "2e7f704530e0dff350b273a4b0f46e18812341fa422b519300b987aca37f12d0"
+  "hash": "ee44c63dedfb77ceeae5fbfde5b76e906b98f66ce6d0eae7d8ee8ecf645eb345"
 }

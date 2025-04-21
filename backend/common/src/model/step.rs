@@ -5,7 +5,9 @@ use crate::ServiceError;
 
 use super::{pipeline::PipelineId, step_definition::StepDefinitionId};
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, sqlx::Type,
+)]
 #[sqlx(transparent)]
 pub struct StepId(Uuid);
 

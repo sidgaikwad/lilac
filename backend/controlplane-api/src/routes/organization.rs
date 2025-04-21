@@ -1,5 +1,4 @@
 use axum::{extract::Path, Extension, Json};
-use chrono::{DateTime, Utc};
 use common::{
     database::Database,
     model::organization::{Organization, OrganizationId},
@@ -51,7 +50,6 @@ pub async fn get_organization(
 pub struct GetOrganizationResponse {
     id: OrganizationId,
     organization_name: String,
-    created_at: DateTime<Utc>,
 }
 
 impl From<Organization> for GetOrganizationResponse {
@@ -59,7 +57,6 @@ impl From<Organization> for GetOrganizationResponse {
         GetOrganizationResponse {
             id: organization.organization_id,
             organization_name: organization.organization_name,
-            created_at: organization.created_at,
         }
     }
 }

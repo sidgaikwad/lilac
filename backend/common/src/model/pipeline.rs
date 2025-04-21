@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::ServiceError;
 
-use super::{organization::OrganizationId, step::Step};
+use super::{project::ProjectId, step::Step};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(transparent)]
@@ -61,7 +61,7 @@ pub struct Pipeline {
     pub pipeline_id: PipelineId,
     pub pipeline_name: String,
     pub description: Option<String>,
-    pub organization_id: OrganizationId,
+    pub project_id: ProjectId,
     pub steps: Vec<Step>,
     pub created_at: DateTime<Utc>,
 }
@@ -71,7 +71,7 @@ impl Pipeline {
         pipeline_id: PipelineId,
         pipeline_name: String,
         description: Option<String>,
-        organization_id: OrganizationId,
+        project_id: ProjectId,
         steps: Vec<Step>,
         created_at: DateTime<Utc>,
     ) -> Self {
@@ -79,7 +79,7 @@ impl Pipeline {
             pipeline_id,
             pipeline_name,
             description,
-            organization_id,
+            project_id,
             steps,
             created_at,
         }
@@ -88,13 +88,13 @@ impl Pipeline {
     pub fn create(
         pipeline_name: String,
         description: Option<String>,
-        organization_id: OrganizationId,
+        project_id: ProjectId,
     ) -> Self {
         Self {
             pipeline_id: PipelineId::generate(),
             pipeline_name,
             description,
-            organization_id,
+            project_id,
             steps: Vec::new(),
             created_at: Utc::now(),
         }

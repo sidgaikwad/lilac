@@ -4,8 +4,8 @@ use common::{
     database::Database,
     model::{
         jobs::{Job, JobId},
-        organization::OrganizationId,
         pipeline::{Pipeline, PipelineId},
+        project::ProjectId,
         step::Step,
     },
     ServiceError,
@@ -21,7 +21,7 @@ pub async fn create_pipeline(
     db: Extension<Database>,
     Json(request): Json<CreatePipelineRequest>,
 ) -> Result<Json<CreatePipelineResponse>, ServiceError> {
-    let pipeline = Pipeline::create(request.name, request.description, request.organization_id);
+    let pipeline = Pipeline::create(request.name, request.description, request.project_id);
 
     let pipeline_id = db.create_pipeline(pipeline).await?;
 
@@ -32,7 +32,7 @@ pub async fn create_pipeline(
 pub struct CreatePipelineRequest {
     name: String,
     description: Option<String>,
-    organization_id: OrganizationId,
+    project_id: ProjectId,
 }
 
 #[derive(Debug, Serialize)]
@@ -57,7 +57,7 @@ pub struct GetPipelineResponse {
     id: PipelineId,
     name: String,
     description: Option<String>,
-    organization_id: OrganizationId,
+    project_id: ProjectId,
     created_at: DateTime<Utc>,
     steps: Vec<Step>,
 }
@@ -67,7 +67,7 @@ impl From<Pipeline> for GetPipelineResponse {
         Self {
             id: pipeline.pipeline_id,
             name: pipeline.pipeline_name,
-            organization_id: pipeline.organization_id,
+            project_id: pipeline.project_id,
             description: pipeline.description,
             created_at: pipeline.created_at,
             steps: pipeline.steps,
@@ -94,4 +94,16 @@ pub async fn run_pipeline(
 #[derive(Debug, Serialize)]
 pub struct RunPipelineResponse {
     job_id: JobId,
+}
+
+#[instrument(level = "info", skip(db), ret, err)]
+pub async fn delete_pipeline(
+    claims: Claims,
+    db: Extension<Database>,
+    Path(pipeline_id): Path<String>,
+) -> Result<(), ServiceError> {
+    let pipeline_id = PipelineId::try_from(pipeline_id)?;
+    db.delete_pipeline(&pipeline_id).await?;
+
+    Ok(())
 }

@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use password_auth::generate_hash;
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
@@ -55,7 +54,6 @@ pub struct User {
     pub email: String,
     pub email_verified: bool,
     pub password_hash: SecretString,
-    pub created_at: DateTime<Utc>,
 }
 
 impl User {
@@ -64,14 +62,12 @@ impl User {
         email: String,
         email_verified: bool,
         password_hash: String,
-        created_at: DateTime<Utc>,
     ) -> Self {
         Self {
             user_id,
             email,
             email_verified,
             password_hash: SecretString::from(password_hash),
-            created_at,
         }
     }
 
@@ -81,7 +77,6 @@ impl User {
             email,
             email_verified: false,
             password_hash: SecretString::from(generate_hash(password.expose_secret())),
-            created_at: Utc::now(),
         }
     }
 }

@@ -22,6 +22,21 @@
         "ordinal": 3,
         "name": "step_parameters",
         "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "deleted_at",
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -33,7 +48,10 @@
       false,
       false,
       false,
-      false
+      false,
+      false,
+      false,
+      true
     ]
   },
   "hash": "4b522c1a0f275938a3664d83a218b9485161ad41bfcea593577d9e210887f3d8"

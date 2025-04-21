@@ -1,5 +1,4 @@
 use axum::{extract::Path, Extension, Json};
-use chrono::{DateTime, Utc};
 use common::{
     database::Database,
     model::user::{User, UserId},
@@ -50,7 +49,6 @@ pub async fn get_user(
     Ok(Json(GetUserResponse {
         id: user.user_id,
         email: user.email,
-        created_at: user.created_at,
     }))
 }
 
@@ -58,5 +56,4 @@ pub async fn get_user(
 pub struct GetUserResponse {
     id: UserId,
     email: String,
-    created_at: DateTime<Utc>,
 }

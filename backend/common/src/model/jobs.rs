@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -7,7 +6,7 @@ use crate::ServiceError;
 use super::pipeline::PipelineId;
 
 #[derive(Clone, Debug, strum::EnumString, strum::Display)]
-#[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+#[strum(serialize_all = "snake_case")]
 pub enum JobStatus {
     Pending,
     InProgress,
@@ -68,27 +67,14 @@ pub struct Job {
     pub job_id: JobId,
     pub pipeline_id: PipelineId,
     pub status: JobStatus,
-    pub created_at: DateTime<Utc>,
-    pub started_at: Option<DateTime<Utc>>,
-    pub ended_at: Option<DateTime<Utc>>,
 }
 
 impl Job {
-    pub fn new(
-        job_id: JobId,
-        pipeline_id: PipelineId,
-        status: JobStatus,
-        created_at: DateTime<Utc>,
-        started_at: Option<DateTime<Utc>>,
-        ended_at: Option<DateTime<Utc>>,
-    ) -> Self {
+    pub fn new(job_id: JobId, pipeline_id: PipelineId, status: JobStatus) -> Self {
         Self {
             job_id,
             pipeline_id,
             status,
-            created_at,
-            started_at,
-            ended_at,
         }
     }
 
@@ -97,9 +83,6 @@ impl Job {
             job_id: JobId::generate(),
             pipeline_id,
             status: JobStatus::Pending,
-            created_at: Utc::now(),
-            started_at: None,
-            ended_at: None,
         }
     }
 }

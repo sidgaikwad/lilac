@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT * FROM \"users\" WHERE user_id = $1\n        ",
+  "query": "\n            SELECT user_id, email, email_verified, password_hash FROM \"users\" WHERE user_id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -22,11 +22,6 @@
         "ordinal": 3,
         "name": "password_hash",
         "type_info": "Text"
-      },
-      {
-        "ordinal": 4,
-        "name": "created_at",
-        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -38,9 +33,8 @@
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "12e184629619b6fde522b6ca05c6feabe2ada5caa6ad7889d692d156727dd021"
+  "hash": "84238221e9544d8a71679aad9c25248f21ece9d322939b8a22e6ee8f7e819a54"
 }

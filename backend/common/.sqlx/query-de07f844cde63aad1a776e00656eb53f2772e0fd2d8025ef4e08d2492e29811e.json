@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT organization_id, organization_name, created_at FROM \"organizations\" WHERE organization_id = $1\n            ",
+  "query": "\n            SELECT o.organization_id, o.organization_name FROM \"organization_memberships\" m INNER JOIN organizations o ON m.organization_id = o.organization_id WHERE m.user_id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -12,11 +12,6 @@
         "ordinal": 1,
         "name": "organization_name",
         "type_info": "Text"
-      },
-      {
-        "ordinal": 2,
-        "name": "created_at",
-        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -26,9 +21,8 @@
     },
     "nullable": [
       false,
-      false,
       false
     ]
   },
-  "hash": "0d50aed78502bcd27336e79bb971705bb3b6c624736c29ddac6d1b636145d8ee"
+  "hash": "de07f844cde63aad1a776e00656eb53f2772e0fd2d8025ef4e08d2492e29811e"
 }

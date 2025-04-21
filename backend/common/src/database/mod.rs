@@ -2,10 +2,10 @@ use sqlx::{postgres::PgPoolOptions, PgPool};
 
 mod jobs;
 mod organization;
-mod pipeline;
+mod pipelines;
 mod step_definitions;
 mod steps;
-mod user;
+mod users;
 
 #[derive(Clone, Debug)]
 pub struct Database {

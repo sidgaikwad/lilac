@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT *\n            FROM \"step_definitions\"\n            WHERE step_type = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "step_definition_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "step_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "schema",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "91c24d63b169d20d9844d1ec930c00990fd6419c567a270096bd10a87c41938d"
+}

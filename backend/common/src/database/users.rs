@@ -17,7 +17,7 @@ impl Database {
             User,
             // language=PostgreSQL
             r#"
-            SELECT * FROM "users" WHERE user_id = $1
+            SELECT user_id, email, email_verified, password_hash FROM "users" WHERE user_id = $1
         "#,
             id
         )
@@ -31,7 +31,7 @@ impl Database {
             User,
             // language=PostgreSQL
             r#"
-            SELECT * FROM "users" WHERE email = $1
+            SELECT user_id, email, email_verified, password_hash FROM "users" WHERE email = $1
         "#,
             email
         )
@@ -44,13 +44,12 @@ impl Database {
         let user_id = sqlx::query!(
         // language=PostgreSQL
         r#"
-            INSERT INTO "users" (user_id, email, email_verified, password_hash, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING user_id
+            INSERT INTO "users" (user_id, email, email_verified, password_hash) VALUES ($1, $2, $3, $4) RETURNING user_id
         "#,
         user.user_id.inner(),
         &user.email,
         &user.email_verified,
         &user.password_hash.expose_secret(),
-        &user.created_at,
     )
     .map(|row| UserId::new(row.user_id))
     .fetch_one(&self.pool)
@@ -67,7 +66,7 @@ impl Database {
         Organization,
         // language=PostgreSQL
         r#"
-            SELECT o.* FROM "organization_memberships" m INNER JOIN organizations o ON m.organization_id = o.organization_id WHERE m.user_id = $1
+            SELECT o.organization_id, o.organization_name FROM "organization_memberships" m INNER JOIN organizations o ON m.organization_id = o.organization_id WHERE m.user_id = $1
         "#,
         id
     )

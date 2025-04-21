@@ -60,19 +60,13 @@ impl TryFrom<String> for OrganizationId {
 pub struct Organization {
     pub organization_id: OrganizationId,
     pub organization_name: String,
-    pub created_at: DateTime<Utc>,
 }
 
 impl Organization {
-    pub fn new(
-        organization_id: OrganizationId,
-        organization_name: String,
-        created_at: DateTime<Utc>,
-    ) -> Self {
+    pub fn new(organization_id: OrganizationId, organization_name: String) -> Self {
         Self {
             organization_id,
             organization_name,
-            created_at,
         }
     }
 
@@ -80,7 +74,6 @@ impl Organization {
         Self {
             organization_id: OrganizationId::generate(),
             organization_name,
-            created_at: Utc::now(),
         }
     }
 }

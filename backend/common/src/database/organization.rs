@@ -18,7 +18,7 @@ impl Database {
             Organization,
             // language=PostgreSQL
             r#"
-                SELECT organization_id, organization_name, created_at FROM "organizations" WHERE organization_id = $1
+                SELECT organization_id, organization_name FROM "organizations" WHERE organization_id = $1
             "#,
             id
         )
@@ -34,11 +34,10 @@ impl Database {
         let org_id = sqlx::query!(
             // language=PostgreSQL
             r#"
-                INSERT INTO "organizations" (organization_id, organization_name, created_at) VALUES ($1, $2, $3) RETURNING organization_id
+                INSERT INTO "organizations" (organization_id, organization_name) VALUES ($1, $2) RETURNING organization_id
             "#,
             organization.organization_id.inner(),
-            &organization.organization_name,
-            &organization.created_at,
+            &organization.organization_name
         )
         .map(|row| OrganizationId::new(row.organization_id))
         .fetch_one(&self.pool)

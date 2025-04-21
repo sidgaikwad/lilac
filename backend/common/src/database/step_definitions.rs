@@ -35,6 +35,32 @@ impl Database {
         Ok(step_definition?)
     }
 
+    pub async fn get_step_definition_by_type(
+        &self,
+        step_type: &StepType,
+    ) -> Result<StepDefinition, ServiceError> {
+        let step_definition: Result<StepDefinition, ServiceError> = sqlx::query!(
+            // language=PostgreSQL
+            r#"
+            SELECT *
+            FROM "step_definitions"
+            WHERE step_type = $1
+        "#,
+            step_type.to_string()
+        )
+        .map(|row| {
+            Ok(StepDefinition {
+                step_definition_id: row.step_definition_id.into(),
+                step_type: StepType::from_str(row.step_type.as_str())
+                    .map_err(|e| ServiceError::ParseError(format!("invalid step type: {e}")))?,
+                schema: row.schema,
+            })
+        })
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(step_definition?)
+    }
+
     pub async fn list_step_definitions(&self) -> Result<Vec<StepDefinition>, ServiceError> {
         let step_definitions: Vec<Result<StepDefinition, ServiceError>> = sqlx::query!(
             // language=PostgreSQL
