@@ -17,12 +17,15 @@ pub use step_definitions::*;
 
 mod pipelines;
 mod steps;
+mod projects;
 
 pub fn router() -> Router {
     Router::new()
         .merge(pipelines::router())
         .merge(steps::router())
+        .merge(projects::router())
         // user routes
+        .route("/account/details", get(user::get_current_user))
         .route("/users", post(user::create_user))
         .route("/users/{user_id}", get(user::get_user))
         // auth routes

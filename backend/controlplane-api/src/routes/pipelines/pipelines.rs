@@ -1,12 +1,11 @@
 use axum::{extract::Path, Extension, Json};
-use chrono::{DateTime, Utc};
 use common::{
     database::Database,
     model::{
         jobs::{Job, JobId},
         pipeline::{Pipeline, PipelineId},
         project::ProjectId,
-        step::Step,
+        step::{Step, StepId},
     },
     ServiceError,
 };
@@ -58,8 +57,8 @@ pub struct GetPipelineResponse {
     name: String,
     description: Option<String>,
     project_id: ProjectId,
-    created_at: DateTime<Utc>,
     steps: Vec<Step>,
+    step_connections: Vec<(StepId, StepId)>,
 }
 
 impl From<Pipeline> for GetPipelineResponse {
@@ -69,8 +68,8 @@ impl From<Pipeline> for GetPipelineResponse {
             name: pipeline.pipeline_name,
             project_id: pipeline.project_id,
             description: pipeline.description,
-            created_at: pipeline.created_at,
             steps: pipeline.steps,
+            step_connections: pipeline.step_connections,
         }
     }
 }

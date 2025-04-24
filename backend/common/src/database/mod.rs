@@ -1,8 +1,9 @@
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
 mod jobs;
-mod organization;
+mod organizations;
 mod pipelines;
+mod projects;
 mod step_definitions;
 mod steps;
 mod users;

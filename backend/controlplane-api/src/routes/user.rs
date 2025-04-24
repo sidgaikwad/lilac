@@ -33,6 +33,19 @@ pub struct CreateUserResponse {
 }
 
 #[instrument(level = "info", skip(db), ret, err)]
+pub async fn get_current_user(
+    claims: Claims,
+    db: Extension<Database>,
+) -> Result<Json<GetUserResponse>, ServiceError> {
+    let user = db.get_user(&claims.sub).await?;
+
+    Ok(Json(GetUserResponse {
+        id: user.user_id,
+        email: user.email,
+    }))
+}
+
+#[instrument(level = "info", skip(db), ret, err)]
 pub async fn get_user(
     claims: Claims,
     db: Extension<Database>,

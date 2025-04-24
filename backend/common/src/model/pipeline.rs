@@ -1,10 +1,12 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::ServiceError;
 
-use super::{project::ProjectId, step::Step};
+use super::{
+    project::ProjectId,
+    step::{Step, StepId},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(transparent)]
@@ -63,7 +65,7 @@ pub struct Pipeline {
     pub description: Option<String>,
     pub project_id: ProjectId,
     pub steps: Vec<Step>,
-    pub created_at: DateTime<Utc>,
+    pub step_connections: Vec<(StepId, StepId)>,
 }
 
 impl Pipeline {
@@ -73,7 +75,7 @@ impl Pipeline {
         description: Option<String>,
         project_id: ProjectId,
         steps: Vec<Step>,
-        created_at: DateTime<Utc>,
+        step_connections: Vec<(StepId, StepId)>,
     ) -> Self {
         Self {
             pipeline_id,
@@ -81,7 +83,7 @@ impl Pipeline {
             description,
             project_id,
             steps,
-            created_at,
+            step_connections,
         }
     }
 
@@ -96,7 +98,7 @@ impl Pipeline {
             description,
             project_id,
             steps: Vec::new(),
-            created_at: Utc::now(),
+            step_connections: Vec::new(),
         }
     }
 }

@@ -1,10 +1,7 @@
 use secrecy::ExposeSecret;
 
 use crate::{
-    model::{
-        organization::Organization,
-        user::{User, UserId},
-    },
+    model::user::{User, UserId},
     ServiceError,
 };
 
@@ -55,23 +52,5 @@ impl Database {
     .fetch_one(&self.pool)
     .await?;
         Ok(user_id)
-    }
-
-    pub async fn list_organizations(
-        &self,
-        user_id: &UserId,
-    ) -> Result<Vec<Organization>, ServiceError> {
-        let id = user_id.inner();
-        let orgs = sqlx::query_as!(
-        Organization,
-        // language=PostgreSQL
-        r#"
-            SELECT o.organization_id, o.organization_name FROM "organization_memberships" m INNER JOIN organizations o ON m.organization_id = o.organization_id WHERE m.user_id = $1
-        "#,
-        id
-    )
-    .fetch_all(&self.pool)
-    .await?;
-        Ok(orgs)
     }
 }

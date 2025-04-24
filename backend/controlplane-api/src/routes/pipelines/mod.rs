@@ -3,15 +3,15 @@ use axum::{
     Router,
 };
 
-mod pipeline;
-use pipeline::*;
+mod pipelines;
+use pipelines::*;
 
 pub fn router() -> Router {
     Router::new()
-        .route("/pipeline", post(create_pipeline))
+        .route("/pipelines", post(create_pipeline))
         .route(
-            "/pipeline/{pipeline_id}",
+            "/pipelines/{pipeline_id}",
             get(get_pipeline).delete(delete_pipeline),
         )
-        .route("/pipeline/{pipeline_id}/run", get(run_pipeline))
+        .route("/pipelines/{pipeline_id}/run", post(run_pipeline))
 }

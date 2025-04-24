@@ -2,7 +2,7 @@ use crate::{
     model::{
         pipeline::{Pipeline, PipelineId},
         project::ProjectId,
-        step::Step,
+        step::{Step, StepId},
     },
     ServiceError,
 };
@@ -15,11 +15,15 @@ impl Database {
         let pipeline = sqlx::query!(
             // language=PostgreSQL
             r#"
-            SELECT p.pipeline_id, p.pipeline_name, p.description, p.project_id, p.created_at,
+            SELECT p.pipeline_id, p.pipeline_name, p.description, p.project_id,
                 ARRAY(
                     SELECT (s.step_id, s.step_definition_id, s.pipeline_id, s.step_parameters)
                     FROM "steps" s WHERE s.pipeline_id = $1
-                ) as "steps: Vec<Step>"
+                ) as "steps: Vec<Step>",
+                ARRAY(
+                    SELECT (s.from_step_id, s.to_step_id)
+                    FROM "step_connections" s WHERE s.pipeline_id = $1
+                ) as "step_connections: Vec<(StepId, StepId)>"
             FROM "pipelines" p
             WHERE p.pipeline_id = $1
             GROUP BY p.pipeline_id
@@ -32,7 +36,7 @@ impl Database {
             description: row.description,
             project_id: row.project_id.into(),
             steps: row.steps.unwrap_or(Vec::new()),
-            created_at: row.created_at,
+            step_connections: row.step_connections.unwrap_or(Vec::new()),
         })
         .fetch_one(&self.pool)
         .await?;
@@ -48,7 +52,11 @@ impl Database {
             // language=PostgreSQL
             r#"
             SELECT p.pipeline_id, p.pipeline_name, p.description, p.project_id, p.created_at,
-                ARRAY_AGG((s.step_id, s.step_definition_id, s.pipeline_id, s.step_parameters)) as "steps: Vec<Step>"
+                ARRAY_AGG((s.step_id, s.step_definition_id, s.pipeline_id, s.step_parameters)) as "steps: Vec<Step>",
+                ARRAY(
+                    SELECT (s.from_step_id, s.to_step_id)
+                    FROM "step_connections" s WHERE s.pipeline_id = $1
+                ) as "step_connections: Vec<(StepId, StepId)>"
             FROM "pipelines" p
             LEFT JOIN "steps" s USING (pipeline_id)
             WHERE p.project_id = $1
@@ -62,7 +70,7 @@ impl Database {
             description: row.description,
             project_id: row.project_id.into(),
             steps: row.steps.unwrap_or(Vec::new()),
-            created_at: row.created_at,
+            step_connections: row.step_connections.unwrap_or(Vec::new()),
         })
         .fetch_all(&self.pool)
         .await?;
@@ -73,13 +81,12 @@ impl Database {
         let pipeline_id = sqlx::query!(
         // language=PostgreSQL
         r#"
-            INSERT INTO "pipelines" (pipeline_id, pipeline_name, description, project_id, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING pipeline_id
+            INSERT INTO "pipelines" (pipeline_id, pipeline_name, description, project_id) VALUES ($1, $2, $3, $4) RETURNING pipeline_id
         "#,
         pipeline.pipeline_id.inner(),
         &pipeline.pipeline_name,
         pipeline.description.as_ref(),
-        &pipeline.project_id.inner(),
-        &pipeline.created_at,
+        &pipeline.project_id.inner()
     )
     .map(|row| PipelineId::new(row.pipeline_id))
     .fetch_one(&self.pool)

@@ -545,6 +545,7 @@ dependencies = [
  "sqlx",
  "strum",
  "thiserror 2.0.12",
+ "tracing",
  "uuid",
 ]
 
@@ -587,6 +588,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.12",
+ "time",
  "tokio",
  "tower-http",
  "tracing",

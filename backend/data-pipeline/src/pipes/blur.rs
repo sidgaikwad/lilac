@@ -137,10 +137,12 @@ impl PipeDefinition for BlurDetectorPipe {
                         "then": {
                             "properties": {
                                 "edge_magnitude_threshold": { "type": "integer" }
-                            }
+                            },
+                            "required": ["edge_magnitude_threshold"],
                         }
                     }
                 ],
+                "required": ["threshold", "method"],
             }),
         }
     }

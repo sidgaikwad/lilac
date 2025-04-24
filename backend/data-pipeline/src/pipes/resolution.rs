@@ -57,6 +57,7 @@ impl PipeDefinition for ResolutionStandardizerPipe {
                         ]
                     }
                 },
+                "required": ["target_height", "target_width", "filter_type"],
             }),
         }
     }

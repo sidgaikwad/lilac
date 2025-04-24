@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -55,7 +54,6 @@ pub struct Project {
     pub project_id: ProjectId,
     pub project_name: String,
     pub organization_id: OrganizationId,
-    pub created_at: DateTime<Utc>,
 }
 
 impl Project {
@@ -63,13 +61,11 @@ impl Project {
         project_id: ProjectId,
         project_name: String,
         organization_id: OrganizationId,
-        created_at: DateTime<Utc>,
     ) -> Self {
         Self {
             project_id,
             project_name,
             organization_id,
-            created_at,
         }
     }
 
@@ -78,7 +74,6 @@ impl Project {
             project_id: ProjectId::generate(),
             project_name,
             organization_id,
-            created_at: Utc::now(),
         }
     }
 }

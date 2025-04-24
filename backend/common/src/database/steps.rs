@@ -1,5 +1,7 @@
 use std::iter;
 
+use tracing::instrument;
+
 use crate::{
     model::{
         pipeline::PipelineId,
@@ -110,16 +112,16 @@ impl Database {
             iter::repeat_n(from.pipeline_id.into_inner(), to.len()).collect();
         let to_ids: Vec<_> = to.into_iter().map(|v| v.inner().clone()).collect();
         sqlx::query!(
-        // language=PostgreSQL
-        r#"
-            INSERT INTO "step_connections" (from_step_id, to_step_id, pipeline_id) SELECT * FROM UNNEST($1::uuid[], $2::uuid[], $3::uuid[])
-        "#,
-        from_ids.as_slice(),
-        to_ids.as_slice(),
-        pipeline_ids.as_slice()
-    )
-    .fetch_one(&self.pool)
-    .await?;
+            // language=PostgreSQL
+            r#"
+                INSERT INTO "step_connections" (from_step_id, to_step_id, pipeline_id) SELECT * FROM UNNEST($1::uuid[], $2::uuid[], $3::uuid[])
+            "#,
+            from_ids.as_slice(),
+            to_ids.as_slice(),
+            pipeline_ids.as_slice()
+        )
+        .execute(&self.pool)
+        .await?;
         Ok(())
     }
 
@@ -137,11 +139,12 @@ impl Database {
             from.inner(),
             to.as_slice(),
         )
-        .fetch_one(&self.pool)
+        .execute(&self.pool)
         .await?;
         Ok(())
     }
 
+    #[instrument(level = "info", skip(self), ret, err)]
     pub async fn get_step_connections(
         &self,
         step_id: &StepId,
