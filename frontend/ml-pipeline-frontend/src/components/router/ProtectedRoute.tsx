@@ -1,7 +1,7 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import useAuthStore from '@/store/authStore';
+import { Navigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
+import { useGetUser } from '@/services/controlplane-api/user/use-get-user.hook';
 
 /**
  * A route guard that checks authentication status.
@@ -10,15 +10,14 @@ import MainLayout from '@/components/layout/MainLayout';
  * Shows a loading indicator during the initial auth check.
  */
 const ProtectedRoute: React.FC = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isLoading = useAuthStore((state) => state.isLoading);
+  const { isError, isLoading } = useGetUser({});
 
   if (isLoading) {
     // TODO: Replace with a proper loading spinner component (e.g., shadcn Skeleton or custom)
     return <div className="flex h-screen items-center justify-center">Checking authentication...</div>;
   }
 
-  if (!isAuthenticated) {
+  if (isError) {
     return <Navigate to="/login" replace />;
   }
 

@@ -18,16 +18,16 @@ interface AuthState {
 const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   user: null,
-  token: localStorage.getItem('authToken'), // Initialize token from storage
+  token: localStorage.getItem('token'), // Initialize token from storage
   isLoading: true, // Start loading until initial check completes
   error: null,
 
   // Action to update the entire auth state, typically after login or auth check
   setAuthState: (isAuthenticated, user, token) => {
     if (isAuthenticated && token) {
-      localStorage.setItem('authToken', token);
+      localStorage.setItem('token', token);
     } else {
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
     }
     set({ isAuthenticated, user, token, isLoading: false, error: null });
   },
@@ -44,7 +44,7 @@ const useAuthStore = create<AuthState>((set) => ({
 
   // Action for logging out
   logout: () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('token');
     set({ isAuthenticated: false, user: null, token: null, error: null, isLoading: false });
   },
 }));

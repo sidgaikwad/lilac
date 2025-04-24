@@ -50,8 +50,6 @@ export interface PipelineDefinition {
   steps: PipelineStepConfig[];
   connections: PipelineConnectionConfig[];
   version_id?: string;
-  created_at?: string;
-  updated_at?: string;
 }
 
 // Type for the list view on the dashboard

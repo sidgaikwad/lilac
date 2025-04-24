@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './store/authStore';
 import ProtectedRoute from './components/router/ProtectedRoute';
 import { useQuery } from '@tanstack/react-query';
 import { checkAuth } from './features/auth/services/authService';
-import { User } from '@/types'; // Import User type
+import { User, ApiError } from '@/types'; // Import User type
+import '@tanstack/react-query'
 
 // Import Feature Pages
 import LoginPage from './features/auth/pages/LoginPage';
@@ -13,6 +14,13 @@ import PipelineEditorPage from './features/pipelines/pages/PipelineEditorPage';
 import SettingsPage from './features/settings/pages/SettingsPage';
 import AccountSettingsPage from './features/settings/pages/AccountSettingsPage';
 import OrganizationSettingsPage from './features/settings/pages/OrganizationSettingsPage';
+
+
+declare module '@tanstack/react-query' {
+  interface Register {
+    defaultError: ApiError
+  }
+}
 
 
 const NotFoundPage = () => <div>404 Not Found</div>;
