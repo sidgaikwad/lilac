@@ -1,79 +1,61 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider, ReactFlowInstance, Node, Edge, Viewport } from 'reactflow';
-import { hardcodedStepDefinitions } from '@/config/stepDefinitions'; // Re-add import
+import { hardcodedStepDefinitions } from '@/config/stepDefinitions';
 import PipelineSidebar from '../components/PipelineSidebar';
 import PipelineEditorFlow from '../components/PipelineEditorFlow';
 import PipelineEditorTopBar from '../components/PipelineEditorTopBar';
-import { getPipelineEntry, addPipelineVersion, renamePipeline, PipelineVersion, FlowData, PipelineStorageEntry } from '@/lib/localStorageUtils';
+// Removed localStorageUtils imports
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PlayIcon, Loader2Icon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchPipelineDetail } from '../services/pipelineService';
-import { PipelineDefinition, StepDefinition, ParameterDefinition } from '@/types'; // Import types
+// Removed old service import
+import { PipelineDefinition, StepDefinition, ParameterDefinition, PipelineVersion } from '@/types'; // Added PipelineVersion
+import { FlowData } from '@/lib/localStorageUtils'; // Keep FlowData type for now
+// Import TanStack Query hooks
+import { useGetPipeline } from '@/services/controlplane-api/useGetPipeline.hook';
+import { useSavePipelineVersion } from '@/services/controlplane-api/useSavePipelineVersion.hook';
+import { useRenamePipeline } from '@/services/controlplane-api/usePipelineMutations.hook'; // Rename hook already exists
 
 const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
 
-// Function to create default nodes (needs access to step definitions)
+// Function to create default nodes (remains the same)
 const createDefaultNodes = (stepDefs: StepDefinition[]): Node[] => {
   const inputDef = stepDefs.find((def: StepDefinition) => def.category === 'Input');
   const outputDef = stepDefs.find((def: StepDefinition) => def.category === 'Output');
   const nodes: Node[] = [];
-
   if (inputDef) {
-    const defaultParams = inputDef.parameters.reduce((acc: Record<string, any>, param: ParameterDefinition) => {
-        if (param.defaultValue !== undefined) acc[param.name] = param.defaultValue;
-        return acc;
-      }, {});
+    const defaultParams = inputDef.parameters.reduce((acc: Record<string, any>, param: ParameterDefinition) => { if (param.defaultValue !== undefined) acc[param.name] = param.defaultValue; return acc; }, {});
     nodes.push({ id: 'input_node', type: 'pipelineNode', position: { x: 50, y: 150 }, data: { label: inputDef.label, stepType: inputDef.type, parameters: defaultParams, stepDefinition: inputDef } });
   } else { console.warn("Default 'Input' step definition not found."); }
-
   if (outputDef) {
-     const defaultParams = outputDef.parameters.reduce((acc: Record<string, any>, param: ParameterDefinition) => {
-        if (param.defaultValue !== undefined) acc[param.name] = param.defaultValue;
-        return acc;
-      }, {});
+     const defaultParams = outputDef.parameters.reduce((acc: Record<string, any>, param: ParameterDefinition) => { if (param.defaultValue !== undefined) acc[param.name] = param.defaultValue; return acc; }, {});
     nodes.push({ id: 'output_node', type: 'pipelineNode', position: { x: 650, y: 150 }, data: { label: outputDef.label, stepType: outputDef.type, parameters: defaultParams, stepDefinition: outputDef } });
   } else { console.warn("Default 'Output' step definition not found."); }
   return nodes;
 };
 
-// Helper to convert API PipelineDefinition to FlowData
+// Helper to convert API PipelineDefinition to FlowData (remains mostly the same)
 const getFlowDataFromPipeline = (
     pipeline: PipelineDefinition | null | undefined,
-    stepDefs: StepDefinition[] // Need step definitions to map labels/data correctly
+    stepDefs: StepDefinition[]
 ): FlowData | null => {
     if (!pipeline) return null;
-
     const stepDefMap = new Map(stepDefs.map(def => [def.type, def]));
-
     const nodes = pipeline.steps.map(step => {
         const definition = stepDefMap.get(step.step_type);
         return {
-            id: step.id,
-            type: 'pipelineNode',
+            id: step.id, type: 'pipelineNode',
             position: step.position || { x: Math.random() * 400, y: Math.random() * 400 },
-            data: {
-                label: definition?.label || step.step_type, // Use label from definition
-                stepType: step.step_type,
-                parameters: step.parameters,
-                stepDefinition: definition // Pass the full definition
-            }
+            data: { label: definition?.label || step.step_type, stepType: step.step_type, parameters: step.parameters, stepDefinition: definition }
         };
-    }).filter(node => node.data.stepDefinition); // Filter out nodes whose definition wasn't found
-
+    }).filter(node => node.data.stepDefinition); // Filter out nodes if definition missing
     const edges = pipeline.connections.map(conn => ({
-        id: `e-${conn.from_step_id}-${conn.to_step_id}`,
-        source: conn.from_step_id,
-        target: conn.to_step_id,
-        animated: true,
+        id: `e-${conn.from_step_id}-${conn.to_step_id}`, source: conn.from_step_id, target: conn.to_step_id, animated: true,
     }));
-
-    // Return a default viewport if none is stored/provided
+    // TODO: Viewport should ideally come from API or be persisted per user/pipeline
     const viewport: Viewport = { x: 0, y: 0, zoom: 1 };
-
     return { nodes, edges, viewport };
 };
 
@@ -81,118 +63,68 @@ const getFlowDataFromPipeline = (
 const PipelineEditorPage: React.FC = () => {
   const { pipelineId } = useParams<{ pipelineId: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  // Re-introduce state for the local storage entry for rename/version list
-  const [pipelineEntry, setPipelineEntry] = useState<PipelineStorageEntry | null>(null);
-  const [currentVersionId, setCurrentVersionId] = useState<string | undefined>(undefined);
-  const [displayNodes, setDisplayNodes] = useState<Node[] | undefined>(undefined);
-  const [displayEdges, setDisplayEdges] = useState<Edge[] | undefined>(undefined);
-  const [displayViewport, setDisplayViewport] = useState<Viewport | undefined>(undefined);
+  // Removed local state for pipelineEntry, versions, displayNodes etc.
   const reactFlowInstanceRef = useRef<ReactFlowInstance | null>(null);
 
-  // Fetch pipeline details using React Query
-  const { data: pipelineData, isLoading: isLoadingPipeline, error: pipelineError, isError } = useQuery<PipelineDefinition | null, Error>({
-    queryKey: ['pipelineDetail', pipelineId],
-    queryFn: () => pipelineId ? fetchPipelineDetail(pipelineId) : Promise.resolve(null),
-    enabled: !!pipelineId,
-    retry: 1,
-  });
+  // --- TanStack Query Hooks ---
+  const { data: pipelineData, isLoading: isLoadingPipeline, error: pipelineError, isError } = useGetPipeline({ pipelineId });
+  const saveMutation = useSavePipelineVersion();
+  const renameMutation = useRenamePipeline();
 
-  // TODO: Fetch step definitions separately using useQuery
-  const stepDefinitions = hardcodedStepDefinitions; // Use hardcoded as fallback
+  // TODO: Fetch step definitions via query hook
+  const stepDefinitions = hardcodedStepDefinitions;
 
-  // Effect to update display state based on fetched data or local storage
+  // --- Derived State ---
+  // Derive flow data directly from the query result
+  const currentFlowData = React.useMemo(
+      () => getFlowDataFromPipeline(pipelineData, stepDefinitions),
+      [pipelineData, stepDefinitions]
+  );
+
+  // Handle navigation/toast on error
   useEffect(() => {
-    const entry = pipelineId ? getPipelineEntry(pipelineId) : null; // Get local entry for name/versions
-    setPipelineEntry(entry || null);
-
-    if (pipelineData) {
-        const flowData = getFlowDataFromPipeline(pipelineData, stepDefinitions);
-        setDisplayNodes(flowData?.nodes || []);
-        setDisplayEdges(flowData?.edges || []);
-        setDisplayViewport(flowData?.viewport || { x: 0, y: 0, zoom: 1 }); // Ensure viewport is set
-        setCurrentVersionId(pipelineData.version_id); // Set current version from fetched data
-    } else if (!isLoadingPipeline && pipelineId) {
-        // Fallback to local storage if API fails or pipeline is new
-        if (entry && entry.versions.length > 0) {
-            const latestVersion = entry.versions[0];
-            const flowData = latestVersion.flowData;
-            setDisplayNodes(flowData.nodes);
-            setDisplayEdges(flowData.edges);
-            setDisplayViewport(flowData.viewport); // Viewport should exist here
-            setCurrentVersionId(latestVersion.versionId);
-        } else if (entry) { // New pipeline (exists locally, no versions)
-             setDisplayNodes(createDefaultNodes(stepDefinitions)); // Pass stepDefs
-             setDisplayEdges([]);
-             setDisplayViewport({ x: 0, y: 0, zoom: 1 }); // Default viewport
-             setCurrentVersionId(undefined);
-        } else if (isError) {
-            toast.error(`Failed to load pipeline: ${pipelineError?.message || 'Unknown error'}`);
-            navigate('/pipelines');
-        } else { // Not loading, no error, no data, no entry -> invalid ID
-             toast.error("Pipeline not found.");
-             navigate('/pipelines');
-        }
-    }
-  }, [pipelineData, isLoadingPipeline, pipelineId, navigate, isError, pipelineError, stepDefinitions]); // Add stepDefinitions
+      if (isError && !isLoadingPipeline) {
+          toast.error(`Failed to load pipeline: ${pipelineError?.message || 'Unknown error'}`);
+          // Navigate back to project pipelines list (assuming projectId is in pipelineData or context)
+          // For now, navigate to a general fallback
+          navigate('/pipelines'); // Adjust this fallback route if needed
+      }
+  }, [isError, isLoadingPipeline, pipelineError, navigate]);
 
 
+  // --- Event Handlers ---
   const handleSave = useCallback(() => {
-    if (!pipelineId || !reactFlowInstanceRef.current || !pipelineEntry) return;
-    const currentFlowData: FlowData = {
+    if (!pipelineId || !reactFlowInstanceRef.current || !pipelineData) {
+        toast.error("Cannot save: Pipeline data or editor instance not available.");
+        return;
+    }
+    const currentFlow: FlowData = {
       nodes: reactFlowInstanceRef.current.getNodes(),
       edges: reactFlowInstanceRef.current.getEdges(),
       viewport: reactFlowInstanceRef.current.getViewport(),
     };
-    const newVersion: PipelineVersion = {
-      versionId: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      flowData: currentFlowData,
-    };
-    // TODO: Replace with useMutation calling savePipelineVersion API
-    addPipelineVersion(pipelineId, newVersion);
-    const updatedEntry = getPipelineEntry(pipelineId);
-    setPipelineEntry(updatedEntry || null); // Update local entry state
-    // Update display state immediately
-    setDisplayNodes(newVersion.flowData.nodes);
-    setDisplayEdges(newVersion.flowData.edges);
-    setDisplayViewport(newVersion.flowData.viewport);
-    setCurrentVersionId(newVersion.versionId);
-    toast.success(`Pipeline '${pipelineEntry.name}' saved successfully!`);
-  }, [pipelineId, pipelineEntry, reactFlowInstanceRef]);
+    saveMutation.mutate({
+        pipelineId: pipelineId,
+        flowData: currentFlow,
+        projectId: pipelineData.project_id // Pass projectId for invalidation context
+    });
+  }, [pipelineId, pipelineData, saveMutation, reactFlowInstanceRef]);
 
-  const handleRename = useCallback((id: string, newName: string): boolean => {
-    // TODO: Replace with useMutation calling renamePipelineApi
-    const success = renamePipeline(id, newName);
-    if (success) {
-        setPipelineEntry(prev => prev ? { ...prev, name: newName } : null); // Update local entry state
-        queryClient.invalidateQueries({ queryKey: ['pipelineDetail', pipelineId] });
-        queryClient.invalidateQueries({ queryKey: ['pipelines'] });
-    }
-    return success;
-  }, [pipelineId, queryClient]);
+  const handleRename = useCallback((id: string, newName: string): void => {
+      // Rename mutation expects { pipelineId, newName }
+      renameMutation.mutate({ pipelineId: id, newName: newName }, {
+          // context: { projectId: pipelineData?.project_id } // Context not needed anymore
+      });
+  }, [renameMutation]); // Removed pipelineData dependency
 
-  const handleSelectVersion = useCallback((versionId: string) => {
-    if (!pipelineId) return;
-    // TODO: Refetch specific version via API if needed
-    const entry = getPipelineEntry(pipelineId); // Still using local for mock version switching
-    const selectedVersion = entry?.versions.find(v => v.versionId === versionId);
-    if (selectedVersion?.flowData) {
-      setCurrentVersionId(selectedVersion.versionId);
-      setDisplayNodes(selectedVersion.flowData.nodes);
-      setDisplayEdges(selectedVersion.flowData.edges);
-      setDisplayViewport(selectedVersion.flowData.viewport); // Load viewport too
-      toast.info(`Loaded version from ${new Date(selectedVersion.timestamp).toLocaleString()}`);
-    } else {
-      toast.error("Selected version data not found.");
-    }
-  }, [pipelineId]); // Removed pipelineEntry dependency as we refetch it
+  // Removed handleSelectVersion - versioning handled by API/Query invalidation now
 
   const handleFlowInit = useCallback((instance: ReactFlowInstance) => {
     reactFlowInstanceRef.current = instance;
   }, []);
 
   const handleRun = useCallback(() => {
+    // Validation logic remains the same
     if (!reactFlowInstanceRef.current || !pipelineId) return;
     const nodes = reactFlowInstanceRef.current.getNodes();
     const edges = reactFlowInstanceRef.current.getEdges();
@@ -217,7 +149,8 @@ const PipelineEditorPage: React.FC = () => {
   }, [pipelineId]);
 
 
-  if (isLoadingPipeline || displayNodes === undefined) {
+  // --- Render ---
+  if (isLoadingPipeline || !currentFlowData) { // Show loading until initial data/flow is ready
     return (
         <div className="flex h-full items-center justify-center p-6">
             <Loader2Icon className="mr-2 h-6 w-6 animate-spin" /> Loading pipeline...
@@ -225,29 +158,35 @@ const PipelineEditorPage: React.FC = () => {
     );
   }
 
+  // Note: Version handling in TopBar needs adjustment as we only fetch latest detail now
+  // The mock API doesn't support fetching specific versions yet.
+  // We pass an empty array for versions for now.
+
   return (
     <ReactFlowProvider>
       <div className="flex flex-col h-full">
         <PipelineEditorTopBar
           pipelineId={pipelineId}
-          pipelineName={pipelineData?.name || pipelineEntry?.name || 'Loading...'} // Use fetched or local name
+          pipelineName={pipelineData?.name || 'Loading...'} // Use name from query data
           onSave={handleSave}
           onRename={handleRename}
-          versions={pipelineEntry?.versions || []} // Use local entry for version list
-          selectedVersionId={currentVersionId}
-          onSelectVersion={handleSelectVersion}
+          versions={[]} // Pass empty array for versions for now
+          selectedVersionId={pipelineData?.version_id} // Show current version ID if available
+          // onSelectVersion={handleSelectVersion} // Removed version selection
+          isSaving={saveMutation.isPending} // Pass saving state
         />
          <div className="p-2 border-b border-border bg-card flex justify-end">
-             <Button onClick={handleRun} size="sm" className={cn(buttonFocusStyle)}>
+             <Button onClick={handleRun} size="sm" className={cn(buttonFocusStyle)} disabled={saveMutation.isPending}>
                  <PlayIcon className="mr-2 h-4 w-4" /> Run Pipeline (Simulated)
              </Button>
          </div>
         <div className="flex flex-grow overflow-hidden">
+          {/* Use key derived from pipelineId and versionId to force remount on data change */}
           <PipelineEditorFlow
-            key={currentVersionId || 'initial'}
-            initialNodes={displayNodes}
-            initialEdges={displayEdges}
-            initialViewport={displayViewport}
+            key={`${pipelineId}-${pipelineData?.version_id || 'initial'}`}
+            initialNodes={currentFlowData.nodes}
+            initialEdges={currentFlowData.edges}
+            initialViewport={currentFlowData.viewport}
             onFlowInit={handleFlowInit}
           />
           <PipelineSidebar />

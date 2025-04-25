@@ -47,14 +47,17 @@ export interface PipelineDefinition {
   id: string;
   name: string;
   organization_id: string;
+project_id: string;
   steps: PipelineStepConfig[];
   connections: PipelineConnectionConfig[];
   version_id?: string;
+created_at?: string;
+  updated_at?: string;
 }
 
 // Type for the list view on the dashboard
 export interface PipelineListItem {
   id: string;
   name: string;
-  lastModified: string; // Use camelCase to match localStorageUtils return type
+  lastModified: string;
 }

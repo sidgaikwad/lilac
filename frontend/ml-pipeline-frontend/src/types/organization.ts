@@ -14,6 +14,13 @@ export interface OrganizationMember extends User {
   joined_at?: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  organization_id: string; // Use snake_case for consistency if backend uses it
+  created_at?: string;
+  // Add other relevant project fields from API
+}
 // Type for listing organizations (e.g., GET /organization)
 export type OrganizationList = Organization[];
 

@@ -1,58 +1,108 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { ThemeToggle } from '@/components/common/ThemeToggle';
+import React, { useState } from 'react';
+import { NavLink, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import useAuthStore from '@/store/authStore';
-import { LogOutIcon } from 'lucide-react';
+import {
+    LogOutIcon, Settings, Home, HardDrive, Zap, LucideProps // Import LucideProps
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+// Define a type for the icon component that accepts LucideProps
+type IconComponent = React.ComponentType<LucideProps>;
 
 const Sidebar: React.FC = () => {
   const logout = useAuthStore((state) => state.logout);
+  const { projectId } = useParams<{ projectId?: string }>();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleLogout = () => {
     logout();
   };
 
-  return (
-    <aside className="w-64 bg-card p-4 border-r border-border shrink-0 flex flex-col">
-      {/* Container for Title and Theme Toggle */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Mario Bros</h2> {/* Updated Title */}
-        <ThemeToggle /> {/* Moved Toggle Here */}
-      </div>
+  const handleMouseEnter = () => setIsExpanded(true);
+  const handleMouseLeave = () => setIsExpanded(false);
 
-      <nav className="flex-grow">
-        <ul className="space-y-2">
-          <li>
+  const getNavLinkClass = ({ isActive }: { isActive: boolean }, isDisabled: boolean = false) =>
+    cn(
+      'flex flex-nowrap items-center gap-2 rounded-md text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
+      'h-8 text-sm font-medium',
+      isDisabled
+        ? 'cursor-not-allowed opacity-50 pointer-events-none'
+        : 'hover:bg-accent hover:text-accent-foreground',
+      isActive && !isDisabled
+        ? 'bg-accent text-accent-foreground font-semibold'
+        : 'text-muted-foreground',
+      isExpanded
+        ? 'w-full justify-start py-2 px-1.5'
+        : 'size-8 justify-center pl-1.5 pr-2'
+    );
+
+    // Updated navLinkContent to directly render the icon component with props
+    const navLinkContent = (Icon: IconComponent, label: string) => (
+        <>
+            <Icon className="size-5 shrink-0" aria-hidden="true" />
+            <span className={cn("whitespace-nowrap", !isExpanded && "hidden")}>{label}</span>
+        </>
+    );
+
+  return (
+      <aside
+        className={cn(
+          "bg-card border-r border-border flex flex-col transition-[width] duration-100 ease-linear shrink-0",
+          isExpanded ? "w-56" : "w-16"
+        )}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* Main Navigation */}
+        <nav className="flex-grow flex flex-col gap-0.5 p-2 overflow-auto">
             <NavLink
-              to="/pipelines"
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground ${isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-foreground/80'}`
-              }
+              to={projectId ? `/projects/${projectId}/home` : '#'}
+              className={({ isActive }) => getNavLinkClass({ isActive }, !projectId)}
+              aria-disabled={!projectId}
+              onClick={(e) => !projectId && e.preventDefault()}
+              tabIndex={!projectId ? -1 : undefined}
             >
-              Dashboard
+                {navLinkContent(Home, "Home")}
             </NavLink>
-          </li>
-          <li>
+             <NavLink
+               to={projectId ? `/projects/${projectId}/pipelines` : '#'}
+               className={({ isActive }) => getNavLinkClass({ isActive }, !projectId)}
+               aria-disabled={!projectId}
+               onClick={(e) => !projectId && e.preventDefault()}
+               tabIndex={!projectId ? -1 : undefined}
+             >
+                {navLinkContent(Zap, "Pipelines")}
+            </NavLink>
             <NavLink
-              to="/settings"
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground ${isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-foreground/80'}`
-              }
+              to={projectId ? `/projects/${projectId}/datasets` : '#'}
+              className={({ isActive }) => getNavLinkClass({ isActive }, !projectId)}
+              aria-disabled={!projectId}
+              onClick={(e) => !projectId && e.preventDefault()}
+              tabIndex={!projectId ? -1 : undefined}
             >
-              Settings
+                {navLinkContent(HardDrive, "Data Sets")}
             </NavLink>
-          </li>
-        </ul>
-      </nav>
-      {/* Add Logout Button at the bottom */}
-      <div className="mt-auto pt-4 border-t border-border">
-          <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-muted-foreground hover:text-foreground">
-            <LogOutIcon className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
-      </div>
-      {/* Removed the div that previously held only the ThemeToggle */}
-    </aside>
+        </nav>
+
+        {/* Bottom Section */}
+        <div className="mt-auto flex flex-col gap-0.5 p-2 border-t border-border">
+             <NavLink
+               to="/settings"
+               className={({ isActive }) => getNavLinkClass({ isActive }, false)}
+             >
+                 {navLinkContent(Settings, "Settings")}
+             </NavLink>
+             <Button
+                 variant="ghost"
+                 onClick={handleLogout}
+                 className={getNavLinkClass({ isActive: false }, false)}
+                 aria-label="Logout"
+             >
+                  {navLinkContent(LogOutIcon, "Logout")}
+             </Button>
+        </div>
+      </aside>
   );
 };
 

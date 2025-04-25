@@ -24,5 +24,7 @@ export enum QueryKeys {
     UPDATE_PIPELINE = 'UpdatePipeline',
     LIST_PIPELINE = 'ListPipelines',
     DELETE_PIPELINE = 'DeletePipeline',
+LIST_DATASETS = 'ListDataSets',
+    // Add GET, CREATE, UPDATE, DELETE for datasets later if needed
     
 }

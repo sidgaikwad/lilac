@@ -80,3 +80,4 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
+/* Removed custom CSS for tooltip arrow */

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Outlet } from 'react-router-dom'; // Import Outlet
 import { Navigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { useGetUser } from '@/services/controlplane-api/user/use-get-user.hook';
@@ -21,9 +22,10 @@ const ProtectedRoute: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // User is authenticated, render the main layout which contains the <Outlet />
-  // for the matched nested route defined in App.tsx
-  return <MainLayout />;
+  // User is authenticated, render the nested routes via Outlet.
+  // The correct layout (MainLayout or ProjectLayout) will be rendered by the
+  // specific route configuration within App.tsx.
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

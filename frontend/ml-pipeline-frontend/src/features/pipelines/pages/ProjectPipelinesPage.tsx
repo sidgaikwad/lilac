@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { useNavigate, Link, useParams } from 'react-router-dom'; // Added useParams
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { PencilIcon, Trash2Icon, CheckIcon, XIcon, Loader2Icon } from 'lucide-react';
+// Removed localStorageUtils imports
+import { PencilIcon, Trash2Icon, CheckIcon, XIcon, Loader2Icon, WorkflowIcon } from 'lucide-react';
 import DestructiveActionDialog from '@/components/common/DestructiveActionDialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-// Removed direct service imports
+import { useQuery, useQueryClient } from '@tanstack/react-query'; // Import useQueryClient
 import { PipelineListItem } from '@/types';
-import useOrganizationStore from '@/store/organizationStore';
-// Import TanStack Query hooks
+// Import TanStack Query hooks for pipelines
 import { useListPipelines } from '@/services/controlplane-api/useListPipelines.hook';
 import {
     useCreatePipeline,
@@ -18,21 +18,15 @@ import {
     useDeletePipeline
 } from '@/services/controlplane-api/usePipelineMutations.hook';
 
+// Removed local mock fetchPipelines function
+
 const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
 
-// NOTE: This component might be deprecated in favor of ProjectPipelinesPage.tsx
-// based on App.tsx routing. Confirm if this page is still needed.
-// Assuming it is for now.
-
-const DashboardPage: React.FC = () => {
+const ProjectPipelinesPage: React.FC = () => {
   const navigate = useNavigate();
-  // Get projectId from URL if this page is accessed directly via /pipelines (less likely now)
-  // OR get it from the store if it's meant to show pipelines for the *selected* project
-  // Let's assume it uses the selected project from the store for consistency
-  const { selectedProject } = useOrganizationStore();
-  const projectId = selectedProject?.id;
+  const { projectId } = useParams<{ projectId: string }>(); // Get projectId from URL
 
-  // State for UI interactions (modals, inline edit)
+  // State for UI interactions
   const [pipelineToDelete, setPipelineToDelete] = useState<PipelineListItem | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [renamingPipelineId, setRenamingPipelineId] = useState<string | null>(null);
@@ -44,7 +38,7 @@ const DashboardPage: React.FC = () => {
       isLoading: isLoadingPipelines,
       isFetching: isFetchingPipelines,
       error: pipelineError
-  } = useListPipelines({ projectId });
+  } = useListPipelines({ projectId }); // Use the hook
 
   const createPipelineMutation = useCreatePipeline();
   const renamePipelineMutation = useRenamePipeline();
@@ -55,10 +49,9 @@ const DashboardPage: React.FC = () => {
   const isBusy = isLoadingPipelines || isFetchingPipelines || isMutating;
 
   // --- Action Handlers ---
-
   const handleCreatePipeline = () => {
     if (!projectId) {
-        toast.error("Cannot create pipeline: No project selected.");
+        toast.error("Cannot create pipeline: Project ID is missing from URL.");
         return;
     }
     const newPipelineName = `New Pipeline ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -79,7 +72,7 @@ const DashboardPage: React.FC = () => {
     setIsDeleteDialogOpen(true);
   };
   const closeDeleteDialog = () => {
-     if (deletePipelineMutation.isPending) return; // Prevent closing while deleting
+     if (deletePipelineMutation.isPending) return;
     setIsDeleteDialogOpen(false);
     setPipelineToDelete(null);
   };
@@ -87,9 +80,9 @@ const DashboardPage: React.FC = () => {
     if (pipelineToDelete && projectId) {
         deletePipelineMutation.mutate(pipelineToDelete.id, {
             onSuccess: () => {
-                closeDeleteDialog(); // Close dialog only on success
+                closeDeleteDialog();
             },
-            // context: { projectId } // Context no longer needed as hook invalidates general query
+            // context: { projectId } // Not needed anymore
         });
     }
   };
@@ -110,9 +103,9 @@ const DashboardPage: React.FC = () => {
             newName: currentNameValue.trim()
         }, {
             onSuccess: () => {
-                cancelRename(); // Close input on success
+                cancelRename();
             },
-             // context: { projectId } // Context no longer needed
+            // context: { projectId } // Not needed anymore
         });
     } else {
         cancelRename();
@@ -126,12 +119,12 @@ const DashboardPage: React.FC = () => {
     else if (event.key === 'Escape') cancelRename();
   };
 
-  // --- Render Logic ---
+   // --- Render Logic ---
   const renderContent = () => {
       if (!projectId) {
-          return (
+           return (
               <div className="text-center py-10 border rounded-lg bg-card text-muted-foreground">
-                  Please select a project in the header to view pipelines.
+                  Project ID not found in URL.
               </div>
           );
       }
@@ -179,16 +172,19 @@ const DashboardPage: React.FC = () => {
                                   <Button variant="ghost" size="icon" className={cn("h-8 w-8 text-red-600 hover:bg-red-100", buttonFocusStyle)} onClick={cancelRename} disabled={renamePipelineMutation.isPending}><XIcon className="h-4 w-4"/></Button>
                               </div>
                           ) : (
-                              <Link to={`/projects/${projectId}/pipelines/${p.id}`} className="text-primary hover:underline">
-                                  <CardTitle className="text-lg">{p.name}</CardTitle>
+                              <Link to={`/projects/${projectId}/pipelines/${p.id}`} className="text-primary hover:underline group">
+                                  <CardTitle className="text-lg flex items-center">
+                                      <WorkflowIcon className="mr-2 h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                                      {p.name}
+                                  </CardTitle>
                               </Link>
                           )}
                           <CardDescription>
-                              Last Modified: {new Date(p.lastModified).toLocaleString()}
+                              Last Modified: {p.lastModified === new Date(0).toISOString() ? 'N/A' : new Date(p.lastModified).toLocaleString()}
                           </CardDescription>
                       </CardHeader>
                       <CardFooter className="border-t pt-4 flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" title="Rename" onClick={() => startRename(p)} disabled={renamingPipelineId === p.id || isMutating || isFetchingPipelines} className={cn(buttonFocusStyle)}>
+                          <Button variant="ghost" size="icon" title="Rename Pipeline" onClick={() => startRename(p)} disabled={renamingPipelineId === p.id || isMutating || isFetchingPipelines} className={cn(buttonFocusStyle)}>
                               <PencilIcon className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon" className={cn("text-destructive hover:bg-destructive/10 hover:text-destructive", buttonFocusStyle)} title="Delete Pipeline" onClick={() => openDeleteDialog(p)} disabled={isMutating || isFetchingPipelines}>
@@ -200,7 +196,6 @@ const DashboardPage: React.FC = () => {
           </div>
       );
   };
-
 
   return (
     <div className="space-y-6">
@@ -231,4 +226,4 @@ const DashboardPage: React.FC = () => {
   );
 };
 
-export default DashboardPage;
+export default ProjectPipelinesPage;

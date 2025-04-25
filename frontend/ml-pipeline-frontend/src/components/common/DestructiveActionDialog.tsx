@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react'; // Added Loader2
 import { cn } from '@/lib/utils';
 
 interface DestructiveActionDialogProps {
@@ -22,6 +22,7 @@ interface DestructiveActionDialogProps {
   description: React.ReactNode;
   confirmationText: string;
   confirmButtonText?: string;
+  isConfirming?: boolean; // Added prop to disable confirm button during action
 }
 
 const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
@@ -32,20 +33,24 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
   description,
   confirmationText,
   confirmButtonText = "Confirm",
+  isConfirming = false, // Default isConfirming to false
 }) => {
   const [inputText, setInputText] = useState("");
   const isMatch = inputText === confirmationText;
 
   useEffect(() => {
     if (!isOpen) {
+      // Reset input when dialog closes
       setTimeout(() => setInputText(""), 150);
     }
   }, [isOpen]);
 
   const handleConfirm = () => {
-    if (isMatch) {
+    // Only call confirm if not already confirming and text matches
+    if (isMatch && !isConfirming) {
       onConfirm();
-      onClose();
+      // Don't close automatically here, let the parent component handle closing after the async action
+      // onClose();
     }
   };
 
@@ -55,7 +60,6 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader className="flex flex-row items-center gap-3">
-          {/* Use theme destructive color for icon and background */}
           <div className="p-2 bg-destructive/10 rounded-full">
              <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
@@ -75,29 +79,32 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
              value={inputText}
              onChange={(e) => setInputText(e.target.value)}
              placeholder={confirmationText}
-             // Use aria-invalid which applies border-destructive via theme/input component styles
              aria-invalid={!isMatch && inputText.length > 0}
              className={cn(
-                // Only add green border manually when matched
                 isMatch && "border-green-500 focus-visible:ring-green-500/50"
              )}
+             disabled={isConfirming} // Disable input while confirming
            />
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline" className={cn(buttonFocusStyle)}>Cancel</Button>
+            {/* Disable Cancel button while confirming */}
+            <Button type="button" variant="outline" className={cn(buttonFocusStyle)} disabled={isConfirming}>Cancel</Button>
           </DialogClose>
           <Button
             type="button"
-            variant="destructive" // Use destructive variant from theme
+            variant="destructive"
             onClick={handleConfirm}
-            disabled={!isMatch}
+            // Disable if text doesn't match OR if confirming is in progress
+            disabled={!isMatch || isConfirming}
             className={cn(
                 buttonFocusStyle,
-                // Override background only when enabled and matched
-                isMatch && "bg-green-600 hover:bg-green-700 border-green-600"
+                // Only apply green style if matched AND not confirming
+                isMatch && !isConfirming && "bg-green-600 hover:bg-green-700 border-green-600"
             )}
           >
+            {/* Show loader when confirming */}
+            {isConfirming && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {confirmButtonText}
           </Button>
         </DialogFooter>
