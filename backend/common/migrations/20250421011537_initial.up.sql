@@ -6,13 +6,6 @@ BEGIN
     RETURN NEW;
 END;
 $$ language 'plpgsql';
-CREATE  FUNCTION set_deleted_at_now()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.deleted_at = now();
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
 
 -- user tables
 CREATE TABLE users (
@@ -30,12 +23,6 @@ CREATE TRIGGER update_users_updated_at
         users
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();
-CREATE TRIGGER delete_users_deleted_at
-    BEFORE DELETE
-    ON
-        users
-    FOR EACH ROW
-EXECUTE PROCEDURE set_deleted_at_now();
 
 -- organization tables
 CREATE TABLE organizations (
@@ -59,12 +46,6 @@ CREATE TRIGGER update_organizations_updated_at
         organizations
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();
-CREATE TRIGGER delete_organizations_deleted_at
-    BEFORE DELETE
-    ON
-        organizations
-    FOR EACH ROW
-EXECUTE PROCEDURE set_deleted_at_now();
 
 -- project tables
 CREATE TABLE projects (
@@ -82,12 +63,24 @@ CREATE TRIGGER update_projects_updated_at
         projects
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();
-CREATE TRIGGER delete_projects_deleted_at
-    BEFORE DELETE
+
+-- datasets tables
+CREATE TABLE datasets (
+    dataset_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    dataset_name text NOT NULL,
+    description text,
+    project_id uuid NOT NULL REFERENCES projects(project_id),
+    created_at timestamptz NOT NULL default (now() at time zone 'UTC'),
+    updated_at timestamptz NOT NULL default (now() at time zone 'UTC'),
+    deleted_at timestamptz
+);
+CREATE INDEX idx_datasets_project_id ON datasets(project_id);
+CREATE TRIGGER update_datasets_updated_at
+    BEFORE UPDATE
     ON
-        projects
+        datasets
     FOR EACH ROW
-EXECUTE PROCEDURE set_deleted_at_now();
+EXECUTE PROCEDURE set_updated_at_now();
 
 -- pipeline tables
 CREATE TABLE pipelines (
@@ -106,16 +99,15 @@ CREATE TRIGGER update_pipelines_updated_at
         pipelines
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();
-CREATE TRIGGER delete_pipelines_deleted_at
-    BEFORE DELETE
-    ON
-        pipelines
-    FOR EACH ROW
-EXECUTE PROCEDURE set_deleted_at_now();
 
 -- step definitions table
 CREATE TABLE step_definitions (
     step_definition_id uuid PRIMARY KEY,
+    name text NOT NULL,
+    description text,
+    category text NOT NULL,
+    inputs text[] NOT NULL DEFAULT array[]::text[],
+    outputs text[] NOT NULL DEFAULT array[]::text[],
     step_type text NOT NULL UNIQUE,
     schema jsonb NOT NULL DEFAULT '{}'::jsonb
 );
@@ -137,12 +129,6 @@ CREATE TRIGGER update_steps_updated_at
         steps
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();
-CREATE TRIGGER delete_steps_deleted_at
-    BEFORE DELETE
-    ON
-        steps
-    FOR EACH ROW
-EXECUTE PROCEDURE set_deleted_at_now();
 
 CREATE TABLE step_connections (
     pipeline_id uuid NOT NULL REFERENCES pipelines(pipeline_id),

@@ -1,5 +1,6 @@
 use crate::pipe_core::{ImagePipe, PipeDefinition, PipeError, PipeImageData};
 use async_trait::async_trait;
+use common::model::step_definition::StepCategory;
 use common::model::step_definition::{StepDefinition, StepType};
 use image::imageops;
 use image::DynamicImage; // Needed for wrapping
@@ -31,8 +32,13 @@ impl FlipPipe {
 impl PipeDefinition for FlipPipe {
     fn step_definition() -> StepDefinition {
         StepDefinition {
-            step_definition_id: uuid!("c9d4e3f2-a1b2-4c5d-ae9f-8a7b6c5e4d3c").into(),
+            id: uuid!("c9d4e3f2-a1b2-4c5d-ae9f-8a7b6c5e4d3c").into(),
             step_type: StepType::Flip,
+            name: "Flip".into(),
+            description: Some("Flips image vertically or horizontally.".into()),
+            category: StepCategory::ImageProcessing,
+            inputs: vec!["input".into()],
+            outputs: vec!["output".into()],
             schema: json!({
                 "type": "object",
                 "properties": {

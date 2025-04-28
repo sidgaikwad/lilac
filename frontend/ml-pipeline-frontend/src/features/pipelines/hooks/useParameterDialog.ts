@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Node } from 'reactflow';
-import { toast } from "sonner";
+import { Node } from '@xyflow/react';
+import { toast } from 'sonner';
 
 // Correct type for the setNodes function from useState<Node[]>
 type SetNodesAction = React.Dispatch<React.SetStateAction<Node[]>>;
@@ -26,30 +26,36 @@ export function useParameterDialog({ setNodes }: UseParameterDialogProps) {
     setConfiguringNode(null);
   }, []);
 
-  const handleSaveParameters = useCallback((updatedParams: Record<string, any>) => {
-    if (!configuringNode) return;
+  const handleSaveParameters = useCallback(
+    (updatedParams: Record<string, string | number | boolean | object>) => {
+      if (!configuringNode) return;
 
-    setNodes((nds: Node[]) => // Add type for nds
-      nds.map((node: Node) => { // Add type for node
-        if (node.id === configuringNode.id) {
-          const originalData = node.data || {};
-          return {
-            ...node,
-            data: {
-              ...originalData,
-              parameters: updatedParams
+      setNodes(
+        (
+          nds: Node[] // Add type for nds
+        ) =>
+          nds.map((node: Node) => {
+            // Add type for node
+            if (node.id === configuringNode.id) {
+              const originalData = node.data || {};
+              return {
+                ...node,
+                data: {
+                  ...originalData,
+                  parameters: updatedParams,
+                },
+              };
             }
-          };
-        }
-        return node;
-      })
-    );
+            return node;
+          })
+      );
 
-    toast.success("Parameters Saved", {
-      description: `Parameters for '${configuringNode.data.label}' updated.`,
-    });
-
-  }, [configuringNode, setNodes]);
+      toast.success('Parameters Saved', {
+        description: `Parameters for '${configuringNode.data.label}' updated.`,
+      });
+    },
+    [configuringNode, setNodes]
+  );
 
   return {
     isDialogOpen,

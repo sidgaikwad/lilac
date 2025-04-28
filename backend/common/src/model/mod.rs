@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod dataset;
 pub mod jobs;
 pub mod organization;
 pub mod pipeline;

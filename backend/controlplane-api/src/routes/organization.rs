@@ -15,7 +15,7 @@ pub async fn create_organization(
     db: Extension<Database>,
     Json(request): Json<CreateOrganizationRequest>,
 ) -> Result<Json<CreateOrganizationResponse>, ServiceError> {
-    let organization = Organization::create(request.organization_name);
+    let organization = Organization::create(request.name);
 
     let org_id = db.create_organization(organization).await?;
 
@@ -26,11 +26,13 @@ pub async fn create_organization(
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateOrganizationRequest {
-    organization_name: String,
+    name: String,
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateOrganizationResponse {
     id: OrganizationId,
 }
@@ -47,21 +49,22 @@ pub async fn get_organization(
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetOrganizationResponse {
     id: OrganizationId,
-    organization_name: String,
+    name: String,
 }
 
 impl From<Organization> for GetOrganizationResponse {
     fn from(organization: Organization) -> Self {
         GetOrganizationResponse {
             id: organization.organization_id,
-            organization_name: organization.organization_name,
+            name: organization.organization_name,
         }
     }
 }
 
-#[instrument(skip(db))]
+#[instrument(level = "info", skip(db), ret, err)]
 pub async fn list_organizations(
     claims: Claims,
     db: Extension<Database>,
@@ -77,6 +80,7 @@ pub async fn list_organizations(
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ListOrganizationsResponse {
     organizations: Vec<GetOrganizationResponse>,
 }

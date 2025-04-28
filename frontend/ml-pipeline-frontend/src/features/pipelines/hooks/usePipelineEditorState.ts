@@ -11,7 +11,7 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
   addEdge,
-} from 'reactflow';
+} from '@xyflow/react';
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
@@ -28,12 +28,14 @@ export function usePipelineEditorState(
   const [edges, setEdges] = useState<Edge[]>(initialEdgesProp);
 
   const onNodesChange: OnNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    (changes: NodeChange[]) =>
+      setNodes((nds) => applyNodeChanges(changes, nds)),
     [setNodes]
   );
 
   const onEdgesChange: OnEdgesChange = useCallback(
-    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    (changes: EdgeChange[]) =>
+      setEdges((eds) => applyEdgeChanges(changes, eds)),
     [setEdges]
   );
 
@@ -52,20 +54,28 @@ export function usePipelineEditorState(
       // Remove any existing edge connected to the same target handle or source handle
       setEdges((prevEdges) => {
         const edgesToRemove = prevEdges.filter(
-          edge => (edge.target === connection.target && edge.targetHandle === connection.targetHandle) ||
-                  (edge.source === connection.source && edge.sourceHandle === connection.sourceHandle)
+          (edge) =>
+            (edge.target === connection.target &&
+              edge.targetHandle === connection.targetHandle) ||
+            (edge.source === connection.source &&
+              edge.sourceHandle === connection.sourceHandle)
         );
-        const updatedEdges = applyEdgeChanges(edgesToRemove.map(edge => ({ id: edge.id, type: 'remove' })), prevEdges);
+        const updatedEdges = applyEdgeChanges(
+          edgesToRemove.map((edge) => ({ id: edge.id, type: 'remove' })),
+          prevEdges
+        );
         return addEdge({ ...connection, animated: true }, updatedEdges);
       });
     },
     [setEdges]
   );
 
-
-  const addNode = useCallback((newNode: Node) => {
-    setNodes((nds) => nds.concat(newNode));
-  }, [setNodes]);
+  const addNode = useCallback(
+    (newNode: Node) => {
+      setNodes((nds) => nds.concat(newNode));
+    },
+    [setNodes]
+  );
 
   return {
     nodes,

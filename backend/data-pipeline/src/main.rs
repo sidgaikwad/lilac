@@ -27,7 +27,7 @@ use dotenv::dotenv;
 use futures::future::join_all;
 use image::imageops::FilterType;
 // Use full path for validate to avoid ambiguity if crate name changes
-use jsonschema::validate as jsonschema_validate;
+use jsonschema::validate;
 use tokio::time::sleep;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
@@ -105,7 +105,7 @@ async fn main() {
 
     let step_definitions = get_steps_to_register();
     for step_definition in step_definitions {
-        if let Err(e) = jsonschema::JSONSchema::compile(&step_definition.schema) {
+        if let Err(e) = jsonschema::validator_for(&step_definition.schema) {
              tracing::error!(schema = ?step_definition.schema, error = %e, "Invalid JSON schema for step type {:?}", step_definition.step_type);
              panic!("Invalid schema for step type {:?}", step_definition.step_type);
         }
@@ -153,10 +153,9 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
         let step_definition = db.get_step_definition(&step.step_definition_id).await?;
 
         // Validate parameters against schema *before* trying to parse them
-        if let Err(errors) = jsonschema_validate(&step.step_parameters, &step_definition.schema) { // Use qualified name
-            let error_details = errors.map(|e| format!("{}", e)).collect::<Vec<_>>().join(", ");
-            tracing::error!(step_id = %step.step_id.inner(), schema = ?step_definition.schema, params = ?step.step_parameters, error=%error_details, "Schema validation failed");
-            return Err(ServiceError::SchemaValidationError(error_details));
+        if let Err(error) = validate(&step.step_parameters, &step_definition.schema) { // Use qualified name
+            tracing::error!(step_id = %step.step_id.inner(), schema = ?step_definition.schema, params = ?step.step_parameters, error=%error, "Schema validation failed");
+            return Err(ServiceError::SchemaValidationError(error.to_string()));
         }
 
         let params = &step.step_parameters;
@@ -180,7 +179,7 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
                     _ => return Err(ServiceError::InvalidParameterValue("method".to_string(), method_str.to_string())),
                 };
                 // Use BlurPipe struct, handle Result from new
-                Box::new(BlurPipe::new(method, threshold)?)
+                Box::new(BlurPipe::new(method, threshold).map_err(|e| ServiceError::BadRequest(e))?)
             }
             StepType::ResolutionStandardizer => {
                 let target_width = get_json_u64(params.get("target_width"), "target_width")? as u32;
@@ -195,7 +194,7 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
                     _ => return Err(ServiceError::InvalidParameterValue("filter_type".to_string(), filter_str.to_string())),
                 };
                 // Use ResizePipe struct, handle Result from new
-                Box::new(ResizePipe::new(target_width, target_height, filter_type)?)
+                Box::new(ResizePipe::new(target_width, target_height, filter_type).map_err(|e| ServiceError::BadRequest(e))?)
             }
              // --- Add arms for new pipes ---
              StepType::Rotate => {
@@ -225,7 +224,7 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
                          let std_dev = get_json_f64(params.get("std_dev"), "std_dev")?;
                          let seed = params.get("seed").map(|v| v.as_u64()).flatten();
                          // Handle Result from new_gaussian
-                         Box::new(AddNoisePipe::new_gaussian(mean, std_dev, seed)?)
+                         Box::new(AddNoisePipe::new_gaussian(mean, std_dev, seed).map_err(|e| ServiceError::BadRequest(e))?)
                      }
                      // Add other noise types later if needed
                  }
@@ -246,7 +245,7 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
     }
 
     // TODO: Get actual input/output paths based on Job/Pipeline definition
-    let input_path = PathBuf::from(format!("./job_data/{}/input", job.job_id.inner()));
+    let input_path = PathBuf::from("./test_images");
     let output_path = PathBuf::from(format!("./job_data/{}/output", job.job_id.inner()));
     std::fs::create_dir_all(&output_path).map_err(|e| ServiceError::IoError(e))?;
 

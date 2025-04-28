@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::{
-    model::step_definition::{StepDefinition, StepDefinitionId, StepType},
+    model::step_definition::{StepCategory, StepDefinition, StepDefinitionId, StepType},
     ServiceError,
 };
 
@@ -24,10 +24,16 @@ impl Database {
         )
         .map(|row| {
             Ok(StepDefinition {
-                step_definition_id: row.step_definition_id.into(),
+                id: row.step_definition_id.into(),
+                name: row.name,
+                description: row.description,
+                category: StepCategory::from_str(row.category.as_str())
+                    .map_err(|e| ServiceError::ParseError(format!("invalid step category: {e}")))?,
                 step_type: StepType::from_str(row.step_type.as_str())
                     .map_err(|e| ServiceError::ParseError(format!("invalid step type: {e}")))?,
                 schema: row.schema,
+                inputs: row.inputs,
+                outputs: row.outputs,
             })
         })
         .fetch_one(&self.pool)
@@ -50,10 +56,16 @@ impl Database {
         )
         .map(|row| {
             Ok(StepDefinition {
-                step_definition_id: row.step_definition_id.into(),
+                id: row.step_definition_id.into(),
+                name: row.name,
+                description: row.description,
+                category: StepCategory::from_str(row.category.as_str())
+                    .map_err(|e| ServiceError::ParseError(format!("invalid step category: {e}")))?,
                 step_type: StepType::from_str(row.step_type.as_str())
                     .map_err(|e| ServiceError::ParseError(format!("invalid step type: {e}")))?,
                 schema: row.schema,
+                inputs: row.inputs,
+                outputs: row.outputs,
             })
         })
         .fetch_one(&self.pool)
@@ -71,10 +83,16 @@ impl Database {
         )
         .map(|row| {
             Ok(StepDefinition {
-                step_definition_id: row.step_definition_id.into(),
+                id: row.step_definition_id.into(),
+                name: row.name,
+                description: row.description,
+                category: StepCategory::from_str(row.category.as_str())
+                    .map_err(|e| ServiceError::ParseError(format!("invalid step category: {e}")))?,
                 step_type: StepType::from_str(row.step_type.as_str())
                     .map_err(|e| ServiceError::ParseError(format!("invalid step type: {e}")))?,
                 schema: row.schema,
+                inputs: row.inputs,
+                outputs: row.outputs,
             })
         })
         .fetch_all(&self.pool)
@@ -91,16 +109,21 @@ impl Database {
         let _ = sqlx::query!(
             // language=PostgreSQL
             r#"
-                INSERT INTO "step_definitions" (step_definition_id, step_type, schema)
-                VALUES ($1, $2, $3)
+                INSERT INTO "step_definitions" (step_definition_id, name, description, category, step_type, schema, inputs, outputs)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 ON CONFLICT(step_definition_id)
                 DO UPDATE SET
                     step_type = EXCLUDED.step_type,
                     schema = EXCLUDED.schema;
             "#,
-            step_definition.step_definition_id.inner(),
+            step_definition.id.inner(),
+            &step_definition.name,
+            step_definition.description.as_ref(),
+            &step_definition.category.to_string(),
             &step_definition.step_type.to_string(),
             &step_definition.schema,
+            &step_definition.inputs,
+            &step_definition.outputs,
         )
         .execute(&self.pool)
         .await?;

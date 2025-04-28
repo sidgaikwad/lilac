@@ -7,21 +7,29 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'; // Import Select
 import { StepDefinition, ParameterDefinition } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface ParameterEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedParams: Record<string, any>) => void;
+  onSave: (
+    updatedParams: Record<string, string | number | boolean | object>
+  ) => void;
   nodeLabel: string | undefined;
   stepDefinition: StepDefinition | undefined;
-  initialParamValues: Record<string, any>;
+  initialParamValues: Record<string, string | number | boolean | object>;
 }
 
 const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
@@ -42,7 +50,9 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
 
   // Use string for select value compatibility
   const handleValueChange = (paramName: string, value: string) => {
-    const paramDef = stepDefinition?.parameters.find(p => p.name === paramName);
+    const paramDef = stepDefinition?.parameters.find(
+      (p) => p.name === paramName
+    );
     let finalValue: string | number | boolean = value;
 
     if (paramDef?.type === 'number') {
@@ -52,7 +62,7 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
     }
     // String/enum/s3_path can remain strings for now
 
-    setCurrentParams(prev => ({ ...prev, [paramName]: finalValue }));
+    setCurrentParams((prev) => ({ ...prev, [paramName]: finalValue }));
   };
 
   const handleSave = () => {
@@ -65,7 +75,8 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
   }
 
   const hasParameters = stepDefinition.parameters.length > 0;
-  const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
+  const buttonFocusStyle =
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950';
 
   const renderInput = (param: ParameterDefinition) => {
     const currentValue = currentParams[param.name];
@@ -88,41 +99,49 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
         );
       case 'enum':
         return (
-           <Select
-            value={currentValue ?? ''}
+          <Select
+            value={currentValue.toString() ?? ''}
             onValueChange={(value) => handleValueChange(param.name, value)}
           >
             <SelectTrigger id={param.name} className="col-span-3">
-              <SelectValue placeholder={`Select ${param.label || param.name}`} />
+              <SelectValue
+                placeholder={`Select ${param.label || param.name}`}
+              />
             </SelectTrigger>
             <SelectContent>
-              {(param.options || []).map(option => (
-                 <SelectItem key={option} value={option}>{option}</SelectItem>
+              {(param.options || []).map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         );
       case 'number':
-         return (
-            <Input
-              id={param.name}
-              value={currentValue ?? ''}
-              onChange={(e) => handleValueChange(param.name, e.target.value)}
-              placeholder={param.description || `Enter ${param.label || param.name}`}
-              type="number"
-              className="col-span-3"
-              required={param.required}
-            />
-         );
+        return (
+          <Input
+            id={param.name}
+            value={currentValue.toString() ?? ''}
+            onChange={(e) => handleValueChange(param.name, e.target.value)}
+            placeholder={
+              param.description || `Enter ${param.label || param.name}`
+            }
+            type="number"
+            className="col-span-3"
+            required={param.required}
+          />
+        );
       case 'string':
       case 's3_path': // Treat s3_path as string for now
       default:
         return (
           <Input
             id={param.name}
-            value={currentValue ?? ''}
+            value={currentValue.toString() ?? ''}
             onChange={(e) => handleValueChange(param.name, e.target.value)}
-            placeholder={param.description || `Enter ${param.label || param.name}`}
+            placeholder={
+              param.description || `Enter ${param.label || param.name}`
+            }
             type="text"
             className="col-span-3"
             required={param.required}
@@ -130,7 +149,6 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
         );
     }
   };
-
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -143,13 +161,20 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           {!hasParameters ? (
-            <p className="text-sm text-muted-foreground">This step has no configurable parameters.</p>
+            <p className="text-sm text-muted-foreground">
+              This step has no configurable parameters.
+            </p>
           ) : (
             stepDefinition.parameters.map((param) => (
-              <div key={param.name} className="grid grid-cols-4 items-center gap-4">
+              <div
+                key={param.name}
+                className="grid grid-cols-4 items-center gap-4"
+              >
                 <Label htmlFor={param.name} className="text-right col-span-1">
                   {param.label || param.name}
-                  {param.required && <span className="text-red-500 ml-1">*</span>}
+                  {param.required && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
                 </Label>
                 {renderInput(param)}
               </div>
@@ -158,21 +183,27 @@ const ParameterEditDialog: React.FC<ParameterEditDialogProps> = ({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline" className={cn(buttonFocusStyle)}>Cancel</Button>
+            <Button
+              type="button"
+              variant="outline"
+              className={cn(buttonFocusStyle)}
+            >
+              Cancel
+            </Button>
           </DialogClose>
           <Button
-             type="button"
-             onClick={handleSave}
-             disabled={!hasParameters}
-             className={cn(
-                buttonFocusStyle,
-                // Override background only when enabled and matched (for delete dialog consistency)
-                // This might not be needed here if default variant looks okay with theme
-                // isMatch && "bg-green-600 hover:bg-green-700 border-green-600"
-             )}
-           >
-             Save Parameters
-           </Button>
+            type="button"
+            onClick={handleSave}
+            disabled={!hasParameters}
+            className={cn(
+              buttonFocusStyle
+              // Override background only when enabled and matched (for delete dialog consistency)
+              // This might not be needed here if default variant looks okay with theme
+              // isMatch && "bg-green-600 hover:bg-green-700 border-green-600"
+            )}
+          >
+            Save Parameters
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

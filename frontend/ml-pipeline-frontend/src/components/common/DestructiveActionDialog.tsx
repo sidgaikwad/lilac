@@ -7,10 +7,10 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { AlertTriangle, Loader2 } from 'lucide-react'; // Added Loader2
 import { cn } from '@/lib/utils';
 
@@ -32,16 +32,16 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
   title,
   description,
   confirmationText,
-  confirmButtonText = "Confirm",
+  confirmButtonText = 'Confirm',
   isConfirming = false, // Default isConfirming to false
 }) => {
-  const [inputText, setInputText] = useState("");
+  const [inputText, setInputText] = useState('');
   const isMatch = inputText === confirmationText;
 
   useEffect(() => {
     if (!isOpen) {
       // Reset input when dialog closes
-      setTimeout(() => setInputText(""), 150);
+      setTimeout(() => setInputText(''), 150);
     }
   }, [isOpen]);
 
@@ -54,14 +54,15 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
     }
   };
 
-  const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
+  const buttonFocusStyle =
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950';
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader className="flex flex-row items-center gap-3">
           <div className="p-2 bg-destructive/10 rounded-full">
-             <AlertTriangle className="h-6 w-6 text-destructive" />
+            <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
           <div>
             <DialogTitle className="text-lg">{title}</DialogTitle>
@@ -71,25 +72,36 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
           </div>
         </DialogHeader>
         <div className="py-4 space-y-2">
-           <Label htmlFor="confirmation-input" className="font-semibold">
-             To confirm, type "<span className="text-destructive font-bold">{confirmationText}</span>" in the box below:
-           </Label>
-           <Input
-             id="confirmation-input"
-             value={inputText}
-             onChange={(e) => setInputText(e.target.value)}
-             placeholder={confirmationText}
-             aria-invalid={!isMatch && inputText.length > 0}
-             className={cn(
-                isMatch && "border-green-500 focus-visible:ring-green-500/50"
-             )}
-             disabled={isConfirming} // Disable input while confirming
-           />
+          <Label htmlFor="confirmation-input" className="font-semibold">
+            To confirm, type "
+            <span className="text-destructive font-bold">
+              {confirmationText}
+            </span>
+            " in the box below:
+          </Label>
+          <Input
+            id="confirmation-input"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder={confirmationText}
+            aria-invalid={!isMatch && inputText.length > 0}
+            className={cn(
+              isMatch && 'border-green-500 focus-visible:ring-green-500/50'
+            )}
+            disabled={isConfirming} // Disable input while confirming
+          />
         </div>
         <DialogFooter>
           <DialogClose asChild>
             {/* Disable Cancel button while confirming */}
-            <Button type="button" variant="outline" className={cn(buttonFocusStyle)} disabled={isConfirming}>Cancel</Button>
+            <Button
+              type="button"
+              variant="outline"
+              className={cn(buttonFocusStyle)}
+              disabled={isConfirming}
+            >
+              Cancel
+            </Button>
           </DialogClose>
           <Button
             type="button"
@@ -98,9 +110,11 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
             // Disable if text doesn't match OR if confirming is in progress
             disabled={!isMatch || isConfirming}
             className={cn(
-                buttonFocusStyle,
-                // Only apply green style if matched AND not confirming
-                isMatch && !isConfirming && "bg-green-600 hover:bg-green-700 border-green-600"
+              buttonFocusStyle,
+              // Only apply green style if matched AND not confirming
+              isMatch &&
+                !isConfirming &&
+                'bg-green-600 hover:bg-green-700 border-green-600'
             )}
           >
             {/* Show loader when confirming */}

@@ -1,5 +1,9 @@
 use crate::{
-    model::{organization::OrganizationId, project::{Project, ProjectId}},
+    model::{
+        organization::OrganizationId,
+        project::{Project, ProjectId},
+        user::UserId,
+    },
     ServiceError,
 };
 
@@ -19,6 +23,24 @@ impl Database {
         .fetch_one(&self.pool)
         .await?;
         Ok(project)
+    }
+
+    pub async fn list_projects_for_user(
+        &self,
+        user_id: &UserId,
+    ) -> Result<Vec<Project>, ServiceError> {
+        let id = user_id.inner();
+        let orgs = sqlx::query_as!(
+            Project,
+            // language=PostgreSQL
+            r#"
+                SELECT project_id, project_name, organization_id FROM "projects" WHERE organization_id = ANY(SELECT organization_id FROM "organization_memberships" WHERE user_id = $1)
+            "#,
+            id
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(orgs)
     }
 
     pub async fn list_projects(

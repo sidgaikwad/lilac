@@ -1,8 +1,13 @@
-use axum::{extract::Path, Extension, Json};
+use axum::{
+    extract::{Path, Query},
+    Extension, Json,
+};
 use common::{
     database::Database,
     model::{
-        organization::OrganizationId, pipeline::PipelineId, project::{Project, ProjectId}
+        organization::OrganizationId,
+        pipeline::PipelineId,
+        project::{Project, ProjectId},
     },
     ServiceError,
 };
@@ -25,12 +30,14 @@ pub async fn create_project(
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateProjectRequest {
     name: String,
     organization_id: OrganizationId,
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateProjectResponse {
     id: ProjectId,
 }
@@ -48,6 +55,7 @@ pub async fn get_project(
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetProjectResponse {
     id: ProjectId,
     name: String,
@@ -76,6 +84,40 @@ pub async fn delete_project(
     Ok(())
 }
 
+#[instrument(level = "info", skip(db), ret, err)]
+pub async fn list_projects(
+    claims: Claims,
+    db: Extension<Database>,
+    Query(request): Query<ListProjectsRequest>,
+) -> Result<Json<ListProjectsResponse>, ServiceError> {
+    let projects = if let Some(org_id) = request.organization_id {
+        db.list_projects(&org_id)
+            .await?
+            .into_iter()
+            .map(|org| org.into())
+            .collect()
+    } else {
+        db.list_projects_for_user(&claims.sub)
+            .await?
+            .into_iter()
+            .map(|org| org.into())
+            .collect()
+    };
+
+    Ok(Json(ListProjectsResponse { projects }))
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListProjectsRequest {
+    organization_id: Option<OrganizationId>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListProjectsResponse {
+    projects: Vec<GetProjectResponse>,
+}
 
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn list_project_pipelines(
@@ -85,24 +127,29 @@ pub async fn list_project_pipelines(
 ) -> Result<Json<ListProjectPipelineResponse>, ServiceError> {
     let pipelines = db.list_pipelines(&project_id).await?;
 
-    let response = pipelines.into_iter().map(|v| ProjectPipelineResponse {
-        pipeline_id: v.pipeline_id,
-        pipeline_name: v.pipeline_name,
-        description: v.description,
-    }).collect();
+    let response = pipelines
+        .into_iter()
+        .map(|v| ProjectPipelineResponse {
+            id: v.pipeline_id,
+            name: v.pipeline_name,
+            description: v.description,
+        })
+        .collect();
     Ok(Json(ListProjectPipelineResponse {
         pipelines: response,
     }))
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ProjectPipelineResponse {
-    pipeline_id: PipelineId,
-    pipeline_name: String,
+    id: PipelineId,
+    name: String,
     description: Option<String>,
-} 
+}
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ListProjectPipelineResponse {
     pipelines: Vec<ProjectPipelineResponse>,
 }

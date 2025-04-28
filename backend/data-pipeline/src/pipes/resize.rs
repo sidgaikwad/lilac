@@ -1,6 +1,6 @@
 use crate::pipe_core::{ImagePipe, PipeDefinition, PipeError, PipeImageData};
 use async_trait::async_trait;
-use common::model::step_definition::{StepDefinition, StepType};
+use common::model::step_definition::{StepCategory, StepDefinition, StepType};
 use image::imageops::{self, FilterType};
 use image::DynamicImage;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -31,8 +31,13 @@ impl ResizePipe {
 impl PipeDefinition for ResizePipe {
     fn step_definition() -> StepDefinition {
         StepDefinition {
-            step_definition_id: uuid!("9a3601dd-d335-4cf9-99e0-01e928a3eec4").into(),
+            id: uuid!("9a3601dd-d335-4cf9-99e0-01e928a3eec4").into(),
             step_type: StepType::ResolutionStandardizer,
+            name: "Resolution Resizer".into(),
+            description: Some("Resizes all images to the target resolution.".into()),
+            category: StepCategory::ImageProcessing,
+            inputs: vec!["input".into()],
+            outputs: vec!["output".into()],
             schema: json!({
                 "type": "object",
                 "properties": {

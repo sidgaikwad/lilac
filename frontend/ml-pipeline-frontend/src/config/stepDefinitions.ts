@@ -50,7 +50,8 @@ export const hardcodedStepDefinitions: StepDefinition[] = [
         type: 'number',
         required: true,
         defaultValue: 100,
-        description: 'Laplacian variance threshold. Lower values detect less blur.',
+        description:
+          'Laplacian variance threshold. Lower values detect less blur.',
       },
       {
         name: 'filter_blurry',
@@ -116,7 +117,8 @@ export const hardcodedStepDefinitions: StepDefinition[] = [
         label: 'S3 Prefix/Path',
         type: 'string',
         required: true,
-        description: 'Path within the bucket to save images (e.g., images/processed/).',
+        description:
+          'Path within the bucket to save images (e.g., images/processed/).',
       },
       {
         name: 'format',
@@ -134,7 +136,8 @@ export const hardcodedStepDefinitions: StepDefinition[] = [
     id: 'sd-noop', // Use 'id'
     type: 'NoOp', // Matches backend StepType
     label: 'No Operation',
-    description: 'Passes data through without modification (for testing/debugging).',
+    description:
+      'Passes data through without modification (for testing/debugging).',
     category: 'Utility',
     parameters: [], // No parameters
   },

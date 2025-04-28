@@ -1,5 +1,6 @@
 use crate::pipe_core::{ImagePipe, PipeDefinition, PipeError, PipeImageData};
 use async_trait::async_trait;
+use common::model::step_definition::StepCategory;
 use common::model::step_definition::{StepDefinition, StepType};
 use image::imageops;
 use image::DynamicImage;
@@ -21,8 +22,13 @@ impl BrightnessPipe {
 impl PipeDefinition for BrightnessPipe {
     fn step_definition() -> StepDefinition {
         StepDefinition {
-            step_definition_id: uuid!("e1f6a5b4-c3d2-4e7f-af1b-0c9d8e7f6a5b").into(),
+            id: uuid!("e1f6a5b4-c3d2-4e7f-af1b-0c9d8e7f6a5b").into(),
             step_type: StepType::Brightness,
+            name: "Brightness".into(),
+            description: Some("Changes the brightness of the images.".into()),
+            category: StepCategory::ImageProcessing,
+            inputs: vec!["input".into()],
+            outputs: vec!["output".into()],
             schema: json!({
                 "type": "object",
                 "properties": {

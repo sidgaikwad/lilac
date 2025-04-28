@@ -1,91 +1,87 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { QueryKeys } from "./constants";
-import { simulateDelay } from "./mocks";
-import { toast } from "sonner"; // For user feedback
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { QueryKeys } from './constants';
+import { post } from '@/lib/fetch';
+import {
+  CreatePipelineRequest,
+  CreatePipelineResponse,
+  RunPipelineResponse,
+  UpdatePipelineRequest,
+} from './types';
+import { ApiError } from '@/types';
 
-// --- Mock Mutation Functions ---
-
-// Simulate creating a pipeline (returns new ID)
-const createPipelineMock = async (payload: { name: string; projectId: string }): Promise<{ id: string }> => {
-    console.log(`Mock API: Creating pipeline "${payload.name}" for project ${payload.projectId}...`);
-    await simulateDelay(500);
-    const newId = `pipeline-${Math.random().toString(36).substring(2, 9)}`; // Simple random ID
-    console.log(`Mock API: Created pipeline with ID: ${newId}`);
-    // In a real API, this would return the created pipeline object or just its ID
-    return { id: newId };
+const createPipeline = async (
+  payload: CreatePipelineRequest
+): Promise<CreatePipelineResponse> => {
+  return post(`/pipelines`, payload);
 };
-
-// Simulate renaming a pipeline
-const renamePipelineMock = async (payload: { pipelineId: string; newName: string }): Promise<boolean> => {
-    console.log(`Mock API: Renaming pipeline ${payload.pipelineId} to "${payload.newName}"...`);
-    await simulateDelay(200);
-    console.log(`Mock API: Renamed pipeline ${payload.pipelineId}.`);
-    // Simulate success - in real API, check response status
-    return true;
-};
-
-// Simulate deleting a pipeline
-const deletePipelineMock = async (pipelineId: string): Promise<boolean> => {
-    console.log(`Mock API: Deleting pipeline ${pipelineId}...`);
-    await simulateDelay(600);
-    console.log(`Mock API: Deleted pipeline ${pipelineId}.`);
-    // Simulate success
-    return true;
-};
-
-
-// --- Mutation Hooks ---
-
-export function useCreatePipeline() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: createPipelineMock,
-        onSuccess: (data, variables) => {
-            toast.success(`Pipeline "${variables.name}" created (mock).`);
-            // Invalidate the list query for the specific project to refetch
-            queryClient.invalidateQueries({ queryKey: [QueryKeys.LIST_PIPELINE, variables.projectId] });
-        },
-        onError: (error, variables) => {
-            console.error("Error creating pipeline (mock):", error);
-            toast.error(`Failed to create pipeline "${variables.name}".`);
-        },
-    });
+export interface UseCreatePipelineProps {
+  onSuccess?: (data: CreatePipelineResponse) => void;
+  onError?: (error: ApiError) => void;
 }
 
-export function useRenamePipeline() {
-    const queryClient = useQueryClient();
+export function useCreatePipeline(props: UseCreatePipelineProps) {
+  const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: renamePipelineMock,
-        // Invalidate the general pipeline list query key on success.
-        onSuccess: (data, variables) => {
-            toast.success(`Pipeline renamed to "${variables.newName}" (mock).`);
-            console.warn("Invalidating general pipeline list query after rename.");
-            queryClient.invalidateQueries({ queryKey: [QueryKeys.LIST_PIPELINE] });
-        },
-        onError: (error, variables) => {
-            console.error("Error renaming pipeline (mock):", error);
-            toast.error(`Failed to rename pipeline.`); // Original name might not be easily available here
-        },
-    });
+  return useMutation({
+    mutationFn: createPipeline,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.LIST_PIPELINE, variables.projectId],
+      });
+      if (props.onSuccess !== undefined) {
+        props.onSuccess(data);
+      }
+    },
+    onError: props.onError,
+  });
 }
 
+const updatePipeline = async (
+  payload: UpdatePipelineRequest
+): Promise<void> => {
+  const { pipelineId, ...rest } = payload;
+  return post(`/pipelines/${pipelineId}`, rest);
+};
+export interface UseUpdatePipelineProps {
+  onSuccess?: () => void;
+  onError?: (error: ApiError) => void;
+}
 
-export function useDeletePipeline() {
-    const queryClient = useQueryClient();
+export function useUpdatePipeline(props: UseUpdatePipelineProps) {
+  const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: deletePipelineMock,
-        // Invalidate the general pipeline list query key on success.
-        onSuccess: (data, variables) => {
-            toast.success(`Pipeline deleted (mock).`);
-            console.warn("Invalidating general pipeline list query after delete.");
-            queryClient.invalidateQueries({ queryKey: [QueryKeys.LIST_PIPELINE] });
-        },
-        onError: (error, variables) => {
-            console.error("Error deleting pipeline (mock):", error);
-            toast.error(`Failed to delete pipeline.`);
-        },
-    });
+  return useMutation({
+    mutationFn: updatePipeline,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.GET_PIPELINE, variables.pipelineId],
+      });
+      if (props.onSuccess !== undefined) {
+        props.onSuccess();
+      }
+    },
+    onError: props.onError,
+  });
+}
+
+const runPipeline = async (payload: {
+  pipelineId: string;
+}): Promise<RunPipelineResponse> => {
+  return post(`/pipelines/${payload.pipelineId}/run`, {});
+};
+export interface UseRunPipelineProps {
+  onSuccess?: (data: RunPipelineResponse) => void;
+  onError?: (error: ApiError) => void;
+}
+
+export function useRunPipeline(props: UseRunPipelineProps) {
+  return useMutation({
+    mutationFn: runPipeline,
+    onSuccess: (data, _variables) => {
+      if (props.onSuccess !== undefined) {
+        props.onSuccess(data);
+      }
+    },
+    onError: props.onError,
+  });
 }

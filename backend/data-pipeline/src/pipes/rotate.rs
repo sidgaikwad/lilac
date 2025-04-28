@@ -1,5 +1,6 @@
 use crate::pipe_core::{ImagePipe, PipeDefinition, PipeError, PipeImageData};
 use async_trait::async_trait;
+use common::model::step_definition::StepCategory;
 use common::model::step_definition::{StepDefinition, StepType};
 use image::imageops;
 use image::DynamicImage; // Needed for wrapping
@@ -32,8 +33,13 @@ impl RotatePipe {
 impl PipeDefinition for RotatePipe {
     fn step_definition() -> StepDefinition {
         StepDefinition {
-            step_definition_id: uuid!("b8c3d2e1-f0a1-4b4c-9d8e-7f6a5e4d3c2b").into(),
+            id: uuid!("b8c3d2e1-f0a1-4b4c-9d8e-7f6a5e4d3c2b").into(),
             step_type: StepType::Rotate,
+            name: "Rotate Image".into(),
+            description: Some("Rotates all images by the provided angle.".into()),
+            category: StepCategory::ImageProcessing,
+            inputs: vec!["input".into()],
+            outputs: vec!["output".into()],
             schema: json!({
                 "type": "object",
                 "properties": {

@@ -1,123 +1,134 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import ReactFlow, {
+import React, { useCallback, useEffect, useRef } from 'react';
+import {
+  ReactFlow,
   Controls,
   Background,
-  Node,
-  Edge,
   BackgroundVariant,
-  ReactFlowInstance,
   NodeTypes,
-  Viewport,
+  EdgeTypes,
   useReactFlow,
-} from 'reactflow';
-import PipelineNode from './PipelineNode';
-import ParameterEditDialog from './ParameterEditDialog';
-import { Toaster } from "@/components/ui/sonner";
-import { usePipelineEditorState } from '../hooks/usePipelineEditorState';
-import { usePipelineDropHandling } from '../hooks/usePipelineDropHandling';
-import { useParameterDialog } from '../hooks/useParameterDialog';
+  OnConnect,
+} from '@xyflow/react';
+import PipelineNode, { PipelineNodeType } from './PipelineNode';
 
-import 'reactflow/dist/style.css';
+import '@xyflow/react/dist/style.css';
+import useReactFlowStore from '@/store/useReactFlowStore';
+import { shallow } from 'zustand/shallow';
+import PipelineEdge from './PipelineEdge';
+import { Pipeline } from '@/types';
+import { usePipelineDropHandling } from '../hooks/usePipelineDropHandling';
+import { useListStepDefinitions } from '@/services/controlplane-api/useListStepDefinitions.hook';
+import { DevTools } from '@/components/devtools';
 
 const nodeTypes: NodeTypes = {
   pipelineNode: PipelineNode,
 };
 
+const edgeTypes: EdgeTypes = {
+  pipelineEdge: PipelineEdge,
+};
+
 interface PipelineEditorFlowProps {
-  initialNodes?: Node[];
-  initialEdges?: Edge[];
-  initialViewport?: Viewport;
-  onFlowInit?: (instance: ReactFlowInstance) => void;
+  pipeline: Pipeline;
 }
 
-const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = ({
-  initialNodes = [],
-  initialEdges = [],
-  initialViewport,
-  onFlowInit,
-}) => {
+const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = (
+  props: PipelineEditorFlowProps
+) => {
+  const reactFlowInstance = useReactFlow();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
-  const { project } = useReactFlow();
-
+  const {
+    data: stepDefinitions,
+    isLoading: _isLoading,
+    error: _error,
+  } = useListStepDefinitions();
   const {
     nodes,
     edges,
-    setNodes,
     onNodesChange,
     onEdgesChange,
-    onConnect,
-    isValidConnection,
+    initialize,
     addNode,
-  } = usePipelineEditorState(initialNodes, initialEdges);
-
-  const { onDragOver, onDrop } = usePipelineDropHandling({
-    reactFlowWrapperRef: reactFlowWrapper,
-    reactFlowInstance,
-    addNode,
-    project,
-  });
-
-  const {
-    isDialogOpen,
-    configuringNode,
-    openDialog,
-    closeDialog,
-    handleSaveParameters,
-  } = useParameterDialog({ setNodes });
-
-  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    openDialog(node);
-  }, [openDialog]);
-
-  const handleInit = (instance: ReactFlowInstance) => {
-    setReactFlowInstance(instance);
-    if (onFlowInit) {
-      onFlowInit(instance);
-    }
-  };
+    addEdge,
+  } = useReactFlowStore(
+    (state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      onNodesChange: state.onNodesChange,
+      onEdgesChange: state.onEdgesChange,
+      initialize: state.initialize,
+      addNode: state.addNode,
+      addEdge: state.addEdge,
+    }),
+    shallow
+  );
 
   useEffect(() => {
-    if (reactFlowInstance && initialViewport) {
-      reactFlowInstance.setViewport(initialViewport, { duration: 0 });
-    }
-  }, [reactFlowInstance, initialViewport]);
+    console.log(props.pipeline);
+    initialize(
+      props.pipeline.steps.map(
+        (step, idx) =>
+          ({
+            id: step.stepId,
+            position: {
+              x: 500 * idx,
+              y: 0,
+            },
+            data: {
+              stepDefinition: stepDefinitions?.stepDefinitions.find(
+                (sd) => sd.id === step.stepDefinitionId
+              ),
+              parameters: step.stepParameters,
+            },
+            type: 'pipelineNode',
+          }) as PipelineNodeType
+      ),
+      props.pipeline.stepConnections.map((conn) => ({
+        id: crypto.randomUUID(),
+        source: conn[0],
+        target: conn[1],
+        data: {
+          fromStepId: conn[0],
+          toStepId: conn[1],
+        },
+      }))
+    );
+  }, [props.pipeline]);
 
+  const { onDragOver, onDrop } = usePipelineDropHandling({
+    stepDefinitions: stepDefinitions?.stepDefinitions ?? [],
+    reactFlowInstance: reactFlowInstance,
+    addNode,
+    reactFlowWrapperRef: reactFlowWrapper,
+  });
+
+  const onConnect: OnConnect = useCallback((params) => {
+    addEdge(params);
+  }, []);
 
   return (
     // Use theme background color
-    <div className="flex-grow h-full bg-background relative" ref={reactFlowWrapper}>
+    <div
+      className="flex-grow h-full bg-background relative"
+      ref={reactFlowWrapper}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        isValidConnection={isValidConnection}
-        onInit={handleInit}
-        onDrop={onDrop}
         onDragOver={onDragOver}
-        onNodeClick={onNodeClick}
-        defaultViewport={initialViewport}
-        proOptions={{ hideAttribution: true }}
+        onDrop={onDrop}
+        onConnect={onConnect}
+        nodeOrigin={[0, 0]}
+        fitView
       >
-        <Controls />
-        {/* Background component might need theme adjustments if default dots are hard to see */}
+        <DevTools position="top-left" />
+        <Controls showInteractive={false} />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-        <Toaster position="bottom-left" richColors />
       </ReactFlow>
-
-      {configuringNode && (
-        <ParameterEditDialog
-          isOpen={isDialogOpen}
-          onClose={closeDialog}
-          onSave={handleSaveParameters}
-          nodeLabel={configuringNode.data.label}
-          stepDefinition={configuringNode.data.stepDefinition}
-          initialParamValues={configuringNode.data.parameters || {}}
-        />
-      )}
     </div>
   );
 };

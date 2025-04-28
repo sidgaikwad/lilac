@@ -1,5 +1,6 @@
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
+mod datasets;
 mod jobs;
 mod organizations;
 mod pipelines;

@@ -58,6 +58,7 @@ impl TryFrom<String> for StepId {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, sqlx::FromRow, sqlx::Type)]
+#[serde(rename_all = "camelCase")]
 pub struct Step {
     pub step_id: StepId,
     pub step_definition_id: StepDefinitionId,

@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import ProjectSectionSidebar from './ProjectSectionSidebar'; // Import the secondary sidebar
 import { cn } from '@/lib/utils'; // Import cn
+import { Toaster } from '../ui';
 
 const MainLayout: React.FC = () => {
   const location = useLocation();
@@ -13,7 +14,7 @@ const MainLayout: React.FC = () => {
   const pathSegments = location.pathname.split('/').filter(Boolean);
   let activeSection: string | undefined = undefined;
   if (pathSegments[0] === 'projects' && pathSegments.length >= 3) {
-      activeSection = pathSegments[2];
+    activeSection = pathSegments[2];
   }
 
   // Determine if we are in a project context to show the secondary sidebar
@@ -22,13 +23,25 @@ const MainLayout: React.FC = () => {
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <Sidebar /> {/* Main icon sidebar */}
+      <Toaster position="top-center" richColors closeButton />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
-        <div className="flex flex-1 overflow-hidden"> {/* Container for secondary sidebar + main content */}
+        <div className="flex flex-1 overflow-hidden">
+          {' '}
+          {/* Container for secondary sidebar + main content */}
           {/* Conditionally render secondary sidebar */}
-          {isInProjectContext && <ProjectSectionSidebar activeSection={activeSection} />}
+          {isInProjectContext && (
+            <ProjectSectionSidebar activeSection={activeSection} />
+          )}
           {/* Adjust main content padding/margin based on secondary sidebar presence */}
-          <main className={cn("flex-1 overflow-y-auto p-6", isInProjectContext && "md:pl-0")}> {/* Remove left padding on md+ if secondary sidebar is shown */}
+          <main
+            className={cn(
+              'flex-1 overflow-y-auto p-6',
+              isInProjectContext && 'md:pl-0'
+            )}
+          >
+            {' '}
+            {/* Remove left padding on md+ if secondary sidebar is shown */}
             <Outlet />
           </main>
         </div>

@@ -29,7 +29,7 @@ pub async fn create_step(
     }
 
     let step = Step::create(
-        step_definition.step_definition_id,
+        step_definition.id,
         request.pipeline_id,
         request.step_parameters,
     );
@@ -40,6 +40,7 @@ pub async fn create_step(
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateStepRequest {
     pipeline_id: PipelineId,
     step_type: StepType,
@@ -47,6 +48,7 @@ pub struct CreateStepRequest {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateStepResponse {
     id: StepId,
 }
@@ -68,6 +70,7 @@ pub async fn get_step(
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetStepResponse {
     step_id: StepId,
     pipeline_id: PipelineId,
@@ -124,6 +127,7 @@ pub async fn update_step(
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateStepRequest {
     step_parameters: Option<serde_json::Value>,
     connections: Option<Vec<StepId>>,

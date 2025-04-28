@@ -1,7 +1,7 @@
 use crate::pipe_core::{ImagePipe, PipeDefinition, PipeError, PipeImageData};
 use crate::utils::log_pipe_event;
 use async_trait::async_trait;
-use common::model::step_definition::{StepDefinition, StepType};
+use common::model::step_definition::{StepCategory, StepDefinition, StepType};
 use image::{DynamicImage, GrayImage, Luma};
 use imageproc::{filter, gradients};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -103,8 +103,13 @@ impl BlurPipe {
 impl PipeDefinition for BlurPipe {
     fn step_definition() -> StepDefinition {
         StepDefinition {
-            step_definition_id: uuid!("039fddf8-72c1-4598-875c-36f40d4fcf84").into(),
+            id: uuid!("039fddf8-72c1-4598-875c-36f40d4fcf84").into(),
+            name: "Blur Detector".into(),
+            description: Some("Filters out images that match a certain blur threshold.".into()),
+            category: StepCategory::ImageProcessing,
             step_type: StepType::BlurDetector,
+            inputs: vec!["input".into()],
+            outputs: vec!["output".into()],
             schema: json!({
                 "type": "object",
                 "properties": {

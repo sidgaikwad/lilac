@@ -14,6 +14,9 @@ pub async fn create_user(
     db: Extension<Database>,
     Json(request): Json<CreateUserRequest>,
 ) -> Result<Json<CreateUserResponse>, ServiceError> {
+    if request.password.len() < 8 {
+        return Err(ServiceError::BadRequest("password too short".into()));
+    }
     let user = User::create(request.email, request.password.into());
 
     let user_id = db.create_user(user).await?;

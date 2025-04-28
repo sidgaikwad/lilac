@@ -2,7 +2,10 @@ use axum::{body::Body, extract::Request, http::HeaderValue, Extension, Router};
 use common::database::Database;
 use controlplane_api::routes;
 use dotenv::dotenv;
-use hyper::{header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE}, Method};
+use hyper::{
+    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
+    Method,
+};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
@@ -31,11 +34,13 @@ async fn main() {
     let app = Router::new()
         .merge(routes::router())
         .layer(Extension(db))
-        .layer(CorsLayer::new()
-            .allow_methods([Method::GET, Method::POST])
-            .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
-            .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE])
-            .allow_credentials(true))
+        .layer(
+            CorsLayer::new()
+                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+                .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
+                .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE])
+                .allow_credentials(true),
+        )
         .layer(
             TraceLayer::new_for_http().make_span_with(|_request: &Request<Body>| {
                 let request_id = Uuid::new_v4().to_string();

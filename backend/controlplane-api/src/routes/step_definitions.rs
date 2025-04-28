@@ -16,6 +16,7 @@ pub async fn list_step_definitions(
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ListStepDefinitionsResponse {
     step_definitions: Vec<StepDefinition>,
 }

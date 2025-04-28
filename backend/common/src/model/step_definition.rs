@@ -53,10 +53,16 @@ impl TryFrom<String> for StepDefinitionId {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StepDefinition {
-    pub step_definition_id: StepDefinitionId,
+    pub id: StepDefinitionId,
+    pub name: String,
+    pub description: Option<String>,
+    pub category: StepCategory,
     pub step_type: StepType,
     pub schema: serde_json::Value,
+    pub inputs: Vec<String>,
+    pub outputs: Vec<String>,
 }
 
 #[derive(
@@ -75,8 +81,10 @@ pub enum StepType {
     Unknown,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ParameterType {
-    String,
-    Number,
+#[derive(
+    Clone, Debug, PartialEq, Eq, Serialize, Deserialize, strum::Display, strum::EnumString,
+)]
+pub enum StepCategory {
+    ImageProcessing,
+    Utility,
 }

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use common::model::step_definition::{StepDefinition, StepType};
+use common::model::step_definition::{StepCategory, StepDefinition, StepType};
 use serde_json::json;
 use uuid::uuid;
 
@@ -10,8 +10,13 @@ pub struct NoOpStep;
 impl PipeDefinition for NoOpStep {
     fn step_definition() -> StepDefinition {
         StepDefinition {
-            step_definition_id: uuid!("6c5d8079-63e9-4396-9369-2a9dda0f3fd9").into(),
+            id: uuid!("6c5d8079-63e9-4396-9369-2a9dda0f3fd9").into(),
+            name: "No Op".into(),
+            description: Some("Does nothing.".into()),
+            category: StepCategory::ImageProcessing,
             step_type: StepType::NoOp,
+            inputs: vec!["input".into()],
+            outputs: vec!["output".into()],
             schema: json!({}),
         }
     }

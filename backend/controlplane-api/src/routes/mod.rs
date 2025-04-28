@@ -16,8 +16,8 @@ mod step_definitions;
 pub use step_definitions::*;
 
 mod pipelines;
-mod steps;
 mod projects;
+mod steps;
 
 pub fn router() -> Router {
     Router::new()
@@ -32,11 +32,11 @@ pub fn router() -> Router {
         .route("/auth/login", post(auth::authorize))
         // organizatino routes
         .route(
-            "/organization",
+            "/organizations",
             get(organization::list_organizations).post(organization::create_organization),
         )
         .route(
-            "/organization/{organization_id}",
+            "/organizations/{organization_id}",
             get(organization::get_organization),
         )
         // step definitions routes

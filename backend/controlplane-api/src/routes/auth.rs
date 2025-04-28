@@ -8,6 +8,7 @@ use serde::Deserialize;
 use crate::auth::{claims::Claims, error::AuthError, keys::KEYS};
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuthPayload {
     email: String,
     password: String,

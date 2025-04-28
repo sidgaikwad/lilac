@@ -1,6 +1,6 @@
 use crate::pipe_core::{ImagePipe, PipeDefinition, PipeError, PipeImageData};
 use async_trait::async_trait;
-use common::model::step_definition::{StepDefinition, StepType};
+use common::model::step_definition::{StepCategory, StepDefinition, StepType};
 use image::DynamicImage;
 use imageproc::noise;
 // Removed unused imports: Rng, SeedableRng, StdRng
@@ -75,8 +75,13 @@ impl AddNoisePipe {
 impl PipeDefinition for AddNoisePipe {
     fn step_definition() -> StepDefinition {
         StepDefinition {
-            step_definition_id: uuid!("0a1b2c3d-4e5f-4a7b-8c9d-0e1f2a3b4c5d").into(),
+            id: uuid!("0a1b2c3d-4e5f-4a7b-8c9d-0e1f2a3b4c5d").into(),
             step_type: StepType::AddNoise,
+            name: "Add Noise".into(),
+            description: Some("Adds noise to the images.".into()),
+            category: StepCategory::ImageProcessing,
+            inputs: vec!["input".into()],
+            outputs: vec!["output".into()],
             schema: json!({
                 "type": "object",
                 "properties": {

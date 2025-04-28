@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import useAuthStore from '@/store/authStore';
+import useAuthStore from '@/store/useAuthStore';
 import {
-    LogOutIcon, Settings, Home, HardDrive, Zap, LucideProps // Import LucideProps
+  LogOutIcon,
+  Settings,
+  Home,
+  HardDrive,
+  Zap,
+  LucideProps, // Import LucideProps
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +27,10 @@ const Sidebar: React.FC = () => {
   const handleMouseEnter = () => setIsExpanded(true);
   const handleMouseLeave = () => setIsExpanded(false);
 
-  const getNavLinkClass = ({ isActive }: { isActive: boolean }, isDisabled: boolean = false) =>
+  const getNavLinkClass = (
+    { isActive }: { isActive: boolean },
+    isDisabled: boolean = false
+  ) =>
     cn(
       'flex flex-nowrap items-center gap-2 rounded-md text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring',
       'h-8 text-sm font-medium',
@@ -37,72 +45,80 @@ const Sidebar: React.FC = () => {
         : 'size-8 justify-center pl-1.5 pr-2'
     );
 
-    // Updated navLinkContent to directly render the icon component with props
-    const navLinkContent = (Icon: IconComponent, label: string) => (
-        <>
-            <Icon className="size-5 shrink-0" aria-hidden="true" />
-            <span className={cn("whitespace-nowrap", !isExpanded && "hidden")}>{label}</span>
-        </>
-    );
+  // Updated navLinkContent to directly render the icon component with props
+  const navLinkContent = (Icon: IconComponent, label: string) => (
+    <>
+      <Icon className="size-5 shrink-0" aria-hidden="true" />
+      <span className={cn('whitespace-nowrap', !isExpanded && 'hidden')}>
+        {label}
+      </span>
+    </>
+  );
 
   return (
-      <aside
-        className={cn(
-          "bg-card border-r border-border flex flex-col transition-[width] duration-100 ease-linear shrink-0",
-          isExpanded ? "w-56" : "w-16"
-        )}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        {/* Main Navigation */}
-        <nav className="flex-grow flex flex-col gap-0.5 p-2 overflow-auto">
-            <NavLink
-              to={projectId ? `/projects/${projectId}/home` : '#'}
-              className={({ isActive }) => getNavLinkClass({ isActive }, !projectId)}
-              aria-disabled={!projectId}
-              onClick={(e) => !projectId && e.preventDefault()}
-              tabIndex={!projectId ? -1 : undefined}
-            >
-                {navLinkContent(Home, "Home")}
-            </NavLink>
-             <NavLink
-               to={projectId ? `/projects/${projectId}/pipelines` : '#'}
-               className={({ isActive }) => getNavLinkClass({ isActive }, !projectId)}
-               aria-disabled={!projectId}
-               onClick={(e) => !projectId && e.preventDefault()}
-               tabIndex={!projectId ? -1 : undefined}
-             >
-                {navLinkContent(Zap, "Pipelines")}
-            </NavLink>
-            <NavLink
-              to={projectId ? `/projects/${projectId}/datasets` : '#'}
-              className={({ isActive }) => getNavLinkClass({ isActive }, !projectId)}
-              aria-disabled={!projectId}
-              onClick={(e) => !projectId && e.preventDefault()}
-              tabIndex={!projectId ? -1 : undefined}
-            >
-                {navLinkContent(HardDrive, "Data Sets")}
-            </NavLink>
-        </nav>
+    <aside
+      className={cn(
+        'bg-card border-r border-border flex flex-col transition-[width] duration-100 ease-linear shrink-0',
+        isExpanded ? 'w-56' : 'w-16'
+      )}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Main Navigation */}
+      <nav className="flex-grow flex flex-col gap-0.5 p-2 overflow-auto">
+        <NavLink
+          to={projectId ? `/projects/${projectId}` : '#'}
+          className={({ isActive }) =>
+            getNavLinkClass({ isActive }, !projectId)
+          }
+          aria-disabled={!projectId}
+          onClick={(e) => !projectId && e.preventDefault()}
+          tabIndex={!projectId ? -1 : undefined}
+        >
+          {navLinkContent(Home, 'Home')}
+        </NavLink>
+        <NavLink
+          to={projectId ? `/projects/${projectId}/pipelines` : '#'}
+          className={({ isActive }) =>
+            getNavLinkClass({ isActive }, !projectId)
+          }
+          aria-disabled={!projectId}
+          onClick={(e) => !projectId && e.preventDefault()}
+          tabIndex={!projectId ? -1 : undefined}
+        >
+          {navLinkContent(Zap, 'Pipelines')}
+        </NavLink>
+        <NavLink
+          to={projectId ? `/projects/${projectId}/datasets` : '#'}
+          className={({ isActive }) =>
+            getNavLinkClass({ isActive }, !projectId)
+          }
+          aria-disabled={!projectId}
+          onClick={(e) => !projectId && e.preventDefault()}
+          tabIndex={!projectId ? -1 : undefined}
+        >
+          {navLinkContent(HardDrive, 'Data Sets')}
+        </NavLink>
+      </nav>
 
-        {/* Bottom Section */}
-        <div className="mt-auto flex flex-col gap-0.5 p-2 border-t border-border">
-             <NavLink
-               to="/settings"
-               className={({ isActive }) => getNavLinkClass({ isActive }, false)}
-             >
-                 {navLinkContent(Settings, "Settings")}
-             </NavLink>
-             <Button
-                 variant="ghost"
-                 onClick={handleLogout}
-                 className={getNavLinkClass({ isActive: false }, false)}
-                 aria-label="Logout"
-             >
-                  {navLinkContent(LogOutIcon, "Logout")}
-             </Button>
-        </div>
-      </aside>
+      {/* Bottom Section */}
+      <div className="mt-auto flex flex-col gap-0.5 p-2 border-t border-border">
+        <NavLink
+          to="/settings"
+          className={({ isActive }) => getNavLinkClass({ isActive }, false)}
+        >
+          {navLinkContent(Settings, 'Settings')}
+        </NavLink>
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className={getNavLinkClass({ isActive: false }, false)}
+          aria-label="Logout"
+        >
+          {navLinkContent(LogOutIcon, 'Logout')}
+        </Button>
+      </div>
+    </aside>
   );
 };
 

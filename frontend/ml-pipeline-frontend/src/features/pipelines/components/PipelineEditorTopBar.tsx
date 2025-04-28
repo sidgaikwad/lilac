@@ -7,7 +7,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import { PipelineVersion } from '@/lib/localStorageUtils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -23,8 +23,8 @@ interface PipelineEditorTopBarProps {
 }
 
 // Consistent focus style for buttons
-const buttonFocusStyle = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950";
-
+const buttonFocusStyle =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950';
 
 const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
   pipelineId,
@@ -55,9 +55,9 @@ const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
     if (pipelineId && currentName.trim() && currentName !== pipelineName) {
       const success = onRename(pipelineId, currentName.trim());
       if (success) {
-        toast.success("Pipeline renamed successfully.");
+        toast.success('Pipeline renamed successfully.');
       } else {
-        toast.error("Failed to rename pipeline.");
+        toast.error('Failed to rename pipeline.');
         setCurrentName(pipelineName);
       }
     } else {
@@ -120,11 +120,18 @@ const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
           </Select>
         ) : (
           // Use theme muted foreground color
-          <span className="text-sm text-muted-foreground">No saved versions</span>
+          <span className="text-sm text-muted-foreground">
+            No saved versions
+          </span>
         )}
 
         {/* Button uses theme variables internally via variants */}
-        <Button onClick={onSave} size="sm" disabled={!onSave} className={cn(buttonFocusStyle)}>
+        <Button
+          onClick={onSave}
+          size="sm"
+          disabled={!onSave}
+          className={cn(buttonFocusStyle)}
+        >
           Save New Version
         </Button>
       </div>

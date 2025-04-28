@@ -6,6 +6,7 @@ use common::{
         pipeline::{Pipeline, PipelineId},
         project::ProjectId,
         step::{Step, StepId},
+        step_definition::StepDefinitionId,
     },
     ServiceError,
 };
@@ -28,6 +29,7 @@ pub async fn create_pipeline(
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreatePipelineRequest {
     name: String,
     description: Option<String>,
@@ -35,6 +37,7 @@ pub struct CreatePipelineRequest {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreatePipelineResponse {
     id: PipelineId,
 }
@@ -52,6 +55,7 @@ pub async fn get_pipeline(
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetPipelineResponse {
     id: PipelineId,
     name: String,
@@ -91,6 +95,7 @@ pub async fn run_pipeline(
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RunPipelineResponse {
     job_id: JobId,
 }
@@ -105,4 +110,64 @@ pub async fn delete_pipeline(
     db.delete_pipeline(&pipeline_id).await?;
 
     Ok(())
+}
+
+#[instrument(level = "info", skip(db), ret, err)]
+pub async fn update_pipeline(
+    claims: Claims,
+    db: Extension<Database>,
+    Path(pipeline_id): Path<String>,
+    Json(request): Json<UpdatePipelineRequest>,
+) -> Result<(), ServiceError> {
+    let pipeline_id = PipelineId::try_from(pipeline_id)?;
+    let mut pipeline = db.get_pipeline(&pipeline_id).await?;
+
+    if let Some(new_pipeline_name) = request.pipeline_name {
+        pipeline.pipeline_name = new_pipeline_name;
+    }
+    if let Some(new_description) = request.description {
+        match new_description.as_str() {
+            "" => pipeline.description = None,
+            _ => pipeline.description = Some(new_description),
+        }
+    }
+
+    if let Some(new_steps) = request.steps {
+        pipeline.steps = new_steps
+            .into_iter()
+            .map(|s| {
+                Step::new(
+                    s.step_id,
+                    s.step_definition_id,
+                    pipeline.pipeline_id.clone(),
+                    s.step_parameters,
+                )
+            })
+            .collect();
+    }
+
+    if let Some(new_step_connections) = request.step_connections {
+        pipeline.step_connections = new_step_connections;
+    }
+
+    db.update_pipeline(pipeline).await?;
+
+    Ok(())
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdatePipelineRequest {
+    pub pipeline_name: Option<String>,
+    pub description: Option<String>,
+    pub steps: Option<Vec<UpdateStepRequest>>,
+    pub step_connections: Option<Vec<(StepId, StepId)>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateStepRequest {
+    pub step_id: StepId,
+    pub step_definition_id: StepDefinitionId,
+    pub step_parameters: serde_json::Value,
 }
