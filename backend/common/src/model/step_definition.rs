@@ -66,6 +66,13 @@ pub enum StepType {
     NoOp,
     BlurDetector,
     ResolutionStandardizer,
+    Rotate,
+    Flip,
+    Grayscale,
+    Brightness,
+    Contrast,
+    AddNoise,
+    Unknown,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
