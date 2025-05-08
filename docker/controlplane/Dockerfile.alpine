@@ -1,14 +1,26 @@
-FROM rust:latest
+# Builder Stage
+FROM rust:latest as builder
 
 WORKDIR /usr/local/app
 
 # Install the application dependencies
-COPY ./backend/controlplane-api/ ./src/
+COPY ./backend/Cargo.toml ./backend/Cargo.lock ./
+COPY ./backend/data-pipeline/ ./data-pipeline/
+COPY ./backend/controlplane-api/ ./controlplane-api/
+COPY ./backend/common/ ./common/
+COPY ./backend/.sqlx .sqlx
 
 RUN mkdir build/
-RUN cargo build --manifest-path ./src/Cargo.toml --target-dir ./build/
-RUN cp ./build/debug/controlplane-api ./
 
-# Setup an app user so the container doesn't run as the root user
-RUN addgroup appgroup && adduser --ingroup appgroup appuser
+# Set SQLX to offline mode for the build
+ENV SQLX_OFFLINE=true
+RUN cargo build --package controlplane-api --target-dir ./build/
+
+# Final Stage
+FROM rust:latest
+
+WORKDIR /usr/local/app
+COPY --from=builder /usr/local/app/build/debug/controlplane-api ./controlplane-api
+RUN groupadd --system appgroup && \
+    useradd --system --gid appgroup --no-create-home appuser
 USER appuser
