@@ -4,13 +4,17 @@ use jsonwebtoken::{encode, Header};
 use password_auth::verify_password;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
+use validator::Validate;
 
 use crate::auth::{claims::Claims, error::AuthError, keys::KEYS};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthPayload {
+    #[validate(email(message = "Invalid email format"))]
+    #[validate(length(min = 1, message = "Email cannot be empty"))]
     email: String,
+    #[validate(length(min = 1, message = "Password cannot be empty"))]
     password: String,
 }
 
@@ -18,14 +22,15 @@ pub async fn authorize(
     Extension(db): Extension<Database>,
     Json(request): Json<AuthPayload>,
 ) -> Result<Json<AuthBody>, AuthError> {
-    if request.email.is_empty() || request.password.is_empty() {
-        return Err(AuthError::MissingCredentials);
-    }
+    match request.validate() {
+        Ok(_) => (),
+        Err(e) => return Err(AuthError::InvalidInput(e.to_string())),
+    };
 
     let user = db
         .get_user_by_email(&request.email)
         .await
-        .map_err(|_| AuthError::WrongCredentials)?;
+        .map_err(|_db_error| AuthError::WrongCredentials)?; // Assuming db error implies wrong creds for simplicity
     if verify_password(request.password, &user.password_hash.expose_secret()).is_err() {
         return Err(AuthError::WrongCredentials);
     }
@@ -33,7 +38,7 @@ pub async fn authorize(
     let claims = Claims::create(user.user_id);
     // Create the authorization token
     let token = encode(&Header::default(), &claims, &KEYS.encoding)
-        .map_err(|_| AuthError::TokenCreation)?;
+        .map_err(|_encode_error| AuthError::TokenCreation)?;
 
     // Send the authorized token
     Ok(Json(AuthBody::new(token)))

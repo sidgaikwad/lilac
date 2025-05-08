@@ -12,6 +12,7 @@ use common::{
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use validator::Validate;
 
 use crate::auth::claims::Claims;
 
@@ -21,6 +22,10 @@ pub async fn create_pipeline(
     db: Extension<Database>,
     Json(request): Json<CreatePipelineRequest>,
 ) -> Result<Json<CreatePipelineResponse>, ServiceError> {
+    match request.validate() {
+        Ok(_) => (),
+        Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
+    }
     let pipeline = Pipeline::create(request.name, request.description, request.project_id);
 
     let pipeline_id = db.create_pipeline(pipeline).await?;
@@ -28,10 +33,12 @@ pub async fn create_pipeline(
     Ok(Json(CreatePipelineResponse { id: pipeline_id }))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreatePipelineRequest {
+    #[validate(length(min = 1, message = "Pipeline name cannot be empty"))]
     name: String,
+    #[validate(length(min = 1, message = "Description cannot be empty if provided"))]
     description: Option<String>,
     project_id: ProjectId,
 }
@@ -119,6 +126,10 @@ pub async fn update_pipeline(
     Path(pipeline_id): Path<String>,
     Json(request): Json<UpdatePipelineRequest>,
 ) -> Result<(), ServiceError> {
+    match request.validate() {
+        Ok(_) => (),
+        Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
+    }
     let pipeline_id = PipelineId::try_from(pipeline_id)?;
     let mut pipeline = db.get_pipeline(&pipeline_id).await?;
 
@@ -155,11 +166,17 @@ pub async fn update_pipeline(
     Ok(())
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdatePipelineRequest {
+    #[validate(length(min = 1, message = "Pipeline name cannot be empty if provided"))]
     pub pipeline_name: Option<String>,
+    #[validate(length(min = 1, message = "Description cannot be empty if provided"))]
     pub description: Option<String>,
+    // Assuming steps and step_connections are validated by their structure or content elsewhere
+    // or that deeper validation isn't required here via `validator`.
+    // If `UpdateStepRequest` itself needed validation and was to be nested,
+    // you would add `#[validate(nested)]` to `steps`.
     pub steps: Option<Vec<UpdateStepRequest>>,
     pub step_connections: Option<Vec<(StepId, StepId)>>,
 }

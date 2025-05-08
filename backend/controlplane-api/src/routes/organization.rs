@@ -6,6 +6,7 @@ use common::{
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use validator::Validate;
 
 use crate::auth::claims::Claims;
 
@@ -15,6 +16,10 @@ pub async fn create_organization(
     db: Extension<Database>,
     Json(request): Json<CreateOrganizationRequest>,
 ) -> Result<Json<CreateOrganizationResponse>, ServiceError> {
+    match request.validate() {
+        Ok(_) => (),
+        Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
+    }
     let organization = Organization::create(request.name);
 
     let org_id = db.create_organization(organization).await?;
@@ -25,9 +30,10 @@ pub async fn create_organization(
     Ok(Json(CreateOrganizationResponse { id: org_id }))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateOrganizationRequest {
+    #[validate(length(min = 1, message = "Organization name cannot be empty"))]
     name: String,
 }
 

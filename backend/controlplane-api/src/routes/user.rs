@@ -6,6 +6,7 @@ use common::{
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use validator::Validate;
 
 use crate::auth::claims::Claims;
 
@@ -14,8 +15,9 @@ pub async fn create_user(
     db: Extension<Database>,
     Json(request): Json<CreateUserRequest>,
 ) -> Result<Json<CreateUserResponse>, ServiceError> {
-    if request.password.len() < 8 {
-        return Err(ServiceError::BadRequest("password too short".into()));
+    match request.validate() {
+        Ok(_) => (),
+        Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
     }
     let user = User::create(request.email, request.password.into());
 
@@ -24,9 +26,12 @@ pub async fn create_user(
     Ok(Json(CreateUserResponse { id: user_id }))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct CreateUserRequest {
+    #[validate(email(message = "Invalid email format"))]
+    #[validate(length(min = 1, message = "Email cannot be empty"))]
     email: String,
+    #[validate(length(min = 8, message = "Password must be at least 8 characters long"))]
     password: String,
 }
 

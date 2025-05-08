@@ -13,6 +13,7 @@ use common::{
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use validator::Validate;
 
 use crate::auth::claims::Claims;
 
@@ -22,6 +23,10 @@ pub async fn create_project(
     db: Extension<Database>,
     Json(request): Json<CreateProjectRequest>,
 ) -> Result<Json<CreateProjectResponse>, ServiceError> {
+    match request.validate() {
+        Ok(_) => (),
+        Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
+    }
     let project = Project::create(request.name, request.organization_id);
 
     let project_id = db.create_project(project).await?;
@@ -29,9 +34,10 @@ pub async fn create_project(
     Ok(Json(CreateProjectResponse { id: project_id }))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateProjectRequest {
+    #[validate(length(min = 1, message = "Project name cannot be empty"))]
     name: String,
     organization_id: OrganizationId,
 }
