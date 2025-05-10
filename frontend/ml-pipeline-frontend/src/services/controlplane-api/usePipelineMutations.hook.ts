@@ -4,6 +4,7 @@ import { post } from '@/lib/fetch';
 import {
   CreatePipelineRequest,
   CreatePipelineResponse,
+  RunPipelinePayload,
   RunPipelineResponse,
   UpdatePipelineRequest,
 } from './types';
@@ -64,24 +65,26 @@ export function useUpdatePipeline(props: UseUpdatePipelineProps) {
   });
 }
 
-const runPipeline = async (payload: {
-  pipelineId: string;
-}): Promise<RunPipelineResponse> => {
-  return post(`/pipelines/${payload.pipelineId}/run`, {});
+const runPipeline = async (payload: RunPipelinePayload): Promise<RunPipelineResponse> => {
+  return post(`/pipelines/${payload.pipelineId}/run`, { datasetPath: payload.datasetPath });
 };
 export interface UseRunPipelineProps {
-  onSuccess?: (data: RunPipelineResponse) => void;
-  onError?: (error: ApiError) => void;
+  onSuccess?: (data: RunPipelineResponse, variables: RunPipelinePayload) => void;
+  onError?: (error: ApiError, variables: RunPipelinePayload) => void;
 }
 
 export function useRunPipeline(props: UseRunPipelineProps) {
-  return useMutation({
+  return useMutation<RunPipelineResponse, ApiError, RunPipelinePayload>({
     mutationFn: runPipeline,
-    onSuccess: (data, _variables) => {
+    onSuccess: (data, variables) => {
       if (props.onSuccess !== undefined) {
-        props.onSuccess(data);
+        props.onSuccess(data, variables);
       }
     },
-    onError: props.onError,
+    onError: (error, variables) => {
+      if (props.onError !== undefined) {
+        props.onError(error, variables);
+      }
+    },
   });
 }

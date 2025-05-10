@@ -61,6 +61,7 @@ pub struct Dataset {
     pub dataset_name: String,
     pub description: Option<String>,
     pub project_id: ProjectId,
+    pub dataset_path: String,
 }
 
 impl Dataset {
@@ -69,12 +70,14 @@ impl Dataset {
         dataset_name: String,
         description: Option<String>,
         project_id: ProjectId,
+        dataset_path: String,
     ) -> Self {
         Self {
             dataset_id,
             dataset_name,
             description,
             project_id,
+            dataset_path,
         }
     }
 
@@ -82,12 +85,14 @@ impl Dataset {
         dataset_name: String,
         description: Option<String>,
         project_id: ProjectId,
+        dataset_path: String,
     ) -> Self {
         Self {
             dataset_id: DatasetId::generate(),
             dataset_name,
             description,
             project_id,
+            dataset_path,
         }
     }
 }

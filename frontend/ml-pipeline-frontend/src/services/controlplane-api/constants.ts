@@ -25,5 +25,9 @@ export enum QueryKeys {
   DELETE_PIPELINE = 'DeletePipeline',
   LIST_DATASETS = 'ListDataSets',
 
+  LIST_JOB_OUTPUTS = 'ListJobOutputs',
+  LIST_JOB_OUTPUT_IMAGES = 'ListJobOutputImages',
+  CREATE_DATASET = 'CreateDataset',
+
   LIST_STEP_DEFINITIONS = 'ListStepDefinitions',
 }

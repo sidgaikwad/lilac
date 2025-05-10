@@ -70,6 +70,7 @@ CREATE TABLE datasets (
     dataset_name text NOT NULL,
     description text,
     project_id uuid NOT NULL REFERENCES projects(project_id),
+    dataset_path text NOT NULL,
     created_at timestamptz NOT NULL default (now() at time zone 'UTC'),
     updated_at timestamptz NOT NULL default (now() at time zone 'UTC'),
     deleted_at timestamptz

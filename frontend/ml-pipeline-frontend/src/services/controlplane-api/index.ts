@@ -6,3 +6,4 @@ export * from './useListPipelines.hook';
 export * from './useListProjects.hook';
 export * from './useLogin.hook';
 export * from './usePipelineMutations.hook';
+export * from './useCreateDataset.hook';

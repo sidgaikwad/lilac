@@ -1,0 +1,88 @@
+import React, { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useListDatasets } from '@/services/controlplane-api/useListDatasets.hook';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface DatasetSelectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectDataset: (datasetPath: string) => void;
+}
+
+const DatasetSelectionModal: React.FC<DatasetSelectionModalProps> = ({
+  isOpen,
+  onClose,
+  onSelectDataset,
+}) => {
+  const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
+  const { data: datasets, isLoading, isError, error } = useListDatasets();
+
+  const handleDatasetSelect = (datasetName: string) => {
+    setSelectedDataset(datasetName);
+  };
+
+  const handleConfirm = () => {
+    if (selectedDataset) {
+      onSelectDataset(selectedDataset);
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Select Dataset</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          {isLoading && (
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          )}
+          {isError && (
+            <p className="text-red-500 text-sm">
+              Error fetching datasets: {error?.error || 'Could not load datasets.'}
+            </p>
+          )}
+          {!isLoading && !isError && datasets && (
+            <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+              {datasets.length === 0 && <p className="text-center text-sm text-muted-foreground">No datasets found.</p>}
+              {datasets.map((name) => (
+                <Button
+                  key={name}
+                  variant={selectedDataset === name ? 'default' : 'outline'}
+                  className="w-full justify-start mb-2"
+                  onClick={() => handleDatasetSelect(name)}
+                >
+                  {name}
+                </Button>
+              ))}
+            </ScrollArea>
+          )}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+          </DialogClose>
+          <Button onClick={handleConfirm} disabled={!selectedDataset || isLoading}>
+            Run with Selected Dataset
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default DatasetSelectionModal;

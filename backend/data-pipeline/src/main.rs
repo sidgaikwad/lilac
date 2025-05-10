@@ -32,20 +32,6 @@ use tokio::time::sleep;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
-// Helper to get typed value from serde_json::Value, returning ServiceError
-// Updated to handle Option<&Value> more directly
-fn get_json_value<'a, T>(
-    value_opt: Option<&'a serde_json::Value>,
-    param_name: &str,
-) -> Result<T, ServiceError>
-where
-    // Adjust trait bounds based on what TryFrom<&Value> needs
-    T: TryFrom<&'a serde_json::Value, Error = serde_json::Error>, // Example, adjust if needed
-{
-    let value = value_opt.ok_or_else(|| ServiceError::MissingParameter(param_name.to_string()))?;
-    T::try_from(value).map_err(|e| ServiceError::InvalidParameterType(param_name.to_string(), e.to_string()))
-}
-
 // Specific helpers for common types, handling potential errors during conversion
 fn get_json_string<'a>(value_opt: Option<&'a serde_json::Value>, param_name: &str) -> Result<&'a str, ServiceError> {
     value_opt.ok_or_else(|| ServiceError::MissingParameter(param_name.to_string()))?
@@ -149,16 +135,16 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
     let pipeline = db.get_pipeline(&job.pipeline_id).await?;
     let mut pipes: Vec<Box<dyn ImagePipe>> = Vec::new();
 
-    for step in &pipeline.steps {
-        let step_definition = db.get_step_definition(&step.step_definition_id).await?;
+    for step_model in &pipeline.steps {
+        let step_definition = db.get_step_definition(&step_model.step_definition_id).await?;
 
         // Validate parameters against schema *before* trying to parse them
-        if let Err(error) = validate(&step.step_parameters, &step_definition.schema) { // Use qualified name
-            tracing::error!(step_id = %step.step_id.inner(), schema = ?step_definition.schema, params = ?step.step_parameters, error=%error, "Schema validation failed");
+        if let Err(error) = validate(&step_model.step_parameters, &step_definition.schema) { 
+            tracing::error!(step_id = %step_model.step_id.inner(), schema = ?step_definition.schema, params = ?step_model.step_parameters, error=%error, "Schema validation failed");
             return Err(ServiceError::SchemaValidationError(error.to_string()));
         }
 
-        let params = &step.step_parameters;
+        let params = &step_model.step_parameters;
 
         // Instantiate pipe based on StepType
         let pipe: Box<dyn ImagePipe> = match step_definition.step_type {
@@ -235,17 +221,30 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
                  // Defaulting to NoOp, could also error out
                  Box::new(NoOpStep {})
             }
-            // Catch-all for safety, though Unknown should cover it if enum is exhaustive
-             _ => {
-                  tracing::error!("Encountered unhandled StepType: {:?}", step_definition.step_type);
-                  return Err(ServiceError::NotImplemented(format!("Pipe for StepType::{:?}", step_definition.step_type)));
-             }
+            // The _ arm was removed as all StepType variants are explicitly handled.
+            // StepType::Unknown serves as the catch-all for any new variants not yet implemented.
         };
         pipes.push(pipe);
     }
 
-    // TODO: Get actual input/output paths based on Job/Pipeline definition
-    let input_path = PathBuf::from("./test_images");
+    
+    let dataset_folder_name = job.dataset_path.as_ref().ok_or_else(|| {
+        tracing::error!("Job {} is missing dataset_path", job.job_id.inner());
+        ServiceError::MissingParameter(format!("dataset_path for job {}", job.job_id.inner()))
+    })?;
+
+    
+    let input_path = PathBuf::from("./test_images").join(dataset_folder_name);
+
+    if !input_path.exists() || !input_path.is_dir() {
+        tracing::error!(path = %input_path.display(), "Input dataset path does not exist or is not a directory.");
+        return Err(ServiceError::IoError(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("Input dataset path not found: {}", input_path.display())
+        )));
+    }
+  
+
     let output_path = PathBuf::from(format!("./job_data/{}/output", job.job_id.inner()));
     std::fs::create_dir_all(&output_path).map_err(|e| ServiceError::IoError(e))?;
 

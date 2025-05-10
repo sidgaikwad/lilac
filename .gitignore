@@ -3,3 +3,5 @@ node_modules/
 output/
 output_images/
 .env
+backend/data-pipeline/job_data
+*.png

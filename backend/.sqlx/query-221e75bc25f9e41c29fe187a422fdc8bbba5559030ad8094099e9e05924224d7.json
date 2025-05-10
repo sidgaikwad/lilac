@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO \"datasets\" (dataset_id, dataset_name, description, project_id, dataset_path) VALUES ($1, $2, $3, $4, $5) RETURNING dataset_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "dataset_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "221e75bc25f9e41c29fe187a422fdc8bbba5559030ad8094099e9e05924224d7"
+}

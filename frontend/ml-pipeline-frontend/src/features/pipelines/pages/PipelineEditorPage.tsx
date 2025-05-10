@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import PipelineSidebar from '../components/PipelineSidebar';
+import DatasetSelectionModal from '../components/DatasetSelectionModal';
 import PipelineEditorFlow from '../components/PipelineEditorFlow';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import { StepDefinition } from '@/types';
 const PipelineEditorPage: React.FC = () => {
   const { pipelineId } = useParams<{ pipelineId: string }>();
   const navigate = useNavigate();
+  const [isDatasetModalOpen, setIsDatasetModalOpen] = useState(false);
 
   const {
     data: pipeline,
@@ -94,7 +96,7 @@ const PipelineEditorPage: React.FC = () => {
             <Button
               onClick={() => {
                 if (pipelineId) {
-                  runPipeline({ pipelineId });
+                  setIsDatasetModalOpen(true);
                 }
               }}
               size="sm"
@@ -111,6 +113,15 @@ const PipelineEditorPage: React.FC = () => {
           )}
           <PipelineSidebar />
         </div>
+        {pipelineId && (
+          <DatasetSelectionModal
+            isOpen={isDatasetModalOpen}
+            onClose={() => setIsDatasetModalOpen(false)}
+            onSelectDataset={(datasetPath) => {
+              runPipeline({ pipelineId, datasetPath });
+            }}
+          />
+        )}
       </div>
     </ReactFlowProvider>
   );

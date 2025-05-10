@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO \"steps\" (step_id, step_definition_id, pipeline_id, step_parameters) VALUES ($1, $2, $3, $4) RETURNING step_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "step_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "7b6098438af10364bb50f39813a34bdc7059a6dd8a5f4176592306a16ae4eb7c"
+}

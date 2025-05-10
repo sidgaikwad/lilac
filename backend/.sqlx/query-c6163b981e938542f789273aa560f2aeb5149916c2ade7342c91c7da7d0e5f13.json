@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT d.dataset_id, d.dataset_name, d.description, d.project_id, d.dataset_path\n            FROM \"datasets\" d\n            WHERE d.project_id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "dataset_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "dataset_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "project_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "dataset_path",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "c6163b981e938542f789273aa560f2aeb5149916c2ade7342c91c7da7d0e5f13"
+}

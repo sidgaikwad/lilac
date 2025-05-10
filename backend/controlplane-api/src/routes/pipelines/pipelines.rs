@@ -90,15 +90,22 @@ pub async fn run_pipeline(
     claims: Claims,
     db: Extension<Database>,
     Path(pipeline_id): Path<String>,
+    Json(request): Json<RunPipelineApiRequest>,
 ) -> Result<Json<RunPipelineResponse>, ServiceError> {
     let pipeline_id = PipelineId::try_from(pipeline_id)?;
     let pipeline = db.get_pipeline(&pipeline_id).await?;
 
-    let job = Job::create(pipeline.pipeline_id);
+    let job = Job::create(pipeline.pipeline_id, Some(request.dataset_path));
     let job_id = job.job_id.clone();
     db.create_job(job).await?;
 
     Ok(Json(RunPipelineResponse { job_id }))
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RunPipelineApiRequest {
+    pub dataset_path: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -173,10 +180,6 @@ pub struct UpdatePipelineRequest {
     pub pipeline_name: Option<String>,
     #[validate(length(min = 1, message = "Description cannot be empty if provided"))]
     pub description: Option<String>,
-    // Assuming steps and step_connections are validated by their structure or content elsewhere
-    // or that deeper validation isn't required here via `validator`.
-    // If `UpdateStepRequest` itself needed validation and was to be nested,
-    // you would add `#[validate(nested)]` to `steps`.
     pub steps: Option<Vec<UpdateStepRequest>>,
     pub step_connections: Option<Vec<(StepId, StepId)>>,
 }

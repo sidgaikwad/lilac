@@ -70,10 +70,40 @@ export interface UpdatePipelineRequest {
   stepConnections?: [string, string][];
 }
 
+export interface RunPipelinePayload {
+  pipelineId: string;
+  datasetPath: string;
+}
 export interface RunPipelineResponse {
   jobId: string;
 }
 
 export interface ListStepDefinitionsResponse {
   stepDefinitions: StepDefinition[];
+}
+
+export interface ListDatasetsResponse {
+  datasets: string[];
+}
+
+export interface JobOutputSummary {
+  jobId: string;
+  inputDatasetName: string | null; // Can be null if dataset_path was null for the job
+  completedAt: string | null; // Assuming string representation of timestamp
+}
+
+export interface JobOutputImages {
+  jobId: string;
+  images: string[];
+}
+
+export interface CreateDatasetRequest {
+  datasetName: string;
+  description?: string;
+  images: string[];
+  projectId: string;
+}
+
+export interface CreateDatasetResponse {
+  id: string;
 }

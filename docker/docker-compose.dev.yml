@@ -12,6 +12,8 @@ services:
       - DATABASE_URL=postgres://postgres:12345@db/database
     ports:
       - '3000:3000'
+    volumes:
+      - ../backend/data-pipeline:/usr/local/app/data-pipeline:rw
     networks:
       - default
 

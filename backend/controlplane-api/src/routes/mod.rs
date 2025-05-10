@@ -18,12 +18,16 @@ pub use step_definitions::*;
 mod pipelines;
 mod projects;
 mod steps;
+mod datasets;
+mod job_outputs;
 
 pub fn router() -> Router {
     Router::new()
         .merge(pipelines::router())
         .merge(steps::router())
         .merge(projects::router())
+        .nest("/api/datasets", datasets::datasets_routes())
+        .nest("/api/job-outputs", job_outputs::job_outputs_routes())
         // user routes
         .route("/account/details", get(user::get_current_user))
         .route("/users", post(user::create_user))
@@ -39,7 +43,6 @@ pub fn router() -> Router {
             "/organizations/{organization_id}",
             get(organization::get_organization),
         )
-        // step definitions routes
         .route(
             "/step_definitions",
             get(step_definitions::list_step_definitions),

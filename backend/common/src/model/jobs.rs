@@ -67,22 +67,30 @@ pub struct Job {
     pub job_id: JobId,
     pub pipeline_id: PipelineId,
     pub status: JobStatus,
+    pub dataset_path: Option<String>,
 }
 
 impl Job {
-    pub fn new(job_id: JobId, pipeline_id: PipelineId, status: JobStatus) -> Self {
+    pub fn new(
+        job_id: JobId,
+        pipeline_id: PipelineId,
+        status: JobStatus,
+        dataset_path: Option<String>,
+    ) -> Self {
         Self {
             job_id,
             pipeline_id,
             status,
+            dataset_path,
         }
     }
 
-    pub fn create(pipeline_id: PipelineId) -> Self {
+    pub fn create(pipeline_id: PipelineId, dataset_path: Option<String>) -> Self {
         Self {
             job_id: JobId::generate(),
             pipeline_id,
             status: JobStatus::Pending,
+            dataset_path,
         }
     }
 }

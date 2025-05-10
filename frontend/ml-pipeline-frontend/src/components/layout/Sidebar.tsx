@@ -69,7 +69,7 @@ const Sidebar: React.FC = () => {
         <NavLink
           to={projectId ? `/projects/${projectId}` : '#'}
           className={({ isActive }) =>
-            getNavLinkClass({ isActive }, !projectId)
+            getNavLinkClass({ isActive: false }, !projectId)
           }
           aria-disabled={!projectId}
           onClick={(e) => !projectId && e.preventDefault()}
@@ -79,8 +79,8 @@ const Sidebar: React.FC = () => {
         </NavLink>
         <NavLink
           to={projectId ? `/projects/${projectId}/pipelines` : '#'}
-          className={({ isActive }) =>
-            getNavLinkClass({ isActive }, !projectId)
+          className={({ isActive }) => 
+            getNavLinkClass({ isActive  }, !projectId)
           }
           aria-disabled={!projectId}
           onClick={(e) => !projectId && e.preventDefault()}

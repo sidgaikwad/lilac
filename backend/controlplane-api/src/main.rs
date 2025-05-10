@@ -1,4 +1,4 @@
-use axum::{body::Body, extract::Request, http::HeaderValue, Extension, Router};
+use axum::{body::Body, extract::{DefaultBodyLimit, Request}, http::HeaderValue, Extension, Router};
 use common::database::Database;
 use controlplane_api::routes;
 use dotenv::dotenv;
@@ -6,7 +6,7 @@ use hyper::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     Method,
 };
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer}; // Added ServeDir
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
@@ -33,6 +33,10 @@ async fn main() {
 
     let app = Router::new()
         .merge(routes::router())
+        // Serve static files from the job_data directory
+        // This path is relative to the WORKDIR in the Docker container (/usr/local/app)
+        // and relies on the volume mount defined in docker-compose.dev.yml
+        .nest_service("/static/job_outputs", ServeDir::new("/usr/local/app/data-pipeline/job_data"))
         .layer(Extension(db))
         .layer(
             CorsLayer::new()
@@ -46,7 +50,8 @@ async fn main() {
                 let request_id = Uuid::new_v4().to_string();
                 tracing::info_span!("http-request", %request_id)
             }),
-        );
+        )
+        .layer(DefaultBodyLimit::max(20_000_000));
 
     // run our app with hyper
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
