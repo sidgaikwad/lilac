@@ -11,11 +11,12 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useListDatasets } from '@/services/controlplane-api/useListDatasets.hook';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useParams } from 'react-router-dom';
 
 interface DatasetSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectDataset: (datasetPath: string) => void;
+  onSelectDataset: (datasetId: string) => void;
 }
 
 const DatasetSelectionModal: React.FC<DatasetSelectionModalProps> = ({
@@ -24,10 +25,11 @@ const DatasetSelectionModal: React.FC<DatasetSelectionModalProps> = ({
   onSelectDataset,
 }) => {
   const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
-  const { data: datasets, isLoading, isError, error } = useListDatasets();
+  const { projectId } = useParams();
+  const { data: datasets, isLoading, isError, error } = useListDatasets({ projectId });
 
-  const handleDatasetSelect = (datasetName: string) => {
-    setSelectedDataset(datasetName);
+  const handleDatasetSelect = (datasetId: string) => {
+    setSelectedDataset(datasetId);
   };
 
   const handleConfirm = () => {
@@ -59,14 +61,14 @@ const DatasetSelectionModal: React.FC<DatasetSelectionModalProps> = ({
           {!isLoading && !isError && datasets && (
             <ScrollArea className="h-[200px] w-full rounded-md border p-4">
               {datasets.length === 0 && <p className="text-center text-sm text-muted-foreground">No datasets found.</p>}
-              {datasets.map((name) => (
+              {datasets.map((dataset) => (
                 <Button
-                  key={name}
-                  variant={selectedDataset === name ? 'default' : 'outline'}
+                  key={dataset.datasetId}
+                  variant={selectedDataset === dataset.datasetName ? 'default' : 'outline'}
                   className="w-full justify-start mb-2"
-                  onClick={() => handleDatasetSelect(name)}
+                  onClick={() => handleDatasetSelect(dataset.datasetId)}
                 >
-                  {name}
+                  {dataset.datasetName}
                 </Button>
               ))}
             </ScrollArea>

@@ -1,3 +1,6 @@
+use std::fmt::Display;
+
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -31,6 +34,12 @@ impl DatasetId {
 impl Default for DatasetId {
     fn default() -> Self {
         Self::generate()
+    }
+}
+
+impl Display for DatasetId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -93,6 +102,50 @@ impl Dataset {
             description,
             project_id,
             dataset_path,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct DatasetFileMetadata {
+    pub file_name: String,
+    pub file_type: String,
+    pub size: i64,
+    pub created_at: DateTime<Utc>,
+    pub url: String,
+}
+
+impl DatasetFileMetadata {
+    pub fn new(file_name: String, file_type: String, size: i64, created_at: DateTime<Utc>, url: String) -> Self {
+        Self {
+            file_name,
+            file_type,
+            size,
+            created_at,
+            url,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct DatasetFile {
+    pub metadata: DatasetFileMetadata,
+    pub contents: Vec<u8>,
+}
+
+impl DatasetFile {
+    pub fn new(file_name: String, file_type: String, size: i64, created_at: DateTime<Utc>, url: String, contents: Vec<u8>) -> Self {
+        Self {
+            metadata: DatasetFileMetadata {
+                file_name,
+                file_type,
+                size,
+                created_at,
+                url,
+            },
+            contents,
         }
     }
 }

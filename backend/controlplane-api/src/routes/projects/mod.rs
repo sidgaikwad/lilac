@@ -3,7 +3,9 @@ use axum::{routing::get, Router};
 mod projects;
 use projects::*;
 
-pub fn router() -> Router {
+use crate::AppState;
+
+pub fn router() -> Router<AppState> {
     Router::new()
         .route("/projects", get(list_projects).post(create_project))
         .route(

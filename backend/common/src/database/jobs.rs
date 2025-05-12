@@ -73,7 +73,7 @@ impl Database {
             // language=PostgreSQL
             r#"
                 WITH jobs AS MATERIALIZED (
-                    SELECT job_id, pipeline_id, status, dataset_path
+                    SELECT job_id, pipeline_id, status, input_dataset_id
                         FROM pipeline_jobs
                         WHERE status IN ('pending')
                         ORDER BY created_at
@@ -83,7 +83,7 @@ impl Database {
                 UPDATE pipeline_jobs
                 SET status = 'in_progress', started_at = now()
                 WHERE job_id = ANY(SELECT job_id FROM jobs)
-                RETURNING job_id, pipeline_id, status, dataset_path; -- Added dataset_path
+                RETURNING job_id, pipeline_id, status, input_dataset_id;
             "#,
         )
         .map(|row| {
@@ -93,7 +93,7 @@ impl Database {
                 status: JobStatus::from_str(&row.status).map_err(|_| {
                     ServiceError::ParseError(format!("invalid JobStatus {}", &row.status))
                 })?,
-                dataset_path: row.dataset_path,
+                input_dataset_id: row.input_dataset_id.into(),
             })
         })
         .fetch_optional(&self.pool)
@@ -109,14 +109,14 @@ impl Database {
             // language=PostgreSQL
             r#"
                 INSERT INTO pipeline_jobs
-                (job_id, pipeline_id, status, dataset_path)
+                (job_id, pipeline_id, status, input_dataset_id)
                 VALUES
                 ($1, $2, $3, $4) -- Added $4
             "#,
             job.job_id.inner(),
             job.pipeline_id.inner(),
             job.status.to_string(),
-            job.dataset_path,
+            job.input_dataset_id.inner(),
         )
         .execute(&self.pool)
         .await?;

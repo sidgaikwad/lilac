@@ -1,7 +1,8 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom'; // Import Outlet
+import { Outlet, useNavigate } from 'react-router-dom'; // Import Outlet
 import { Navigate } from 'react-router-dom';
 import useAuthStore from '@/store/useAuthStore';
+import { useGetAccountDetails } from '@/services/controlplane-api/useGetAccountDetails.hook';
 
 /**
  * A route guard that checks authentication status.
@@ -10,9 +11,18 @@ import useAuthStore from '@/store/useAuthStore';
  * Shows a loading indicator during the initial auth check.
  */
 const ProtectedRoute: React.FC = () => {
-  const { user, token } = useAuthStore();
+  const navigate = useNavigate();
+  const { token, logout } = useAuthStore();
+  const {} = useGetAccountDetails({
+    onError: (error) => {
+      if (error.statusCode === 401) {
+        logout();
+        navigate('/login');
+      }
+    }
+  })
 
-  if (!user || !token) {
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
 

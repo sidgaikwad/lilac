@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+aws-config.workspace = true
+aws-sdk-s3.workspace = true
+aws-smithy-types-convert.workspace = true
 axum.workspace = true
 chrono.workspace = true
 jsonschema.workspace = true

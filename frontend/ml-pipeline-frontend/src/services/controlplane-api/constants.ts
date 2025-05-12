@@ -4,6 +4,7 @@ export enum QueryKeys {
   LOGIN = 'Login',
 
   GET_USER = 'GetUser',
+  GET_ACCOUNT_DETAILS = 'GetAccountDetails',
   CREATE_USER = 'CreateUser',
 
   GET_ORGANIZATION = 'GetOrganization',
@@ -28,6 +29,7 @@ export enum QueryKeys {
   LIST_JOB_OUTPUTS = 'ListJobOutputs',
   LIST_JOB_OUTPUT_IMAGES = 'ListJobOutputImages',
   CREATE_DATASET = 'CreateDataset',
+  GET_DATASET = 'GetDataset',
 
   LIST_STEP_DEFINITIONS = 'ListStepDefinitions',
 }

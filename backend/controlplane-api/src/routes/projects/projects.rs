@@ -1,6 +1,6 @@
 use axum::{
-    extract::{Path, Query},
-    Extension, Json,
+    extract::{Path, Query, State},
+    Json,
 };
 use common::{
     database::Database,
@@ -20,7 +20,7 @@ use crate::auth::claims::Claims;
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn create_project(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Json(request): Json<CreateProjectRequest>,
 ) -> Result<Json<CreateProjectResponse>, ServiceError> {
     match request.validate() {
@@ -51,7 +51,7 @@ pub struct CreateProjectResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn get_project(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(project_id): Path<String>,
 ) -> Result<Json<GetProjectResponse>, ServiceError> {
     let project_id = ProjectId::try_from(project_id)?;
@@ -81,7 +81,7 @@ impl From<Project> for GetProjectResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn delete_project(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(project_id): Path<String>,
 ) -> Result<(), ServiceError> {
     let project_id = ProjectId::try_from(project_id)?;
@@ -93,7 +93,7 @@ pub async fn delete_project(
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn list_projects(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Query(request): Query<ListProjectsRequest>,
 ) -> Result<Json<ListProjectsResponse>, ServiceError> {
     let projects = if let Some(org_id) = request.organization_id {
@@ -128,7 +128,7 @@ pub struct ListProjectsResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn list_project_pipelines(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(project_id): Path<ProjectId>,
 ) -> Result<Json<ListProjectPipelineResponse>, ServiceError> {
     let pipelines = db.list_pipelines(&project_id).await?;

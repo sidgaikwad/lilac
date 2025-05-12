@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use axum::{extract::Path, Extension, Json};
+use axum::{extract::{Path, State}, Json};
 use common::{
     database::Database,
     model::{
@@ -19,7 +19,7 @@ use crate::auth::claims::Claims;
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn create_step(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Json(request): Json<CreateStepRequest>,
 ) -> Result<Json<CreateStepResponse>, ServiceError> {
     let step_definition = db.get_step_definition_by_type(&request.step_type).await?;
@@ -56,7 +56,7 @@ pub struct CreateStepResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn get_step(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(step_id): Path<StepId>,
 ) -> Result<Json<GetStepResponse>, ServiceError> {
     let step = db.get_step(&step_id).await?;
@@ -81,7 +81,7 @@ pub struct GetStepResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn delete_step(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(step_id): Path<StepId>,
 ) -> Result<(), ServiceError> {
     db.delete_step(&step_id).await?;
@@ -91,7 +91,7 @@ pub async fn delete_step(
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn update_step(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(step_id): Path<StepId>,
     Json(request): Json<UpdateStepRequest>,
 ) -> Result<(), ServiceError> {

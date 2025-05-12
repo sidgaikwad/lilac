@@ -7,7 +7,10 @@ use crate::pipeline_definition::Pipeline; // Pipeline definition struct
 use crate::utils::log_pipe_event;
 use crate::{datasource, destination}; // Import the I/O modules // Logging utility
 
+use std::sync::Arc;
 use std::time::Instant;
+use common::database::Database;
+use common::s3::S3Wrapper;
 use thiserror::Error; // For structured errors
 
 /// Errors that can occur during pipeline execution orchestration.
@@ -28,7 +31,7 @@ pub enum RunnerError {
 /// Executes a defined pipeline containing pre-instantiated stages.
 /// Input: Reference to the Pipeline definition.
 /// Output: Result indicating overall success or the first encountered RunnerError.
-pub async fn run_pipeline(pipeline: &Pipeline) -> Result<(), RunnerError> {
+pub async fn run_pipeline(db: Arc<Database>, s3: S3Wrapper, pipeline: &Pipeline) -> Result<(), RunnerError> {
     let run_id = &pipeline.id; // Use pipeline ID for context if available
     log_pipe_event(
         "Runner",
@@ -43,12 +46,12 @@ pub async fn run_pipeline(pipeline: &Pipeline) -> Result<(), RunnerError> {
         "Runner",
         run_id,
         "INFO",
-        &format!("Loading data from source: {:?}", pipeline.input_source),
+        &format!("Loading data from source"),
     );
     let load_start_time = Instant::now();
 
     // Call generic load function from the datasource module
-    let mut current_batch = datasource::load_batch(&pipeline.input_source)?; // Propagate SourceError
+    let mut current_batch = datasource::load_batch(&pipeline.input_source).await?; // Propagate SourceError
 
     let load_duration = load_start_time.elapsed();
     let initial_count = current_batch.len();
@@ -148,7 +151,7 @@ pub async fn run_pipeline(pipeline: &Pipeline) -> Result<(), RunnerError> {
     let save_start_time = Instant::now();
 
     // Call generic save function from the destination module
-    destination::save_batch(&current_batch, &pipeline.output_destination)?; // Propagate DestinationError
+    destination::save_batch(db.clone(), s3.clone(), &current_batch, &pipeline.output_destination).await?; // Propagate DestinationError
 
     let save_duration = save_start_time.elapsed();
     let saved_count = current_batch.len(); // All remaining images were intended for saving

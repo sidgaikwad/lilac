@@ -1,4 +1,4 @@
-use axum::{extract::Path, Extension, Json};
+use axum::{extract::{Path, State}, Json};
 use common::{
     database::Database,
     model::user::{User, UserId},
@@ -12,7 +12,7 @@ use crate::auth::claims::Claims;
 
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn create_user(
-    db: Extension<Database>,
+    State(db): State<Database>,
     Json(request): Json<CreateUserRequest>,
 ) -> Result<Json<CreateUserResponse>, ServiceError> {
     match request.validate() {
@@ -42,8 +42,8 @@ pub struct CreateUserResponse {
 
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn get_current_user(
+    State(db): State<Database>,
     claims: Claims,
-    db: Extension<Database>,
 ) -> Result<Json<GetUserResponse>, ServiceError> {
     let user = db.get_user(&claims.sub).await?;
 
@@ -56,7 +56,7 @@ pub async fn get_current_user(
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn get_user(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(user_id): Path<String>,
 ) -> Result<Json<GetUserResponse>, ServiceError> {
     let user_id = UserId::try_from(user_id)?;

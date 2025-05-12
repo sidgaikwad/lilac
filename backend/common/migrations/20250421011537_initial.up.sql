@@ -143,6 +143,7 @@ CREATE INDEX idx_step_connections_pipeline_id ON steps (pipeline_id);
 CREATE TABLE pipeline_jobs (
     job_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     pipeline_id uuid NOT NULL REFERENCES pipelines(pipeline_id),
+    input_dataset_id uuid NOT NULL REFERENCES datasets(dataset_id),
     status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'failed')),
     created_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
     started_at timestamptz,

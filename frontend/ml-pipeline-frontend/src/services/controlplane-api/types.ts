@@ -72,7 +72,7 @@ export interface UpdatePipelineRequest {
 
 export interface RunPipelinePayload {
   pipelineId: string;
-  datasetPath: string;
+  datasetId: string;
 }
 export interface RunPipelineResponse {
   jobId: string;
@@ -83,7 +83,11 @@ export interface ListStepDefinitionsResponse {
 }
 
 export interface ListDatasetsResponse {
-  datasets: string[];
+  datasets: {
+    datasetId: string,
+    datasetName: string,
+    description?: string,
+  }[];
 }
 
 export interface JobOutputSummary {
@@ -95,15 +99,4 @@ export interface JobOutputSummary {
 export interface JobOutputImages {
   jobId: string;
   images: string[];
-}
-
-export interface CreateDatasetRequest {
-  datasetName: string;
-  description?: string;
-  images: string[];
-  projectId: string;
-}
-
-export interface CreateDatasetResponse {
-  id: string;
 }

@@ -7,6 +7,7 @@ use serde_json::json;
 
 pub mod database;
 pub mod model;
+pub mod s3;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
@@ -51,6 +52,9 @@ pub enum ServiceError {
 
     #[error("schema validation failed: {0}")]
     SchemaValidationError(String),
+
+    #[error("unhandled error")]
+    UnhandledError,
 }
 
 impl IntoResponse for ServiceError {

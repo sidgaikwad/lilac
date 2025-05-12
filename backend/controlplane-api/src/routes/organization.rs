@@ -1,4 +1,4 @@
-use axum::{extract::Path, Extension, Json};
+use axum::{extract::{Path, State}, Json};
 use common::{
     database::Database,
     model::organization::{Organization, OrganizationId},
@@ -13,7 +13,7 @@ use crate::auth::claims::Claims;
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn create_organization(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Json(request): Json<CreateOrganizationRequest>,
 ) -> Result<Json<CreateOrganizationResponse>, ServiceError> {
     match request.validate() {
@@ -46,7 +46,7 @@ pub struct CreateOrganizationResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn get_organization(
     _claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(organization_id): Path<String>,
 ) -> Result<Json<GetOrganizationResponse>, ServiceError> {
     let organization_id = OrganizationId::try_from(organization_id)?;
@@ -73,7 +73,7 @@ impl From<Organization> for GetOrganizationResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn list_organizations(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
 ) -> Result<Json<ListOrganizationsResponse>, ServiceError> {
     let organizations = db
         .list_organizations(&claims.sub)

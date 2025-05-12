@@ -1,7 +1,6 @@
 use axum::{
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     routing::get,
-    Extension,
     Json, Router,
 };
 use common::{
@@ -10,10 +9,12 @@ use common::{
     ServiceError,
 };
 use serde::{Deserialize, Serialize};
-use std::{fs, path::PathBuf, sync::Arc};
+use std::{fs, path::PathBuf};
 use tracing::instrument;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
+
+use crate::AppState;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -24,16 +25,15 @@ pub struct JobOutputSummary {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ListJobOutputsParams {
-    #[serde(rename = "projectId")]
     project_id: Option<String>,
-    #[serde(rename = "organizationId")]
     organization_id: Option<String>,
 }
 
-#[instrument(level = "info", skip(db), ret, err)]
+#[instrument(level = "info", skip(_db), ret, err)]
 async fn list_job_outputs_handler(
-    db: Extension<Database>,
+    State(_db): State<Database>,
     Query(_params): Query<ListJobOutputsParams>, 
 ) -> Result<Json<Vec<JobOutputSummary>>, ServiceError> {
     // let project_uuid = match params.project_id {
@@ -148,7 +148,7 @@ async fn list_job_output_images_handler(
     }))
 }
 
-pub fn job_outputs_routes() -> Router {
+pub fn job_outputs_routes() -> Router<AppState> {
     Router::new()
         .route("/", get(list_job_outputs_handler))
         .route("/{job_id}/images", get(list_job_output_images_handler))

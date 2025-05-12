@@ -4,8 +4,15 @@
 use crate::pipe_core::PipeImageData;
 use crate::pipeline_definition::DataDestination;
 use crate::utils::log_pipe_event;
-use std::fs;
+use std::io::Cursor;
+use std::{fs, io::BufWriter};
 use std::path::Path;
+use std::sync::Arc;
+use chrono::Utc;
+use common::database::Database;
+use common::model::dataset::DatasetFile;
+use common::s3::S3Wrapper;
+use image::{ImageEncoder, ImageFormat};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -20,9 +27,30 @@ pub enum DestinationError {
     PartialSave { count: u32 },
 }
 
-pub fn save_batch(batch: &[PipeImageData], dest: &DataDestination) -> Result<(), DestinationError> {
+pub async fn save_batch(db: Arc<Database>, s3: S3Wrapper, batch: &[PipeImageData], dest: &DataDestination) -> Result<(), DestinationError> {
     match dest {
         DataDestination::LocalPath(path) => save_to_local_path(batch, path),
+        DataDestination::Dataset(dataset_id) => {
+            let dataset = db.get_dataset(dataset_id).await.map_err(|e| DestinationError::ImageSaveError(e.to_string()))?;
+            let s3_path = dataset.dataset_path;
+            let mut files = Vec::new();
+            for image in batch {
+                let mut image_data: Cursor<Vec<u8>> = Cursor::new(Vec::new());
+                image.image.to_rgb8().write_to(&mut image_data, image.original_format).map_err(|e| DestinationError::ImageSaveError(e.to_string()))?;
+                let contents = image_data.into_inner();
+                let file = DatasetFile::new(
+                    format!("{}.{}", image.id, image.original_format.extensions_str()[0]),
+                    image.original_format.to_mime_type().to_string(),
+                    contents.len() as i64,
+                    Utc::now(),
+                    "".to_string(),
+                    contents,
+                );
+                files.push(file);
+            }
+            s3.upload_files(&s3_path, files).await.map_err(|e| DestinationError::ImageSaveError(e.to_string()))?;
+            Ok(())
+        }
         // Example for future S3 implementation
         // DataDestination::S3Bucket { bucket, prefix } => save_to_s3(batch, bucket, prefix),
         // Add other destination types here

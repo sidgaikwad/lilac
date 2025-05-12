@@ -117,8 +117,8 @@ const PipelineEditorPage: React.FC = () => {
           <DatasetSelectionModal
             isOpen={isDatasetModalOpen}
             onClose={() => setIsDatasetModalOpen(false)}
-            onSelectDataset={(datasetPath) => {
-              runPipeline({ pipelineId, datasetPath });
+            onSelectDataset={(datasetId) => {
+              runPipeline({ pipelineId, datasetId });
             }}
           />
         )}

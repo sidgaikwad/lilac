@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -32,6 +34,12 @@ impl OrganizationId {
 impl Default for OrganizationId {
     fn default() -> Self {
         Self::generate()
+    }
+}
+
+impl Display for OrganizationId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::ServiceError;
 
-use super::pipeline::PipelineId;
+use super::{dataset::DatasetId, pipeline::PipelineId};
 
 #[derive(Clone, Debug, strum::EnumString, strum::Display)]
 #[strum(serialize_all = "snake_case")]
@@ -67,7 +67,7 @@ pub struct Job {
     pub job_id: JobId,
     pub pipeline_id: PipelineId,
     pub status: JobStatus,
-    pub dataset_path: Option<String>,
+    pub input_dataset_id: DatasetId,
 }
 
 impl Job {
@@ -75,22 +75,22 @@ impl Job {
         job_id: JobId,
         pipeline_id: PipelineId,
         status: JobStatus,
-        dataset_path: Option<String>,
+        input_dataset_id: DatasetId,
     ) -> Self {
         Self {
             job_id,
             pipeline_id,
             status,
-            dataset_path,
+            input_dataset_id,
         }
     }
 
-    pub fn create(pipeline_id: PipelineId, dataset_path: Option<String>) -> Self {
+    pub fn create(pipeline_id: PipelineId, input_dataset_id: DatasetId) -> Self {
         Self {
             job_id: JobId::generate(),
             pipeline_id,
             status: JobStatus::Pending,
-            dataset_path,
+            input_dataset_id,
         }
     }
 }

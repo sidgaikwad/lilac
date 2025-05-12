@@ -66,7 +66,7 @@ export function useUpdatePipeline(props: UseUpdatePipelineProps) {
 }
 
 const runPipeline = async (payload: RunPipelinePayload): Promise<RunPipelineResponse> => {
-  return post(`/pipelines/${payload.pipelineId}/run`, { datasetPath: payload.datasetPath });
+  return post(`/pipelines/${payload.pipelineId}/run`, { datasetId: payload.datasetId });
 };
 export interface UseRunPipelineProps {
   onSuccess?: (data: RunPipelineResponse, variables: RunPipelinePayload) => void;

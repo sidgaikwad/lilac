@@ -39,7 +39,7 @@ import {
     props: CreateDatasetModalProps
   ) => {
     const { mutate: createDataset, isPending } = useCreateDataset({
-      onSuccess: (_data) => toast.success('Successfully created fataset!'),
+      onSuccess: (_data) => toast.success('Successfully created dataset!'),
       onError: (error) => toast.error(error.error),
     });
   
@@ -51,13 +51,12 @@ import {
       resolver: zodResolver(createDatasetSchema),
     });
 
-    const toBase64 = (file: File): Promise<string> =>
+    const readImageData = (file: File): Promise<string> =>
       new Promise((resolve, reject) => {
         const reader = new FileReader()
-        reader.readAsDataURL(file)
+        reader.readAsDataURL(file);
         reader.onload = () => {
-            let text = reader.result as string;
-            resolve(text.replace('data:image/png;base64,', ''));
+          resolve(reader.result as string);
         }
         reader.onerror = (error) => reject(error)
     });
@@ -67,8 +66,17 @@ import {
         console.log(data);
         const images = [];
         for (let i = 0; i < data.images.length; i++) {
-            const image = await toBase64(data.images[i]);
-            images.push(image);
+          const image = data.images[i];
+            const imageData = await readImageData(image);
+            images.push({
+              metadata: {
+                fileName: image.name,
+                fileType: image.type,
+                size: image.size,
+                createdAt: new Date(image.lastModified).toISOString(),
+              },
+              contents: imageData,
+            });
         }
       createDataset({ datasetName: data.name, projectId: props.projectId, description: data.description, images });
       props.setOpen(false);

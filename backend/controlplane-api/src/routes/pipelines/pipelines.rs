@@ -1,12 +1,8 @@
-use axum::{extract::Path, Extension, Json};
+use axum::{extract::{Path, State}, Json};
 use common::{
     database::Database,
     model::{
-        jobs::{Job, JobId},
-        pipeline::{Pipeline, PipelineId},
-        project::ProjectId,
-        step::{Step, StepId},
-        step_definition::StepDefinitionId,
+        dataset::DatasetId, jobs::{Job, JobId}, pipeline::{Pipeline, PipelineId}, project::ProjectId, step::{Step, StepId}, step_definition::StepDefinitionId
     },
     ServiceError,
 };
@@ -19,7 +15,7 @@ use crate::auth::claims::Claims;
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn create_pipeline(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Json(request): Json<CreatePipelineRequest>,
 ) -> Result<Json<CreatePipelineResponse>, ServiceError> {
     match request.validate() {
@@ -52,7 +48,7 @@ pub struct CreatePipelineResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn get_pipeline(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(pipeline_id): Path<String>,
 ) -> Result<Json<GetPipelineResponse>, ServiceError> {
     let pipeline_id = PipelineId::try_from(pipeline_id)?;
@@ -88,14 +84,14 @@ impl From<Pipeline> for GetPipelineResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn run_pipeline(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(pipeline_id): Path<String>,
     Json(request): Json<RunPipelineApiRequest>,
 ) -> Result<Json<RunPipelineResponse>, ServiceError> {
     let pipeline_id = PipelineId::try_from(pipeline_id)?;
     let pipeline = db.get_pipeline(&pipeline_id).await?;
 
-    let job = Job::create(pipeline.pipeline_id, Some(request.dataset_path));
+    let job = Job::create(pipeline.pipeline_id, request.dataset_id);
     let job_id = job.job_id.clone();
     db.create_job(job).await?;
 
@@ -105,7 +101,7 @@ pub async fn run_pipeline(
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RunPipelineApiRequest {
-    pub dataset_path: String,
+    pub dataset_id: DatasetId,
 }
 
 #[derive(Debug, Serialize)]
@@ -117,7 +113,7 @@ pub struct RunPipelineResponse {
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn delete_pipeline(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(pipeline_id): Path<String>,
 ) -> Result<(), ServiceError> {
     let pipeline_id = PipelineId::try_from(pipeline_id)?;
@@ -129,7 +125,7 @@ pub async fn delete_pipeline(
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn update_pipeline(
     claims: Claims,
-    db: Extension<Database>,
+    State(db): State<Database>,
     Path(pipeline_id): Path<String>,
     Json(request): Json<UpdatePipelineRequest>,
 ) -> Result<(), ServiceError> {

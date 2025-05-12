@@ -1,16 +1,31 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QueryKeys } from './constants';
 import { post } from '@/lib/fetch';
-import {
-  CreateDatasetRequest,
-  CreateDatasetResponse,
-} from './types';
 import { ApiError } from '@/types';
+
+export interface CreateDatasetRequest {
+  datasetName: string;
+  description?: string;
+  images: {
+    metadata: {
+      fileName: string,
+      fileType: string,
+      size: number,
+      createdAt: string,
+    }
+    contents: string,
+  }[];
+  projectId: string;
+}
+
+export interface CreateDatasetResponse {
+  id: string;
+}
 
 const createDataset = async (
     payload: CreateDatasetRequest
   ): Promise<CreateDatasetResponse> => {
-    return post(`/api/datasets/${payload.projectId}`, payload);
+    return post(`/projects/${payload.projectId}/datasets`, payload);
   };
   export interface UseCreateDatasetProps {
     onSuccess?: (data: CreateDatasetResponse) => void;
@@ -22,7 +37,7 @@ const createDataset = async (
   
     return useMutation({
       mutationFn: createDataset,
-      onSuccess: (data, variables) => {
+      onSuccess: (data, _variables) => {
         queryClient.invalidateQueries({
           queryKey: [QueryKeys.LIST_DATASETS],
         });

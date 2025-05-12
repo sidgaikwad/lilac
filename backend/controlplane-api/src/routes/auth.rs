@@ -1,4 +1,4 @@
-use axum::{Extension, Json};
+use axum::{extract::State, Json};
 use common::{database::Database, model::auth::AuthBody};
 use jsonwebtoken::{encode, Header};
 use password_auth::verify_password;
@@ -19,7 +19,7 @@ pub struct AuthPayload {
 }
 
 pub async fn authorize(
-    Extension(db): Extension<Database>,
+    State(db): State<Database>,
     Json(request): Json<AuthPayload>,
 ) -> Result<Json<AuthBody>, AuthError> {
     match request.validate() {

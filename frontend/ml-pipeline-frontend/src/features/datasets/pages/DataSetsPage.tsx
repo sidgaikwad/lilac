@@ -1,21 +1,14 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  useListJobOutputs,
-  useListJobOutputImages,
-} from '@/services/controlplane-api/useJobOutputs.hook';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CreateDatasetModal from '../components/CreateDatasetModal';
+import { useListDatasets } from '@/services/controlplane-api/useListDatasets.hook';
+import { useGetDataset } from '@/services/controlplane-api/useGetDataset.hook';
 
-const JobOutputImagesGrid: React.FC<{ jobId: string }> = ({ jobId }) => {
-  const {
-    data: jobOutputImages,
-    isLoading,
-    isError,
-    error,
-  } = useListJobOutputImages(jobId);
+const DatasetImagesGrid: React.FC<{ projectId: string, datasetId: string }> = ({ projectId, datasetId }) => {
 
+  const { data: files, isLoading, isError, error } = useGetDataset({ projectId, datasetId });
 
   if (isLoading) {
     return (
@@ -30,19 +23,15 @@ const JobOutputImagesGrid: React.FC<{ jobId: string }> = ({ jobId }) => {
   if (isError) {
     return <p className="text-red-500">Error loading images: {error?.error}</p>;
   }
-
-  if (!jobOutputImages || jobOutputImages.images.length === 0) {
-    return <p className="text-muted-foreground">No images found for this job output.</p>;
-  }
-
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      {jobOutputImages.images.map((imageName) => (
-        <div key={imageName} className="aspect-square border rounded-lg overflow-hidden">
+      {files?.map((file) => (
+        <div key={file.fileName} className="aspect-square border rounded-lg overflow-hidden">
           <img
-            src={`http://localhost:3000/static/job_outputs/${jobId}/output/${imageName}`}
-            alt={imageName}
+            src={file.url}
+            alt={file.fileName}
             className="w-full h-full object-cover"
+            crossOrigin='anonymous'
           />
         </div>
       ))}
@@ -51,19 +40,19 @@ const JobOutputImagesGrid: React.FC<{ jobId: string }> = ({ jobId }) => {
 };
 
 const DataSetsPage: React.FC = () => {
-  const { projectId } = useParams<{ projectId: string }>(); // Assuming projectId is in the URL
+  const { projectId } = useParams<{ projectId: string }>();
   const {
-    data: jobOutputs,
+    data: datasets,
     isLoading,
     isError,
     error,
-  } = useListJobOutputs(projectId);
+  } = useListDatasets({ projectId });
   const [isOpen, setOpen] = useState(false);
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Processed Data Sets (Job Outputs)</h1>
+        <h1 className="text-2xl font-semibold">Datasets</h1>
         <CreateDatasetModal projectId={projectId ?? ''} isOpen={isOpen} setOpen={setOpen} />
       </div>
 
@@ -77,7 +66,7 @@ const DataSetsPage: React.FC = () => {
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {[...Array(5)].map((_, j) => (
-                    <Skeleton key={j} className="aspect-square w-full h-auto" />
+                    <Skeleton key={j} className="aspect-square w-full h-auto bg-muted" />
                   ))}
                 </div>
               </CardContent>
@@ -88,35 +77,28 @@ const DataSetsPage: React.FC = () => {
 
       {isError && (
         <p className="text-red-500">
-          Error loading job outputs: {error?.error}
+          Error loading datasets: {error?.error}
         </p>
       )}
 
-      {!isLoading && !isError && (!jobOutputs || jobOutputs.length === 0) && (
+      {!isLoading && !isError && (!datasets || datasets.length === 0) && (
         <p className="text-center text-muted-foreground py-8">
-          No processed datasets found for this project.
+          No datasets found for this project.
         </p>
       )}
 
-      {!isLoading && !isError && jobOutputs && jobOutputs.length > 0 && (
+      {!isLoading && !isError && datasets && datasets.length > 0 && (
         <div className="space-y-6">
-          {jobOutputs.map((jobOutput) => (
-            <Card key={jobOutput.jobId}>
+          {datasets.map((dataset) => (
+            <Card key={dataset.datasetId}>
               <CardHeader>
-                <CardTitle>Job ID: {jobOutput.jobId}</CardTitle>
-                {jobOutput.inputDatasetName && (
-                  <p className="text-sm text-muted-foreground">
-                    Input: {jobOutput.inputDatasetName}
-                  </p>
-                )}
-                {jobOutput.completedAt && (
-                  <p className="text-sm text-muted-foreground">
-                    Completed: {new Date(jobOutput.completedAt).toLocaleString()}
-                  </p>
-                )}
+                <CardTitle>{dataset.datasetName}</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {dataset.description}
+                </p>
               </CardHeader>
               <CardContent>
-                <JobOutputImagesGrid jobId={jobOutput.jobId} />
+                {projectId && <DatasetImagesGrid projectId={projectId} datasetId={dataset.datasetId} />}
               </CardContent>
             </Card>
           ))}

@@ -6,7 +6,9 @@ use axum::{
 mod pipelines;
 use pipelines::*;
 
-pub fn router() -> Router {
+use crate::AppState;
+
+pub fn router() -> Router<AppState> {
     Router::new()
         .route("/pipelines", post(create_pipeline))
         .route(

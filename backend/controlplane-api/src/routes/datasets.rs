@@ -1,88 +1,156 @@
-use axum::{extract::Path, routing::{get, post}, Extension, Json, Router};
-use base64::{engine::general_purpose::URL_SAFE, prelude::BASE64_STANDARD, DecodeError, Engine};
-use std::{fs, path::PathBuf};
-use common::{database::Database, model::{dataset::{Dataset, DatasetId}, project::ProjectId}, ServiceError};
-use serde::{Deserialize, Serialize};
-use tracing::{error, info, instrument};
+use std::io::Cursor;
 
-use crate::auth::claims::Claims;
+use axum::{
+    extract::{Path, State},
+    routing::{get, post},
+    Json, Router,
+};
+use chrono::{DateTime, Utc};
+use common::{
+    database::Database,
+    model::{
+        dataset::{Dataset, DatasetFile, DatasetFileMetadata, DatasetId},
+        project::ProjectId,
+    },
+    s3::S3Wrapper,
+    ServiceError,
+};
+use data_url::DataUrl;
+use image::ImageReader;
+use serde::{Deserialize, Serialize};
+use tracing::instrument;
+
+use crate::{auth::claims::Claims, AppState};
 
 #[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct DatasetSummary {
+    pub dataset_id: DatasetId,
+    pub dataset_name: String,
+    pub description: Option<String>,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct ListDatasetsResponse {
-    datasets: Vec<String>,
+    datasets: Vec<DatasetSummary>,
 }
 
 #[instrument(level = "info", skip_all, ret, err)]
-async fn list_datasets_handler() -> Result<Json<ListDatasetsResponse>, ServiceError> {
-    let datasets_base_path = PathBuf::from("./data-pipeline/test_images");
-    match datasets_base_path.canonicalize() {
-        Ok(abs_path) => tracing::info!("Attempting to list datasets from path: {:?}", abs_path),
-        Err(_) => tracing::info!("Attempting to list datasets from relative path: {:?}", datasets_base_path),
-    }
-    let mut dataset_names = Vec::new();
-
-    if datasets_base_path.is_dir() {
-        for entry in fs::read_dir(&datasets_base_path).map_err(|e| {
-            tracing::error!("Failed to read datasets directory {:?}: {}", datasets_base_path, e);
-            ServiceError::IoError(e)
-        })? {
-            let entry = entry.map_err(|e| {
-                tracing::error!("Failed to read directory entry: {}", e);
-                ServiceError::IoError(e)
-            })?;
-            let path = entry.path();
-            if path.is_dir() {
-                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                    dataset_names.push(name.to_string());
-                }
-            }
-        }
-    } else {
-        tracing::warn!("Datasets base path not found or not a directory: {:?}", datasets_base_path);
-    }
-    Ok(Json(ListDatasetsResponse { datasets: dataset_names }))
+async fn list_datasets_handler(
+    _claims: Claims,
+    State(db): State<Database>,
+    Path(project_id): Path<ProjectId>,
+) -> Result<Json<ListDatasetsResponse>, ServiceError> {
+    let datasets = db.list_datasets(&project_id).await?;
+    Ok(Json(ListDatasetsResponse {
+        datasets: datasets.into_iter().map(|v| DatasetSummary {
+            dataset_id: v.dataset_id,
+            dataset_name: v.dataset_name,
+            description: v.description,
+        }).collect(),
+    }))
 }
 
-
-#[instrument(level = "info", skip(claims, db, request), ret, err)]
+#[instrument(level = "info", skip(_claims, db, s3, request), ret, err)]
 async fn create_dataset(
-    claims: Claims,
-    db: Extension<Database>,
+    _claims: Claims,
+    State(db): State<Database>,
+    State(s3): State<S3Wrapper>,
     Path(project_id): Path<ProjectId>,
     Json(request): Json<CreateDatasetRequest>,
 ) -> Result<Json<CreateDatasetResponse>, ServiceError> {
-    let images: Vec<Vec<u8>> = request.images.into_iter().map(|v| BASE64_STANDARD.decode(v)).collect::<Result<Vec<Vec<u8>>, DecodeError>>().map_err(|e| {
-        error!("{e:?}");
-        ServiceError::BadRequest("bad images".into())
-    })?;
-    let dir = format!("/usr/local/app/data-pipeline/test_images/{}", &request.dataset_name);
-    info!("creating dir {dir}");
-    fs::create_dir(dir.clone())?;
-    for (i, image) in images.iter().enumerate() {
-        info!("writing image {}", format!("{dir}/image_{}.png", i));
-        fs::write(format!("{dir}/image_{}.png", i), image)?;
-    }
-    let dataset = Dataset::create(request.dataset_name, request.description, project_id, dir);
+    let project = db.get_project(&project_id).await?;
+    let dataset_id = DatasetId::generate();
+    let s3_path = s3.get_dataset_s3_path(&project.organization_id, &project_id, &dataset_id);
+    let dataset = Dataset::new(
+        dataset_id,
+        request.dataset_name,
+        request.description,
+        project_id,
+        s3_path.clone(),
+    );
+
+    let images = request
+        .images
+        .into_iter()
+        .map(|v| {
+            let url = DataUrl::process(&v.contents).unwrap();
+            let (body, _fragment) = url.decode_to_vec().unwrap();
+
+            DatasetFile::new(
+                v.metadata.file_name,
+                v.metadata.file_type,
+                v.metadata.size,
+                v.metadata.created_at,
+                "".to_string(),
+                body,
+            )
+        })
+        .collect();
+    s3.upload_files(&s3_path, images).await?;
+
     let id = db.create_dataset(dataset).await?;
     Ok(Json(CreateDatasetResponse { id }))
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all="camelCase")]
+pub struct FileMetaadataRequest {
+    pub file_name: String,
+    pub file_type: String,
+    pub size: i64,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileRequest {
+    pub metadata: FileMetaadataRequest,
+    pub contents: String,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateDatasetRequest {
     dataset_name: String,
     description: Option<String>,
-    images: Vec<String>,
+    images: Vec<FileRequest>,
 }
 
 #[derive(Serialize, Debug)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct CreateDatasetResponse {
-    id: DatasetId
+    id: DatasetId,
 }
 
-pub fn datasets_routes() -> Router {
+
+#[instrument(level = "info", skip(_claims, db, s3), ret, err)]
+async fn get_dataset(
+    _claims: Claims,
+    State(db): State<Database>,
+    State(s3): State<S3Wrapper>,
+    Path((project_id, dataset_id)): Path<(ProjectId, DatasetId)>,
+) -> Result<Json<GetDatasetResponse>, ServiceError> {
+    let dataset = db.get_dataset(&dataset_id).await?;
+
+    let files = s3.list_dataset_files(&dataset.dataset_path).await?;
+    
+    Ok(Json(GetDatasetResponse { 
+        files,
+     }))
+}
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GetDatasetResponse {
+    files: Vec<DatasetFileMetadata>,
+}
+
+
+
+pub fn datasets_routes() -> Router<AppState> {
     Router::new()
-        .route("/", get(list_datasets_handler))
-        .route("/{project_id}", post(create_dataset))
+        .route("/datasets", get(list_datasets_handler))
+        .route("/datasets", post(create_dataset))
+        .route("/datasets/{datasetId}", get(get_dataset))
 }

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -34,6 +36,12 @@ impl PipelineId {
 impl Default for PipelineId {
     fn default() -> Self {
         Self::generate()
+    }
+}
+
+impl Display for PipelineId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

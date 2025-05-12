@@ -9,6 +9,8 @@ use image::{ImageFormat, ImageReader};
 use serde_json::json;
 use std::collections::HashMap;
 use std::fs;
+use std::hash::Hash;
+use std::io::Cursor;
 use std::path::Path;
 use thiserror::Error;
 
@@ -29,13 +31,32 @@ pub enum SourceError {
     NoImagesLoaded,
 }
 
-pub fn load_batch(source: &DataSource) -> Result<Vec<PipeImageData>, SourceError> {
+pub async fn load_batch(source: &DataSource) -> Result<Vec<PipeImageData>, SourceError> {
     match source {
         DataSource::LocalPath(path) => load_from_local_path(path),
-        // Example for future S3 implementation
-        // DataSource::S3Bucket { bucket, prefix } => load_from_s3(bucket, prefix),
-        // Add other source types here
-        // _ => Err(SourceError::UnsupportedSource), // Handle unsupported types
+        DataSource::S3Path(s3, path) => {
+            let files = s3.list_dataset_files(&path).await.map_err(|e| SourceError::ImageLoadFailed { count: 0 })?; 
+            let mut images = Vec::new();
+            for file in files {
+                let file = s3
+                    .get_dataset_file(&format!("{}{}", &path, &file.file_name))
+                    .await
+                    .map_err(|e| SourceError::ImageLoadFailed { count: 0 })?;
+                images.push(PipeImageData {
+                    id: file.metadata.file_name,
+                    image: ImageReader::new(Cursor::new(file.contents))
+                        .with_guessed_format()
+                        .expect("to parse")
+                        .decode()?,
+                    metadata: HashMap::new(),
+                    original_format: ImageFormat::from_mime_type(file.metadata.file_type).unwrap(),
+                })
+            }
+            Ok(images)
+        } // Example for future S3 implementation
+          // DataSource::S3Bucket { bucket, prefix } => load_from_s3(bucket, prefix),
+          // Add other source types here
+          // _ => Err(SourceError::UnsupportedSource), // Handle unsupported types
     }
 }
 

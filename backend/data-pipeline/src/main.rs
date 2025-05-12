@@ -1,9 +1,7 @@
 use std::{path::PathBuf, str::FromStr, sync::Arc, time::Duration}; // Added PathBuf, FromStr
 
 use common::{
-    database::Database,
-    model::{jobs::Job, step_definition::StepType},
-    ServiceError,
+    database::Database, model::{dataset::{Dataset, DatasetId}, jobs::Job, step_definition::StepType}, s3::S3Wrapper, ServiceError
 };
 use data_pipeline::{
     get_steps_to_register,
@@ -89,6 +87,9 @@ async fn main() {
     let db = Arc::new(Database::new(&db_url).await.expect("database to connect"));
     db.migrate().await.expect("migrations to complete");
 
+    let bucket_name = std::env::var("CUSTOMER_ASSETS_BUCKET").expect("CUSTOMER_ASSETS_BUCKET to be set");
+    let s3 = S3Wrapper::new_from_default(bucket_name).await;
+
     let step_definitions = get_steps_to_register();
     for step_definition in step_definitions {
         if let Err(e) = jsonschema::validator_for(&step_definition.schema) {
@@ -100,18 +101,18 @@ async fn main() {
             .expect("step to be registered");
     }
 
-    let handle = tokio::spawn(process_jobs(db));
+    let handle = tokio::spawn(process_jobs(db, s3));
     join_all(vec![handle]).await;
 }
 
-async fn process_jobs(db: Arc<Database>) {
+async fn process_jobs(db: Arc<Database>, s3: S3Wrapper) {
     loop {
         let result = db.get_pending_job().await;
 
         match result {
             Ok(Some(job)) => {
                 tracing::info!(job_id = %job.job_id.inner(), "Processing job");
-                let res = handle_job(db.clone(), &job).await;
+                let res = handle_job(db.clone(), s3.clone(), &job).await;
                 if let Err(err) = res {
                     tracing::error!(job_id = %job.job_id.inner(), error = %err, "Error processing job");
                     if let Err(e) = db.fail_job(&job.job_id).await {
@@ -131,7 +132,7 @@ async fn process_jobs(db: Arc<Database>) {
     }
 }
 
-async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
+async fn handle_job(db: Arc<Database>, s3: S3Wrapper, job: &Job) -> Result<(), ServiceError> {
     let pipeline = db.get_pipeline(&job.pipeline_id).await?;
     let mut pipes: Vec<Box<dyn ImagePipe>> = Vec::new();
 
@@ -227,23 +228,12 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
         pipes.push(pipe);
     }
 
-    
-    let dataset_folder_name = job.dataset_path.as_ref().ok_or_else(|| {
-        tracing::error!("Job {} is missing dataset_path", job.job_id.inner());
-        ServiceError::MissingParameter(format!("dataset_path for job {}", job.job_id.inner()))
-    })?;
+    let dataset = db.get_dataset(&job.input_dataset_id).await?;
+    let project = db.get_project(&dataset.project_id).await?;
 
-    
-    let input_path = PathBuf::from("./test_images").join(dataset_folder_name);
-
-    if !input_path.exists() || !input_path.is_dir() {
-        tracing::error!(path = %input_path.display(), "Input dataset path does not exist or is not a directory.");
-        return Err(ServiceError::IoError(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            format!("Input dataset path not found: {}", input_path.display())
-        )));
-    }
-  
+    let output_dataset_id = DatasetId::generate();
+    let output_path = s3.get_dataset_s3_path(&project.organization_id, &project.project_id, &output_dataset_id);
+    let output_dataset = db.create_dataset(Dataset::new(output_dataset_id, format!("{}-output", dataset.dataset_name), Some(format!("The results from running pipeline \"{}\" on dataset \"{}\"", pipeline.pipeline_name, dataset.dataset_name)), dataset.project_id, output_path)).await?;
 
     let output_path = PathBuf::from(format!("./job_data/{}/output", job.job_id.inner()));
     std::fs::create_dir_all(&output_path).map_err(|e| ServiceError::IoError(e))?;
@@ -251,12 +241,12 @@ async fn handle_job(db: Arc<Database>, job: &Job) -> Result<(), ServiceError> {
     let pl = Pipeline {
         id: pipeline.pipeline_id.inner().to_string(),
         name: pipeline.pipeline_name.clone(),
-        input_source: DataSource::LocalPath(input_path),
-        output_destination: DataDestination::LocalPath(output_path),
+        input_source: DataSource::S3Path(s3.clone(), dataset.dataset_path),
+        output_destination: DataDestination::Dataset(output_dataset),
         stages: pipes,
     };
 
-    run_pipeline(&pl)
+    run_pipeline(db.clone(), s3.clone(), &pl)
         .await
         .map_err(|e| {
              tracing::error!("Pipeline execution failed: {:?}", e);

@@ -15,18 +15,20 @@ pub use organization::*;
 mod step_definitions;
 pub use step_definitions::*;
 
+use crate::AppState;
+
 mod pipelines;
 mod projects;
 mod steps;
 mod datasets;
 mod job_outputs;
 
-pub fn router() -> Router {
+pub fn router() -> Router<AppState> {
     Router::new()
         .merge(pipelines::router())
         .merge(steps::router())
         .merge(projects::router())
-        .nest("/api/datasets", datasets::datasets_routes())
+        .nest("/projects/{projectId}", datasets::datasets_routes())
         .nest("/api/job-outputs", job_outputs::job_outputs_routes())
         // user routes
         .route("/account/details", get(user::get_current_user))
