@@ -46,7 +46,7 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
     resolver: zodResolver(createOrgSchema),
   });
 
-  // Form submission handler now directly sets auth state
+  
   const onSubmit = (data: CreateOrgFormInputs) => {
     createOrg({ name: data.orgName });
     props.setOpen(false);
@@ -59,7 +59,7 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-white">Create Organization</DialogTitle>
+          <DialogTitle>Create Organization</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="flex items-center justify-between bg-background">
@@ -89,7 +89,7 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
                   {isPending ? (
                     <Spinner size="small" />
                   ) : (
-                    <span className="text-background">Submit</span>
+                    <span>Submit</span>
                   )}
                 </Button>
                 <DialogClose asChild>

@@ -1,83 +1,95 @@
 import React from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area'; // Use ScrollArea for potentially long lists
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useListPipelines } from '@/services/controlplane-api/useListPipelines.hook';
+import { WorkflowIcon } from 'lucide-react';
 
 interface ProjectSectionSidebarProps {
-  // Props to determine which section's links to show (e.g., 'database', 'pipelines', 'datasets')
-  // This will likely come from the parent layout or routing state
-  activeSection?: string; // Example prop
+  activeSection?: string;
 }
 
-// Mock data structure for links - replace with actual logic
-const sectionLinks: Record<
+
+const baseSectionLinks: Record<
   string,
-  { title: string; items: { href: string; label: string }[] }
+  { title: string; baseHref: string; baseLabel: string }
 > = {
-  // Removed 'database' section for now
   pipelines: {
     title: 'Pipelines',
-    items: [
-      { href: '', label: 'All Pipelines' }, // Link to base pipelines page
-      { href: 'editor', label: 'New Pipeline' }, // Example link
-      // Add other pipeline related links...
-    ],
+    baseHref: '', 
+    baseLabel: 'All Pipelines',
   },
   datasets: {
-    // Ensure 'datasets' section exists
     title: 'Data Sets',
-    items: [
-      { href: '', label: 'All Data Sets' }, // Link to base datasets page
-      // Removed Visualizer link
-      // Add other dataset related links... e.g., specific dataset views?
-    ],
+    baseHref: '', 
+    baseLabel: 'All Data Sets',
   },
-  // Add other sections like 'settings' if needed (though settings might be global)
 };
 
 const ProjectSectionSidebar: React.FC<ProjectSectionSidebarProps> = ({
-  activeSection = 'pipelines' /* Default to pipelines for now */,
+  activeSection = 'pipelines',
 }) => {
   const { projectId } = useParams<{ projectId: string }>();
-  const currentSection = sectionLinks[activeSection];
+  const currentBaseSection = baseSectionLinks[activeSection];
 
-  if (!projectId || !currentSection) {
-    // Don't render sidebar if no project or section is active/found
+  const { data: pipelines, isLoading: isLoadingPipelines } = useListPipelines({
+    projectId,
+  });
+
+  if (!projectId || !currentBaseSection) {
     return null;
   }
 
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      'block px-4 py-1.5 text-sm rounded-md transition-colors', // Base styling
+      'block px-4 py-1.5 text-sm rounded-md transition-colors truncate',
       isActive
-        ? 'bg-muted text-foreground font-medium' // Active style
-        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50' // Inactive style
+        ? 'bg-muted text-foreground font-medium'
+        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
     );
 
   return (
     <aside className="w-64 bg-background border-r border-border p-4 mx-4 shrink-0 hidden md:block">
-      {' '}
-      {/* Hide on small screens */}
       <ScrollArea className="h-full">
         <h2 className="text-lg font-semibold mb-4 px-4">
-          {currentSection.title}
+          {currentBaseSection.title}
         </h2>
         <nav className="flex flex-col gap-1">
-          {currentSection.items.map((item) => (
-            <NavLink
-              key={item.href}
-              // Construct full path relative to the current section base
-              // e.g., /projects/:projectId/pipelines/editor
-              to={`/projects/${projectId}/${activeSection}/${item.href}`.replace(
-                /\/$/,
-                ''
-              )} // Remove trailing slash if href is empty
-              end={item.href === ''} // `end` prop for exact match on base path
-              className={getNavLinkClass}
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {}
+          <NavLink
+            to={`/projects/${projectId}/${activeSection}/${currentBaseSection.baseHref}`.replace(
+              /\/$/,
+              ''
+            )}
+            end={currentBaseSection.baseHref === ''}
+            className={getNavLinkClass}
+          >
+            {currentBaseSection.baseLabel}
+          </NavLink>
+
+          {}
+          {activeSection === 'pipelines' && (
+            <>
+              {isLoadingPipelines && (
+                <span className="px-4 py-1.5 text-sm text-muted-foreground">
+                  Loading pipelines...
+                </span>
+              )}
+              {!isLoadingPipelines &&
+                pipelines?.map((pipeline) => (
+                  <NavLink
+                    key={pipeline.id}
+                    to={`/projects/${projectId}/pipelines/${pipeline.id}`}
+                    className={getNavLinkClass}
+                    title={pipeline.name}
+                  >
+                    <WorkflowIcon className="inline-block mr-2 h-4 w-4 flex-shrink-0" />
+                    {pipeline.name}
+                  </NavLink>
+                ))}
+            </>
+          )}
+          {}
         </nav>
       </ScrollArea>
     </aside>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Assuming react-router-dom is used
+import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -8,167 +8,96 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { ChevronDown, ChevronRight, FileText, Folder } from 'lucide-react'; // Icons
+import { FileText, Image as ImageIcon, AlertTriangle } from 'lucide-react'; 
+import { useGetDataset } from '@/services/controlplane-api/useGetDataset.hook';
+import { Spinner } from '@/components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Mock data - replace with actual data fetching based on params.id
-const mockDataSetDetail = {
-  id: 'ds-1',
-  name: 'Customer Churn Data',
-  source: 'Local Upload',
-  createdAt: '2024-04-23',
-  originalDataPreview: {
-    type: 'csv',
-    content:
-      'CustomerID,Gender,SeniorCitizen,Partner,Dependents,tenure...\n1234,Male,0,Yes,No,1...',
-  },
-  pipelineRuns: [
-    {
-      runId: 'run-abc',
-      pipelineName: 'Data Cleaning Pipeline v1',
-      timestamp: '2024-04-24 10:00:00',
-      derivedDataSet: {
-        id: 'ds-1-run-abc',
-        name: 'Cleaned Customer Data',
-        preview: {
-          type: 'csv',
-          content:
-            'CustomerID,Gender,SeniorCitizen,Partner,Dependents,TenureMonths...\n1234,Male,0,Yes,No,1...',
-        },
-        subRuns: [
-          {
-            runId: 'run-def',
-            pipelineName: 'Feature Engineering v2',
-            timestamp: '2024-04-25 11:30:00',
-            derivedDataSet: {
-              id: 'ds-1-run-def',
-              name: 'Engineered Features',
-              preview: {
-                type: 'csv',
-                content:
-                  'CustomerID,IsMale,IsSenior,HasPartner,HasDependents,TenureCategory...\n1234,1,0,1,0,New...',
-              },
-              subRuns: [], // Can be nested further
-            },
-          },
-        ],
-      },
-    },
-    {
-      runId: 'run-xyz',
-      pipelineName: 'Image Resizing Pipeline',
-      timestamp: '2024-04-24 11:00:00',
-      derivedDataSet: {
-        id: 'ds-1-run-xyz',
-        name: 'Resized Images (512x512)',
-        preview: {
-          type: 'image_folder',
-          content: 'Preview of image thumbnails...',
-        },
-        subRuns: [],
-      },
-    },
-  ],
-};
 
-interface DerivedDataSetNodeProps {
-  runId: string;
-  pipelineName: string;
-  timestamp: string;
-  derivedDataSet: {
-    id: string;
-    name: string;
-    preview: { type: string; content: string };
-    subRuns: DerivedDataSetNodeProps[]; // Recursive structure
-  };
-  level?: number;
-}
-
-const DerivedDataSetNode: React.FC<DerivedDataSetNodeProps> = ({
-  pipelineName,
-  timestamp,
-  derivedDataSet,
-  level = 0,
-}) => {
-  const [isOpen, setIsOpen] = useState(true); // Default to open for visibility
-
-  const handleToggle = () => setIsOpen(!isOpen);
-  const handleViewData = () => {
-    alert(
-      `Mock: Viewing data for ${derivedDataSet.name} (ID: ${derivedDataSet.id})`
-    );
-    // TODO: Implement actual data viewing logic (e.g., open a modal, navigate)
-  };
-
-  return (
-    <div
-      style={{ marginLeft: `${level * 20}px` }}
-      className="mt-2 border-l pl-3"
-    >
-      <div className="flex items-center cursor-pointer" onClick={handleToggle}>
-        {derivedDataSet.subRuns.length > 0 ? (
-          isOpen ? (
-            <ChevronDown className="h-4 w-4 mr-1" />
-          ) : (
-            <ChevronRight className="h-4 w-4 mr-1" />
-          )
-        ) : (
-          <span className="w-4 mr-1"></span> // Placeholder for alignment
-        )}
-        <Folder className="h-4 w-4 mr-2 text-blue-500" />
-        <span className="font-medium">{derivedDataSet.name}</span>
-        <span className="text-xs text-muted-foreground ml-2">
-          (Run: {pipelineName} @ {timestamp})
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-auto"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleViewData();
-          }}
-        >
-          View Data
-        </Button>
-      </div>
-      {isOpen &&
-        derivedDataSet.subRuns.map((subRun) => (
-          <DerivedDataSetNode
-            key={subRun.runId}
-            {...subRun}
-            level={level + 1}
-          />
-        ))}
-      {isOpen && derivedDataSet.subRuns.length === 0 && (
-        <div
-          style={{ marginLeft: `${(level + 1) * 20}px` }}
-          className="mt-1 text-sm text-muted-foreground pl-4"
-        >
-          (No further runs on this dataset)
-        </div>
-      )}
-    </div>
-  );
+const formatBytes = (bytes: number, decimals = 2) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
 const DataSetDetailPage: React.FC = () => {
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
+  const { projectId, datasetId } = useParams<{
+    projectId: string;
+    datasetId: string;
+  }>();
 
-  // TODO: Fetch actual dataset details based on 'id'
-  const dataSet = mockDataSetDetail; // Using mock data for now
-
-  if (!dataSet) {
-    return <div className="container mx-auto p-6">Dataset not found.</div>;
-  }
+  const {
+    data: files,
+    isLoading,
+    isError,
+    error,
+  } = useGetDataset({ projectId, datasetId });
 
   const handleGoBack = () => {
-    navigate(-1); // Go back to the previous page (DataSetsPage)
+    navigate(-1);
   };
 
-  const handleViewOriginalData = () => {
-    alert(`Mock: Viewing original data for ${dataSet.name}`);
-    // TODO: Implement actual data viewing logic
-  };
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-4">
+        <Skeleton className="h-8 w-32 mb-4" /> {}
+        <Skeleton className="h-24 w-full mb-6" /> {}
+        <Skeleton className="h-12 w-full mb-2" /> {}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-40 w-full" /> 
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto p-4 md:p-6 lg:p-8 text-center">
+        <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-destructive mb-2">
+          Error Loading Dataset
+        </h2>
+        <p className="text-muted-foreground mb-4">
+          {error?.error || 'An unexpected error occurred.'}
+        </p>
+        <Button onClick={handleGoBack} variant="outline">
+          &larr; Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  if (!files || files.length === 0) {
+    return (
+      <div className="container mx-auto p-4 md:p-6 lg:p-8">
+        <Button onClick={handleGoBack} variant="outline" className="mb-4">
+          &larr; Back to Data Sets
+        </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle>Dataset Details</CardTitle>
+            <CardDescription>Dataset ID: {datasetId}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              No files found in this dataset or the dataset does not exist.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  
+  
+  const datasetDisplayName = files[0]?.fileName.split('/')[0] || datasetId || 'Dataset';
+
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
@@ -178,45 +107,53 @@ const DataSetDetailPage: React.FC = () => {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>{dataSet.name}</CardTitle>
+          <CardTitle>{datasetDisplayName}</CardTitle>
           <CardDescription>
-            Source: {dataSet.source} | Created: {dataSet.createdAt} | ID:{' '}
-            {dataSet.id}
+            Displaying {files.length} file(s) from dataset ID: {datasetId}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <h3 className="text-lg font-semibold mb-2">Original Data</h3>
-          <div className="flex items-center p-3 border rounded bg-gray-50 dark:bg-gray-800">
-            <FileText className="h-5 w-5 mr-3 text-gray-600 dark:text-gray-400" />
-            <div className="flex-grow">
-              <p className="text-sm font-medium">Original Dataset</p>
-              <p className="text-xs text-muted-foreground truncate">
-                Preview: {dataSet.originalDataPreview.content}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleViewOriginalData}
-            >
-              View Full Data
-            </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {files.map((file) => (
+              <Card key={file.fileName} className="overflow-hidden">
+                <CardHeader className="p-3">
+                  {file.fileType.startsWith('image/') ? (
+                    <ImageIcon className="h-6 w-6 text-blue-500" />
+                  ) : (
+                    <FileText className="h-6 w-6 text-gray-500" />
+                  )}
+                  <CardTitle className="text-sm font-medium truncate pt-1" title={file.fileName}>
+                    {file.fileName.split('/').pop()}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3">
+                  {file.fileType.startsWith('image/') ? (
+                    <a href={file.url} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={file.url}
+                        alt={file.fileName}
+                        className="w-full h-32 object-cover rounded border hover:opacity-80 transition-opacity"
+                      />
+                    </a>
+                  ) : (
+                    <div className="w-full h-32 flex items-center justify-center bg-muted rounded border">
+                      <p className="text-xs text-muted-foreground p-2">
+                        No preview available for {file.fileType}
+                      </p>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Size: {formatBytes(file.size)}
+                  </p>
+                   <p className="text-xs text-muted-foreground">
+                    Type: {file.fileType}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </CardContent>
       </Card>
-
-      <h2 className="text-xl font-semibold mb-4">
-        Pipeline Runs & Derived Data Sets
-      </h2>
-      {dataSet.pipelineRuns.length > 0 ? (
-        dataSet.pipelineRuns.map((run) => (
-          <DerivedDataSetNode key={run.runId} {...run} />
-        ))
-      ) : (
-        <p className="text-muted-foreground">
-          No pipeline runs have been performed using this dataset yet.
-        </p>
-      )}
     </div>
   );
 };

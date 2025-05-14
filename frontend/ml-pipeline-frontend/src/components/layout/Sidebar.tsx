@@ -2,22 +2,24 @@ import React, { useState } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import useAuthStore from '@/store/useAuthStore';
+import useOrganizationStore from '@/store/useOrganizationStore'; 
 import {
   LogOutIcon,
   Settings,
   Home,
   HardDrive,
   Zap,
-  LucideProps, // Import LucideProps
+  LucideProps, 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Define a type for the icon component that accepts LucideProps
+
 type IconComponent = React.ComponentType<LucideProps>;
 
 const Sidebar: React.FC = () => {
   const logout = useAuthStore((state) => state.logout);
-  const { projectId } = useParams<{ projectId?: string }>();
+  const { projectId } = useParams<{ projectId?: string }>(); 
+  const { selectedOrganizationId: globalSelectedOrgId } = useOrganizationStore(); 
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleLogout = () => {
@@ -45,7 +47,7 @@ const Sidebar: React.FC = () => {
         : 'size-8 justify-center pl-1.5 pr-2'
     );
 
-  // Updated navLinkContent to directly render the icon component with props
+  
   const navLinkContent = (Icon: IconComponent, label: string) => (
     <>
       <Icon className="size-5 shrink-0" aria-hidden="true" />
@@ -64,23 +66,20 @@ const Sidebar: React.FC = () => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Main Navigation */}
+      {}
       <nav className="flex-grow flex flex-col gap-0.5 p-2 overflow-auto">
         <NavLink
-          to={projectId ? `/projects/${projectId}` : '#'}
-          className={({ isActive }) =>
-            getNavLinkClass({ isActive: false }, !projectId)
+          to={globalSelectedOrgId ? `/organizations/${globalSelectedOrgId}/projects` : '/'}
+          className={({ isActive }) => getNavLinkClass({ isActive }, false) 
           }
-          aria-disabled={!projectId}
-          onClick={(e) => !projectId && e.preventDefault()}
-          tabIndex={!projectId ? -1 : undefined}
+          
         >
           {navLinkContent(Home, 'Home')}
         </NavLink>
         <NavLink
           to={projectId ? `/projects/${projectId}/pipelines` : '#'}
-          className={({ isActive }) => 
-            getNavLinkClass({ isActive  }, !projectId)
+          className={({ isActive }) =>
+            getNavLinkClass({ isActive }, !projectId) 
           }
           aria-disabled={!projectId}
           onClick={(e) => !projectId && e.preventDefault()}
@@ -101,7 +100,7 @@ const Sidebar: React.FC = () => {
         </NavLink>
       </nav>
 
-      {/* Bottom Section */}
+      {}
       <div className="mt-auto flex flex-col gap-0.5 p-2 border-t border-border">
         <NavLink
           to="/settings"

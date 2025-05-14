@@ -24,7 +24,9 @@ import {
     description: z
         .string()
         .optional(),
-    images: z.instanceof(FileList)
+    images: z.instanceof(FileList).refine(files => files.length > 0, {
+      message: 'At least one image must be selected.',
+    })
   });
   
   type CreateDatasetFormInputs = z.infer<typeof createDatasetSchema>;
@@ -61,7 +63,7 @@ import {
         reader.onerror = (error) => reject(error)
     });
   
-    // Form submission handler now directly sets auth state
+    
     const onSubmit = async (data: CreateDatasetFormInputs) => {
         console.log(data);
         const images = [];
@@ -89,7 +91,7 @@ import {
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-white">Create Dataset</DialogTitle>
+            <DialogTitle>Create Dataset</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex items-center justify-between bg-background">
@@ -152,7 +154,7 @@ import {
                     {isPending ? (
                       <Spinner size="small" />
                     ) : (
-                      <span className="text-background">Submit</span>
+                      <span>Submit</span>
                     )}
                   </Button>
                   <DialogClose asChild>

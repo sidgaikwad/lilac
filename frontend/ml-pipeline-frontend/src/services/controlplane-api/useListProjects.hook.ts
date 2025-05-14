@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { BASE_URL, QueryKeys } from './constants';
-import { Project } from '@/types';
+import { ApiError, Project } from '@/types'; 
 import useAuthStore from '@/store/useAuthStore';
 import { ListProjectsResponse } from './types';
 
 interface UseListProjectsProps {
-  organizationId: string | undefined; // Accept undefined to disable query
+  organizationId: string | undefined; 
 }
 
-// Mock function simulating API call
+
 const fetchProjects = async (orgId?: string): Promise<Project[]> => {
   const queryParams = orgId ? `?organizationId=${orgId}` : '';
   const resp = await fetch(`${BASE_URL}/projects${queryParams}`, {
@@ -33,13 +33,13 @@ const fetchProjects = async (orgId?: string): Promise<Project[]> => {
 
 export function useListProjects(props?: UseListProjectsProps) {
   const { user } = useAuthStore();
-  return useQuery<Project[], Error>({
-    // Query key depends on the organizationId
+  return useQuery<Project[], ApiError>({ 
+    
     queryKey: [QueryKeys.LIST_PROJECTS, props?.organizationId],
-    // Pass orgId to the mock function
-    queryFn: () => fetchProjects(props?.organizationId), // Non-null assertion ok due to 'enabled'
-    // Only run the query if organizationId is truthy
+    
+    queryFn: () => fetchProjects(props?.organizationId), 
+    
     enabled: !!props?.organizationId || !!user?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, 
   });
 }

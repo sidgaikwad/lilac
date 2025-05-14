@@ -8,21 +8,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PipelineVersion } from '@/lib/localStorageUtils';
+
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+
+interface PipelineVersion {
+  versionId: string;
+  timestamp: string;
+  
+}
 
 interface PipelineEditorTopBarProps {
   pipelineId: string | undefined;
   pipelineName?: string;
   onSave?: () => void;
+  isSaving?: boolean;
   onRename: (pipelineId: string, newName: string) => boolean;
   versions: PipelineVersion[];
   selectedVersionId: string | undefined;
   onSelectVersion: (versionId: string) => void;
 }
 
-// Consistent focus style for buttons
+
 const buttonFocusStyle =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950';
 
@@ -30,6 +38,7 @@ const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
   pipelineId,
   pipelineName = 'Untitled Pipeline',
   onSave,
+  isSaving = false,
   onRename,
   versions = [],
   selectedVersionId,
@@ -75,7 +84,7 @@ const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
   };
 
   return (
-    // Use theme variables for background and border
+    
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 shrink-0">
       {isEditingName ? (
         <Input
@@ -84,13 +93,13 @@ const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
           onChange={handleNameChange}
           onBlur={handleNameBlur}
           onKeyDown={handleNameKeyDown}
-          className="text-xl font-semibold h-9" // Input uses theme variables internally
+          className="text-xl font-semibold h-9" 
           autoFocus
           maxLength={100}
         />
       ) : (
         <h1
-          // Use theme variables for hover text color
+          
           className="text-xl font-semibold truncate cursor-pointer hover:text-primary"
           title={`Click to rename "${pipelineName}"`}
           onClick={() => setIsEditingName(true)}
@@ -105,11 +114,11 @@ const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
             value={selectedVersionId}
             onValueChange={(value) => value && onSelectVersion(value)}
           >
-            {/* SelectTrigger uses theme variables internally */}
+            {}
             <SelectTrigger className="w-[280px] text-sm">
               <SelectValue placeholder="Select version..." />
             </SelectTrigger>
-            {/* SelectContent uses theme variables internally (popover) */}
+            {}
             <SelectContent>
               {versions.map((v) => (
                 <SelectItem key={v.versionId} value={v.versionId}>
@@ -119,20 +128,20 @@ const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
             </SelectContent>
           </Select>
         ) : (
-          // Use theme muted foreground color
+          
           <span className="text-sm text-muted-foreground">
             No saved versions
           </span>
         )}
 
-        {/* Button uses theme variables internally via variants */}
+        {}
         <Button
           onClick={onSave}
           size="sm"
-          disabled={!onSave}
+          disabled={!onSave || isSaving}
           className={cn(buttonFocusStyle)}
         >
-          Save New Version
+          {isSaving ? 'Saving...' : 'Save New Version'}
         </Button>
       </div>
     </header>

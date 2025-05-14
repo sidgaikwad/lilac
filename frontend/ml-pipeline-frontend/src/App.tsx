@@ -3,10 +3,10 @@ import ProtectedRoute from './components/router/ProtectedRoute';
 import { ApiError } from '@/types';
 import '@tanstack/react-query';
 
-// Import Layouts
+
 import MainLayout from './components/layout/MainLayout';
 
-// Import Feature Pages
+
 import LoginPage from './features/auth/pages/LoginPage';
 import PipelineEditorPage from './features/pipelines/pages/PipelineEditorPage';
 import DataSetsPage from './features/datasets/pages/DataSetsPage';
@@ -16,6 +16,7 @@ import AccountSettingsPage from './features/settings/pages/AccountSettingsPage';
 import OrganizationSettingsPage from './features/settings/pages/OrganizationSettingsPage';
 import OrganizationsOverviewPage from './features/organizations/OrganizationsOverviewPage';
 import ProjectOverviewPage from './features/projects/ProjectOverviewPage';
+import ProjectsByOrgPage from './features/projects/ProjectsByOrgPage'; 
 import SignUpPage from './features/auth/pages/SignUpPage';
 import PipelinesOverviewPage from './features/pipelines/pages/PipelinesOverviewPage';
 
@@ -33,6 +34,7 @@ function App() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route index element={<OrganizationsOverviewPage />} />
+          <Route path="organizations/:organizationId/projects" element={<ProjectsByOrgPage />} /> {}
           <Route path="projects/:projectId" element={<ProjectOverviewPage />} />
           <Route
             path="projects/:projectId/database"

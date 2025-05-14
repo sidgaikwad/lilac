@@ -27,10 +27,10 @@ const PipelineEditorPage: React.FC = () => {
     isError,
   } = useGetPipeline({ pipelineId });
 
-  const { mutate: updatePipeline } = useUpdatePipeline({
-    onSuccess: () => toast.success('Successfully saved pipeline!'),
-    onError: (err) => {
-      toast.error(`Failed to save pipeline: ${err.statusCode} ${err.error}`);
+const { mutate: updatePipeline, isPending: isSavingPipeline } = useUpdatePipeline({
+  onSuccess: () => toast.success('Successfully saved pipeline!'),
+  onError: (err) => {
+    toast.error(`Failed to save pipeline: ${err.statusCode} ${err.error}`);
     },
   });
 
@@ -89,9 +89,10 @@ const PipelineEditorPage: React.FC = () => {
               }}
               size="sm"
               variant="outline"
-              disabled={false}
+              disabled={isSavingPipeline || isLoadingPipeline || !pipeline}
             >
-              <SaveIcon className="mr-2 h-4 w-4" /> Save Pipeline
+              <SaveIcon className="mr-2 h-4 w-4" />{' '}
+              {isSavingPipeline ? 'Saving...' : 'Save Pipeline'}
             </Button>
             <Button
               onClick={() => {
@@ -107,7 +108,7 @@ const PipelineEditorPage: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-grow overflow-hidden">
-          {/* Use key derived from pipelineId and versionId to force remount on data change */}
+          {}
           {pipeline && (
             <PipelineEditorFlow key={pipelineId} pipeline={pipeline} />
           )}

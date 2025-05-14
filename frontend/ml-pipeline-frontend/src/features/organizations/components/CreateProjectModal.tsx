@@ -70,7 +70,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = (
     }
   }, [props.organizationId]);
 
-  // Form submission handler now directly sets auth state
+  
   const onSubmit = (data: CreateProjectFormInputs) => {
     createProject({
       name: data.projectName,
@@ -89,51 +89,23 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = (
             props.setOpen(true);
           }}
           variant="outline"
+          disabled={!props.organizations || props.organizations.length === 0}
         >
           Create Project
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-white">Create Project</DialogTitle>
+          <DialogTitle>Create Project</DialogTitle>
+          {props.organizationId && props.organizations.find(org => org.id === props.organizationId) && (
+            <DialogDescription>
+              In Organization: {props.organizations.find(org => org.id === props.organizationId)?.name}
+            </DialogDescription>
+          )}
         </DialogHeader>
-        <DialogDescription />
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="organizationId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Project Name</FormLabel>
-                  <FormDescription></FormDescription>
-                  <FormControl>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="text-white">
-                          <SelectValue placeholder="Select an organization" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {props.organizations.map((org) => (
-                          <SelectItem
-                            className="text-white"
-                            key={org.id}
-                            value={org.id}
-                          >
-                            {org.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {}
             <FormField
               control={form.control}
               name="projectName"
@@ -154,7 +126,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = (
                     {isPending ? (
                       <Spinner size="small" />
                     ) : (
-                      <span className="text-background">Submit</span>
+                      <span>Submit</span>
                     )}
                   </Button>
                   <DialogClose asChild>

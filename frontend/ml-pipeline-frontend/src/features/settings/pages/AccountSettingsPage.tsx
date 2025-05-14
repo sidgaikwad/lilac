@@ -11,23 +11,22 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-// TODO: Import useAuthStore to get user data
-// TODO: Import react-hook-form for form handling
+import useAuthStore from '@/store/useAuthStore';
+
 
 const AccountSettingsPage: React.FC = () => {
-  // TODO: Fetch current user data from authStore or API (e.g., GET /users/me)
-  const currentUser = { name: 'Admin User', email: 'admin@example.com' }; // Placeholder
+  const user = useAuthStore((state) => state.user);
 
-  // TODO: Implement form handling for profile update
+  
   const handleProfileSave = () => {
     console.log('Saving profile...');
-    // TODO: API Call - PUT/PATCH /users/me (or similar) with updated name
+    
   };
 
-  // TODO: Implement form handling for password update
+  
   const handlePasswordUpdate = () => {
     console.log('Updating password...');
-    // TODO: API Call - PUT/POST /users/me/password (or similar) with current/new passwords
+    
   };
 
   return (
@@ -41,15 +40,11 @@ const AccountSettingsPage: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" defaultValue={currentUser.name} />
-          </div>
-          <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              defaultValue={currentUser.email}
+              defaultValue={user?.email ?? ''}
               disabled
             />
             <p className="text-xs text-muted-foreground">
@@ -57,11 +52,6 @@ const AccountSettingsPage: React.FC = () => {
             </p>
           </div>
         </CardContent>
-        <CardFooter>
-          <Button onClick={handleProfileSave} disabled>
-            Save Profile
-          </Button>
-        </CardFooter>
       </Card>
 
       <Separator />

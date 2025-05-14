@@ -47,7 +47,7 @@ const CreatePipelineModal: React.FC<CreatePipelineModalProps> = (
     resolver: zodResolver(createOrgSchema),
   });
 
-  // Form submission handler now directly sets auth state
+  
   const onSubmit = (data: CreateOrgFormInputs) => {
     createPipeline({ name: data.pipelineName, projectId: props.projectId });
     props.setOpen(false);
@@ -60,7 +60,7 @@ const CreatePipelineModal: React.FC<CreatePipelineModalProps> = (
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-white">Create Pipeline</DialogTitle>
+          <DialogTitle>Create Pipeline</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="flex items-center justify-between bg-background">
@@ -90,7 +90,7 @@ const CreatePipelineModal: React.FC<CreatePipelineModalProps> = (
                   {isPending ? (
                     <Spinner size="small" />
                   ) : (
-                    <span className="text-background">Submit</span>
+                    <span>Submit</span>
                   )}
                 </Button>
                 <DialogClose asChild>

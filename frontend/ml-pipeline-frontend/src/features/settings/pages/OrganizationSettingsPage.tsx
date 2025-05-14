@@ -19,13 +19,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-// TODO: Import state management for org data (e.g., Zustand store or TanStack Query)
+import useOrganizationStore from '@/store/useOrganizationStore';
+import { useGetOrganization } from '@/services/controlplane-api/useGetOrganization.hook';
+import { Spinner } from '@/components/ui';
 
 const OrganizationSettingsPage: React.FC = () => {
-  // TODO: Fetch current organization details (e.g., GET /organization/{current_org_id})
-  const currentOrg = { id: 'org-123', name: 'Default Org' }; // Placeholder
+  const selectedOrganizationId = useOrganizationStore(
+    (state) => state.selectedOrganizationId
+  );
 
-  // TODO: Fetch members list (e.g., GET /organization/{current_org_id}/members)
+  const {
+    data: currentOrg,
+    isLoading: isLoadingOrg,
+    error: orgError,
+  } = useGetOrganization({
+    organizationId: selectedOrganizationId,
+    enabled: !!selectedOrganizationId,
+  });
+
+  
   const members = [
     {
       id: 'user-admin',
@@ -39,23 +51,23 @@ const OrganizationSettingsPage: React.FC = () => {
       email: 'jane@example.com',
       role: 'Member',
     },
-  ]; // Placeholder
+  ]; 
 
-  // TODO: Implement form handling and API calls for rename, invite, manage roles, remove member
+  
 
   const handleRenameOrg = () => {
     console.log('Renaming org...');
-    // TODO: API Call - PUT/PATCH /organization/{currentOrg.id}
+    
   };
 
   const handleInviteMember = () => {
     console.log('Inviting member...');
-    // TODO: API Call - POST /organization/{currentOrg.id}/invitations (or similar)
+    
   };
 
   const handleManageMember = (memberId: string) => {
     console.log('Managing member:', memberId);
-    // TODO: Open modal or navigate to manage role/remove member
+    
   };
 
   return (
@@ -66,10 +78,29 @@ const OrganizationSettingsPage: React.FC = () => {
           <CardDescription>Manage your organization's name.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-1 max-w-sm">
-            <Label htmlFor="orgName">Name</Label>
-            <Input id="orgName" defaultValue={currentOrg.name} />
-          </div>
+          {isLoadingOrg && <Spinner show={isLoadingOrg} />}
+          {!isLoadingOrg && orgError && (
+            <p className="text-destructive">Error loading organization details.</p>
+          )}
+          {!isLoadingOrg && !orgError && !currentOrg && selectedOrganizationId && (
+            <p className="text-muted-foreground">Organization not found.</p>
+          )}
+          {!isLoadingOrg && !orgError && !selectedOrganizationId && (
+            <p className="text-muted-foreground">
+              No organization selected. Please select an organization from the
+              header or dashboard.
+            </p>
+          )}
+          {currentOrg && (
+            <div className="space-y-1 max-w-sm">
+              <Label htmlFor="orgName">Name</Label>
+              <Input
+                id="orgName"
+                defaultValue={currentOrg.name}
+                disabled={isLoadingOrg || !currentOrg}
+              />
+            </div>
+          )}
         </CardContent>
         <CardFooter>
           <Button onClick={handleRenameOrg} disabled>
@@ -137,7 +168,7 @@ const OrganizationSettingsPage: React.FC = () => {
       </Card>
 
       {/* TODO: Add Danger Zone Card for deleting organization */}
-    </div>
+      </div>
   );
 };
 

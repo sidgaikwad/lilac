@@ -15,7 +15,7 @@ const fetchDatasets = async (projectId: string): Promise<ListDatasetsResponse> =
 
 export function useListDatasets(props: UseListDatasetsProps) {
   return useQuery<ListDatasetsResponse, ApiError, ListDatasetsResponse['datasets']>({
-    queryKey: [QueryKeys.LIST_DATASETS], 
+    queryKey: [QueryKeys.LIST_DATASETS, props.projectId],
     queryFn: () => fetchDatasets(props.projectId!),
     enabled: !!props.projectId,
     select: (data) => data.datasets,
