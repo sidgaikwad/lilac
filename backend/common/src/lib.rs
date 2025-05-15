@@ -53,6 +53,9 @@ pub enum ServiceError {
     #[error("schema validation failed: {0}")]
     SchemaValidationError(String),
 
+    #[error("conflict: {0}")]
+    Conflict(String),
+
     #[error("unhandled error")]
     UnhandledError,
 }
@@ -74,10 +77,13 @@ impl IntoResponse for ServiceError {
                         StatusCode::BAD_REQUEST,
                         "schema validation failed".to_string(),
                     ),
+            ServiceError::Conflict(s) => (StatusCode::CONFLICT, s),
             ServiceError::BadRequest(s) => (StatusCode::BAD_REQUEST, s),
             ServiceError::InvalidParameterValue(_, _) => (StatusCode::BAD_REQUEST, "invalid parameter value".to_string()),
             ServiceError::InvalidParameterType(_, _) => (StatusCode::BAD_REQUEST, "invalid parameter type".to_string()),
             ServiceError::MissingParameter(_) => (StatusCode::BAD_REQUEST, "missing parameter".to_string()),
+            // Ensure SchemaValidationError is handled if it has a distinct message requirement
+            ServiceError::SchemaValidationError(s) => (StatusCode::BAD_REQUEST, s),
             _ => (StatusCode::INTERNAL_SERVER_ERROR, "something went wrong".to_string())
         };
         let body = Json(json!({

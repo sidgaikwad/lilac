@@ -82,9 +82,19 @@ pub struct GetStepResponse {
 pub async fn delete_step(
     claims: Claims,
     State(db): State<Database>,
-    Path(step_id): Path<StepId>,
+    Path(step_id_param): Path<StepId>,
 ) -> Result<(), ServiceError> {
-    db.delete_step(&step_id).await?;
+    let step = db.get_step(&step_id_param).await?;
+    let pipeline = db.get_pipeline(&step.pipeline_id).await?;
+    let project = db.get_project(&pipeline.project_id).await?;
+    let is_member = db
+        .is_user_member_of_organization(&claims.sub, &project.organization_id)
+        .await?;
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
+    }
+
+    db.delete_step(&step_id_param).await?;
     Ok(())
 }
 

@@ -78,3 +78,19 @@ pub struct GetUserResponse {
     id: UserId,
     email: String,
 }
+#[instrument(level = "info", skip(db), ret, err)]
+pub async fn delete_user_handler(
+    claims: Claims,
+    State(db): State<Database>,
+    Path(user_id_str): Path<String>,
+) -> Result<(), ServiceError> {
+    let user_id_to_delete = UserId::try_from(user_id_str)?;
+
+    if user_id_to_delete != claims.sub {
+        return Err(ServiceError::Unauthorized);
+    }
+
+    db.delete_user(&user_id_to_delete).await?;
+
+    Ok(())
+}

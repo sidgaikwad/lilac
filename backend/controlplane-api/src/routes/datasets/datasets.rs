@@ -145,3 +145,33 @@ pub async fn get_dataset(
 pub struct GetDatasetResponse {
     files: Vec<DatasetFileMetadata>,
 }
+#[instrument(level = "info", skip(db, s3), ret, err)]
+pub async fn delete_dataset_handler(
+    claims: Claims,
+    State(db): State<Database>,
+    State(s3): State<S3Wrapper>,
+    Path((project_id_str, dataset_id_str)): Path<(String, String)>,
+) -> Result<(), ServiceError> {
+    let project_id = ProjectId::try_from(project_id_str)?;
+    let dataset_id = DatasetId::try_from(dataset_id_str)?;
+
+    let project = db.get_project(&project_id).await?;
+    let is_member = db
+        .is_user_member_of_organization(&claims.sub, &project.organization_id)
+        .await?;
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
+    }
+
+    let dataset = db.get_dataset(&dataset_id).await?;
+
+    if dataset.project_id != project_id {
+        return Err(ServiceError::NotFound { id: dataset_id.to_string() });
+    }
+
+    s3.delete_folder(&dataset.dataset_path).await?;
+
+    db.delete_dataset(&dataset_id).await?;
+
+    Ok(())
+}

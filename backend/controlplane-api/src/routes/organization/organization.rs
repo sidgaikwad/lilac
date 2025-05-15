@@ -90,3 +90,22 @@ pub async fn list_organizations(
 pub struct ListOrganizationsResponse {
     organizations: Vec<GetOrganizationResponse>,
 }
+#[instrument(level = "info", skip(db), ret, err)]
+pub async fn delete_organization_handler(
+    claims: Claims,
+    State(db): State<Database>,
+    Path(organization_id_str): Path<String>,
+) -> Result<(), ServiceError> {
+    let organization_id = OrganizationId::try_from(organization_id_str)?;
+
+    let is_member = db
+        .is_user_member_of_organization(&claims.sub, &organization_id)
+        .await?;
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
+    }
+
+    db.delete_organization(&organization_id).await?;
+
+    Ok(())
+}

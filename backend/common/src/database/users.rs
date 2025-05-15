@@ -53,4 +53,17 @@ impl Database {
     .await?;
         Ok(user_id)
     }
+pub async fn delete_user(&self, user_id: &UserId) -> Result<(), ServiceError> {
+        let id = user_id.inner();
+        sqlx::query!(
+            // language=PostgreSQL
+            r#"
+            DELETE FROM "users" WHERE user_id = $1
+        "#,
+            id
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
 }

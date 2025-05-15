@@ -114,9 +114,19 @@ pub struct RunPipelineResponse {
 pub async fn delete_pipeline(
     claims: Claims,
     State(db): State<Database>,
-    Path(pipeline_id): Path<String>,
+    Path(pipeline_id_str): Path<String>,
 ) -> Result<(), ServiceError> {
-    let pipeline_id = PipelineId::try_from(pipeline_id)?;
+    let pipeline_id = PipelineId::try_from(pipeline_id_str)?;
+
+    let pipeline = db.get_pipeline(&pipeline_id).await?;
+    let project = db.get_project(&pipeline.project_id).await?;
+    let is_member = db
+        .is_user_member_of_organization(&claims.sub, &project.organization_id)
+        .await?;
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
+    }
+
     db.delete_pipeline(&pipeline_id).await?;
 
     Ok(())

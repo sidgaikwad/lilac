@@ -80,4 +80,69 @@ impl Database {
         .await?;
         Ok(())
     }
+    pub async fn is_user_member_of_organization(
+        &self,
+        user_id: &UserId,
+        organization_id: &OrganizationId,
+    ) -> Result<bool, ServiceError> {
+        let result = sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                SELECT EXISTS (SELECT 1 FROM "organization_memberships" WHERE user_id = $1 AND organization_id = $2) AS "exists!"
+            "#,
+            user_id.inner(),
+            organization_id.inner()
+        )
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(result.exists)
+    }
+
+    pub async fn delete_organization(&self, organization_id: &OrganizationId) -> Result<(), ServiceError> {
+        let mut tx = self.pool.begin().await?;
+        let org_id_inner = organization_id.inner();
+
+        // Step 1: Check for child Projects
+        let project_exists = sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                SELECT EXISTS (SELECT 1 FROM "projects" WHERE organization_id = $1 LIMIT 1) AS "exists!"
+            "#,
+            org_id_inner
+        )
+        .fetch_one(&mut *tx)
+        .await?
+        .exists;
+
+        if project_exists {
+            return Err(ServiceError::Conflict(
+                "Organization cannot be deleted as it still contains projects. Please delete them first.".to_string(),
+            ));
+        }
+
+        // Step 2: Delete Memberships
+        sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                DELETE FROM "organization_memberships" WHERE organization_id = $1
+            "#,
+            org_id_inner
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        // Step 3: Delete Organization
+        sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                DELETE FROM "organizations" WHERE organization_id = $1
+            "#,
+            org_id_inner
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
+    }
 }

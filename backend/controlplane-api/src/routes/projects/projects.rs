@@ -82,9 +82,18 @@ impl From<Project> for GetProjectResponse {
 pub async fn delete_project(
     claims: Claims,
     State(db): State<Database>,
-    Path(project_id): Path<String>,
+    Path(project_id_str): Path<String>,
 ) -> Result<(), ServiceError> {
-    let project_id = ProjectId::try_from(project_id)?;
+    let project_id = ProjectId::try_from(project_id_str)?;
+
+    let project = db.get_project(&project_id).await?;
+    let is_member = db
+        .is_user_member_of_organization(&claims.sub, &project.organization_id)
+        .await?;
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
+    }
+
     db.delete_project(&project_id).await?;
 
     Ok(())

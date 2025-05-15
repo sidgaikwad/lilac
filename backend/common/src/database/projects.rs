@@ -78,15 +78,57 @@ impl Database {
     }
 
     pub async fn delete_project(&self, project_id: &ProjectId) -> Result<(), ServiceError> {
+        let mut tx = self.pool.begin().await?;
+        let project_id_inner = project_id.inner();
+
+        // Step 1: Check for child Pipelines
+        let pipeline_exists = sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                SELECT EXISTS (SELECT 1 FROM "pipelines" WHERE project_id = $1 LIMIT 1) AS "exists!"
+            "#,
+            project_id_inner
+        )
+        .fetch_one(&mut *tx)
+        .await?
+        .exists;
+
+        if pipeline_exists {
+            return Err(ServiceError::Conflict(
+                "Project cannot be deleted as it still contains pipelines. Please delete them first.".to_string(),
+            ));
+        }
+
+        // Step 2: Check for child Datasets
+        let dataset_exists = sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                SELECT EXISTS (SELECT 1 FROM "datasets" WHERE project_id = $1 LIMIT 1) AS "exists!"
+            "#,
+            project_id_inner
+        )
+        .fetch_one(&mut *tx)
+        .await?
+        .exists;
+
+        if dataset_exists {
+            return Err(ServiceError::Conflict(
+                "Project cannot be deleted as it still contains datasets. Please delete them first.".to_string(),
+            ));
+        }
+
+        // Step 3: Delete Project
         sqlx::query!(
             // language=PostgreSQL
             r#"
                 DELETE FROM "projects" WHERE project_id = $1
             "#,
-            project_id.inner()
+            project_id_inner
         )
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
+
+        tx.commit().await?;
         Ok(())
     }
 }

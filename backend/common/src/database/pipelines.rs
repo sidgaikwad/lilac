@@ -161,16 +161,37 @@ impl Database {
     }
 
     pub async fn delete_pipeline(&self, pipeline_id: &PipelineId) -> Result<(), ServiceError> {
+        let mut tx = self.pool.begin().await?;
         let id = pipeline_id.inner();
+
+        // Delete connections
         sqlx::query!(
             // language=PostgreSQL
-            r#"
-            DELETE FROM pipelines WHERE pipeline_id = $1;
-        "#,
+            r#"DELETE FROM "step_connections" WHERE pipeline_id = $1"#,
             id
         )
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
+
+        // Delete steps
+        sqlx::query!(
+            // language=PostgreSQL
+            r#"DELETE FROM "steps" WHERE pipeline_id = $1"#,
+            id
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        // Delete pipeline
+        sqlx::query!(
+            // language=PostgreSQL
+            r#"DELETE FROM pipelines WHERE pipeline_id = $1"#,
+            id
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
         Ok(())
     }
 }

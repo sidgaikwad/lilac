@@ -3,9 +3,11 @@ use std::sync::Arc;
 use aws_config::{AppName, BehaviorVersion, Region, SdkConfig};
 use aws_sdk_s3::{
     operation::{
-        get_object::GetObjectError, list_objects_v2::ListObjectsV2Error, put_object::PutObjectError,
+        delete_objects::DeleteObjectsError, get_object::GetObjectError,
+        list_objects_v2::ListObjectsV2Error, put_object::PutObjectError,
     },
     primitives::ByteStream,
+    types::ObjectIdentifier,
     Client as S3Client,
 };
 use aws_smithy_types_convert::date_time::DateTimeExt;
@@ -36,6 +38,9 @@ pub enum S3Error {
 
     #[error("{0}")]
     GetObjectError(#[from] GetObjectError),
+
+    #[error("{0}")]
+    DeleteObjectsError(#[from] DeleteObjectsError),
 }
 
 impl From<S3Error> for ServiceError {
@@ -46,6 +51,7 @@ impl From<S3Error> for ServiceError {
             S3Error::PutObjectError(_) => ServiceError::UnhandledError,
             S3Error::GetObjectError(_) => ServiceError::UnhandledError,
             S3Error::DecodeError => ServiceError::UnhandledError,
+            S3Error::DeleteObjectsError(_) => ServiceError::UnhandledError,
         }
     }
 }
@@ -125,6 +131,7 @@ impl S3Wrapper {
             .into_paginator()
             .send();
 
+        const BUCKET_REGION: &str = "us-west-2";
         let mut files = Vec::new();
         while let Some(page) = stream.next().await {
             let output = page.map_err(|e| e.into_service_error())?;
@@ -136,7 +143,7 @@ impl S3Wrapper {
                             "".to_string(),
                             v.size?,
                             v.last_modified?.to_chrono_utc().ok()?,
-                            format!("https://{}.s3.amazonaws.com/{}", &self.bucket, &v.key?),
+                            format!("https://{}.s3.{}.amazonaws.com/{}", &self.bucket, BUCKET_REGION, &v.key?),
                         ))
                     }));
                 }
@@ -178,5 +185,55 @@ impl S3Wrapper {
             "".into(),
             bytes.to_vec(),
         ))
+    }
+    #[instrument(level = "info", skip(self), ret, err)]
+    pub async fn delete_folder(&self, folder_path: &str) -> Result<(), S3Error> {
+        let mut objects_to_delete: Vec<ObjectIdentifier> = Vec::new();
+        let mut continuation_token: Option<String> = None;
+
+        loop {
+            let list_output = self
+                .client
+                .list_objects_v2()
+                .bucket(&self.bucket)
+                .prefix(folder_path)
+                .set_continuation_token(continuation_token)
+                .send()
+                .await
+                .map_err(|e| e.into_service_error())?;
+
+            if let Some(contents) = list_output.contents {
+                for object in contents {
+                    if let Some(key) = object.key {
+                        objects_to_delete.push(ObjectIdentifier::builder().key(key).build().map_err(|_e| S3Error::DecodeError)?);
+                    }
+                }
+            }
+
+            if list_output.is_truncated.unwrap_or(false) {
+                continuation_token = list_output.next_continuation_token;
+            } else {
+                break;
+            }
+        }
+
+        if !objects_to_delete.is_empty() {
+            // S3 DeleteObjects can take up to 1000 keys at a time.
+            for chunk in objects_to_delete.chunks(1000) {
+                let delete_request = aws_sdk_s3::types::Delete::builder()
+                    .set_objects(Some(Vec::from(chunk)))
+                    .quiet(false) // Set to true if you don't want verbose output
+                    .build().map_err(|_e| S3Error::DecodeError)?;
+
+                self.client
+                    .delete_objects()
+                    .bucket(&self.bucket)
+                    .delete(delete_request)
+                    .send()
+                    .await
+                    .map_err(|e| e.into_service_error())?;
+            }
+        }
+        Ok(())
     }
 }
