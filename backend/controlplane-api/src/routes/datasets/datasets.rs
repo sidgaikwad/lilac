@@ -37,7 +37,7 @@ pub struct ListDatasetsResponse {
 }
 
 #[instrument(level = "info", skip_all, ret, err)]
-async fn list_datasets_handler(
+pub async fn list_datasets_handler(
     _claims: Claims,
     State(db): State<Database>,
     Path(project_id): Path<ProjectId>,
@@ -53,7 +53,7 @@ async fn list_datasets_handler(
 }
 
 #[instrument(level = "info", skip(_claims, db, s3, request), ret, err)]
-async fn create_dataset(
+pub async fn create_dataset(
     _claims: Claims,
     State(db): State<Database>,
     State(s3): State<S3Wrapper>,
@@ -126,7 +126,7 @@ pub struct CreateDatasetResponse {
 
 
 #[instrument(level = "info", skip(_claims, db, s3), ret, err)]
-async fn get_dataset(
+pub async fn get_dataset(
     _claims: Claims,
     State(db): State<Database>,
     State(s3): State<S3Wrapper>,
@@ -144,13 +144,4 @@ async fn get_dataset(
 #[serde(rename_all = "camelCase")]
 pub struct GetDatasetResponse {
     files: Vec<DatasetFileMetadata>,
-}
-
-
-
-pub fn datasets_routes() -> Router<AppState> {
-    Router::new()
-        .route("/datasets", get(list_datasets_handler))
-        .route("/datasets", post(create_dataset))
-        .route("/datasets/{datasetId}", get(get_dataset))
 }

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom'; // Import useLocation
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import ProjectSectionSidebar from './ProjectSectionSidebar'; // Import the secondary sidebar
-import { cn } from '@/lib/utils'; // Import cn
+import ProjectSectionSidebar from './ProjectSectionSidebar';
+import { cn } from '@/lib/utils';
 import { Toaster } from '../ui';
 
 const MainLayout: React.FC = () => {

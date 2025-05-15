@@ -32,7 +32,7 @@ pub struct ListJobOutputsParams {
 }
 
 #[instrument(level = "info", skip(_db), ret, err)]
-async fn list_job_outputs_handler(
+pub async fn list_job_outputs_handler(
     State(_db): State<Database>,
     Query(_params): Query<ListJobOutputsParams>, 
 ) -> Result<Json<Vec<JobOutputSummary>>, ServiceError> {
@@ -110,7 +110,7 @@ pub struct JobOutputImages {
 }
 
 #[instrument(level = "info", skip_all, ret, err)]
-async fn list_job_output_images_handler(
+pub async fn list_job_output_images_handler(
     Path(job_id_str): Path<String>,
 ) -> Result<Json<JobOutputImages>, ServiceError> {
     let job_id = JobId::try_from(job_id_str.clone())?;
@@ -146,10 +146,4 @@ async fn list_job_output_images_handler(
         job_id,
         images: image_filenames,
     }))
-}
-
-pub fn job_outputs_routes() -> Router<AppState> {
-    Router::new()
-        .route("/", get(list_job_outputs_handler))
-        .route("/{job_id}/images", get(list_job_output_images_handler))
 }
