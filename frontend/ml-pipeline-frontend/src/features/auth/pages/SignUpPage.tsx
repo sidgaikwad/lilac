@@ -5,10 +5,11 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Spinner, Toaster } from '@/components/ui';
-import { useRegisterUser } from '@/services/controlplane-api/useRegisterUser.hook';
+import { Toaster } from '@/components/ui/toast';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSignUp } from '@/services';
 
 const registerSchema = z
   .object({
@@ -28,7 +29,7 @@ type RegisterFormInputs = z.infer<typeof registerSchema>;
 const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
   // Get auth store actions
-  const { mutate: registerUser, isPending } = useRegisterUser({
+  const { mutate: signUp, isPending } = useSignUp({
     onSuccess: () => {
       toast.success('Successfully signed up!');
       setTimeout(() => navigate('/login'), 1000);
@@ -48,7 +49,7 @@ const SignUpPage: React.FC = () => {
 
   // Form submission handler now directly sets auth state
   const onSubmit = (data: RegisterFormInputs) => {
-    registerUser({ email: data.email, password: data.password });
+    signUp({ email: data.email, password: data.password });
   };
 
   return (

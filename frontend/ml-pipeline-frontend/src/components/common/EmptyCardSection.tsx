@@ -4,8 +4,8 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  Button,
-} from '@/components/ui';
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface EmptyCardSectionProps {
   title: string;

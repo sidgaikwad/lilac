@@ -1,11 +1,11 @@
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-  Button,
-} from '@/components/ui';
+} from '@/components/ui/card';
 
 interface EmptyProjectsCardProps {
   onClick: () => void;

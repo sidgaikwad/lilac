@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useListOrganizations } from '@/services/controlplane-api/useListOrganizations.hook';
 import useOrganizationStore from '@/store/useOrganizationStore';
 import { toast } from 'sonner';
-import { Spinner } from '@/components/ui';
+import { Spinner } from '@/components/ui/spinner';
 import CreateOrganizationModal from './components/CreateOrganizationModal';
 import EmptyCardSection from '@/components/common/EmptyCardSection';
 import { Link } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import { BuildingIcon } from 'lucide-react';
+import { useListOrganizations } from '@/services';
 
 const OrganizationsOverviewPage: React.FC = () => {
   const [isCreateOrgModalOpen, setCreateOrgModalOpen] = useState(false);
@@ -16,17 +21,12 @@ const OrganizationsOverviewPage: React.FC = () => {
   const { data: organizations = [], isLoading: isLoadingOrganizations } =
     useListOrganizations({
       onError: (error) =>
-        toast.error(
-          `Error listing organizations: ${error.statusCode} ${error.error}`,
-          {
-            dismissible: true,
-            duration: Infinity,
-          }
-        ),
+        toast.error('Error listing organizations', {
+          description: `${error.statusCode} ${error.error}`,
+        }),
     });
 
   useEffect(() => {
-    
     setSelectedOrganizationId(undefined);
   }, [setSelectedOrganizationId]);
 

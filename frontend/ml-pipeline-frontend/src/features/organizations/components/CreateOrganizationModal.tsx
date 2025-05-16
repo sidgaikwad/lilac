@@ -4,14 +4,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Button,
-  Label,
-  Input,
-  Spinner,
   DialogFooter,
   DialogClose,
-} from '@/components/ui';
-import { useCreateOrganization } from '@/services/controlplane-api/useCreateOrganization.hook';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { useCreateOrganization } from '@/services';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -46,7 +46,6 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
     resolver: zodResolver(createOrgSchema),
   });
 
-  
   const onSubmit = (data: CreateOrgFormInputs) => {
     createOrg({ name: data.orgName });
     props.setOpen(false);
@@ -86,11 +85,7 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
             <div className="flex items-center bg-background w-full">
               <div className="flex bg-card justify-between text-card-foreground rounded shadow-md w-96">
                 <Button type="submit" disabled={isPending}>
-                  {isPending ? (
-                    <Spinner size="small" />
-                  ) : (
-                    <span>Submit</span>
-                  )}
+                  {isPending ? <Spinner size="small" /> : <span>Submit</span>}
                 </Button>
                 <DialogClose asChild>
                   <Button

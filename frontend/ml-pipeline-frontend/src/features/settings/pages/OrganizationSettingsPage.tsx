@@ -20,8 +20,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import useOrganizationStore from '@/store/useOrganizationStore';
-import { useGetOrganization } from '@/services/controlplane-api/useGetOrganization.hook';
-import { Spinner } from '@/components/ui';
+import { useGetOrganization } from '@/services';
+import { Spinner } from '@/components/ui/spinner';
 
 const OrganizationSettingsPage: React.FC = () => {
   const selectedOrganizationId = useOrganizationStore(
@@ -37,7 +37,6 @@ const OrganizationSettingsPage: React.FC = () => {
     enabled: !!selectedOrganizationId,
   });
 
-  
   const members = [
     {
       id: 'user-admin',
@@ -51,23 +50,18 @@ const OrganizationSettingsPage: React.FC = () => {
       email: 'jane@example.com',
       role: 'Member',
     },
-  ]; 
-
-  
+  ];
 
   const handleRenameOrg = () => {
     console.log('Renaming org...');
-    
   };
 
   const handleInviteMember = () => {
     console.log('Inviting member...');
-    
   };
 
   const handleManageMember = (memberId: string) => {
     console.log('Managing member:', memberId);
-    
   };
 
   return (
@@ -80,11 +74,16 @@ const OrganizationSettingsPage: React.FC = () => {
         <CardContent>
           {isLoadingOrg && <Spinner show={isLoadingOrg} />}
           {!isLoadingOrg && orgError && (
-            <p className="text-destructive">Error loading organization details.</p>
+            <p className="text-destructive">
+              Error loading organization details.
+            </p>
           )}
-          {!isLoadingOrg && !orgError && !currentOrg && selectedOrganizationId && (
-            <p className="text-muted-foreground">Organization not found.</p>
-          )}
+          {!isLoadingOrg &&
+            !orgError &&
+            !currentOrg &&
+            selectedOrganizationId && (
+              <p className="text-muted-foreground">Organization not found.</p>
+            )}
           {!isLoadingOrg && !orgError && !selectedOrganizationId && (
             <p className="text-muted-foreground">
               No organization selected. Please select an organization from the
@@ -168,7 +167,7 @@ const OrganizationSettingsPage: React.FC = () => {
       </Card>
 
       {/* TODO: Add Danger Zone Card for deleting organization */}
-      </div>
+    </div>
   );
 };
 

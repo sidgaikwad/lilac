@@ -6,7 +6,7 @@ export interface Organization {
 }
 
 export interface OrganizationMember extends User {
-  role: 'admin' | 'member'; // e.g., 'admin', 'member'
+  role: 'admin' | 'member';
   joinedAt?: string;
 }
 

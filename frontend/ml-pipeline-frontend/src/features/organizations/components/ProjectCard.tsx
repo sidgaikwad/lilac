@@ -1,4 +1,9 @@
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import useOrganizationStore from '@/store/useOrganizationStore';
 import { Organization, Project } from '@/types';
 import { Link } from 'react-router-dom';

@@ -23,6 +23,5 @@ pub fn router() -> Router<AppState> {
         .merge(organization::router())
         .merge(step_definitions::router())
 
-        .nest("/projects/{projectId}", datasets::router())
-        .nest("/api/job-outputs", job_outputs::router())
+        .merge(datasets::router())
 }

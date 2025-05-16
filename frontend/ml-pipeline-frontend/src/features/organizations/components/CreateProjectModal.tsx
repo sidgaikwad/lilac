@@ -4,28 +4,22 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Button,
-  Input,
-  Spinner,
   DialogFooter,
   DialogClose,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   DialogDescription,
-} from '@/components/ui';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { useCreateProject } from '@/services/controlplane-api/useCreateProject.hook';
+import { useCreateProject } from '@/services';
 import { Organization } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
@@ -68,9 +62,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = (
     if (props.organizationId !== undefined) {
       form.setValue('organizationId', props.organizationId);
     }
-  }, [props.organizationId]);
+  }, [props.organizationId, form]);
 
-  
   const onSubmit = (data: CreateProjectFormInputs) => {
     createProject({
       name: data.projectName,
@@ -88,7 +81,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = (
             form.resetField('organizationId');
             props.setOpen(true);
           }}
-          variant="outline"
+          variant="default"
           disabled={!props.organizations || props.organizations.length === 0}
         >
           Create Project
@@ -97,11 +90,19 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = (
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Project</DialogTitle>
-          {props.organizationId && props.organizations.find(org => org.id === props.organizationId) && (
-            <DialogDescription>
-              In Organization: {props.organizations.find(org => org.id === props.organizationId)?.name}
-            </DialogDescription>
-          )}
+          {props.organizationId &&
+            props.organizations.find(
+              (org) => org.id === props.organizationId
+            ) && (
+              <DialogDescription>
+                In Organization:{' '}
+                {
+                  props.organizations.find(
+                    (org) => org.id === props.organizationId
+                  )?.name
+                }
+              </DialogDescription>
+            )}
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -120,26 +121,14 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = (
               )}
             />
             <DialogFooter>
-              <div className="flex items-center bg-background w-full">
-                <div className="flex bg-card justify-between text-card-foreground rounded shadow-md w-96">
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? (
-                      <Spinner size="small" />
-                    ) : (
-                      <span>Submit</span>
-                    )}
-                  </Button>
-                  <DialogClose asChild>
-                    <Button
-                      className="mr-1"
-                      variant="outline"
-                      disabled={isPending}
-                    >
-                      <span>Cancel</span>
-                    </Button>
-                  </DialogClose>
-                </div>
-              </div>
+              <DialogClose asChild>
+                <Button className="mr-1" variant="outline" disabled={isPending}>
+                  <span>Cancel</span>
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? <Spinner size="small" /> : <span>Submit</span>}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

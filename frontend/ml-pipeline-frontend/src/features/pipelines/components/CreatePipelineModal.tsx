@@ -4,14 +4,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Button,
-  Label,
-  Input,
-  Spinner,
   DialogFooter,
   DialogClose,
-} from '@/components/ui';
-import { useCreatePipeline } from '@/services/controlplane-api';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { useCreatePipeline } from '@/services';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -47,7 +47,6 @@ const CreatePipelineModal: React.FC<CreatePipelineModalProps> = (
     resolver: zodResolver(createOrgSchema),
   });
 
-  
   const onSubmit = (data: CreateOrgFormInputs) => {
     createPipeline({ name: data.pipelineName, projectId: props.projectId });
     props.setOpen(false);
@@ -87,11 +86,7 @@ const CreatePipelineModal: React.FC<CreatePipelineModalProps> = (
             <div className="flex items-center bg-background w-full">
               <div className="flex bg-card justify-between text-card-foreground rounded shadow-md w-96">
                 <Button type="submit" disabled={isPending}>
-                  {isPending ? (
-                    <Spinner size="small" />
-                  ) : (
-                    <span>Submit</span>
-                  )}
+                  {isPending ? <Spinner size="small" /> : <span>Submit</span>}
                 </Button>
                 <DialogClose asChild>
                   <Button

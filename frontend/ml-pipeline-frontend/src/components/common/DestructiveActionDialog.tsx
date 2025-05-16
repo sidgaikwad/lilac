@@ -32,7 +32,7 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
   title,
   description,
   confirmationText,
-  confirmButtonText = 'Confirm',
+  confirmButtonText = 'confirm',
   isConfirming = false, // Default isConfirming to false
 }) => {
   const [inputText, setInputText] = useState('');
@@ -92,7 +92,7 @@ const DestructiveActionDialog: React.FC<DestructiveActionDialogProps> = ({
           />
         </div>
         <DialogFooter>
-          <DialogClose asChild>
+          <DialogClose>
             {/* Disable Cancel button while confirming */}
             <Button
               type="button"

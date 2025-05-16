@@ -1,4 +1,4 @@
-import { BASE_URL } from '@/services/controlplane-api/constants';
+import { BASE_URL } from '@/services';
 
 export async function post<Req, Resp>(
   path: string,
@@ -31,7 +31,7 @@ export async function post<Req, Resp>(
   return {} as Resp;
 }
 
-export async function get<Req extends object, Resp>(
+export async function get<Req extends Record<string, string>, Resp>(
   path: string,
   params?: Req,
   withAuth: boolean = true
@@ -41,7 +41,7 @@ export async function get<Req extends object, Resp>(
   }
   const searchParams = new URLSearchParams();
   Object.entries(params ?? {}).forEach(([key, value]) =>
-    searchParams.append(key, JSON.stringify(value))
+    searchParams.append(key, value)
   );
   const authHeader: HeadersInit = withAuth
     ? { Authorization: `Bearer ${localStorage.getItem('token')}` }

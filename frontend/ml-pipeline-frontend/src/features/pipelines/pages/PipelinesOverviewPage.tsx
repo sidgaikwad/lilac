@@ -5,20 +5,18 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter,
 } from '@/components/ui/card';
 import { Loader2Icon, WorkflowIcon } from 'lucide-react';
-import { useListPipelines } from '@/services/controlplane-api/useListPipelines.hook';
 import EmptyCardSection from '@/components/common/EmptyCardSection';
 import CreatePipelineModal from '../components/CreatePipelineModal';
+import { useListPipelines } from '@/services';
 
 const PipelinesOverviewPage: React.FC = () => {
-  const { projectId } = useParams<{ projectId: string }>(); 
+  const { projectId } = useParams<{ projectId: string }>();
 
   const [isCreatePipelineModalOpen, setCreatePipelineModalOpen] =
     useState(false);
 
-  
   const {
     data: pipelines = [],
     isLoading: isLoadingPipelines,
@@ -55,7 +53,9 @@ const PipelinesOverviewPage: React.FC = () => {
                 >
                   <CardTitle className="text-lg flex items-center group-hover:text-primary transition-colors">
                     <WorkflowIcon className="mr-2 h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                    <span className="truncate" title={p.name}>{p.name}</span>
+                    <span className="truncate" title={p.name}>
+                      {p.name}
+                    </span>
                   </CardTitle>
                 </Link>
                 <CardDescription className="pt-1 text-sm leading-relaxed h-16 overflow-hidden text-ellipsis">

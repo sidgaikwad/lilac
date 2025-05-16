@@ -12,11 +12,9 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-
 interface PipelineVersion {
   versionId: string;
   timestamp: string;
-  
 }
 
 interface PipelineEditorTopBarProps {
@@ -29,7 +27,6 @@ interface PipelineEditorTopBarProps {
   selectedVersionId: string | undefined;
   onSelectVersion: (versionId: string) => void;
 }
-
 
 const buttonFocusStyle =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950';
@@ -84,7 +81,6 @@ const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
   };
 
   return (
-    
     <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 shrink-0">
       {isEditingName ? (
         <Input
@@ -93,13 +89,12 @@ const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
           onChange={handleNameChange}
           onBlur={handleNameBlur}
           onKeyDown={handleNameKeyDown}
-          className="text-xl font-semibold h-9" 
+          className="text-xl font-semibold h-9"
           autoFocus
           maxLength={100}
         />
       ) : (
         <h1
-          
           className="text-xl font-semibold truncate cursor-pointer hover:text-primary"
           title={`Click to rename "${pipelineName}"`}
           onClick={() => setIsEditingName(true)}
@@ -128,7 +123,6 @@ const PipelineEditorTopBar: React.FC<PipelineEditorTopBarProps> = ({
             </SelectContent>
           </Select>
         ) : (
-          
           <span className="text-sm text-muted-foreground">
             No saved versions
           </span>

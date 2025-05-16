@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import PipelineSidebar from '../components/PipelineSidebar';
 import DatasetSelectionModal from '../components/DatasetSelectionModal';
@@ -7,38 +7,40 @@ import PipelineEditorFlow from '../components/PipelineEditorFlow';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { PlayIcon, SaveIcon } from 'lucide-react';
-import { useGetPipeline } from '@/services/controlplane-api/useGetPipeline.hook';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useRunPipeline, useUpdatePipeline } from '@/services/controlplane-api';
 import useReactFlowStore from '@/store/useReactFlowStore';
 import { shallow } from 'zustand/shallow';
-import { UpdatePipelineRequest } from '@/services/controlplane-api/types';
 import { StepDefinition } from '@/types';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { getPipelineQuery } from '@/services';
+import { UpdatePipelineRequest, useUpdatePipeline } from '@/services';
+import { useRunPipeline } from '@/services';
 
 const PipelineEditorPage: React.FC = () => {
   const { pipelineId } = useParams<{ pipelineId: string }>();
-  const navigate = useNavigate();
   const [isDatasetModalOpen, setIsDatasetModalOpen] = useState(false);
 
-  const {
-    data: pipeline,
-    isLoading: isLoadingPipeline,
-    error: pipelineError,
-    isError,
-  } = useGetPipeline({ pipelineId });
+  const { data: pipeline } = useSuspenseQuery(getPipelineQuery(pipelineId));
 
-const { mutate: updatePipeline, isPending: isSavingPipeline } = useUpdatePipeline({
-  onSuccess: () => toast.success('Successfully saved pipeline!'),
-  onError: (err) => {
-    toast.error(`Failed to save pipeline: ${err.statusCode} ${err.error}`);
-    },
-  });
+  const { mutate: updatePipeline, isPending: isSavingPipeline } =
+    useUpdatePipeline({
+      onSuccess: () => toast.success('Successfully saved pipeline!'),
+      onError: (err) => {
+        toast.error('Failed to save pipeline', {
+          description: `${err.statusCode} ${err.error}`,
+        });
+      },
+    });
 
   const { mutate: runPipeline } = useRunPipeline({
     onSuccess: (data) =>
-      toast.success(`Successfully submitted pipeline job: ${data.jobId}`),
+      toast.success('Successfully submitted pipeline job', {
+        description: `${data.id}`,
+      }),
     onError: (err) => {
-      toast.error(`Failed to save pipeline: ${err.statusCode} ${err.error}`);
+      toast.error('Failed to save pipeline', {
+        description: `${err.statusCode} ${err.error}`,
+      });
     },
   });
 
@@ -49,14 +51,6 @@ const { mutate: updatePipeline, isPending: isSavingPipeline } = useUpdatePipelin
     }),
     shallow
   );
-
-  useEffect(() => {
-    if (isError && !isLoadingPipeline) {
-      toast.error(
-        `Failed to load pipeline: ${pipelineError?.message || 'Unknown error'}`
-      );
-    }
-  }, [isError, isLoadingPipeline, pipelineError, navigate]);
 
   return (
     <ReactFlowProvider>
@@ -89,7 +83,7 @@ const { mutate: updatePipeline, isPending: isSavingPipeline } = useUpdatePipelin
               }}
               size="sm"
               variant="outline"
-              disabled={isSavingPipeline || isLoadingPipeline || !pipeline}
+              disabled={isSavingPipeline || !pipeline}
             >
               <SaveIcon className="mr-2 h-4 w-4" />{' '}
               {isSavingPipeline ? 'Saving...' : 'Save Pipeline'}

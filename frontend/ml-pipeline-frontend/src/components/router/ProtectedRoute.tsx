@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom'; // Import Outlet
 import { Navigate } from 'react-router-dom';
 import useAuthStore from '@/store/useAuthStore';
-import { useGetAccountDetails } from '@/services/controlplane-api/useGetAccountDetails.hook';
+import { useGetAccountDetails } from '@/services';
 
 /**
  * A route guard that checks authentication status.
@@ -13,14 +13,14 @@ import { useGetAccountDetails } from '@/services/controlplane-api/useGetAccountD
 const ProtectedRoute: React.FC = () => {
   const navigate = useNavigate();
   const { token, logout } = useAuthStore();
-  const {} = useGetAccountDetails({
+  useGetAccountDetails({
     onError: (error) => {
       if (error.statusCode === 401) {
         logout();
         navigate('/login');
       }
-    }
-  })
+    },
+  });
 
   if (!token) {
     return <Navigate to="/login" replace />;

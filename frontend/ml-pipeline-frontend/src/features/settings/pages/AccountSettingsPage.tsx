@@ -11,22 +11,17 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import useAuthStore from '@/store/useAuthStore';
-
+import { useGetAccountDetails } from '@/services';
 
 const AccountSettingsPage: React.FC = () => {
-  const user = useAuthStore((state) => state.user);
+  const { data: user } = useGetAccountDetails({});
 
-  
-  const handleProfileSave = () => {
+  const _handleProfileSave = () => {
     console.log('Saving profile...');
-    
   };
 
-  
   const handlePasswordUpdate = () => {
     console.log('Updating password...');
-    
   };
 
   return (

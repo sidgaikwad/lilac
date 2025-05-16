@@ -1,32 +1,33 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useListProjects } from '@/services/controlplane-api/useListProjects.hook';
-import { useGetOrganization } from '@/services/controlplane-api/useGetOrganization.hook';
-import { toast } from 'sonner';
-import { Button, Spinner } from '@/components/ui';
+import { useParams } from 'react-router-dom';
 import ProjectCard from '@/features/organizations/components/ProjectCard';
 import CreateProjectModal from '@/features/organizations/components/CreateProjectModal';
 import EmptyCardSection from '@/components/common/EmptyCardSection';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle } from 'lucide-react';
+import { getOrganizationQuery } from '@/services';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { useListProjects } from '@/services';
+import { toast } from 'sonner';
 
 const ProjectsByOrgPage: React.FC = () => {
   const { organizationId } = useParams<{ organizationId: string }>();
   const [isCreateProjectModalOpen, setCreateProjectModalOpen] = useState(false);
 
-  const {
-    data: organization,
-    isLoading: isLoadingOrganization,
-    error: orgError,
-  } = useGetOrganization({ organizationId });
+  const { data: organization } = useSuspenseQuery(
+    getOrganizationQuery(organizationId)
+  );
 
-  const {
-    data: projects = [],
-    isLoading: isLoadingProjects,
-    error: projectsError,
-  } = useListProjects({ organizationId });
+  const { data: projects = [], isLoading: isLoadingProjects } = useListProjects(
+    {
+      organizationId,
+      onError: (error) =>
+        toast.error('Failed to list projects', {
+          description: error.error,
+        }),
+    }
+  );
 
-  if (isLoadingOrganization || isLoadingProjects) {
+  if (isLoadingProjects) {
     return (
       <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6">
         <Skeleton className="h-10 w-1/2 mb-4" /> {}
@@ -35,38 +36,9 @@ const ProjectsByOrgPage: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-48 w-full" /> 
+            <Skeleton key={i} className="h-48 w-full" />
           ))}
         </div>
-      </div>
-    );
-  }
-
-  if (orgError || projectsError) {
-    return (
-      <div className="container mx-auto p-4 md:p-6 lg:p-8 text-center">
-        <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-destructive mb-2">
-          Error Loading Page
-        </h2>
-        <p className="text-muted-foreground">
-          {orgError?.error || projectsError?.error || 'An unexpected error occurred.'}
-        </p>
-        <Button asChild variant="outline">
-          <Link to="/">Go to Organizations</Link>
-        </Button>
-      </div>
-    );
-  }
-
-  if (!organization) {
-    return (
-      <div className="container mx-auto p-4 md:p-6 lg:p-8 text-center">
-        <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Organization Not Found</h2>
-        <Button asChild variant="outline">
-          <Link to="/">Go to Organizations</Link>
-        </Button>
       </div>
     );
   }
@@ -74,14 +46,12 @@ const ProjectsByOrgPage: React.FC = () => {
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">
-          Projects in {organization.name}
-        </h1>
+        <h1 className="text-3xl font-bold">Projects in {organization.name}</h1>
         <CreateProjectModal
           isOpen={isCreateProjectModalOpen}
           setOpen={setCreateProjectModalOpen}
-          organizations={[organization]} 
-          organizationId={organization.id} 
+          organizations={[organization]}
+          organizationId={organization.id}
         />
       </div>
 

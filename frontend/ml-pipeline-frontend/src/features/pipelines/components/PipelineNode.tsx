@@ -18,7 +18,8 @@ import {
   RJSFSchema,
   SubmitButtonProps,
 } from '@rjsf/utils';
-import { Button, Separator } from '@/components/ui';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import useReactFlowStore, { RFState } from '@/store/useReactFlowStore';
 import { shallow } from 'zustand/shallow';
 import { toast } from 'sonner';
@@ -57,6 +58,7 @@ function SubmitButton(props: SubmitButtonProps) {
 const PipelineNode: React.FC<NodeProps<PipelineNodeType>> = (
   props: NodeProps<PipelineNodeType>
 ) => {
+  console.log(props.data);
   const { updateParameters } = useReactFlowStore(selector(props.id), shallow);
   const parameters = useRef<object>({ ...props.data.parameters });
   const [isOpen, setIsOpen] = React.useState(false);

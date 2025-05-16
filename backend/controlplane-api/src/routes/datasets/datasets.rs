@@ -1,9 +1,6 @@
-use std::io::Cursor;
-
 use axum::{
     extract::{Path, State},
-    routing::{get, post},
-    Json, Router,
+    Json,
 };
 use chrono::{DateTime, Utc};
 use common::{
@@ -16,17 +13,17 @@ use common::{
     ServiceError,
 };
 use data_url::DataUrl;
-use image::ImageReader;
+
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
-use crate::{auth::claims::Claims, AppState};
+use crate::auth::claims::Claims;
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DatasetSummary {
-    pub dataset_id: DatasetId,
-    pub dataset_name: String,
+    pub id: DatasetId,
+    pub name: String,
     pub description: Option<String>,
 }
 
@@ -45,8 +42,8 @@ pub async fn list_datasets_handler(
     let datasets = db.list_datasets(&project_id).await?;
     Ok(Json(ListDatasetsResponse {
         datasets: datasets.into_iter().map(|v| DatasetSummary {
-            dataset_id: v.dataset_id,
-            dataset_name: v.dataset_name,
+            id: v.dataset_id,
+            name: v.dataset_name,
             description: v.description,
         }).collect(),
     }))
@@ -130,19 +127,27 @@ pub async fn get_dataset(
     _claims: Claims,
     State(db): State<Database>,
     State(s3): State<S3Wrapper>,
-    Path((project_id, dataset_id)): Path<(ProjectId, DatasetId)>,
+    Path(dataset_id): Path<DatasetId>,
 ) -> Result<Json<GetDatasetResponse>, ServiceError> {
     let dataset = db.get_dataset(&dataset_id).await?;
 
     let files = s3.list_dataset_files(&dataset.dataset_path).await?;
     
     Ok(Json(GetDatasetResponse { 
+        id: dataset.dataset_id,
+        name: dataset.dataset_name,
+        description: dataset.description,
+        project_id: dataset.project_id,
         files,
      }))
 }
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GetDatasetResponse {
+    id: DatasetId,
+    name: String,
+    description: Option<String>,
+    project_id: ProjectId,
     files: Vec<DatasetFileMetadata>,
 }
 #[instrument(level = "info", skip(db, s3), ret, err)]
@@ -150,24 +155,9 @@ pub async fn delete_dataset_handler(
     claims: Claims,
     State(db): State<Database>,
     State(s3): State<S3Wrapper>,
-    Path((project_id_str, dataset_id_str)): Path<(String, String)>,
+    Path(dataset_id): Path<DatasetId>,
 ) -> Result<(), ServiceError> {
-    let project_id = ProjectId::try_from(project_id_str)?;
-    let dataset_id = DatasetId::try_from(dataset_id_str)?;
-
-    let project = db.get_project(&project_id).await?;
-    let is_member = db
-        .is_user_member_of_organization(&claims.sub, &project.organization_id)
-        .await?;
-    if !is_member {
-        return Err(ServiceError::Unauthorized);
-    }
-
     let dataset = db.get_dataset(&dataset_id).await?;
-
-    if dataset.project_id != project_id {
-        return Err(ServiceError::NotFound { id: dataset_id.to_string() });
-    }
 
     s3.delete_folder(&dataset.dataset_path).await?;
 

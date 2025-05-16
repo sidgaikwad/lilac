@@ -4,7 +4,7 @@ import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Loader2Icon, AlertTriangleIcon } from 'lucide-react'; // Icons for loading/error
-import { useListStepDefinitions } from '@/services/controlplane-api/useListStepDefinitions.hook';
+import { useListStepDefinitions } from '@/services';
 import { StepDefinition } from '@/types';
 
 // interface PipelineSidebarProps {}
@@ -45,7 +45,7 @@ const PipelineSidebar: React.FC = () => {
   };
 
   const groupedSteps = groupStepsByCategory(
-    stepDefinitions?.stepDefinitions ?? []
+    stepDefinitions ?? []
   );
 
   return (

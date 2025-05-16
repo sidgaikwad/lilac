@@ -5,9 +5,11 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useLogin } from '@/services/controlplane-api/useLogin.hook';
-import { Spinner, Toaster } from '@/components/ui';
-import { Link } from 'react-router-dom';
+import { Toaster } from '@/components/ui/toast';
+import { Spinner } from '@/components/ui/spinner';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useLogin } from '@/services';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -17,8 +19,18 @@ const loginSchema = z.object({
 type LoginFormInputs = z.infer<typeof loginSchema>;
 
 const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
   // Get auth store actions
-  const { mutate: loginUser, isPending } = useLogin({ redirectTo: '/' });
+  const { mutate: loginUser, isPending } = useLogin({
+    onSuccess: (_token) => {
+      navigate('/home');
+    },
+    onError: (error) => {
+      toast.error('Login failed', {
+        description: error.error,
+      });
+    },
+  });
 
   const {
     register,

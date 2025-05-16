@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useListDatasets } from '@/services/controlplane-api/useListDatasets.hook';
+import { useListDatasets } from '@/services';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useParams } from 'react-router-dom';
 
@@ -26,7 +26,12 @@ const DatasetSelectionModal: React.FC<DatasetSelectionModalProps> = ({
 }) => {
   const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
   const { projectId } = useParams();
-  const { data: datasets, isLoading, isError, error } = useListDatasets({ projectId });
+  const {
+    data: datasets,
+    isLoading,
+    isError,
+    error,
+  } = useListDatasets({ projectId });
 
   const handleDatasetSelect = (datasetId: string) => {
     setSelectedDataset(datasetId);
@@ -55,20 +60,27 @@ const DatasetSelectionModal: React.FC<DatasetSelectionModalProps> = ({
           )}
           {isError && (
             <p className="text-red-500 text-sm">
-              Error fetching datasets: {error?.error || 'Could not load datasets.'}
+              Error fetching datasets:{' '}
+              {error?.error || 'Could not load datasets.'}
             </p>
           )}
           {!isLoading && !isError && datasets && (
             <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-              {datasets.length === 0 && <p className="text-center text-sm text-muted-foreground">No datasets found.</p>}
+              {datasets.length === 0 && (
+                <p className="text-center text-sm text-muted-foreground">
+                  No datasets found.
+                </p>
+              )}
               {datasets.map((dataset) => (
                 <Button
-                  key={dataset.datasetId}
-                  variant={selectedDataset === dataset.datasetName ? 'default' : 'outline'}
+                  key={dataset.id}
+                  variant={
+                    selectedDataset === dataset.name ? 'default' : 'outline'
+                  }
                   className="w-full justify-start mb-2"
-                  onClick={() => handleDatasetSelect(dataset.datasetId)}
+                  onClick={() => handleDatasetSelect(dataset.id)}
                 >
-                  {dataset.datasetName}
+                  {dataset.name}
                 </Button>
               ))}
             </ScrollArea>
@@ -76,9 +88,14 @@ const DatasetSelectionModal: React.FC<DatasetSelectionModalProps> = ({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
           </DialogClose>
-          <Button onClick={handleConfirm} disabled={!selectedDataset || isLoading}>
+          <Button
+            onClick={handleConfirm}
+            disabled={!selectedDataset || isLoading}
+          >
             Run with Selected Dataset
           </Button>
         </DialogFooter>

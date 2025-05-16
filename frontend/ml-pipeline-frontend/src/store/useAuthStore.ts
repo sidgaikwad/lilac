@@ -1,31 +1,24 @@
-import { create } from 'zustand';
-import { User } from '@/types'; // Import User type
+import { createWithEqualityFn } from 'zustand/traditional';
 
 // Define the shape of the authentication state
 interface AuthState {
-  user: User | undefined;
   token: string | undefined;
   // Actions to update the state
-  login: (user: User, token: string) => void;
+  login: (token: string) => void;
   logout: () => void;
 }
 
-const useAuthStore = create<AuthState>((set) => ({
-  user:
-    localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')!),
-  token: localStorage.getItem('token') || undefined, // Initialize token from storage
+const useAuthStore = createWithEqualityFn<AuthState>((set) => ({
+  token: localStorage.getItem('token') || undefined,
 
-  // Action to update the entire auth state, typically after login or auth check
-  login: (user, token) => {
+  login: (token) => {
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    set({ user, token });
+    set({ token });
   },
 
-  // Action for logging out
   logout: () => {
     localStorage.removeItem('token');
-    set({ user: undefined, token: undefined });
+    set({ token: undefined });
   },
 }));
 

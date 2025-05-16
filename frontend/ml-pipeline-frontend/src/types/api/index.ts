@@ -4,3 +4,4 @@ export * from './organization';
 export * from './project';
 export * from './pipeline';
 export * from './steps';
+export * from './dataset';

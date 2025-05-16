@@ -1,7 +1,4 @@
-import { create } from 'zustand';
-
-
-
+import { createWithEqualityFn } from 'zustand/traditional';
 
 interface OrganizationState {
   selectedOrganizationId?: string;
@@ -10,13 +7,12 @@ interface OrganizationState {
   setSelectedProjectId: (projectId?: string) => void;
 }
 
-const useOrganizationStore = create<OrganizationState>((set) => ({
+const useOrganizationStore = createWithEqualityFn<OrganizationState>((set) => ({
   selectedOrganizationId: undefined,
   selectedProjectId: undefined,
 
   setSelectedOrganizationId: (orgId) =>
     set((state) => {
-      
       if (state.selectedOrganizationId !== orgId) {
         return { selectedOrganizationId: orgId, selectedProjectId: undefined };
       }

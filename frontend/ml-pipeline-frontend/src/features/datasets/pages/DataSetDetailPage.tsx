@@ -8,11 +8,9 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { FileText, Image as ImageIcon, AlertTriangle } from 'lucide-react'; 
-import { useGetDataset } from '@/services/controlplane-api/useGetDataset.hook';
-import { Spinner } from '@/components/ui';
+import { FileText, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-
+import { useGetDataset } from '@/services';
 
 const formatBytes = (bytes: number, decimals = 2) => {
   if (bytes === 0) return '0 Bytes';
@@ -25,17 +23,17 @@ const formatBytes = (bytes: number, decimals = 2) => {
 
 const DataSetDetailPage: React.FC = () => {
   const navigate = useNavigate();
-  const { projectId, datasetId } = useParams<{
+  const { datasetId } = useParams<{
     projectId: string;
     datasetId: string;
   }>();
 
   const {
-    data: files,
+    data: dataset,
     isLoading,
     isError,
     error,
-  } = useGetDataset({ projectId, datasetId });
+  } = useGetDataset({ datasetId });
 
   const handleGoBack = () => {
     navigate(-1);
@@ -49,7 +47,7 @@ const DataSetDetailPage: React.FC = () => {
         <Skeleton className="h-12 w-full mb-2" /> {}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-40 w-full" /> 
+            <Skeleton key={i} className="h-40 w-full" />
           ))}
         </div>
       </div>
@@ -73,7 +71,7 @@ const DataSetDetailPage: React.FC = () => {
     );
   }
 
-  if (!files || files.length === 0) {
+  if (!dataset || dataset.files.length === 0) {
     return (
       <div className="container mx-auto p-4 md:p-6 lg:p-8">
         <Button onClick={handleGoBack} variant="outline" className="mb-4">
@@ -94,10 +92,8 @@ const DataSetDetailPage: React.FC = () => {
     );
   }
 
-  
-  
-  const datasetDisplayName = files[0]?.fileName.split('/')[0] || datasetId || 'Dataset';
-
+  const datasetDisplayName =
+    dataset.files[0]?.fileName.split('/')[0] || datasetId || 'Dataset';
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
@@ -109,12 +105,13 @@ const DataSetDetailPage: React.FC = () => {
         <CardHeader>
           <CardTitle>{datasetDisplayName}</CardTitle>
           <CardDescription>
-            Displaying {files.length} file(s) from dataset ID: {datasetId}
+            Displaying {dataset.files.length} file(s) from dataset ID:{' '}
+            {datasetId}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {files.map((file) => (
+            {dataset.files.map((file) => (
               <Card key={file.fileName} className="overflow-hidden">
                 <CardHeader className="p-3">
                   {file.fileType.startsWith('image/') ? (
@@ -122,13 +119,20 @@ const DataSetDetailPage: React.FC = () => {
                   ) : (
                     <FileText className="h-6 w-6 text-gray-500" />
                   )}
-                  <CardTitle className="text-sm font-medium truncate pt-1" title={file.fileName}>
+                  <CardTitle
+                    className="text-sm font-medium truncate pt-1"
+                    title={file.fileName}
+                  >
                     {file.fileName.split('/').pop()}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-3">
                   {file.fileType.startsWith('image/') ? (
-                    <a href={file.url} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <img
                         src={file.url}
                         alt={file.fileName}
@@ -145,7 +149,7 @@ const DataSetDetailPage: React.FC = () => {
                   <p className="text-xs text-muted-foreground mt-2">
                     Size: {formatBytes(file.size)}
                   </p>
-                   <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Type: {file.fileType}
                   </p>
                 </CardContent>

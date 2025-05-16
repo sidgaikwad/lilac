@@ -17,8 +17,9 @@ import { shallow } from 'zustand/shallow';
 import PipelineEdge from './PipelineEdge';
 import { Pipeline } from '@/types';
 import { usePipelineDropHandling } from '../hooks/usePipelineDropHandling';
-import { useListStepDefinitions } from '@/services/controlplane-api/useListStepDefinitions.hook';
+import { listStepDefinitionsQuery, useListStepDefinitions } from '@/services';
 import { DevTools } from '@/components/devtools';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 const nodeTypes: NodeTypes = {
   pipelineNode: PipelineNode,
@@ -41,7 +42,7 @@ const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = (
     data: stepDefinitions,
     isLoading: _isLoading,
     error: _error,
-  } = useListStepDefinitions();
+  } = useSuspenseQuery(listStepDefinitionsQuery());
   const {
     nodes,
     edges,
@@ -64,7 +65,6 @@ const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = (
   );
 
   useEffect(() => {
-    console.log(props.pipeline);
     initialize(
       props.pipeline.steps.map(
         (step, idx) =>
@@ -75,7 +75,7 @@ const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = (
               y: 0,
             },
             data: {
-              stepDefinition: stepDefinitions?.stepDefinitions.find(
+              stepDefinition: stepDefinitions?.find(
                 (sd) => sd.id === step.stepDefinitionId
               ),
               parameters: step.stepParameters,
@@ -93,18 +93,21 @@ const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = (
         },
       }))
     );
-  }, [props.pipeline]);
+  }, [props.pipeline, initialize, stepDefinitions]);
 
   const { onDragOver, onDrop } = usePipelineDropHandling({
-    stepDefinitions: stepDefinitions?.stepDefinitions ?? [],
+    stepDefinitions: stepDefinitions ?? [],
     reactFlowInstance: reactFlowInstance,
     addNode,
     reactFlowWrapperRef: reactFlowWrapper,
   });
 
-  const onConnect: OnConnect = useCallback((params) => {
-    addEdge(params);
-  }, []);
+  const onConnect: OnConnect = useCallback(
+    (params) => {
+      addEdge(params);
+    },
+    [addEdge]
+  );
 
   return (
     // Use theme background color

@@ -95,7 +95,7 @@ pub async fn run_pipeline(
     let job_id = job.job_id.clone();
     db.create_job(job).await?;
 
-    Ok(Json(RunPipelineResponse { job_id }))
+    Ok(Json(RunPipelineResponse { id: job_id }))
 }
 
 #[derive(Debug, Deserialize)]
@@ -107,7 +107,7 @@ pub struct RunPipelineApiRequest {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RunPipelineResponse {
-    job_id: JobId,
+    id: JobId,
 }
 
 #[instrument(level = "info", skip(db), ret, err)]
