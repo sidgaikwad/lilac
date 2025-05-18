@@ -16,6 +16,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { useNavigate, generatePath } from 'react-router-dom';
+import { Routes } from '@/constants';
+import useOrganizationStore from '@/store/use-organization-store';
 
 const createOrgSchema = z.object({
   orgName: z
@@ -28,13 +31,26 @@ type CreateOrgFormInputs = z.infer<typeof createOrgSchema>;
 export interface CreateOrganizationModalProps {
   isOpen: boolean;
   setOpen: (isOpen: boolean) => void;
+  showTrigger?: boolean;
 }
 
-const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
-  props: CreateOrganizationModalProps
-) => {
+const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = ({
+  isOpen,
+  setOpen,
+  showTrigger = true,
+}: CreateOrganizationModalProps) => {
+  const navigate = useNavigate();
+  const setSelectedOrganizationId = useOrganizationStore(
+    (state) => state.setSelectedOrganizationId
+  );
+
   const { mutate: createOrg, isPending } = useCreateOrganization({
-    onSuccess: (_data) => toast.success('Successfully created organization!'),
+    onSuccess: (data) => {
+      toast.success('Successfully created organization!');
+      setOpen(false);
+      setSelectedOrganizationId(data.id);
+      navigate(generatePath(Routes.ORGANIZATION_PROJECTS, { organizationId: data.id })); // Added
+    },
     onError: (error) => toast.error(error.error),
   });
 
@@ -42,20 +58,30 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<CreateOrgFormInputs>({
     resolver: zodResolver(createOrgSchema),
   });
 
   const onSubmit = (data: CreateOrgFormInputs) => {
     createOrg({ name: data.orgName });
-    props.setOpen(false);
+    reset();
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+    if (!open) {
+      reset();
+    }
   };
 
   return (
-    <Dialog open={props.isOpen} onOpenChange={props.setOpen}>
-      <DialogTrigger asChild>
-        <Button>Create Organization</Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <Button>Create Organization</Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Organization</DialogTitle>

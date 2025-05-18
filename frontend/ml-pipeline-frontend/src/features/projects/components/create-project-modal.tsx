@@ -1,3 +1,4 @@
+import * as React from 'react';
 import {
   Dialog,
   DialogTrigger,
@@ -24,6 +25,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { useNavigate, generatePath } from 'react-router-dom';
+import { Routes } from '@/constants';
 
 const createProjectSchema = z.object({
   organizationId: z.string().nonempty(),
@@ -38,36 +41,67 @@ export interface CreateProjectModalProps {
   isOpen: boolean;
   setOpen: (input: boolean) => void;
   organization: Organization;
+  showTrigger?: boolean;
 }
 
-const CreateProjectModal: React.FC<CreateProjectModalProps> = (
-  props: CreateProjectModalProps
-) => {
+const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
+  isOpen,
+  setOpen,
+  organization,
+  showTrigger = true,
+}: CreateProjectModalProps) => {
+  const navigate = useNavigate();
   const { mutate: createProject, isPending } = useCreateProject({
-    onSuccess: (_data) => toast.success('Successfully created project!'),
+    onSuccess: (data) => {
+      toast.success('Successfully created project!');
+      setOpen(false);
+      navigate(generatePath(Routes.PROJECT_DETAILS, { projectId: data.id }), { replace: true });
+    },
     onError: (error) => toast.error(error.error),
   });
 
   const form = useForm<CreateProjectFormInputs>({
     resolver: zodResolver(createProjectSchema),
     defaultValues: {
-      organizationId: props.organization.id,
+      organizationId: organization.id,
+      projectName: '',
     },
   });
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      form.reset({
+        organizationId: organization.id,
+        projectName: '',
+      });
+    }
+  }, [organization, isOpen, form]);
+
 
   const onSubmit = (data: CreateProjectFormInputs) => {
     createProject({
       name: data.projectName,
       organizationId: data.organizationId,
     });
-    form.reset();
+  };
+  
+  const handleOpenChange = (openState: boolean) => {
+    setOpen(openState);
+    if (!openState) {
+      form.reset({
+        organizationId: organization.id,
+        projectName: '',
+      });
+    }
   };
 
   return (
-    <Dialog open={props.isOpen} onOpenChange={props.setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="default">Create Project</Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="default">Create Project</Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Project</DialogTitle>
@@ -77,7 +111,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = (
             <FormItem>
               <FormLabel>Selected Organization</FormLabel>
               <FormControl>
-                <Input value={props.organization.name} disabled />
+                <Input value={organization.name} disabled />
               </FormControl>
               <FormMessage />
             </FormItem>
