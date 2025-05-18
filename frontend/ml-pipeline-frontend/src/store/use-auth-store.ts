@@ -1,9 +1,7 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 
-// Define the shape of the authentication state
 interface AuthState {
   token: string | undefined;
-  // Actions to update the state
   login: (token: string) => void;
   logout: () => void;
 }

@@ -37,6 +37,7 @@ pub struct CreateUserRequest {
 
 #[derive(Debug, Serialize)]
 pub struct CreateUserResponse {
+    #[serde(rename = "userId")]
     id: UserId,
 }
 
