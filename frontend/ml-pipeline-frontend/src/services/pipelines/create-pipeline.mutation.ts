@@ -15,8 +15,7 @@ export interface CreatePipelineResponse {
 async function createPipeline(
   payload: CreatePipelineRequest
 ): Promise<CreatePipelineResponse> {
-  const { projectId, ...request } = payload;
-  return postHttp(`/projects/${projectId}/pipelines`, request);
+  return postHttp('/pipelines', payload);
 }
 
 export interface UseCreatePipelineProps {
@@ -24,19 +23,28 @@ export interface UseCreatePipelineProps {
   onError?: (error: ApiError) => void;
 }
 
-export function useCreatePipeline(props: UseCreatePipelineProps) {
+export function useCreatePipeline(props?: UseCreatePipelineProps) {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<CreatePipelineResponse, ApiError, CreatePipelineRequest>({
     mutationKey: [QueryKeys.CREATE_PIPELINE],
     mutationFn: createPipeline,
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.LIST_PROJECTS],
+        queryKey: [QueryKeys.LIST_PIPELINES, variables.projectId]
       });
-      if (props.onSuccess !== undefined) {
+
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.LIST_PIPELINES],
+      });
+
+      if (props?.onSuccess) {
         props.onSuccess(data);
       }
     },
-    onError: props.onError,
+    onError: (error) => {
+      if (props?.onError) {
+        props.onError(error);
+      }
+    },
   });
 }
