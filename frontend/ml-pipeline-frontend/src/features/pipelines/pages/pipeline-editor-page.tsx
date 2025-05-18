@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ReactFlowProvider } from '@xyflow/react';
+import { ReactFlowProvider, Node, Edge } from '@xyflow/react';
 import PipelineSidebar from '../components/pipeline-sidebar';
 import DatasetSelectionModal from '../components/dataset-selection-modal';
 import PipelineEditorFlow from '../components/pipeline-editor-flow';
@@ -23,6 +23,60 @@ import {
   ContainerTitle,
 } from '@/components/ui/container';
 import Breadcrumbs from '@/components/common/breadcrumbs';
+
+interface PipelineValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+function validatePipeline(nodes: Node[], edges: Edge[]): PipelineValidationResult {
+  const errors: string[] = [];
+
+  if (nodes.length === 0) {
+    errors.push('Pipeline has no steps. Add steps to the canvas.');
+  }
+
+  // To-Do fix parameter checking
+
+
+  if (nodes.length > 1 && edges.length === 0) {
+    errors.push('Pipeline has multiple steps but no connections between them.');
+  }
+
+  const nodeIds = new Set(nodes.map(node => node.id));
+  const connectedNodes = new Set<string>();
+  edges.forEach(edge => {
+    connectedNodes.add(edge.source);
+    connectedNodes.add(edge.target);
+  });
+
+  if (nodes.length > 0) {
+    for (const node of nodes) {
+      if (edges.length > 0 && nodes.length > 1 && !connectedNodes.has(node.id)) {
+         const stepDef = node.data.stepDefinition as StepDefinition;
+         errors.push(`Step "${stepDef?.name || node.id}" is isolated and not connected.`);
+      }
+    }
+  }
+  
+  if (nodes.length > 1) {
+    const sourceNodes = nodes.filter(n => !edges.some(e => e.target === n.id));
+    const sinkNodes = nodes.filter(n => !edges.some(e => e.source === n.id));
+
+    if (sourceNodes.length === 0 && nodes.length > 0) { // Check nodes.length > 0 for single node case
+      errors.push('Pipeline has no clear starting step (a step with no inputs). This might be a cycle.');
+    }
+    if (sinkNodes.length === 0 && nodes.length > 0) { // Check nodes.length > 0 for single node case
+      errors.push('Pipeline has no clear ending step (a step with no outputs).');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+}
+
 
 function PipelineEditorPage() {
   const { pipelineId, projectId } = useParams<{
@@ -50,7 +104,7 @@ function PipelineEditorPage() {
         description: `${data.id}`,
       }),
     onError: (err) => {
-      toast.error('Failed to save pipeline', {
+      toast.error('Failed to run pipeline', {
         description: `${err.statusCode} ${err.error}`,
       });
     },
@@ -123,12 +177,16 @@ function PipelineEditorPage() {
           </Button>
           <Button
             onClick={() => {
+              const validationResult = validatePipeline(nodes, edges);
+              if (!validationResult.isValid) {
+                validationResult.errors.forEach(err => toast.error(err, { duration: 5000 }));
+                return;
+              }
               if (pipelineId) {
                 setIsDatasetModalOpen(true);
               }
             }}
             size="sm"
-            disabled={false}
           >
             <PlayIcon className="mr-2 h-4 w-4" /> Run Pipeline
           </Button>
