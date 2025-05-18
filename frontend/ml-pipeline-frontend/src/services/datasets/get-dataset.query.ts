@@ -1,4 +1,4 @@
-import { get } from '@/lib/fetch';
+import { getHttp } from '@/lib/fetch';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
 import { ApiError, Dataset } from '@/types';
@@ -21,7 +21,7 @@ export interface GetDatasetResponse {
 export async function getDataset(
   datasetId: string
 ): Promise<GetDatasetResponse> {
-  return get(`/datasets/${datasetId}`);
+  return getHttp(`/datasets/${datasetId}`);
 }
 
 export function getDatasetQuery(datasetId?: string, enabled: boolean = true) {

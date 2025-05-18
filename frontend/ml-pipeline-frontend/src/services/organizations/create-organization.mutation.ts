@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/types';
-import { post } from '@/lib/fetch';
+import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
 
 export interface CreateOrganizationRequest {
@@ -14,7 +14,7 @@ export interface CreateOrganizationResponse {
 async function createOrganization(
   payload: CreateOrganizationRequest
 ): Promise<CreateOrganizationResponse> {
-  return post('/organizations', payload);
+  return postHttp('/organizations', payload);
 }
 
 export interface UseCreateOrganizationProps {

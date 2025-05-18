@@ -1,17 +1,24 @@
 import { createBrowserRouter } from 'react-router';
 import { Routes } from './constants';
-import OrganizationsOverviewPage from './features/organizations/OrganizationsOverviewPage';
-import { MainLayout } from './components/layout';
-import ProjectsByOrgPage from './features/projects/ProjectsByOrgPage';
-import ProjectOverviewPage from './features/projects/ProjectOverviewPage';
-import PipelinesOverviewPage from './features/pipelines/pages/PipelinesOverviewPage';
-import PipelineEditorPage from './features/pipelines/pages/PipelineEditorPage';
-import DataSetsPage from './features/datasets/pages/DataSetsPage';
-import DataSetDetailPage from './features/datasets/pages/DataSetDetailPage';
-import ProtectedRoute from './components/router/ProtectedRoute';
-import LoginPage from './features/auth/pages/LoginPage';
-import SignUpPage from './features/auth/pages/SignUpPage';
+import OrganizationsListPage from './features/organizations/pages/organizations-list-page';
+import {
+  MainLayout,
+  OrganizationLayout,
+  ProjectLayout,
+} from './components/layout';
+import ProjectsListPage from './features/projects/pages/projects-list-page';
+import ProjectDashboardPage from './features/projects/pages/project-dashboard-page';
+import PipelinesOverviewPage from './features/pipelines/pages/pipelines-overview-page';
+import PipelineEditorPage from './features/pipelines/pages/pipeline-editor-page';
+import DataSetsPage from './features/datasets/pages/datasets-page';
+import DataSetDetailPage from './features/datasets/pages/dataset-details-page';
+import ProtectedRoute from './components/router/protected-route';
+import LoginPage from './features/account/pages/login-page';
+import SignUpPage from './features/account/pages/sign-up-page';
 import ErrorBoundary from './error-boundary';
+import OrganizationSettingsPage from './features/organizations/pages/organization-settings-page';
+import AccountSettingsPage from './features/account/pages/account-settings-page';
+import ProjectSettingsPage from './features/projects/pages/project-settings-page';
 
 export const router = createBrowserRouter([
   {
@@ -33,19 +40,37 @@ export const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: <OrganizationsOverviewPage />,
+                element: <OrganizationsListPage />,
               },
               {
-                path: Routes.HOME,
-                element: <OrganizationsOverviewPage />,
+                path: '/organizations',
+                element: <OrganizationsListPage />,
               },
               {
-                path: Routes.PROJECTS,
-                element: <ProjectsByOrgPage />,
+                path: Routes.ACCOUNT_SETTINGS,
+                element: <AccountSettingsPage />,
               },
+            ],
+          },
+          {
+            element: <OrganizationLayout />,
+            children: [
+              {
+                path: Routes.ORGANIZATION_PROJECTS,
+                element: <ProjectsListPage />,
+              },
+              {
+                path: Routes.ORGANIZATION_SETTINGS,
+                element: <OrganizationSettingsPage />,
+              },
+            ],
+          },
+          {
+            element: <ProjectLayout />,
+            children: [
               {
                 path: Routes.PROJECT_DETAILS,
-                element: <ProjectOverviewPage />,
+                element: <ProjectDashboardPage />,
               },
               {
                 path: Routes.PROJECT_PIPELINES,
@@ -62,6 +87,10 @@ export const router = createBrowserRouter([
               {
                 path: Routes.PROJECT_DATASET_DETAILS,
                 element: <DataSetDetailPage />,
+              },
+              {
+                path: Routes.PROJECT_SETTINGS,
+                element: <ProjectSettingsPage />,
               },
             ],
           },

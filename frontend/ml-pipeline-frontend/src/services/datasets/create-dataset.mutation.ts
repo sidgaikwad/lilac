@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/types';
-import { post } from '@/lib/fetch';
+import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
 
 export interface CreateDatasetRequest {
@@ -26,7 +26,7 @@ async function createDataset(
   payload: CreateDatasetRequest
 ): Promise<CreateDatasetResponse> {
   const { projectId, ...request } = payload;
-  return post(`/projects/${projectId}/datasets`, request);
+  return postHttp(`/projects/${projectId}/datasets`, request);
 }
 
 export interface UseCreateDatasetProps {
@@ -34,7 +34,7 @@ export interface UseCreateDatasetProps {
   onError?: (error: ApiError) => void;
 }
 
-export function useCreateDataset(props: UseCreateDatasetProps) {
+export function useCreateDataset(props?: UseCreateDatasetProps) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: [QueryKeys.CREATE_DATASET],
@@ -43,10 +43,10 @@ export function useCreateDataset(props: UseCreateDatasetProps) {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.LIST_DATASETS],
       });
-      if (props.onSuccess !== undefined) {
+      if (props?.onSuccess !== undefined) {
         props.onSuccess(data);
       }
     },
-    onError: props.onError,
+    onError: props?.onError,
   });
 }

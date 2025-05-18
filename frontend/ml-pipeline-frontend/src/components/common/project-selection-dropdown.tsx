@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronDown, PlusIcon } from 'lucide-react';
-import useOrganizationStore from '@/store/useOrganizationStore';
+import useOrganizationStore from '@/store/use-organization-store';
 import { shallow } from 'zustand/shallow';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
@@ -18,12 +18,17 @@ export default function ProjectSelectionDropdown() {
   const { projectId } = useParams<'projectId'>();
   const navigate = useNavigate();
   const { selectedOrganizationId, setSelectedOrganizationId } =
-    useOrganizationStore((state) => ({
-      selectedOrganizationId: state.selectedOrganizationId,
-      setSelectedOrganizationId: state.setSelectedOrganizationId,
-    }), shallow);
+    useOrganizationStore(
+      (state) => ({
+        selectedOrganizationId: state.selectedOrganizationId,
+        setSelectedOrganizationId: state.setSelectedOrganizationId,
+      }),
+      shallow
+    );
 
-  const { data: projects, isLoading } = useListProjects({ organizationId: selectedOrganizationId });
+  const { data: projects, isLoading } = useListProjects({
+    organizationId: selectedOrganizationId,
+  });
 
   const selectedProject = useMemo(() => {
     return projects?.find((proj) => proj.id === projectId);
@@ -31,27 +36,27 @@ export default function ProjectSelectionDropdown() {
 
   useEffect(() => {
     if (selectedProject !== undefined) {
-      setSelectedOrganizationId(selectedProject?.organizationId)
+      setSelectedOrganizationId(selectedProject?.organizationId);
     }
-  }, [selectedProject]);
+  }, [selectedProject, setSelectedOrganizationId]);
 
   return (
-    <div className='flex flex-1'>
+    <div className="flex flex-1">
       {!projects || isLoading ? (
-        <Skeleton className="w-24 h-6 bg-muted" />
+        <Skeleton className="bg-muted h-6 w-24" />
       ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className="flex items-center gap-1 px-2 h-7 text-xs"
+              className="flex h-7 items-center gap-1 px-2 text-xs"
             >
-              <span className="truncate max-w-[100px]">
-                {projects.find((project) => project.id === projectId)
-                  ?.name ?? 'Select Project'}
+              <span className="max-w-[100px] truncate">
+                {projects.find((project) => project.id === projectId)?.name ??
+                  'Select Project'}
               </span>
-              <ChevronDown className="h-4 w-4 text-muted-foreground ml-1" />
+              <ChevronDown className="text-muted-foreground ml-1 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
@@ -60,16 +65,14 @@ export default function ProjectSelectionDropdown() {
                 <DropdownMenuItem
                   key={project.id}
                   onSelect={() => {
-                    navigate(`/projects/${project.id}`)
+                    navigate(`/projects/${project.id}`);
                   }}
                 >
                   {project.name}
                 </DropdownMenuItem>
               ))
             ) : (
-              <DropdownMenuItem disabled>
-                No projects found
-              </DropdownMenuItem>
+              <DropdownMenuItem disabled>No projects found</DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled>

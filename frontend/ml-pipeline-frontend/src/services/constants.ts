@@ -22,7 +22,7 @@ export enum QueryKeys {
   GET_PIPELINE = 'GetPipeline',
   CREATE_PIPELINE = 'CreatePipeline',
   UPDATE_PIPELINE = 'UpdatePipeline',
-  LIST_PIPELINE = 'ListPipelines',
+  LIST_PIPELINES = 'ListPipelines',
   DELETE_PIPELINE = 'DeletePipeline',
   RUN_PIPELINE = 'RunPipeline',
 

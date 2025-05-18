@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'; // Import UseQue
 import { QueryKeys } from '../constants';
 import { ApiError, PipelineSummary } from '@/types';
 import { useEffect } from 'react';
-import { get } from '@/lib/fetch';
+import { getHttp } from '@/lib/fetch';
 
 export interface ListPipelinesResponse {
   pipelines: {
@@ -15,7 +15,7 @@ export interface ListPipelinesResponse {
 export async function listPipelines(
   projectId: string
 ): Promise<ListPipelinesResponse> {
-  return get(`/projects/${projectId}/pipelines`);
+  return getHttp(`/projects/${projectId}/pipelines`);
 }
 
 export function listPipelinesQuery(
@@ -23,7 +23,7 @@ export function listPipelinesQuery(
   enabled: boolean = true
 ) {
   return queryOptions({
-    queryKey: [QueryKeys.LIST_PROJECTS, projectId],
+    queryKey: [QueryKeys.LIST_PIPELINES, projectId],
     queryFn: () => listPipelines(projectId!),
     enabled: !!projectId && enabled,
     staleTime: 1000 * 60 * 5,

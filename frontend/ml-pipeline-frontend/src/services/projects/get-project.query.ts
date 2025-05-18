@@ -1,4 +1,4 @@
-import { get } from '@/lib/fetch';
+import { getHttp } from '@/lib/fetch';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
 import { ApiError, Project } from '@/types';
@@ -13,7 +13,7 @@ export interface GetProjectResponse {
 export async function getProject(
   projectId: string
 ): Promise<GetProjectResponse> {
-  return get(`/projects/${projectId}`);
+  return getHttp(`/projects/${projectId}`);
 }
 
 export function getProjectQuery(projectId?: string, enabled: boolean = true) {

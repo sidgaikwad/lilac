@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/types';
-import { post } from '@/lib/fetch';
+import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
 
 export interface CreatePipelineRequest {
@@ -16,7 +16,7 @@ async function createPipeline(
   payload: CreatePipelineRequest
 ): Promise<CreatePipelineResponse> {
   const { projectId, ...request } = payload;
-  return post(`/projects/${projectId}/pipelines`, request);
+  return postHttp(`/projects/${projectId}/pipelines`, request);
 }
 
 export interface UseCreatePipelineProps {

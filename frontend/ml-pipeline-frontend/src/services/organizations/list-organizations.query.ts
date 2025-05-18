@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'; // Import UseQue
 import { QueryKeys } from '../constants';
 import { ApiError, Organization } from '@/types';
 import { useEffect } from 'react';
-import { get } from '@/lib/fetch';
+import { getHttp } from '@/lib/fetch';
 
 export interface ListOrganizationsResponse {
   organizations: {
@@ -12,7 +12,7 @@ export interface ListOrganizationsResponse {
 }
 
 export async function listOrganizations(): Promise<ListOrganizationsResponse> {
-  return get('/organizations');
+  return getHttp('/organizations');
 }
 
 export function listOrganizationsQuery(enabled: boolean = true) {

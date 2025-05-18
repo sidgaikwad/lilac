@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'; // Import UseQue
 import { QueryKeys } from '../constants';
 import { ApiError, Organization, StepDefinition } from '@/types';
 import { useEffect } from 'react';
-import { get } from '@/lib/fetch';
+import { getHttp } from '@/lib/fetch';
 
 export interface ListStepDefinitionsResponse {
   stepDefinitions: {
@@ -18,7 +18,7 @@ export interface ListStepDefinitionsResponse {
 }
 
 export async function listStepDefinitions(): Promise<ListStepDefinitionsResponse> {
-  return await get('/step-definitions');
+  return await getHttp('/step-definitions');
 }
 
 export function listStepDefinitionsQuery(enabled: boolean = true) {
@@ -41,7 +41,7 @@ export function useListStepDefinitions(props?: UseListStepDefinitionsProps) {
   const query = useQuery(listStepDefinitionsQuery(props?.enabled));
 
   useEffect(() => {
-    console.log('hook', query.data)
+    console.log('hook', query.data);
     if (props?.onSuccess && query.data != undefined) {
       props.onSuccess(query.data);
     }

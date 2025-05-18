@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/types';
-import { post } from '@/lib/fetch';
+import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
 
 export interface RunPipelineRequest {
@@ -16,7 +16,7 @@ async function runPipeline(
   payload: RunPipelineRequest
 ): Promise<RunPipelineResponse> {
   const { pipelineId, ...request } = payload;
-  return post(`/pipelines/${pipelineId}/run`, request);
+  return postHttp(`/pipelines/${pipelineId}/run`, request);
 }
 
 export interface UseRunPipelineProps {

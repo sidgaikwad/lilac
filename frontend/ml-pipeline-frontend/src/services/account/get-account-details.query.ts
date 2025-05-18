@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
 import { ApiError, User } from '@/types';
 import { useEffect } from 'react';
-import { get } from '@/lib/fetch';
+import { getHttp } from '@/lib/fetch';
 
 export interface GetAccountDetailsResponse {
   id: string;
@@ -11,7 +11,7 @@ export interface GetAccountDetailsResponse {
 }
 
 export async function getAccountDetails(): Promise<GetAccountDetailsResponse> {
-  return get('/account/details');
+  return getHttp('/account/details');
 }
 
 export function getAccountDetailsQuery(enabled: boolean = true) {

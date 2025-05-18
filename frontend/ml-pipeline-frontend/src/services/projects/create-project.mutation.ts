@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/types';
-import { post } from '@/lib/fetch';
+import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
 
 export interface CreateProjectRequest {
@@ -15,7 +15,7 @@ export interface CreateProjectResponse {
 async function createProject(
   payload: CreateProjectRequest
 ): Promise<CreateProjectResponse> {
-  return post('/projects', payload);
+  return postHttp('/projects', payload);
 }
 
 export interface UseCreateProjectProps {

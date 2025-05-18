@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'; // Import UseQue
 import { QueryKeys } from '../constants';
 import { ApiError, Project } from '@/types';
 import { useEffect } from 'react';
-import { get } from '@/lib/fetch';
+import { getHttp } from '@/lib/fetch';
 
 export interface ListProjectsResponse {
   projects: {
@@ -15,7 +15,7 @@ export interface ListProjectsResponse {
 export async function listProjects(
   organizationId?: string
 ): Promise<ListProjectsResponse> {
-  return get('/projects', organizationId ? { organizationId } : undefined);
+  return getHttp('/projects', organizationId ? { organizationId } : undefined);
 }
 
 export function listProjectsQuery(
@@ -23,7 +23,7 @@ export function listProjectsQuery(
   enabled: boolean = true
 ) {
   return queryOptions({
-    queryKey: [QueryKeys.LIST_PROJECTS],
+    queryKey: [QueryKeys.LIST_PROJECTS, organizationId],
     queryFn: () => listProjects(organizationId!),
     enabled,
     staleTime: 1000 * 60 * 5,

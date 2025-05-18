@@ -164,6 +164,15 @@ impl Database {
         let mut tx = self.pool.begin().await?;
         let id = pipeline_id.inner();
 
+        // Delete jobs
+        sqlx::query!(
+            // language=PostgreSQL
+            r#"DELETE FROM pipeline_jobs WHERE pipeline_id = $1"#,
+            id
+        )
+        .execute(&mut *tx)
+        .await?;
+
         // Delete connections
         sqlx::query!(
             // language=PostgreSQL

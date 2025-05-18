@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'; // Import UseQue
 import { QueryKeys } from '../constants';
 import { ApiError, DatasetSummary } from '@/types';
 import { useEffect } from 'react';
-import { get } from '@/lib/fetch';
+import { getHttp } from '@/lib/fetch';
 
 export interface ListDatasetsResponse {
   datasets: {
@@ -15,7 +15,7 @@ export interface ListDatasetsResponse {
 export async function listDatasets(
   projectId: string
 ): Promise<ListDatasetsResponse> {
-  return get(`/projects/${projectId}/datasets`);
+  return getHttp(`/projects/${projectId}/datasets`);
 }
 
 export function listDatasetsQuery(projectId?: string, enabled: boolean = true) {

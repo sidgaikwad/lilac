@@ -1,4 +1,4 @@
-import { get } from '@/lib/fetch';
+import { getHttp } from '@/lib/fetch';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
 import { ApiError, Pipeline } from '@/types';
@@ -21,7 +21,7 @@ export interface GetPipelineResponse {
 export async function getPipeline(
   pipelineId: string
 ): Promise<GetPipelineResponse> {
-  return get(`/pipelines/${pipelineId}`);
+  return getHttp(`/pipelines/${pipelineId}`);
 }
 
 export function getPipelineQuery(pipelineId?: string, enabled: boolean = true) {

@@ -1,4 +1,4 @@
-import { post } from '@/lib/fetch';
+import { postHttp } from '@/lib/fetch';
 import { ApiError } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
@@ -19,7 +19,7 @@ export async function updatePipeline(
   payload: UpdatePipelineRequest
 ): Promise<void> {
   const { pipelineId, ...request } = payload;
-  return post(`/pipelines/${pipelineId}`, request);
+  return postHttp(`/pipelines/${pipelineId}`, request);
 }
 
 export interface UseUpdatePipelineProps {

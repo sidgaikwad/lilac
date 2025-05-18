@@ -91,7 +91,7 @@ pub struct ListOrganizationsResponse {
     organizations: Vec<GetOrganizationResponse>,
 }
 #[instrument(level = "info", skip(db), ret, err)]
-pub async fn delete_organization_handler(
+pub async fn delete_organization(
     claims: Claims,
     State(db): State<Database>,
     Path(organization_id_str): Path<String>,

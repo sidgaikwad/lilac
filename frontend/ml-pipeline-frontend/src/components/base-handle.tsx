@@ -12,7 +12,7 @@ export const BaseHandle = forwardRef<HTMLDivElement, BaseHandleProps>(
         ref={ref}
         {...props}
         className={cn(
-          'h-[11px] w-[11px] p-1 size-[11px] rounded-full border border-slate-300 bg-slate-100 transition dark:border-secondary dark:bg-secondary',
+          'dark:border-secondary dark:bg-secondary size-[11px] h-[11px] w-[11px] rounded-full border border-slate-300 bg-slate-100 p-1 transition',
           className
         )}
         {...props}

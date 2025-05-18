@@ -1,4 +1,4 @@
-import { get } from '@/lib/fetch';
+import { getHttp } from '@/lib/fetch';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
 import { ApiError, Organization } from '@/types';
@@ -12,7 +12,7 @@ interface GetOrganizationResponse {
 export async function getOrganization(
   organizationId: string
 ): Promise<GetOrganizationResponse> {
-  return get(`/organizations/${organizationId}`);
+  return getHttp(`/organizations/${organizationId}`);
 }
 
 export function getOrganizationQuery(
