@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use password_auth::generate_hash;
 use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
@@ -8,6 +10,12 @@ use crate::ServiceError;
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(transparent)]
 pub struct UserId(Uuid);
+
+impl Display for UserId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
 
 impl UserId {
     pub fn new(user_id: Uuid) -> Self {

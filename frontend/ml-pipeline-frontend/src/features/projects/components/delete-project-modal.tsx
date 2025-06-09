@@ -18,12 +18,12 @@ function DeleteProjectModal(props: DeleteProjectModalProps) {
   return (
     <DestructiveActionConfirmationModal
       dialogTrigger={
-        <Button variant="ghost">
-          <Trash2 className="text-destructive hover:text-destructive/80" />
+        <Button variant='ghost'>
+          <Trash2 className='text-destructive hover:text-destructive/80' />
         </Button>
       }
       itemName={props.project.name}
-      itemType="project"
+      itemType='project'
       onConfirm={() =>
         deleteProject({
           organizationId: props.project.organizationId,

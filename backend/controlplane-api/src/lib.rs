@@ -1,5 +1,5 @@
 use axum::extract::FromRef;
-use common::{database::Database, s3::S3Wrapper};
+use common::{aws::{S3Wrapper, STSWrapper}, database::Database};
 
 pub mod auth;
 pub mod routes;
@@ -8,6 +8,7 @@ pub mod routes;
 pub struct AppState {
     pub db: Database,
     pub s3: S3Wrapper,
+    pub sts: STSWrapper,
 }
 
 impl FromRef<AppState> for Database {
@@ -19,5 +20,11 @@ impl FromRef<AppState> for Database {
 impl FromRef<AppState> for S3Wrapper {
     fn from_ref(app_state: &AppState) -> S3Wrapper {
         app_state.s3.clone()
+    }
+}
+
+impl FromRef<AppState> for STSWrapper {
+    fn from_ref(app_state: &AppState) -> STSWrapper {
+        app_state.sts.clone()
     }
 }

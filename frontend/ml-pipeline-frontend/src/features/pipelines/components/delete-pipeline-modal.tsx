@@ -19,12 +19,12 @@ function DeletePipelineModal(props: DeletePipelineModalProps) {
   return (
     <DestructiveActionConfirmationModal
       dialogTrigger={
-        <Button variant="ghost">
-          <Trash2 className="text-destructive hover:text-destructive/80" />
+        <Button variant='ghost'>
+          <Trash2 className='text-destructive hover:text-destructive/80' />
         </Button>
       }
       itemName={props.pipeline.name}
-      itemType="pipeline"
+      itemType='pipeline'
       onConfirm={() =>
         deletePipeline({
           projectId: props.projectId,

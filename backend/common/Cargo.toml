@@ -6,9 +6,12 @@ edition = "2021"
 [dependencies]
 aws-config.workspace = true
 aws-sdk-s3.workspace = true
+aws-sdk-sts.workspace = true
 aws-smithy-types-convert.workspace = true
 axum.workspace = true
+cached.workspace = true
 chrono.workspace = true
+getset.workspace = true
 jsonschema.workspace = true
 secrecy.workspace = true
 serde.workspace = true

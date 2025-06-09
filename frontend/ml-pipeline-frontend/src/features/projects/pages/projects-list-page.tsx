@@ -46,14 +46,14 @@ function ProjectsListPage() {
 
   if (isLoadingProjects) {
     return (
-      <div className="container mx-auto space-y-6 p-4 md:p-6 lg:p-8">
-        <Skeleton className="mb-4 h-10 w-1/2" /> {}
-        <div className="mb-4 flex justify-end">
-          <Skeleton className="h-10 w-32" /> {}
+      <div className='container mx-auto space-y-6 p-4 md:p-6 lg:p-8'>
+        <Skeleton className='mb-4 h-10 w-1/2' /> {}
+        <div className='mb-4 flex justify-end'>
+          <Skeleton className='h-10 w-32' /> {}
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3'>
           {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-48 w-full" />
+            <Skeleton key={i} className='h-48 w-full' />
           ))}
         </div>
       </div>
@@ -63,7 +63,7 @@ function ProjectsListPage() {
   return (
     <Container>
       <ContainerHeader>
-        <div className="flex-1 shrink-0 grow-0 basis-full pb-4">
+        <div className='flex-1 shrink-0 grow-0 basis-full pb-4'>
           <Breadcrumbs
             breadcrumbs={[
               {
@@ -96,16 +96,16 @@ function ProjectsListPage() {
 
       <ContainerContent>
         {projects.length > 0 ? (
-          <div className="flex flex-wrap m-auto gap-4">
+          <div className='m-auto flex flex-wrap gap-4'>
             {projects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
           </div>
         ) : (
           <EmptyCardSection
-            title="No Projects"
+            title='No Projects'
             description={`Get started by creating your first project in ${organization.name}.`}
-            buttonText="Create Project"
+            buttonText='Create Project'
             onClick={() => setCreateProjectModalOpen(true)}
           />
         )}

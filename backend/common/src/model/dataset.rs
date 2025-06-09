@@ -64,13 +64,24 @@ impl TryFrom<String> for DatasetId {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(tag = "source_type")]
+pub enum DatasetSource {
+    #[default]
+    Unknown,
+    S3 {
+        bucket_name: String,
+        region: String,
+    },
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Dataset {
     pub dataset_id: DatasetId,
     pub dataset_name: String,
     pub description: Option<String>,
     pub project_id: ProjectId,
-    pub dataset_path: String,
+    pub dataset_source: DatasetSource,
 }
 
 impl Dataset {
@@ -79,14 +90,14 @@ impl Dataset {
         dataset_name: String,
         description: Option<String>,
         project_id: ProjectId,
-        dataset_path: String,
+        dataset_source: DatasetSource,
     ) -> Self {
         Self {
             dataset_id,
             dataset_name,
             description,
             project_id,
-            dataset_path,
+            dataset_source,
         }
     }
 
@@ -94,20 +105,20 @@ impl Dataset {
         dataset_name: String,
         description: Option<String>,
         project_id: ProjectId,
-        dataset_path: String,
+        dataset_source: DatasetSource,
     ) -> Self {
         Self {
             dataset_id: DatasetId::generate(),
             dataset_name,
             description,
             project_id,
-            dataset_path,
+            dataset_source,
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct DatasetFileMetadata {
     pub file_name: String,
     pub file_type: String,
@@ -117,7 +128,13 @@ pub struct DatasetFileMetadata {
 }
 
 impl DatasetFileMetadata {
-    pub fn new(file_name: String, file_type: String, size: i64, created_at: DateTime<Utc>, url: String) -> Self {
+    pub fn new(
+        file_name: String,
+        file_type: String,
+        size: i64,
+        created_at: DateTime<Utc>,
+        url: String,
+    ) -> Self {
         Self {
             file_name,
             file_type,
@@ -129,14 +146,21 @@ impl DatasetFileMetadata {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct DatasetFile {
     pub metadata: DatasetFileMetadata,
     pub contents: Vec<u8>,
 }
 
 impl DatasetFile {
-    pub fn new(file_name: String, file_type: String, size: i64, created_at: DateTime<Utc>, url: String, contents: Vec<u8>) -> Self {
+    pub fn new(
+        file_name: String,
+        file_type: String,
+        size: i64,
+        created_at: DateTime<Utc>,
+        url: String,
+        contents: Vec<u8>,
+    ) -> Self {
         Self {
             metadata: DatasetFileMetadata {
                 file_name,

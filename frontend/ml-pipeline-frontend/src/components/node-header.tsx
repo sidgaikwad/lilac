@@ -125,7 +125,7 @@ export const NodeHeaderAction = forwardRef<
   return (
     <Button
       ref={ref}
-      variant="ghost"
+      variant='ghost'
       aria-label={label}
       title={title ?? label}
       className={cn(className, 'nodrag size-6 p-1')}
@@ -184,7 +184,7 @@ export const NodeHeaderDeleteAction = () => {
   }, [id, setNodes]);
 
   return (
-    <NodeHeaderAction onClick={handleClick} variant="ghost" label="Delete node">
+    <NodeHeaderAction onClick={handleClick} variant='ghost' label='Delete node'>
       <Trash />
     </NodeHeaderAction>
   );

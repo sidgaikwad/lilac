@@ -14,7 +14,7 @@ impl Database {
         let dataset = sqlx::query!(
             // language=PostgreSQL
             r#"
-            SELECT d.dataset_id, d.dataset_name, d.description, d.project_id, d.dataset_path
+            SELECT d.dataset_id, d.dataset_name, d.description, d.project_id, d.dataset_source
             FROM "datasets" d
             WHERE d.dataset_id = $1
         "#,
@@ -25,7 +25,7 @@ impl Database {
             dataset_name: row.dataset_name,
             description: row.description,
             project_id: row.project_id.into(),
-            dataset_path: row.dataset_path.into(),
+            dataset_source: serde_json::from_value(row.dataset_source).unwrap_or_default(),
         })
         .fetch_one(&self.pool)
         .await?;
@@ -40,7 +40,7 @@ impl Database {
         let datasets = sqlx::query!(
             // language=PostgreSQL
             r#"
-            SELECT d.dataset_id, d.dataset_name, d.description, d.project_id, d.dataset_path
+            SELECT d.dataset_id, d.dataset_name, d.description, d.project_id, d.dataset_source
             FROM "datasets" d
             WHERE d.project_id = $1
         "#,
@@ -51,7 +51,7 @@ impl Database {
             dataset_name: row.dataset_name,
             description: row.description,
             project_id: row.project_id.into(),
-            dataset_path: row.dataset_path.into(),
+            dataset_source: serde_json::from_value(row.dataset_source).unwrap_or_default(),
         })
         .fetch_all(&self.pool)
         .await?;
@@ -62,13 +62,13 @@ impl Database {
         let dataset_id = sqlx::query!(
         // language=PostgreSQL
         r#"
-            INSERT INTO "datasets" (dataset_id, dataset_name, description, project_id, dataset_path) VALUES ($1, $2, $3, $4, $5) RETURNING dataset_id
+            INSERT INTO "datasets" (dataset_id, dataset_name, description, project_id, dataset_source) VALUES ($1, $2, $3, $4, $5) RETURNING dataset_id
         "#,
         dataset.dataset_id.inner(),
         &dataset.dataset_name,
         dataset.description.as_ref(),
         &dataset.project_id.inner(),
-        &dataset.dataset_path,
+        serde_json::to_value(dataset.dataset_source)?,
     )
     .map(|row| DatasetId::new(row.dataset_id))
     .fetch_one(&self.pool)

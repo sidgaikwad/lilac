@@ -7,20 +7,25 @@ edition = "2021"
 name = "controlplane-api"
 
 [dependencies]
-image = "0.25"
-base64.workspace = true
-common.workspace = true
 argon2.workspace = true
 aws-lc-rs.workspace = true
+aws-smithy-types-convert.workspace = true
+aws-config.workspace = true
+aws-sdk-s3.workspace = true
+aws-sdk-sts.workspace = true
 axum-extra.workspace = true
 axum.workspace = true
+base64.workspace = true
 chrono.workspace = true
+common.workspace = true
+data-url = "0.3.1"
 dotenv.workspace = true
 http-body-util.workspace = true
 hyper-util.workspace = true
 hyper.workspace = true
-jsonwebtoken.workspace = true
+image = "0.25"
 jsonschema.workspace = true
+jsonwebtoken.workspace = true
 nanoid.workspace = true
 once_cell.workspace = true
 password-auth.workspace = true
@@ -36,4 +41,3 @@ tracing-subscriber.workspace = true
 tracing.workspace = true
 uuid.workspace = true
 validator = { version = "0.19", features = ["derive"] }
-data-url = "0.3.1"

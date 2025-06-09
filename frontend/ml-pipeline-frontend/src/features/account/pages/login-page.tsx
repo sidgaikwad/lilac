@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useLogin } from '@/services';
+import useAuthStore from '@/store/use-auth-store';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -20,8 +21,10 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 function LoginPage() {
   const navigate = useNavigate();
   // Get auth store actions
+  const login = useAuthStore((state) => state.login);
   const { mutate: loginUser, isPending } = useLogin({
-    onSuccess: (_token) => {
+    onSuccess: (token) => {
+      login(token.accessToken);
       navigate('/');
     },
     onError: (error) => {
@@ -45,58 +48,58 @@ function LoginPage() {
   };
 
   return (
-    <div className="bg-background flex h-screen items-center justify-center">
-      <div className="bg-card text-card-foreground w-96 rounded p-8 shadow-md">
-        <h2 className="mb-6 text-center text-2xl font-bold">Login</h2>
+    <div className='bg-background flex h-screen items-center justify-center'>
+      <div className='bg-card text-card-foreground w-96 rounded p-8 shadow-md'>
+        <h2 className='mb-6 text-center text-2xl font-bold'>Login</h2>
         <Toaster />
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
           {/* Removed general auth error display as we bypass API */}
-          <div className="space-y-1">
-            <Label htmlFor="email">Email</Label>
+          <div className='space-y-1'>
+            <Label htmlFor='email'>Email</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="Enter any email"
+              id='email'
+              type='email'
+              placeholder='Enter any email'
               {...register('email')}
               aria-invalid={errors.email ? 'true' : 'false'}
               disabled={isPending}
             />
             {errors.email && (
-              <p className="text-destructive text-sm">{errors.email.message}</p>
+              <p className='text-destructive text-sm'>{errors.email.message}</p>
             )}
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="password">Password</Label>
+          <div className='space-y-1'>
+            <Label htmlFor='password'>Password</Label>
             <Input
-              id="password"
-              type="password"
-              placeholder="Enter any password"
+              id='password'
+              type='password'
+              placeholder='Enter any password'
               {...register('password')}
               aria-invalid={errors.password ? 'true' : 'false'}
               disabled={isPending}
             />
             {errors.password && (
-              <p className="text-destructive text-sm">
+              <p className='text-destructive text-sm'>
                 {errors.password.message}
               </p>
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Button
-              type="submit"
-              className="w-full gap-4 space-y-4"
+              type='submit'
+              className='w-full gap-4 space-y-4'
               disabled={isPending}
             >
               {isPending ? (
-                <Spinner size="small" className="text-card-foreground" />
+                <Spinner size='small' className='text-card-foreground' />
               ) : (
-                <span className="text-background">Login</span>
+                <span className='text-background'>Login</span>
               )}
             </Button>
-            <span className="flex justify-center-safe text-xs">
+            <span className='flex justify-center-safe text-xs'>
               Don't have an account?&nbsp;
-              <Link className="underline" to={{ pathname: '/signup' }}>
+              <Link className='underline' to={{ pathname: '/signup' }}>
                 Sign Up Now
               </Link>
             </span>

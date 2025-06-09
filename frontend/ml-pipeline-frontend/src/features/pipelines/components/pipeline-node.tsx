@@ -48,9 +48,9 @@ const PipelineNode: React.FC<NodeProps<PipelineNodeType>> = (
     <BaseNode
       selected={props.selected}
       data-state={isError ? 'invalid' : 'valid'}
-      className="w-64 px-3 py-2 data-[state=invalid]:border-red-500 data-[state=invalid]:ring-red-500"
+      className='w-64 px-3 py-2 data-[state=invalid]:border-red-500 data-[state=invalid]:ring-red-500'
     >
-      <NodeHeader className="-mx-3 -mt-2 border-b">
+      <NodeHeader className='-mx-3 -mt-2 border-b'>
         <NodeHeaderIcon>
           <Cog />
         </NodeHeaderIcon>
@@ -59,15 +59,15 @@ const PipelineNode: React.FC<NodeProps<PipelineNodeType>> = (
           <NodeHeaderDeleteAction />
         </NodeHeaderActions>
       </NodeHeader>
-      <div className="-mx-3 flex justify-between py-5">
+      <div className='-mx-3 flex justify-between py-5'>
         {props.data.stepDefinition.inputs.map((input) => (
           <LabeledHandle
             id={input}
             key={`${props.id}-${input}`}
             title={input}
-            type="target"
+            type='target'
             position={Position.Left}
-            handleClassName="bg-red-500"
+            handleClassName='bg-red-500'
           />
         ))}
 
@@ -76,7 +76,7 @@ const PipelineNode: React.FC<NodeProps<PipelineNodeType>> = (
             id={output}
             key={`${props.id}-${output}`}
             title={output}
-            type="source"
+            type='source'
             position={Position.Right}
           />
         ))}
@@ -86,9 +86,9 @@ const PipelineNode: React.FC<NodeProps<PipelineNodeType>> = (
       ).length > 0 && (
         <>
           <Separator />
-          <div className="m-2">
+          <div className='m-2'>
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-              <CollapsibleTrigger className="justify-left flex w-full flex-nowrap">
+              <CollapsibleTrigger className='justify-left flex w-full flex-nowrap'>
                 {isOpen ? <ChevronDown /> : <ChevronRight />}
                 <span
                   className={cn(
@@ -103,7 +103,7 @@ const PipelineNode: React.FC<NodeProps<PipelineNodeType>> = (
                 <Form
                   liveValidate
                   showErrorList={false}
-                  className="space-y-2"
+                  className='space-y-2'
                   uiSchema={{
                     'ui:submitButtonOptions': {
                       norender: true,

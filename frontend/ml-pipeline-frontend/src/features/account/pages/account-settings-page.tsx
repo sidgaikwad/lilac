@@ -24,7 +24,7 @@ function AccountSettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
@@ -32,16 +32,16 @@ function AccountSettingsPage() {
             Update your account's profile information and email address.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="email">Email</Label>
+        <CardContent className='space-y-4'>
+          <div className='space-y-1'>
+            <Label htmlFor='email'>Email</Label>
             <Input
-              id="email"
-              type="email"
+              id='email'
+              type='email'
               defaultValue={user?.email ?? ''}
               disabled
             />
-            <p className="text-muted-foreground text-xs">
+            <p className='text-muted-foreground text-xs'>
               Email address cannot be changed.
             </p>
           </div>
@@ -57,18 +57,18 @@ function AccountSettingsPage() {
             Update your password. Choose a strong one!
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="currentPassword">Current Password</Label>
-            <Input id="currentPassword" type="password" />
+        <CardContent className='space-y-4'>
+          <div className='space-y-1'>
+            <Label htmlFor='currentPassword'>Current Password</Label>
+            <Input id='currentPassword' type='password' />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="newPassword">New Password</Label>
-            <Input id="newPassword" type="password" />
+          <div className='space-y-1'>
+            <Label htmlFor='newPassword'>New Password</Label>
+            <Input id='newPassword' type='password' />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="confirmPassword">Confirm New Password</Label>
-            <Input id="confirmPassword" type="password" />
+          <div className='space-y-1'>
+            <Label htmlFor='confirmPassword'>Confirm New Password</Label>
+            <Input id='confirmPassword' type='password' />
           </div>
         </CardContent>
         <CardFooter>

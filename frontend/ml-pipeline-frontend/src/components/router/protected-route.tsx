@@ -1,8 +1,8 @@
-import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom'; // Import Outlet
+import { Outlet } from 'react-router-dom'; // Import Outlet
 import { Navigate } from 'react-router-dom';
 import useAuthStore from '@/store/use-auth-store';
 import { useGetAccountDetails } from '@/services';
+import { Spinner } from '../ui/spinner';
 
 /**
  * A route guard that checks authentication status.
@@ -11,19 +11,18 @@ import { useGetAccountDetails } from '@/services';
  * Shows a loading indicator during the initial auth check.
  */
 function ProtectedRoute() {
-  const navigate = useNavigate();
   const { token, logout } = useAuthStore();
-  useGetAccountDetails({
-    onError: (error) => {
-      if (error.statusCode === 401) {
-        logout();
-        navigate('/login');
-      }
-    },
-  });
+  const { isLoading, isError, error } = useGetAccountDetails({});
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  if (!token || (isError && error.statusCode === 401)) {
+    logout();
+    return <Navigate to='/login' replace />;
+  }
+
+  if (isLoading) {
+    return (<div className='w-full h-full'>
+     <Spinner size='large'>Loading</Spinner>
+    </div>);
   }
 
   // User is authenticated, render the nested routes via Outlet.

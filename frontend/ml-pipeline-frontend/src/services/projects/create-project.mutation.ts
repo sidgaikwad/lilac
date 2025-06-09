@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/types';
 import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface CreateProjectRequest {
   name: string;
@@ -15,7 +16,13 @@ export interface CreateProjectResponse {
 async function createProject(
   payload: CreateProjectRequest
 ): Promise<CreateProjectResponse> {
-  return postHttp('/projects', payload);
+  return postHttp<Sn<CreateProjectRequest>, Sn<CreateProjectResponse>>(
+    '/projects',
+    {
+      name: payload.name,
+      organization_id: payload.organizationId,
+    }
+  );
 }
 
 export interface UseCreateProjectProps {

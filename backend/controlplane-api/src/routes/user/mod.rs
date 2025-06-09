@@ -1,4 +1,4 @@
-use axum::{routing::{get, post, delete}, Router};
+use axum::{routing::{get, post}, Router};
 mod user;
 use user::{create_user, get_current_user, get_user, delete_user_handler};
 use crate::AppState;

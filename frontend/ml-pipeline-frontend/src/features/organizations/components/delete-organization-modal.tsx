@@ -18,12 +18,12 @@ function DeleteOrganizationModal(props: DeleteOrganizationModalProps) {
   return (
     <DestructiveActionConfirmationModal
       dialogTrigger={
-        <Button variant="ghost">
-          <Trash2 className="text-destructive hover:text-destructive/80" />
+        <Button variant='ghost'>
+          <Trash2 className='text-destructive hover:text-destructive/80' />
         </Button>
       }
       itemName={props.organization.name}
-      itemType="organization"
+      itemType='organization'
       onConfirm={() => deleteOrg({ organizationId: props.organization.id })}
       isLoading={isPending}
     />

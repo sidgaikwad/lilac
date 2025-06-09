@@ -5,9 +5,7 @@ use axum::{
 use common::{
     database::Database,
     model::{
-        organization::OrganizationId,
-        pipeline::PipelineId,
-        project::{Project, ProjectId},
+        integration::AWSIntegration, organization::OrganizationId, project::{Project, ProjectId}
     },
     ServiceError,
 };
@@ -35,7 +33,6 @@ pub async fn create_project(
 }
 
 #[derive(Debug, Deserialize, Validate)]
-#[serde(rename_all = "camelCase")]
 pub struct CreateProjectRequest {
     #[validate(length(min = 1, message = "Project name cannot be empty"))]
     name: String,
@@ -43,7 +40,6 @@ pub struct CreateProjectRequest {
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct CreateProjectResponse {
     id: ProjectId,
 }
@@ -61,11 +57,12 @@ pub async fn get_project(
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct GetProjectResponse {
     id: ProjectId,
     name: String,
     organization_id: OrganizationId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    aws_integration: Option<AWSIntegration>,
 }
 
 impl From<Project> for GetProjectResponse {
@@ -74,6 +71,7 @@ impl From<Project> for GetProjectResponse {
             id: project.project_id,
             name: project.project_name,
             organization_id: project.organization_id,
+            aws_integration: project.aws_integration,
         }
     }
 }
@@ -123,48 +121,11 @@ pub async fn list_projects(
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ListProjectsRequest {
     organization_id: Option<OrganizationId>,
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ListProjectsResponse {
     projects: Vec<GetProjectResponse>,
-}
-
-#[instrument(level = "info", skip(db), ret, err)]
-pub async fn list_project_pipelines(
-    claims: Claims,
-    State(db): State<Database>,
-    Path(project_id): Path<ProjectId>,
-) -> Result<Json<ListProjectPipelineResponse>, ServiceError> {
-    let pipelines = db.list_pipelines(&project_id).await?;
-
-    let response = pipelines
-        .into_iter()
-        .map(|v| ProjectPipelineResponse {
-            id: v.pipeline_id,
-            name: v.pipeline_name,
-            description: v.description,
-        })
-        .collect();
-    Ok(Json(ListProjectPipelineResponse {
-        pipelines: response,
-    }))
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ProjectPipelineResponse {
-    id: PipelineId,
-    name: String,
-    description: Option<String>,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ListProjectPipelineResponse {
-    pipelines: Vec<ProjectPipelineResponse>,
 }

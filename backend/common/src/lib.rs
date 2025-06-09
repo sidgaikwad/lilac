@@ -5,14 +5,17 @@ use axum::{
 };
 use serde_json::json;
 
+pub mod aws;
 pub mod database;
 pub mod model;
-pub mod s3;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ServiceError {
     #[error("parse error: {0}")]
     ParseError(String),
+
+    #[error("serde error: {0}")]
+    SerdeError(#[from] serde_json::Error),
 
     #[error("database error: {0}")]
     DatabaseError(#[from] sqlx::Error),
@@ -67,24 +70,35 @@ impl IntoResponse for ServiceError {
             ServiceError::NotFound { id } => (StatusCode::NOT_FOUND, format!("{id} not found")),
             ServiceError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized".to_string()),
             ServiceError::DatabaseError(sqlx::Error::RowNotFound) => {
-                        (StatusCode::NOT_FOUND, "not found".to_string())
-                    }
+                (StatusCode::NOT_FOUND, "not found".to_string())
+            }
             ServiceError::DatabaseError(_) | ServiceError::PipelineExecutionError(_) => (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        "something went wrong".to_string(),
-                    ),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "something went wrong".to_string(),
+            ),
             ServiceError::SchemaError => (
-                        StatusCode::BAD_REQUEST,
-                        "schema validation failed".to_string(),
-                    ),
+                StatusCode::BAD_REQUEST,
+                "schema validation failed".to_string(),
+            ),
             ServiceError::Conflict(s) => (StatusCode::CONFLICT, s),
             ServiceError::BadRequest(s) => (StatusCode::BAD_REQUEST, s),
-            ServiceError::InvalidParameterValue(_, _) => (StatusCode::BAD_REQUEST, "invalid parameter value".to_string()),
-            ServiceError::InvalidParameterType(_, _) => (StatusCode::BAD_REQUEST, "invalid parameter type".to_string()),
-            ServiceError::MissingParameter(_) => (StatusCode::BAD_REQUEST, "missing parameter".to_string()),
+            ServiceError::InvalidParameterValue(_, _) => (
+                StatusCode::BAD_REQUEST,
+                "invalid parameter value".to_string(),
+            ),
+            ServiceError::InvalidParameterType(_, _) => (
+                StatusCode::BAD_REQUEST,
+                "invalid parameter type".to_string(),
+            ),
+            ServiceError::MissingParameter(_) => {
+                (StatusCode::BAD_REQUEST, "missing parameter".to_string())
+            }
             // Ensure SchemaValidationError is handled if it has a distinct message requirement
             ServiceError::SchemaValidationError(s) => (StatusCode::BAD_REQUEST, s),
-            _ => (StatusCode::INTERNAL_SERVER_ERROR, "something went wrong".to_string())
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "something went wrong".to_string(),
+            ),
         };
         let body = Json(json!({
             "error": error_message,

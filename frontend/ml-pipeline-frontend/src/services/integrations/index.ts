@@ -1,0 +1,1 @@
+export * from './connect-aws-integration.mutation';

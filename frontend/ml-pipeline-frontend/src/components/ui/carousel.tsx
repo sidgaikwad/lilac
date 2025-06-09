@@ -121,9 +121,9 @@ function Carousel({
       <div
         onKeyDownCapture={handleKeyDown}
         className={cn('relative', className)}
-        role="region"
-        aria-roledescription="carousel"
-        data-slot="carousel"
+        role='region'
+        aria-roledescription='carousel'
+        data-slot='carousel'
         {...props}
       >
         {children}
@@ -138,8 +138,8 @@ function CarouselContent({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       ref={carouselRef}
-      className="overflow-hidden"
-      data-slot="carousel-content"
+      className='overflow-hidden'
+      data-slot='carousel-content'
     >
       <div
         className={cn(
@@ -158,9 +158,9 @@ function CarouselItem({ className, ...props }: React.ComponentProps<'div'>) {
 
   return (
     <div
-      role="group"
-      aria-roledescription="slide"
-      data-slot="carousel-item"
+      role='group'
+      aria-roledescription='slide'
+      data-slot='carousel-item'
       className={cn(
         'min-w-0 shrink-0 grow-0 basis-full',
         orientation === 'horizontal' ? 'pl-4' : 'pt-4',
@@ -181,7 +181,7 @@ function CarouselPrevious({
 
   return (
     <Button
-      data-slot="carousel-previous"
+      data-slot='carousel-previous'
       variant={variant}
       size={size}
       className={cn(
@@ -196,7 +196,7 @@ function CarouselPrevious({
       {...props}
     >
       <ArrowLeft />
-      <span className="sr-only">Previous slide</span>
+      <span className='sr-only'>Previous slide</span>
     </Button>
   );
 }
@@ -211,7 +211,7 @@ function CarouselNext({
 
   return (
     <Button
-      data-slot="carousel-next"
+      data-slot='carousel-next'
       variant={variant}
       size={size}
       className={cn(
@@ -226,7 +226,7 @@ function CarouselNext({
       {...props}
     >
       <ArrowRight />
-      <span className="sr-only">Next slide</span>
+      <span className='sr-only'>Next slide</span>
     </Button>
   );
 }

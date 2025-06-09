@@ -9,16 +9,16 @@ import Footer from '../main/footer';
 
 export default function Layout() {
   return (
-    <div className="[--header-height:calc(theme(spacing.14))]">
-      <SidebarProvider className="flex flex-col" defaultOpen={false}>
+    <div className='[--header-height:calc(theme(spacing.14))]'>
+      <SidebarProvider className='flex flex-col' defaultOpen={false}>
         <Header />
 
-        <div className="flex flex-1">
+        <div className='flex flex-1'>
           <Sidebar />
           <SidebarInset>
-            <div className="@container flex flex-1 flex-row md:flex-col">
-              <Toaster position="top-center" richColors closeButton />
-              <React.Suspense fallback={<Skeleton className="h-full w-full" />}>
+            <div className='@container flex flex-1 flex-row md:flex-col'>
+              <Toaster position='top-center' richColors closeButton />
+              <React.Suspense fallback={<Skeleton className='h-full w-full' />}>
                 <Outlet />
               </React.Suspense>
             </div>

@@ -44,7 +44,7 @@ const ChangeInfo = ({ change }: ChangeInfoProps) => {
   const { type } = change;
 
   return (
-    <div className="mb-3">
+    <div className='mb-3'>
       <div>node id: {id}</div>
       <div>
         {type === 'add' ? JSON.stringify(change.item, null, 2) : null}
@@ -102,7 +102,7 @@ export const NodeInspector = () => {
 
   return (
     <ViewportPortal>
-      <div className="text-secondary-foreground">
+      <div className='text-secondary-foreground'>
         {nodes.map((node) => {
           const internalNode = getInternalNode(node.id);
           if (!internalNode) {
@@ -165,7 +165,7 @@ const NodeInfo = ({
         transform: absoluteTransform,
         width: width * 2,
       }}
-      className="text-xs"
+      className='text-xs'
     >
       <div>id: {id}</div>
       <div>type: {type}</div>
@@ -191,15 +191,15 @@ type DevToolsToggleProps = {
 
 const DevToolsToggle = ({ tools, position }: DevToolsToggleProps) => {
   return (
-    <Panel position={position} className="bg-card rounded border p-1 shadow-sm">
-      <ToggleGroup type="multiple">
+    <Panel position={position} className='bg-card rounded border p-1 shadow-sm'>
+      <ToggleGroup type='multiple'>
         {tools.map(({ active, setActive, label, value }) => (
           <ToggleGroupItem
             key={value}
             value={value}
             onClick={() => setActive((prev) => !prev)}
             aria-pressed={active}
-            className="bg-card text-card-foreground hover:bg-secondary hover:text-secondary-foreground transition-colors duration-300"
+            className='bg-card text-card-foreground hover:bg-secondary hover:text-secondary-foreground transition-colors duration-300'
           >
             {label}
           </ToggleGroupItem>
@@ -245,8 +245,8 @@ export const DevTools = ({ position }: DevToolsProps) => {
 
       {changeLoggerActive && (
         <Panel
-          className="mt-20 max-h-[50%] overflow-y-auto rounded bg-white p-5 text-xs shadow-md"
-          position="bottom-right"
+          className='mt-20 max-h-[50%] overflow-y-auto rounded bg-white p-5 text-xs shadow-md'
+          position='bottom-right'
         >
           <ChangeLogger />
         </Panel>
@@ -255,7 +255,7 @@ export const DevTools = ({ position }: DevToolsProps) => {
       {nodeInspectorActive && <NodeInspector />}
 
       {viewportLoggerActive && (
-        <Panel position="bottom-left" className="text-secondary-foreground">
+        <Panel position='bottom-left' className='text-secondary-foreground'>
           <ViewportLogger />
         </Panel>
       )}

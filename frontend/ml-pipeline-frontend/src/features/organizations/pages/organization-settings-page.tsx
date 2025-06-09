@@ -73,10 +73,10 @@ function OrganizationSettingsPage() {
             <CardDescription>Update organization details.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div key={organization.id} className="max-w-sm space-y-2">
-              <Label htmlFor="orgName">Name</Label>
+            <div key={organization.id} className='max-w-sm space-y-2'>
+              <Label htmlFor='orgName'>Name</Label>
               <Input
-                id="orgName"
+                id='orgName'
                 defaultValue={organization.name}
                 disabled={!organization}
               />
@@ -107,7 +107,7 @@ function OrganizationSettingsPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className='text-right'>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -115,7 +115,7 @@ function OrganizationSettingsPage() {
                   <TableRow>
                     <TableCell
                       colSpan={4}
-                      className="text-muted-foreground text-center"
+                      className='text-muted-foreground text-center'
                     >
                       No members found.
                     </TableCell>
@@ -123,15 +123,15 @@ function OrganizationSettingsPage() {
                 ) : (
                   members.map((member) => (
                     <TableRow key={member.id}>
-                      <TableCell className="font-medium">
+                      <TableCell className='font-medium'>
                         {member.name}
                       </TableCell>
                       <TableCell>{member.email}</TableCell>
                       <TableCell>{member.role}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className='text-right'>
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          variant='ghost'
+                          size='sm'
                           onClick={() => handleManageMember(member.id)}
                           disabled
                         >

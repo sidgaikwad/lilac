@@ -6,6 +6,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -49,7 +50,9 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = ({
       toast.success('Successfully created organization!');
       setOpen(false);
       setSelectedOrganizationId(data.id);
-      navigate(generatePath(Routes.ORGANIZATION_PROJECTS, { organizationId: data.id })); // Added
+      navigate(
+        generatePath(Routes.ORGANIZATION_PROJECTS, { organizationId: data.id })
+      ); // Added
     },
     onError: (error) => toast.error(error.error),
   });
@@ -85,22 +88,23 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Organization</DialogTitle>
+          <DialogDescription></DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="text-card-foreground w-[80%]">
-              <div className="w-full flex-1 gap-2 space-y-2">
-                <Label htmlFor="orgName">Name</Label>
+        <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <div className='text-card-foreground w-[80%]'>
+              <div className='w-full flex-1 gap-2 space-y-2'>
+                <Label htmlFor='orgName'>Name</Label>
                 <Input
-                  id="orgName"
-                  type="text"
-                  placeholder="Organization name"
+                  id='orgName'
+                  type='text'
+                  placeholder='Organization name'
                   {...register('orgName')}
                   aria-invalid={errors.orgName ? 'true' : 'false'}
                   disabled={isPending}
                 />
                 {errors.orgName && (
-                  <p className="text-destructive text-sm">
+                  <p className='text-destructive text-sm'>
                     {errors.orgName.message}
                   </p>
                 )}
@@ -108,15 +112,15 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = ({
             </div>
           </div>
           <DialogFooter>
-            <div className="flex w-full items-center">
-              <div className="text-card-foreground flex w-[80%] justify-between rounded">
-                <Button type="submit" disabled={isPending}>
-                  {isPending ? <Spinner size="small" /> : <span>Submit</span>}
+            <div className='flex w-full items-center'>
+              <div className='text-card-foreground flex w-[80%] justify-between rounded'>
+                <Button type='submit' disabled={isPending}>
+                  {isPending ? <Spinner size='small' /> : <span>Submit</span>}
                 </Button>
                 <DialogClose asChild>
                   <Button
-                    className="mr-1"
-                    variant="outline"
+                    className='mr-1'
+                    variant='outline'
                     disabled={isPending}
                   >
                     <span>Cancel</span>

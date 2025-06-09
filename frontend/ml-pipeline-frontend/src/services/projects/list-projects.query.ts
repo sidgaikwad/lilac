@@ -3,6 +3,7 @@ import { QueryKeys } from '../constants';
 import { ApiError, Project } from '@/types';
 import { useEffect } from 'react';
 import { getHttp } from '@/lib/fetch';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface ListProjectsResponse {
   projects: {
@@ -15,7 +16,17 @@ export interface ListProjectsResponse {
 export async function listProjects(
   organizationId?: string
 ): Promise<ListProjectsResponse> {
-  return getHttp('/projects', organizationId ? { organizationId } : undefined);
+  const resp = await getHttp<Sn<ListProjectsResponse>>(
+    '/projects',
+    organizationId ? { organization_id: organizationId } : undefined
+  );
+  return {
+    projects: resp.projects.map((proj) => ({
+      id: proj.id,
+      name: proj.name,
+      organizationId: proj.organization_id,
+    })),
+  };
 }
 
 export function listProjectsQuery(

@@ -48,26 +48,26 @@ function DestructiveActionConfirmationModal({
       <DialogTrigger asChild onClick={(event) => event.stopPropagation()}>
         {dialogTrigger}
       </DialogTrigger>
-      <DialogContent className="border-destructive border-4 sm:max-w-[425px]">
+      <DialogContent className='border-destructive border-4 sm:max-w-[425px]'>
         <DialogHeader>
-          <DialogTitle className="flex flex-row items-center gap-2">
-            <TriangleAlert className="text-destructive" />
+          <DialogTitle className='flex flex-row items-center gap-2'>
+            <TriangleAlert className='text-destructive' />
             Are you absolutely sure?
           </DialogTitle>
           <DialogDescription>
             This action will permanently delete the {itemType} "{itemName}".
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-1 items-center gap-2">
-            <Label htmlFor="confirmation-input">
+        <div className='grid gap-4 py-4'>
+          <div className='grid grid-cols-1 items-center gap-2'>
+            <Label htmlFor='confirmation-input'>
               <span>
                 To confirm, please type "<strong>{confirmationText}</strong>" in
                 the box below.
               </span>
             </Label>
             <Input
-              id="confirmation-input"
+              id='confirmation-input'
               value={typedInput}
               onChange={(e) => setTypedInput(e.target.value)}
               placeholder={confirmationText}
@@ -82,16 +82,16 @@ function DestructiveActionConfirmationModal({
         </div>
         <DialogFooter>
           <DialogClose asChild onClick={(event) => event.stopPropagation()}>
-            <div className="space-x-4">
+            <div className='space-x-4'>
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={handleCancel}
                 disabled={isLoading}
               >
                 Cancel
               </Button>
               <Button
-                variant="destructive"
+                variant='destructive'
                 onClick={(event) => {
                   event.stopPropagation();
                   handleConfirm();
@@ -100,7 +100,7 @@ function DestructiveActionConfirmationModal({
               >
                 {isLoading ? (
                   <>
-                    <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2Icon className='mr-2 h-4 w-4 animate-spin' />
                     Deleting...
                   </>
                 ) : (

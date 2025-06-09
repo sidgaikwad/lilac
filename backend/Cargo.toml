@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [ "common", "controlplane-api","data-pipeline"]
+members = [ "common", "controlplane-api"]
 
 
 [workspace.dependencies]
@@ -12,10 +12,13 @@ axum = { version = "0.8", features = ["macros"] }
 axum-extra = { version = "0.10.1", features = ["typed-header", "cookie"] }
 aws-config = { version = "1.1", features = ["behavior-version-latest"] }
 aws-sdk-s3 = "1.85"
+aws-sdk-sts = "1.72"
 aws-smithy-types-convert = { version = "0.60", features = ["convert-chrono"] }
 base64 = "0.22.1"
+cached = { version = "0.55.1", features = ["async"] }
 chrono = { version = "0.4.40", features = ["serde"] }
 dotenv = "0.15.0"
+getset = "0.1.5"
 http-body-util = "0.1"
 hyper = { version = "1", features = ["full"] }
 hyper-util = { version = "0.1", features = ["full"] }
@@ -29,7 +32,7 @@ secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 strum = { version = "0.27.1", features = ["derive"] }
-sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-rustls-aws-lc-rs", "postgres", "uuid", "derive", "chrono" ] }
+sqlx = { version = "0.8.6", features = [ "runtime-tokio", "tls-rustls-aws-lc-rs", "postgres", "uuid", "derive", "chrono" ] }
 thiserror = "2.0.12"
 time = "0.3"
 tokio = { version = "1", features = ["full"] }

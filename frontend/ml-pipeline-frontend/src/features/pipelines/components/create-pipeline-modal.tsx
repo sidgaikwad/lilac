@@ -61,21 +61,21 @@ const CreatePipelineModal: React.FC<CreatePipelineModalProps> = (
         <DialogHeader>
           <DialogTitle>Create Pipeline</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="bg-background flex items-center justify-between">
-            <div className="bg-card text-card-foreground w-96 rounded shadow-md">
-              <div className="w-full flex-1 gap-2 space-y-2">
-                <Label htmlFor="pipelineName">Name</Label>
+        <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <div className='text-card-foreground w-[80%] space-y-4'>
+              <div className='w-full flex-1 space-y-2'>
+                <Label htmlFor='pipelineName'>Name</Label>
                 <Input
-                  id="pipelineName"
-                  type="text"
-                  placeholder="Pipeline name"
+                  id='pipelineName'
+                  type='text'
+                  placeholder='Pipeline name'
                   {...register('pipelineName')}
                   aria-invalid={errors.pipelineName ? 'true' : 'false'}
                   disabled={isPending}
                 />
                 {errors.pipelineName && (
-                  <p className="text-destructive text-sm">
+                  <p className='text-destructive text-sm'>
                     {errors.pipelineName.message}
                   </p>
                 )}
@@ -83,15 +83,15 @@ const CreatePipelineModal: React.FC<CreatePipelineModalProps> = (
             </div>
           </div>
           <DialogFooter>
-            <div className="bg-background flex w-full items-center">
-              <div className="bg-card text-card-foreground flex w-96 justify-between rounded shadow-md">
-                <Button type="submit" disabled={isPending}>
-                  {isPending ? <Spinner size="small" /> : <span>Submit</span>}
+            <div className='flex w-full items-center'>
+              <div className='text-card-foreground flex w-[80%] justify-between'>
+                <Button type='submit' disabled={isPending}>
+                  {isPending ? <Spinner size='small' /> : <span>Submit</span>}
                 </Button>
                 <DialogClose asChild>
                   <Button
-                    className="mr-1"
-                    variant="outline"
+                    className='mr-1'
+                    variant='outline'
                     disabled={isPending}
                   >
                     <span>Cancel</span>

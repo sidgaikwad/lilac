@@ -31,6 +31,11 @@ export async function postHttp<Req, Resp>(
   return {} as Resp;
 }
 
+export async function getHttp<Resp>(
+  path: string,
+  params?: Record<string, string>,
+  withAuth?: boolean
+): Promise<Resp>;
 export async function getHttp<Req extends Record<string, string>, Resp>(
   path: string,
   params?: Req,

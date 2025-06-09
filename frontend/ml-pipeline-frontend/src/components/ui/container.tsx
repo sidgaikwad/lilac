@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 function Container({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      data-slot="container"
+      data-slot='container'
       className={cn(
         'bg-container text-container-foreground @container flex h-full w-full flex-col gap-6 py-6 shadow-sm md:px-12',
         className
@@ -18,7 +18,7 @@ function Container({ className, ...props }: React.ComponentProps<'div'>) {
 function ContainerHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      data-slot="container-header"
+      data-slot='container-header'
       className={cn(
         '@container/container-header flex flex-row flex-wrap items-center justify-between gap-x-8 gap-y-2 px-6 [.border-b]:pb-6',
         className
@@ -31,7 +31,7 @@ function ContainerHeader({ className, ...props }: React.ComponentProps<'div'>) {
 function ContainerTitle({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      data-slot="container-title"
+      data-slot='container-title'
       className={cn('peer text-2xl leading-none font-semibold', className)}
       {...props}
     />
@@ -44,7 +44,7 @@ function ContainerDescription({
 }: React.ComponentProps<'div'>) {
   return (
     <div
-      data-slot="container-description"
+      data-slot='container-description'
       className={cn(
         'text-muted-foreground pt-1 align-bottom text-sm font-normal peer-[[data-slot=container-title]]:basis-full',
         className
@@ -57,7 +57,7 @@ function ContainerDescription({
 function ContainerAction({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      data-slot="container-action"
+      data-slot='container-action'
       className={cn(
         'md:elf-start space-y-1 space-x-2 justify-self-end pt-2 md:pt-0',
         className
@@ -73,7 +73,7 @@ function ContainerContent({
 }: React.ComponentProps<'div'>) {
   return (
     <div
-      data-slot="container-content"
+      data-slot='container-content'
       className={cn('space-y-8 px-6', className)}
       {...props}
     />
@@ -83,7 +83,7 @@ function ContainerContent({
 function ContainerFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      data-slot="container-footer"
+      data-slot='container-footer'
       className={cn('flex items-center px-6 [.border-t]:pt-6', className)}
       {...props}
     />

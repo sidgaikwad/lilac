@@ -1,18 +1,13 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     Json,
 };
-use chrono::{DateTime, Utc};
 use common::{
-    database::Database,
-    model::{
-        dataset::{Dataset, DatasetFile, DatasetFileMetadata, DatasetId},
+    aws::{get_s3_client_with_role, S3Wrapper}, database::Database, model::{
+        dataset::{Dataset, DatasetId, DatasetSource},
         project::ProjectId,
-    },
-    s3::S3Wrapper,
-    ServiceError,
+    }, ServiceError
 };
-use data_url::DataUrl;
 
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -20,7 +15,6 @@ use tracing::instrument;
 use crate::auth::claims::Claims;
 
 #[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct DatasetSummary {
     pub id: DatasetId,
     pub name: String,
@@ -28,7 +22,6 @@ pub struct DatasetSummary {
 }
 
 #[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct ListDatasetsResponse {
     datasets: Vec<DatasetSummary>,
 }
@@ -41,11 +34,14 @@ pub async fn list_datasets_handler(
 ) -> Result<Json<ListDatasetsResponse>, ServiceError> {
     let datasets = db.list_datasets(&project_id).await?;
     Ok(Json(ListDatasetsResponse {
-        datasets: datasets.into_iter().map(|v| DatasetSummary {
-            id: v.dataset_id,
-            name: v.dataset_name,
-            description: v.description,
-        }).collect(),
+        datasets: datasets
+            .into_iter()
+            .map(|v| DatasetSummary {
+                id: v.dataset_id,
+                name: v.dataset_name,
+                description: v.description,
+            })
+            .collect(),
     }))
 }
 
@@ -57,111 +53,146 @@ pub async fn create_dataset(
     Path(project_id): Path<ProjectId>,
     Json(request): Json<CreateDatasetRequest>,
 ) -> Result<Json<CreateDatasetResponse>, ServiceError> {
-    let project = db.get_project(&project_id).await?;
-    let dataset_id = DatasetId::generate();
-    let s3_path = s3.get_dataset_s3_path(&project.organization_id, &project_id, &dataset_id);
-    let dataset = Dataset::new(
-        dataset_id,
+    // verify project exists
+    let _project = db.get_project(&project_id).await?;
+
+    let dataset_source = match request.source {
+        DatasetSourceRequest::Unknown => return Err(ServiceError::BadRequest("unknown source".into())),
+        DatasetSourceRequest::S3 { bucket_name } => {
+            let region = s3.get_bucket_location(&bucket_name).await?;
+            DatasetSource::S3 { bucket_name: bucket_name, region: region }
+        },
+    };
+
+    let dataset = Dataset::create(
         request.dataset_name,
         request.description,
         project_id,
-        s3_path.clone(),
+        dataset_source,
     );
-
-    let images = request
-        .images
-        .into_iter()
-        .map(|v| {
-            let url = DataUrl::process(&v.contents).unwrap();
-            let (body, _fragment) = url.decode_to_vec().unwrap();
-
-            DatasetFile::new(
-                v.metadata.file_name,
-                v.metadata.file_type,
-                v.metadata.size,
-                v.metadata.created_at,
-                "".to_string(),
-                body,
-            )
-        })
-        .collect();
-    s3.upload_files(&s3_path, images).await?;
-
     let id = db.create_dataset(dataset).await?;
     Ok(Json(CreateDatasetResponse { id }))
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all="camelCase")]
-pub struct FileMetaadataRequest {
-    pub file_name: String,
-    pub file_type: String,
-    pub size: i64,
-    pub created_at: DateTime<Utc>,
-}
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FileRequest {
-    pub metadata: FileMetaadataRequest,
-    pub contents: String,
+#[derive(Clone, Debug, Deserialize, Default)]
+#[serde(tag = "source_type")]
+pub enum DatasetSourceRequest {
+    #[default]
+    Unknown,
+    S3 {
+        bucket_name: String,
+    }
 }
 
 #[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct CreateDatasetRequest {
     dataset_name: String,
     description: Option<String>,
-    images: Vec<FileRequest>,
+    source: DatasetSourceRequest,
 }
 
 #[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct CreateDatasetResponse {
     id: DatasetId,
 }
 
-
-#[instrument(level = "info", skip(_claims, db, s3), ret, err)]
+#[instrument(level = "info", skip(_claims, db), ret, err)]
 pub async fn get_dataset(
     _claims: Claims,
     State(db): State<Database>,
-    State(s3): State<S3Wrapper>,
     Path(dataset_id): Path<DatasetId>,
 ) -> Result<Json<GetDatasetResponse>, ServiceError> {
     let dataset = db.get_dataset(&dataset_id).await?;
 
-    let files = s3.list_dataset_files(&dataset.dataset_path).await?;
-    
-    Ok(Json(GetDatasetResponse { 
+    Ok(Json(GetDatasetResponse {
         id: dataset.dataset_id,
         name: dataset.dataset_name,
         description: dataset.description,
         project_id: dataset.project_id,
-        files,
-     }))
+        dataset_source: dataset.dataset_source,
+    }))
 }
+
 #[derive(Serialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct GetDatasetResponse {
     id: DatasetId,
     name: String,
     description: Option<String>,
     project_id: ProjectId,
-    files: Vec<DatasetFileMetadata>,
+    dataset_source: DatasetSource,
 }
-#[instrument(level = "info", skip(db, s3), ret, err)]
+
+#[instrument(level = "info", skip(db), ret, err)]
 pub async fn delete_dataset_handler(
     claims: Claims,
     State(db): State<Database>,
-    State(s3): State<S3Wrapper>,
     Path(dataset_id): Path<DatasetId>,
 ) -> Result<(), ServiceError> {
-    let dataset = db.get_dataset(&dataset_id).await?;
-
-    s3.delete_folder(&dataset.dataset_path).await?;
+    let _dataset = db.get_dataset(&dataset_id).await?;
 
     db.delete_dataset(&dataset_id).await?;
 
     Ok(())
+}
+
+#[instrument(level = "info", skip_all, fields(dataset_id = dataset_id.to_string(), user_id = _claims.sub.to_string()), err)]
+pub async fn list_dataset_s3_folders(
+    _claims: Claims,
+    State(db): State<Database>,
+    State(s3): State<S3Wrapper>,
+    Path(dataset_id): Path<DatasetId>,
+    Query(request): Query<ListS3ObjectsRequest>,
+) -> Result<Json<ListS3ObjectsResponse>, ServiceError> {
+    let dataset = db.get_dataset(&dataset_id).await?;
+    let project = db.get_project(&dataset.project_id).await?;
+    match dataset.dataset_source {
+        DatasetSource::S3 { bucket_name, region } => {
+            let aws_integration = project.aws_integration.ok_or(ServiceError::BadRequest("AWS integration not configured".into()))?;
+            let s3_client = get_s3_client_with_role(&region, aws_integration.role_arn(), aws_integration.external_id()).await;
+            let start_key_ref = request.start_after_key.as_ref().map(|v| v.as_str());
+            let (prefixes, objects) = s3
+                .list_dataset_prefixes(
+                    Some(&s3_client),
+                    &bucket_name,
+                    &request.prefix,
+                    start_key_ref,
+                )
+                .await?;
+
+            Ok(Json(ListS3ObjectsResponse {
+                prefixes: prefixes
+                    .into_iter()
+                    .filter_map(|v| {
+                        v.prefix
+                    })
+                    .collect(),
+                objects: objects
+                    .into_iter()
+                    .filter_map(|v| {
+                        v.key
+                    })
+                    .collect(),
+            }))
+        }
+        _ => {
+            return Err(ServiceError::BadRequest(
+                "dataset is not an S3 dataset".into(),
+            ))
+        }
+    }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ListS3ObjectsRequest {
+    #[allow(dead_code)]
+    prefix: String,
+    #[allow(dead_code)]
+    start_after_key: Option<String>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct ListS3ObjectsResponse {
+    prefixes: Vec<String>,
+    objects: Vec<String>,
 }

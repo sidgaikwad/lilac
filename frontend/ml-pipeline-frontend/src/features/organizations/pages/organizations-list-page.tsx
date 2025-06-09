@@ -59,22 +59,25 @@ function OrganizationsListPage() {
         {isLoadingOrganizations && <Spinner show={isLoadingOrganizations} />}
 
         {!isLoadingOrganizations && organizations.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3'>
             {organizations.map((org) => (
-              <Card className="h-full transition-shadow duration-200 ease-in-out hover:shadow-lg">
+              <Card
+                key={org.id}
+                className='h-full transition-shadow duration-200 ease-in-out hover:shadow-lg'
+              >
                 <CardHeader>
                   <Link
                     key={org.id}
                     to={`/organizations/${org.id}/projects`}
-                    className="hover:text-primary"
+                    className='hover:text-primary'
                     onClick={() => setSelectedOrganizationId(org.id)}
                   >
-                    <CardTitle className="flex items-center">
-                      <BuildingIcon className="text-primary mr-2 h-5 w-5" />
+                    <CardTitle className='flex items-center'>
+                      <BuildingIcon className='text-primary mr-2 h-5 w-5' />
                       {org.name}
                     </CardTitle>
                   </Link>
-                  <CardDescription className="pt-1">
+                  <CardDescription className='pt-1'>
                     View projects in this organization.
                   </CardDescription>
                   <CardAction>
@@ -87,9 +90,9 @@ function OrganizationsListPage() {
         ) : (
           !isLoadingOrganizations && (
             <EmptyCardSection
-              title="No Organizations"
-              description="Get started by creating a new organization."
-              buttonText="Create Organization"
+              title='No Organizations'
+              description='Get started by creating a new organization.'
+              buttonText='Create Organization'
               onClick={() => setCreateOrgModalOpen(true)}
             />
           )

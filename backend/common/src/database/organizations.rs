@@ -98,7 +98,10 @@ impl Database {
         Ok(result.exists)
     }
 
-    pub async fn delete_organization(&self, organization_id: &OrganizationId) -> Result<(), ServiceError> {
+    pub async fn delete_organization(
+        &self,
+        organization_id: &OrganizationId,
+    ) -> Result<(), ServiceError> {
         let mut tx = self.pool.begin().await?;
         let org_id_inner = organization_id.inner();
 

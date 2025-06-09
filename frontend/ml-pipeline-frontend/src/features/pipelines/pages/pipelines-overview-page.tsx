@@ -40,7 +40,7 @@ function PipelinesOverviewPage() {
   return (
     <Container>
       <ContainerHeader>
-        <div className="flex-1 shrink-0 grow-0 basis-full pb-4">
+        <div className='flex-1 shrink-0 grow-0 basis-full pb-4'>
           <Breadcrumbs
             breadcrumbs={[
               {
@@ -72,27 +72,27 @@ function PipelinesOverviewPage() {
       </ContainerHeader>
 
       <ContainerContent>
-        <div className="grid h-full w-full gap-4">
+        <div className='grid h-full w-full gap-4'>
           {isLoadingPipelines && <Spinner size={'large'} />}
           {pipelines.length > 0 ? (
             pipelines.map((p) => (
               <Card
                 key={p.id}
-                className="flex flex-col transition-shadow duration-200 ease-in-out hover:shadow-lg"
+                className='flex flex-col transition-shadow duration-200 ease-in-out hover:shadow-lg'
               >
                 <CardHeader>
                   <Link
                     to={`/projects/${projectId}/pipelines/${p.id}`}
-                    className="group"
+                    className='group'
                   >
-                    <CardTitle className="group-hover:text-primary flex items-center text-lg transition-colors">
-                      <WorkflowIcon className="text-muted-foreground group-hover:text-primary mr-2 h-5 w-5 flex-shrink-0 transition-colors" />
-                      <span className="truncate" title={p.name}>
+                    <CardTitle className='group-hover:text-primary flex items-center text-lg transition-colors'>
+                      <WorkflowIcon className='text-muted-foreground group-hover:text-primary mr-2 h-5 w-5 flex-shrink-0 transition-colors' />
+                      <span className='truncate' title={p.name}>
                         {p.name}
                       </span>
                     </CardTitle>
                   </Link>
-                  <CardDescription className="h-16 overflow-hidden pt-1 text-sm leading-relaxed text-ellipsis">
+                  <CardDescription className='h-16 overflow-hidden pt-1 text-sm leading-relaxed text-ellipsis'>
                     {p.description || 'No description available.'}
                   </CardDescription>
                   <CardAction>
@@ -103,9 +103,9 @@ function PipelinesOverviewPage() {
             ))
           ) : (
             <EmptyCardSection
-              title="No Pipelines"
-              description="Get started by creating your first pipeline for this project."
-              buttonText="Create Pipeline"
+              title='No Pipelines'
+              description='Get started by creating your first pipeline for this project.'
+              buttonText='Create Pipeline'
               onClick={() => setCreatePipelineModalOpen(true)}
             />
           )}

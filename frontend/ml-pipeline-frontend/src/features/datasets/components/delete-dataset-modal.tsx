@@ -19,12 +19,12 @@ function DeleteDatasetModal(props: DeleteDatasetModalProps) {
   return (
     <DestructiveActionConfirmationModal
       dialogTrigger={
-        <Button variant="ghost">
-          <Trash2 className="text-destructive hover:text-destructive/80" />
+        <Button variant='ghost'>
+          <Trash2 className='text-destructive hover:text-destructive/80' />
         </Button>
       }
       itemName={props.dataset.name}
-      itemType="dataset"
+      itemType='dataset'
       onConfirm={() =>
         deleteDataset({
           projectId: props.projectId,

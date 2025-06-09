@@ -47,36 +47,36 @@ function PipelineSidebar() {
   const groupedSteps = groupStepsByCategory(stepDefinitions ?? []);
 
   return (
-    <aside className="bg-card flex h-full w-64 shrink-0 flex-col space-y-2 border border-l">
-      <CardHeader className="shrink-0 pt-4">
+    <aside className='bg-card flex h-full w-64 shrink-0 flex-col space-y-2 border border-l'>
+      <CardHeader className='shrink-0 pt-4'>
         <CardTitle>Available Pipes</CardTitle>
       </CardHeader>
-      <Separator className="shrink-0" />
-      <CardContent className="flex-grow overflow-y-auto p-0">
+      <Separator className='shrink-0' />
+      <CardContent className='flex-grow overflow-y-auto p-0'>
         {isLoading ? (
-          <div className="text-muted-foreground flex h-full items-center justify-center p-4 text-center">
-            <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> Loading...
+          <div className='text-muted-foreground flex h-full items-center justify-center p-4 text-center'>
+            <Loader2Icon className='mr-2 h-4 w-4 animate-spin' /> Loading...
           </div>
         ) : error ? (
-          <div className="text-destructive flex h-full flex-col items-center justify-center p-4 text-center">
-            <AlertTriangleIcon className="mb-2 h-6 w-6" />
-            <span className="text-sm">Error loading pipes: {error.error}</span>
+          <div className='text-destructive flex h-full flex-col items-center justify-center p-4 text-center'>
+            <AlertTriangleIcon className='mb-2 h-6 w-6' />
+            <span className='text-sm'>Error loading pipes: {error.error}</span>
           </div>
         ) : Object.keys(groupedSteps).length === 0 ? (
-          <div className="text-muted-foreground flex h-full items-center justify-center p-4 text-center">
+          <div className='text-muted-foreground flex h-full items-center justify-center p-4 text-center'>
             No pipes available.
           </div>
         ) : (
           Object.entries(groupedSteps).map(([category, steps]) => (
-            <div key={category} className="p-4">
-              <h3 className="text-foreground mb-2 text-sm font-semibold">
+            <div key={category} className='p-4'>
+              <h3 className='text-foreground mb-2 text-sm font-semibold'>
                 {category}
               </h3>
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 {steps.map((step) => (
                   <Button
                     key={step.id}
-                    variant="outline"
+                    variant='outline'
                     className={cn(
                       'h-auto w-full cursor-grab justify-start py-2 text-left [&.is-dragging]:cursor-grabbing',
                       buttonFocusStyle
@@ -91,13 +91,13 @@ function PipelineSidebar() {
                   </Button>
                 ))}
               </div>
-              <Separator className="mt-4" />
+              <Separator className='mt-4' />
             </div>
           ))
         )}
       </CardContent>
     </aside>
   );
-};
+}
 
 export default PipelineSidebar;

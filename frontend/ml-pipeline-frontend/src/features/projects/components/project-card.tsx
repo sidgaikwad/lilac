@@ -16,13 +16,13 @@ export interface ProjectCardProps {
 function ProjectCard(props: ProjectCardProps) {
   return (
     <Card
-      className="w-full max-w-[300px] basis-full md:basis-1/2 lg:basis-1/4"
+      className='w-full max-w-[300px] basis-full md:basis-1/2 lg:basis-1/4'
       key={props.project.id}
     >
       <CardHeader>
         <Link
-          to={`/projects/${props.project.id}`}
-          className="text-primary hover:underline"
+          to={`/projects/${props.project.id}/datasets`}
+          className='text-primary hover:underline'
         >
           <CardTitle>{props.project.name}</CardTitle>
         </Link>

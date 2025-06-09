@@ -1,9 +1,6 @@
 pub mod auth;
 pub mod dataset;
-pub mod jobs;
+pub mod integration;
 pub mod organization;
-pub mod pipeline;
 pub mod project;
-pub mod step;
-pub mod step_definition;
 pub mod user;

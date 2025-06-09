@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/types';
 import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface RunPipelineRequest {
   pipelineId: string;
@@ -16,7 +17,12 @@ async function runPipeline(
   payload: RunPipelineRequest
 ): Promise<RunPipelineResponse> {
   const { pipelineId, ...request } = payload;
-  return postHttp(`/pipelines/${pipelineId}/run`, request);
+  return postHttp<
+    Sn<Omit<RunPipelineRequest, 'pipelineId'>>,
+    Sn<RunPipelineResponse>
+  >(`/pipelines/${pipelineId}/run`, {
+    dataset_id: request.datasetId,
+  });
 }
 
 export interface UseRunPipelineProps {

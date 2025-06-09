@@ -1,12 +1,9 @@
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
 mod datasets;
-pub mod jobs;
+mod integrations;
 mod organizations;
-mod pipelines;
 mod projects;
-mod step_definitions;
-mod steps;
 mod users;
 
 #[derive(Clone, Debug)]

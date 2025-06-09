@@ -2,6 +2,7 @@ import { postHttp } from '@/lib/fetch';
 import { ApiError } from '@/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface UpdatePipelineRequest {
   pipelineId: string;
@@ -19,7 +20,19 @@ export async function updatePipeline(
   payload: UpdatePipelineRequest
 ): Promise<void> {
   const { pipelineId, ...request } = payload;
-  return postHttp(`/pipelines/${pipelineId}`, request);
+  return postHttp<Sn<Omit<UpdatePipelineRequest, 'pipelineId'>>, void>(
+    `/pipelines/${pipelineId}`,
+    {
+      name: request.name,
+      description: request.description,
+      steps: request.steps?.map((step) => ({
+        step_id: step.stepId,
+        step_parameters: step.stepParameters,
+        step_definition_id: step.stepDefinitionId,
+      })),
+      step_connections: request.stepConnections,
+    }
+  );
 }
 
 export interface UseUpdatePipelineProps {

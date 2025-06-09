@@ -46,28 +46,28 @@ const DatasetSelectionModal: React.FC<DatasetSelectionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
           <DialogTitle>Select Dataset</DialogTitle>
         </DialogHeader>
-        <div className="py-4">
+        <div className='py-4'>
           {isLoading && (
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
+            <div className='space-y-2'>
+              <Skeleton className='h-8 w-full' />
+              <Skeleton className='h-8 w-full' />
+              <Skeleton className='h-8 w-full' />
             </div>
           )}
           {isError && (
-            <p className="text-sm text-red-500">
+            <p className='text-sm text-red-500'>
               Error fetching datasets:{' '}
               {error?.error || 'Could not load datasets.'}
             </p>
           )}
           {!isLoading && !isError && datasets && (
-            <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+            <ScrollArea className='h-[200px] w-full rounded-md border p-4'>
               {datasets.length === 0 && (
-                <p className="text-muted-foreground text-center text-sm">
+                <p className='text-muted-foreground text-center text-sm'>
                   No datasets found.
                 </p>
               )}
@@ -77,7 +77,7 @@ const DatasetSelectionModal: React.FC<DatasetSelectionModalProps> = ({
                   variant={
                     selectedDataset === dataset.name ? 'default' : 'outline'
                   }
-                  className="mb-2 w-full justify-start"
+                  className='mb-2 w-full justify-start'
                   onClick={() => handleDatasetSelect(dataset.id)}
                 >
                   {dataset.name}
@@ -88,7 +88,7 @@ const DatasetSelectionModal: React.FC<DatasetSelectionModalProps> = ({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" onClick={onClose}>
+            <Button variant='outline' onClick={onClose}>
               Cancel
             </Button>
           </DialogClose>

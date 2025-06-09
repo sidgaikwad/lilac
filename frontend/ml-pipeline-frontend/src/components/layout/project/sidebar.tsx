@@ -1,5 +1,11 @@
 import { generatePath, useLocation, useParams } from 'react-router-dom';
-import { Settings, Home, PanelsTopLeft, HardDrive, LayoutDashboard } from 'lucide-react'; // Added LayoutDashboard
+import {
+  Settings,
+  Home,
+  PanelsTopLeft,
+  HardDrive,
+  LayoutDashboard,
+} from 'lucide-react'; // Added LayoutDashboard
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -47,11 +53,11 @@ export default function Sidebar() {
 
   return (
     <SidebarComponent
-      variant="sidebar"
-      collapsible="icon"
+      variant='sidebar'
+      collapsible='icon'
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
-      className="top-(--header-height) !h-[calc(100svh-var(--header-height))]"
+      className='top-(--header-height) !h-[calc(100svh-var(--header-height))]'
     >
       <SidebarHeader></SidebarHeader>
       <SidebarContent>
@@ -110,7 +116,7 @@ export default function Sidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator className="mx-0" />
+        <SidebarSeparator className='mx-0' />
 
         <SidebarGroup>
           <SidebarGroupContent>

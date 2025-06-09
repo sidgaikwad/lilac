@@ -1,27 +1,33 @@
 import { getHttp } from '@/lib/fetch';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
-import { ApiError, Dataset } from '@/types';
+import { ApiError } from '@/types';
 import { useEffect } from 'react';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface GetDatasetResponse {
   id: string;
   name: string;
   description?: string;
   projectId: string;
-  files: {
-    fileName: string;
-    fileType: string;
-    size: number;
-    createdAt: string;
-    url: string;
-  }[];
+  datasetSource: { sourceType: 'S3'; bucketName: string; region: string };
 }
 
 export async function getDataset(
   datasetId: string
 ): Promise<GetDatasetResponse> {
-  return getHttp(`/datasets/${datasetId}`);
+  const resp = await getHttp<Sn<GetDatasetResponse>>(`/datasets/${datasetId}`);
+  return {
+    id: resp.id,
+    projectId: resp.project_id,
+    name: resp.name,
+    description: resp.description,
+    datasetSource: {
+      sourceType: resp.dataset_source.source_type,
+      bucketName: resp.dataset_source.bucket_name,
+      region: resp.dataset_source.region,
+    },
+  };
 }
 
 export function getDatasetQuery(datasetId?: string, enabled: boolean = true) {
@@ -30,14 +36,13 @@ export function getDatasetQuery(datasetId?: string, enabled: boolean = true) {
     queryFn: () => getDataset(datasetId!),
     enabled: !!datasetId && enabled,
     staleTime: 1000 * 60 * 5,
-    select: (data) => data as Dataset,
   });
 }
 
 interface UseGetDatasetProps {
   datasetId: string | undefined;
   enabled?: boolean;
-  onSuccess?: (dataset: Dataset) => void;
+  onSuccess?: (dataset: GetDatasetResponse) => void;
   onError?: (error: ApiError) => void;
 }
 

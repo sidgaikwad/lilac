@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import CreateDatasetModal from '../components/create-dataset-modal';
+import CreateDatasetModal from '../components/connect-dataset-modal';
 import { getProjectQuery, useGetDataset } from '@/services';
 import { useListDatasets } from '@/services';
 import {
@@ -24,6 +24,7 @@ import Breadcrumbs from '@/components/common/breadcrumbs';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import DeleteDatasetModal from '../components/delete-dataset-modal';
+import EmptyCardSection from '@/components/common/empty-card-section';
 
 const DatasetImagesGrid: React.FC<{ projectId: string; datasetId: string }> = ({
   datasetId,
@@ -37,29 +38,29 @@ const DatasetImagesGrid: React.FC<{ projectId: string; datasetId: string }> = ({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="aspect-square h-auto w-full" />
+          <Skeleton key={i} className='aspect-square h-auto w-full' />
         ))}
       </div>
     );
   }
 
   if (isError) {
-    return <p className="text-red-500">Error loading images: {error?.error}</p>;
+    return <p className='text-red-500'>Error loading images: {error?.error}</p>;
   }
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+    <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
       {dataset?.files?.map((file) => (
         <div
           key={file.fileName}
-          className="aspect-square overflow-hidden rounded-lg border"
+          className='aspect-square overflow-hidden rounded-lg border'
         >
           <img
             src={file.url}
             alt={file.fileName}
-            className="h-full w-full object-cover"
-            crossOrigin="anonymous"
+            className='h-full w-full object-cover'
+            crossOrigin='anonymous'
           />
         </div>
       ))}
@@ -83,7 +84,7 @@ function DataSetsPage() {
   return (
     <Container>
       <ContainerHeader>
-        <div className="flex-1 shrink-0 grow-0 basis-full pb-4">
+        <div className='flex-1 shrink-0 grow-0 basis-full pb-4'>
           <Breadcrumbs
             breadcrumbs={[
               {
@@ -116,18 +117,18 @@ function DataSetsPage() {
 
       <ContainerContent>
         {isLoading && (
-          <div className="space-y-4">
+          <div className='space-y-4'>
             {[...Array(3)].map((_, i) => (
               <Card key={i}>
                 <CardHeader>
-                  <Skeleton className="h-6 w-1/2" />
+                  <Skeleton className='h-6 w-1/2' />
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
                     {[...Array(5)].map((_, j) => (
                       <Skeleton
                         key={j}
-                        className="bg-muted aspect-square h-auto w-full"
+                        className='bg-muted aspect-square h-auto w-full'
                       />
                     ))}
                   </div>
@@ -136,34 +137,45 @@ function DataSetsPage() {
             ))}
           </div>
         )}
-        {datasets?.map((dataset) => (
-          <Card
-            key={dataset.id}
-            className="mb-4 cursor-pointer"
-            onClick={() =>
-              navigate(`/projects/${projectId}/datasets/${dataset.id}`)
-            }
-          >
-            <CardHeader>
-              <CardTitle>{dataset.name}</CardTitle>
-              <CardDescription>{dataset.description}</CardDescription>
-              <CardAction>
-                <DeleteDatasetModal projectId={projectId!} dataset={dataset} />
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              {projectId && (
-                <DatasetImagesGrid
-                  projectId={projectId}
-                  datasetId={dataset.id}
-                />
-              )}
-            </CardContent>
-          </Card>
-        ))}
+        {datasets !== undefined && datasets.length > 0 ? (
+          datasets.map((dataset) => (
+            <Card
+              key={dataset.id}
+              className='mb-4 cursor-pointer'
+              onClick={() =>
+                navigate(`/projects/${projectId}/datasets/${dataset.id}`)
+              }
+            >
+              <CardHeader>
+                <CardTitle>{dataset.name}</CardTitle>
+                <CardDescription>{dataset.description}</CardDescription>
+                <CardAction>
+                  <DeleteDatasetModal
+                    projectId={projectId!}
+                    dataset={dataset}
+                  />
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                {projectId && (
+                  <DatasetImagesGrid
+                    projectId={projectId}
+                    datasetId={dataset.id}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <EmptyCardSection
+            title={'No datasets'}
+            buttonText={'Create Dataset'}
+            onClick={() => setOpen(true)}
+          />
+        )}
       </ContainerContent>
     </Container>
   );
-};
+}
 
 export default DataSetsPage;

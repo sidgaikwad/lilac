@@ -33,10 +33,11 @@ export default function ProjectSelectionDropdown() {
     enabled: !!selectedOrganizationId,
   });
 
-  const { data: organizations, isLoading: isLoadingOrganizations } = useListOrganizations();
-  
-  const selectedOrgObject = React.useMemo(() =>
-    organizations?.find(org => org.id === selectedOrganizationId),
+  const { data: organizations, isLoading: isLoadingOrganizations } =
+    useListOrganizations();
+
+  const selectedOrgObject = React.useMemo(
+    () => organizations?.find((org) => org.id === selectedOrganizationId),
     [organizations, selectedOrganizationId]
   );
 
@@ -62,26 +63,30 @@ export default function ProjectSelectionDropdown() {
 
   return (
     <>
-      <div className="flex flex-1">
-        {isLoadingProjects || (selectedOrganizationId && isLoadingOrganizations) ? (
-          <Skeleton className="bg-muted h-6 w-24" />
+      <div className='flex flex-1'>
+        {isLoadingProjects ||
+        (selectedOrganizationId && isLoadingOrganizations) ? (
+          <Skeleton className='bg-muted h-6 w-24' />
         ) : (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 ref={triggerRef}
-                variant="ghost"
-                size="sm"
-                className="flex h-7 items-center gap-1 px-2 text-xs"
+                variant='ghost'
+                size='sm'
+                className='flex h-7 items-center gap-1 px-2 text-xs'
                 disabled={!selectedOrganizationId}
               >
-                <span className="max-w-[100px] truncate">
-                  {selectedProject?.name ?? (selectedOrganizationId ? 'Select Project' : 'No Org Selected')}
+                <span className='max-w-[100px] truncate'>
+                  {selectedProject?.name ??
+                    (selectedOrganizationId
+                      ? 'Select Project'
+                      : 'No Org Selected')}
                 </span>
-                <ChevronDown className="text-muted-foreground ml-1 h-4 w-4" />
+                <ChevronDown className='text-muted-foreground ml-1 h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent align='start'>
               {projects && projects.length > 0 ? (
                 projects.map((project) => (
                   <DropdownMenuItem
@@ -95,7 +100,9 @@ export default function ProjectSelectionDropdown() {
                 ))
               ) : (
                 <DropdownMenuItem disabled>
-                  {selectedOrganizationId ? 'No projects found' : 'Select an organization first'}
+                  {selectedOrganizationId
+                    ? 'No projects found'
+                    : 'Select an organization first'}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -104,12 +111,14 @@ export default function ProjectSelectionDropdown() {
                   if (selectedOrgObject) {
                     setCreateProjectModalOpen(true);
                   } else {
-                    toast.error("Please select an organization or wait for it to load.");
+                    toast.error(
+                      'Please select an organization or wait for it to load.'
+                    );
                   }
                 }}
                 disabled={!selectedOrgObject || isLoadingOrganizations}
               >
-                <PlusIcon className="mr-2 h-4 w-4" />
+                <PlusIcon className='mr-2 h-4 w-4' />
                 <span>Create project</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

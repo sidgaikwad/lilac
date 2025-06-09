@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import { Fragment } from 'react/jsx-runtime';
 
 interface BreadcrumbProps {
   content: React.ReactNode;
@@ -45,13 +46,13 @@ export default function Breadcrumbs({
 
           <BreadcrumbItem>
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1">
-                <BreadcrumbEllipsis className="h-4 w-4" />
-                <span className="sr-only">Toggle menu</span>
+              <DropdownMenuTrigger className='flex items-center gap-1'>
+                <BreadcrumbEllipsis className='h-4 w-4' />
+                <span className='sr-only'>Toggle menu</span>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {breadcrumbs.slice(1, -2).map((bc) => (
-                  <DropdownMenuItem>
+              <DropdownMenuContent align='start'>
+                {breadcrumbs.slice(1, -2).map((bc, index) => (
+                  <DropdownMenuItem key={index}>
                     <Link to={bc.link}>{bc.content}</Link>
                   </DropdownMenuItem>
                 ))}
@@ -79,13 +80,15 @@ export default function Breadcrumbs({
   return (
     <Breadcrumb>
       <BreadcrumbList>
-        {breadcrumbs.slice(0, -1).map((bc) => (
-          <>
-            <BreadcrumbLink asChild>
-              <Link to={bc.link}>{bc.content}</Link>
-            </BreadcrumbLink>
+        {breadcrumbs.slice(0, -1).map((bc, index) => (
+          <Fragment key={index}>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to={bc.link}>{bc.content}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
             <BreadcrumbSeparator />
-          </>
+          </Fragment>
         ))}
         <BreadcrumbItem>
           <BreadcrumbPage>

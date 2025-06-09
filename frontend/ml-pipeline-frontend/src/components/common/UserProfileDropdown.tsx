@@ -16,42 +16,45 @@ interface UserProfileDropdownProps {
   isLoading?: boolean;
 }
 
-export function UserProfileDropdown({ user, isLoading }: UserProfileDropdownProps) {
+export function UserProfileDropdown({
+  user,
+  isLoading,
+}: UserProfileDropdownProps) {
   const getInitials = (email?: string) => {
     if (!email) return 'U';
     return email.charAt(0).toUpperCase();
   };
 
   if (isLoading) {
-    return <Skeleton className="h-8 w-8 rounded-full" />;
+    return <Skeleton className='h-8 w-8 rounded-full' />;
   }
 
   if (!user) {
-    return null; 
+    return null;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-full">
+        <button className='focus:ring-ring rounded-full focus:ring-2 focus:ring-offset-2 focus:outline-none'>
           <Avatar>
             {/* <AvatarImage src={user.avatarUrl} alt={user.name || user.email} /> */}
             <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="truncate font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Signed in as</p>
-            <p className="text-xs leading-none text-muted-foreground truncate">
+      <DropdownMenuContent align='end' className='w-56'>
+        <DropdownMenuLabel className='truncate font-normal'>
+          <div className='flex flex-col space-y-1'>
+            <p className='text-sm leading-none font-medium'>Signed in as</p>
+            <p className='text-muted-foreground truncate text-xs leading-none'>
               {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="p-0 cursor-pointer">
-          <LogoutButton className="w-full justify-start h-8" />
+        <DropdownMenuItem asChild className='cursor-pointer p-0'>
+          <LogoutButton className='h-8 w-full justify-start' />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

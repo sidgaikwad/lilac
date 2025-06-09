@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,7 +56,9 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     onSuccess: (data) => {
       toast.success('Successfully created project!');
       setOpen(false);
-      navigate(generatePath(Routes.PROJECT_DETAILS, { projectId: data.id }), { replace: true });
+      navigate(generatePath(Routes.PROJECT_DATASETS, { projectId: data.id }), {
+        replace: true,
+      });
     },
     onError: (error) => toast.error(error.error),
   });
@@ -77,14 +80,13 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     }
   }, [organization, isOpen, form]);
 
-
   const onSubmit = (data: CreateProjectFormInputs) => {
     createProject({
       name: data.projectName,
       organizationId: data.organizationId,
     });
   };
-  
+
   const handleOpenChange = (openState: boolean) => {
     setOpen(openState);
     if (!openState) {
@@ -99,15 +101,16 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       {showTrigger && (
         <DialogTrigger asChild>
-          <Button variant="default">Create Project</Button>
+          <Button variant='default'>Create Project</Button>
         </DialogTrigger>
       )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Project</DialogTitle>
+          <DialogDescription></DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
             <FormItem>
               <FormLabel>Selected Organization</FormLabel>
               <FormControl>
@@ -117,12 +120,12 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </FormItem>
             <FormField
               control={form.control}
-              name="projectName"
+              name='projectName'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Project Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="My project" {...field} />
+                    <Input placeholder='My project' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -130,12 +133,12 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             />
             <DialogFooter>
               <DialogClose asChild>
-                <Button className="mr-1" variant="outline" disabled={isPending}>
+                <Button className='mr-1' variant='outline' disabled={isPending}>
                   <span>Cancel</span>
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? <Spinner size="small" /> : <span>Submit</span>}
+              <Button type='submit' disabled={isPending}>
+                {isPending ? <Spinner size='small' /> : <span>Submit</span>}
               </Button>
             </DialogFooter>
           </form>

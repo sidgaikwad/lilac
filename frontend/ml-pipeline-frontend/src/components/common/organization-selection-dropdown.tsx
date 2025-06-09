@@ -27,7 +27,7 @@ export default function OrganizationSelectionDropdown() {
       }),
       shallow
     );
-  
+
   const [isCreateOrgModalOpen, setCreateOrgModalOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -40,26 +40,27 @@ export default function OrganizationSelectionDropdown() {
 
   return (
     <>
-      <div className="flex flex-1">
+      <div className='flex flex-1'>
         {!organizations || isLoading ? (
-          <Skeleton className="bg-muted h-6 w-24" />
+          <Skeleton className='bg-muted h-6 w-24' />
         ) : (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 ref={triggerRef}
-                variant="ghost"
-                size="sm"
-                className="flex h-7 items-center gap-1 px-2 text-xs"
+                variant='ghost'
+                size='sm'
+                className='flex h-7 items-center gap-1 px-2 text-xs'
               >
-                <span className="max-w-[100px] truncate">
-                  {organizations.find((org) => org.id === selectedOrganizationId)
-                    ?.name ?? 'Select Org'}
+                <span className='max-w-[100px] truncate'>
+                  {organizations.find(
+                    (org) => org.id === selectedOrganizationId
+                  )?.name ?? 'Select Org'}
                 </span>
-                <ChevronDown className="text-muted-foreground ml-1 h-4 w-4" />
+                <ChevronDown className='text-muted-foreground ml-1 h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent align='start'>
               {organizations.length > 0 ? (
                 organizations.map((org) => (
                   <DropdownMenuItem
@@ -83,7 +84,7 @@ export default function OrganizationSelectionDropdown() {
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => setCreateOrgModalOpen(true)}>
-                <PlusIcon className="mr-2 h-4 w-4" />
+                <PlusIcon className='mr-2 h-4 w-4' />
                 <span>Create organization</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

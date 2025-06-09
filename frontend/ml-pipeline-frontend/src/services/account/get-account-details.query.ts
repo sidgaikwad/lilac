@@ -19,7 +19,7 @@ export function getAccountDetailsQuery(enabled: boolean = true) {
     queryKey: [QueryKeys.GET_ACCOUNT_DETAILS],
     queryFn: getAccountDetails,
     enabled,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
     select: (data) => data as User,
   });
 }

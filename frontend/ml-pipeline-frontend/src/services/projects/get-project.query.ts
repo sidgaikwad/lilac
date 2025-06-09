@@ -3,17 +3,31 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
 import { ApiError, Project } from '@/types';
 import { useEffect } from 'react';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface GetProjectResponse {
   id: string;
   name: string;
   organizationId: string;
+  awsIntegration?: {
+    roleArn: string;
+    externalId: string;
+  }
 }
 
 export async function getProject(
   projectId: string
 ): Promise<GetProjectResponse> {
-  return getHttp(`/projects/${projectId}`);
+  const resp = await getHttp<Sn<GetProjectResponse>>(`/projects/${projectId}`);
+  return {
+    id: resp.id,
+    name: resp.name,
+    organizationId: resp.organization_id,
+    awsIntegration: resp.aws_integration && {
+      roleArn: resp.aws_integration.role_arn,
+      externalId: resp.aws_integration.external_id,
+    },
+  };
 }
 
 export function getProjectQuery(projectId?: string, enabled: boolean = true) {

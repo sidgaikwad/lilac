@@ -31,14 +31,12 @@ pub async fn create_organization(
 }
 
 #[derive(Debug, Deserialize, Validate)]
-#[serde(rename_all = "camelCase")]
 pub struct CreateOrganizationRequest {
     #[validate(length(min = 1, message = "Organization name cannot be empty"))]
     name: String,
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct CreateOrganizationResponse {
     id: OrganizationId,
 }
@@ -55,7 +53,6 @@ pub async fn get_organization(
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct GetOrganizationResponse {
     id: OrganizationId,
     name: String,
@@ -86,7 +83,6 @@ pub async fn list_organizations(
 }
 
 #[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ListOrganizationsResponse {
     organizations: Vec<GetOrganizationResponse>,
 }

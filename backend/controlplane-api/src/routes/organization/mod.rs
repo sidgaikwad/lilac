@@ -1,7 +1,9 @@
-use axum::{routing::{get, delete}, Router};
+use axum::{routing::get, Router};
+
+use crate::AppState;
+
 mod organization;
 use organization::{create_organization, get_organization, list_organizations, delete_organization};
-use crate::AppState;
 
 pub fn router() -> Router<AppState> {
     Router::new()

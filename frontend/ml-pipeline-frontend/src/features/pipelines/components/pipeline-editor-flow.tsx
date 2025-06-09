@@ -112,7 +112,7 @@ const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = (
   return (
     // Use theme background color
     <div
-      className="bg-background relative h-full flex-grow border"
+      className='bg-background relative h-full flex-grow border'
       ref={reactFlowWrapper}
     >
       <ReactFlow
@@ -128,7 +128,7 @@ const PipelineEditorFlow: React.FC<PipelineEditorFlowProps> = (
         nodeOrigin={[0, 0]}
         fitView
       >
-        <DevTools position="top-left" />
+        <DevTools position='top-left' />
         <Controls showInteractive={false} />
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>

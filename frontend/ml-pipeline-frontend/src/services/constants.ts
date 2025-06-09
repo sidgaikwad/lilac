@@ -19,6 +19,8 @@ export enum QueryKeys {
   LIST_PROJECTS = 'ListProjects',
   DELETE_PROJECT = 'DeleteProject',
 
+  CONNECT_AWS_INTEGRATION = 'ConnectAwsIntegration',
+
   GET_PIPELINE = 'GetPipeline',
   CREATE_PIPELINE = 'CreatePipeline',
   UPDATE_PIPELINE = 'UpdatePipeline',
@@ -28,7 +30,8 @@ export enum QueryKeys {
 
   GET_DATASET = 'GetDataset',
   CREATE_DATASET = 'CreateDataset',
-  LIST_DATASETS = 'ListDataSets',
+  LIST_DATASETS = 'ListDatasets',
+  LIST_DATASET_S3_OBJECTS = 'ListDatsetS3Objects',
 
   LIST_JOBS = 'ListJobs',
 

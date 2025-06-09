@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import useOrganizationStore from '@/store/use-organization-store';
 import { useParams } from 'react-router-dom';
 import { getProjectQuery } from '@/services';
 import {
   Container,
-  ContainerAction,
   ContainerContent,
   ContainerDescription,
   ContainerHeader,
-  ContainerTitle,
 } from '@/components/ui/container';
 import Breadcrumbs from '@/components/common/breadcrumbs';
 import { useSuspenseQuery } from '@tanstack/react-query';
@@ -48,10 +46,15 @@ function ProjectDashboardPage() {
     useOrganizationStore();
 
   const getProjectSpecificDefaultContent = useCallback(() => {
-    return BASE_DEFAULT_MARKDOWN_CONTENT.replace('{{projectName}}', project?.name || 'this project');
+    return BASE_DEFAULT_MARKDOWN_CONTENT.replace(
+      '{{projectName}}',
+      project?.name || 'this project'
+    );
   }, [project?.name]);
 
-  const [markdownContent, setMarkdownContent] = useState(getProjectSpecificDefaultContent());
+  const [markdownContent, setMarkdownContent] = useState(
+    getProjectSpecificDefaultContent()
+  );
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -66,7 +69,9 @@ function ProjectDashboardPage() {
 
   useEffect(() => {
     if (projectId) {
-      const savedContent = localStorage.getItem(`projectDashboard_${projectId}`);
+      const savedContent = localStorage.getItem(
+        `projectDashboard_${projectId}`
+      );
       if (savedContent) {
         setMarkdownContent(savedContent);
       } else {
@@ -84,7 +89,7 @@ function ProjectDashboardPage() {
   return (
     <Container>
       <ContainerHeader>
-        <div className="flex-1 shrink-0 grow-0 basis-full pb-4">
+        <div className='flex-1 shrink-0 grow-0 basis-full pb-4'>
           <Breadcrumbs
             breadcrumbs={[
               {
@@ -98,23 +103,29 @@ function ProjectDashboardPage() {
             ]}
           />
         </div>
-
       </ContainerHeader>
 
       <ContainerContent>
-        {/* Static Welcome Header with Logo */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b">
-          <h1 className="text-3xl font-bold">
-            <span className="text-primary">{project?.name || 'Your Project'}</span>
+        <div className='mb-6 flex items-center justify-between border-b pb-4'>
+          <h1 className='text-3xl font-bold'>
+            <span className='text-primary'>
+              {project?.name || 'Your Project'}
+            </span>
           </h1>
-          <img src="/logo.png" alt="Application Logo" style={{ width: '100px', height: 'auto' }} />
+          <img
+            src='/logo.png'
+            alt='Application Logo'
+            style={{ width: '100px', height: 'auto' }}
+          />
         </div>
-          <ContainerDescription>
-            
-          </ContainerDescription>
+        <ContainerDescription></ContainerDescription>
 
-        <div className="flex justify-end mb-4">
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)}>
+        <div className='mb-4 flex justify-end'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => setIsEditing(!isEditing)}
+          >
             {isEditing ? 'View Content' : 'Edit Content'}
           </Button>
         </div>
@@ -123,15 +134,14 @@ function ProjectDashboardPage() {
           <textarea
             value={markdownContent}
             onChange={(e) => setMarkdownContent(e.target.value)}
-            className="w-full h-96 p-2 border rounded-md shadow-sm focus:ring-primary focus:border-primary"
-            placeholder="Enter your project notes in Markdown..."
+            className='focus:ring-primary focus:border-primary h-96 w-full rounded-md border p-2 shadow-sm'
+            placeholder='Enter your project notes in Markdown...'
           />
         ) : (
-          <div className="prose dark:prose-invert lg:prose-xl max-w-none p-2 border rounded-md bg-card text-card-foreground min-h-[24rem]">
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-            >
-              {markdownContent || "*No content yet. Click 'Edit Content' to add your notes.*"}
+          <div className='prose dark:prose-invert lg:prose-xl bg-card text-card-foreground min-h-[24rem] max-w-none rounded-md border p-2'>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {markdownContent ||
+                "*No content yet. Click 'Edit Content' to add your notes.*"}
             </ReactMarkdown>
           </div>
         )}

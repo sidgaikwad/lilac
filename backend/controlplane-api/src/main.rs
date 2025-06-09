@@ -1,5 +1,5 @@
 use axum::{body::Body, extract::{DefaultBodyLimit, Request}, http::HeaderValue, Router};
-use common::{database::Database, s3::S3Wrapper};
+use common::{aws::{S3Wrapper, STSWrapper}, database::Database};
 use controlplane_api::{routes, AppState};
 use dotenv::dotenv;
 use hyper::{
@@ -33,6 +33,8 @@ async fn main() {
 
     let bucket_name = std::env::var("CUSTOMER_ASSETS_BUCKET").expect("CUSTOMER_ASSETS_BUCKET to be set");
     let s3 = S3Wrapper::new_from_default(bucket_name).await;
+    let sts = STSWrapper::new_from_default().await;
+
     let app = Router::new()
         .merge(routes::router())
         // Serve static files from the job_data directory
@@ -56,6 +58,7 @@ async fn main() {
         .with_state(AppState {
             db,
             s3,
+            sts,
         });
 
     // run our app with hyper

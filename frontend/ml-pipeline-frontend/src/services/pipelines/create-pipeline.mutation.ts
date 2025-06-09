@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/types';
 import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface CreatePipelineRequest {
   name: string;
@@ -15,7 +16,16 @@ export interface CreatePipelineResponse {
 async function createPipeline(
   payload: CreatePipelineRequest
 ): Promise<CreatePipelineResponse> {
-  return postHttp('/pipelines', payload);
+  const resp = await postHttp<
+    Sn<CreatePipelineRequest>,
+    Sn<CreatePipelineResponse>
+  >('/pipelines', {
+    name: payload.name,
+    project_id: payload.projectId,
+  });
+  return {
+    id: resp.id,
+  };
 }
 
 export interface UseCreatePipelineProps {
@@ -30,7 +40,7 @@ export function useCreatePipeline(props?: UseCreatePipelineProps) {
     mutationFn: createPipeline,
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.LIST_PIPELINES, variables.projectId]
+        queryKey: [QueryKeys.LIST_PIPELINES, variables.projectId],
       });
 
       queryClient.invalidateQueries({

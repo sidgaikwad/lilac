@@ -18,7 +18,7 @@ interface EmptyCardSectionProps {
 function EmptyCardSection(props: EmptyCardSectionProps) {
   return (
     <Card
-      className="border-input w-full flex-1 basis-full border-dashed text-center"
+      className='border-input w-full flex-1 basis-full border-dashed text-center'
       key={'empty-card-section'}
     >
       <CardHeader>
@@ -29,7 +29,7 @@ function EmptyCardSection(props: EmptyCardSectionProps) {
         <Button
           onClick={props.onClick}
           disabled={props.buttonDisabled}
-          variant="default"
+          variant='default'
         >
           {props.buttonText}
         </Button>

@@ -3,6 +3,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
 import { ApiError, Pipeline } from '@/types';
 import { useEffect } from 'react';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface GetPipelineResponse {
   id: string;
@@ -21,7 +22,22 @@ export interface GetPipelineResponse {
 export async function getPipeline(
   pipelineId: string
 ): Promise<GetPipelineResponse> {
-  return getHttp(`/pipelines/${pipelineId}`);
+  const resp = await getHttp<Sn<GetPipelineResponse>>(
+    `/pipelines/${pipelineId}`
+  );
+  return {
+    id: resp.id,
+    name: resp.name,
+    description: resp.description,
+    projectId: resp.project_id,
+    steps: resp.steps.map((step) => ({
+      stepId: step.step_id,
+      stepDefinitionId: step.step_definition_id,
+      stepParameters: step.step_parameters,
+      stepType: step.step_type,
+    })),
+    stepConnections: resp.step_connections,
+  };
 }
 
 export function getPipelineQuery(pipelineId?: string, enabled: boolean = true) {

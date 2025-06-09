@@ -52,6 +52,7 @@ CREATE TABLE projects (
     project_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     project_name text NOT NULL,
     organization_id uuid NOT NULL REFERENCES organizations(organization_id),
+    aws_integration jsonb,
     created_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
     updated_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
     deleted_at timestamptz
@@ -70,7 +71,7 @@ CREATE TABLE datasets (
     dataset_name text NOT NULL,
     description text,
     project_id uuid NOT NULL REFERENCES projects(project_id),
-    dataset_path text NOT NULL,
+    dataset_source jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamptz NOT NULL default (now() at time zone 'UTC'),
     updated_at timestamptz NOT NULL default (now() at time zone 'UTC'),
     deleted_at timestamptz
@@ -83,70 +84,3 @@ CREATE TRIGGER update_datasets_updated_at
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();
 
--- pipeline tables
-CREATE TABLE pipelines (
-    pipeline_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    pipeline_name text NOT NULL,
-    description text,
-    project_id uuid NOT NULL REFERENCES projects(project_id),
-    created_at timestamptz NOT NULL default (now() at time zone 'UTC'),
-    updated_at timestamptz NOT NULL default (now() at time zone 'UTC'),
-    deleted_at timestamptz
-);
-CREATE INDEX idx_pipelines_project_id ON pipelines(project_id);
-CREATE TRIGGER update_pipelines_updated_at
-    BEFORE UPDATE
-    ON
-        pipelines
-    FOR EACH ROW
-EXECUTE PROCEDURE set_updated_at_now();
-
--- step definitions table
-CREATE TABLE step_definitions (
-    step_definition_id uuid PRIMARY KEY,
-    name text NOT NULL,
-    description text,
-    category text NOT NULL,
-    inputs text[] NOT NULL DEFAULT array[]::text[],
-    outputs text[] NOT NULL DEFAULT array[]::text[],
-    step_type text NOT NULL UNIQUE,
-    schema jsonb NOT NULL DEFAULT '{}'::jsonb
-);
-
--- step tables
-CREATE TABLE steps (
-    step_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    pipeline_id uuid NOT NULL REFERENCES pipelines(pipeline_id),
-    step_definition_id uuid NOT NULL REFERENCES step_definitions(step_definition_id),
-    step_parameters jsonb NOT NULL DEFAULT '{}'::jsonb,
-    created_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
-    updated_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
-    deleted_at timestamptz
-);
-CREATE INDEX idx_steps_pipeline_id ON steps (pipeline_id);
-CREATE TRIGGER update_steps_updated_at
-    BEFORE UPDATE
-    ON
-        steps
-    FOR EACH ROW
-EXECUTE PROCEDURE set_updated_at_now();
-
-CREATE TABLE step_connections (
-    pipeline_id uuid NOT NULL REFERENCES pipelines(pipeline_id),
-    from_step_id uuid NOT NULL REFERENCES steps(step_id),
-    to_step_id uuid NOT NULL REFERENCES steps(step_id),
-    PRIMARY KEY (from_step_id, to_step_id)
-);
-CREATE INDEX idx_step_connections_pipeline_id ON steps (pipeline_id);
-
--- jobs table
-CREATE TABLE pipeline_jobs (
-    job_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    pipeline_id uuid NOT NULL REFERENCES pipelines(pipeline_id),
-    input_dataset_id uuid NOT NULL REFERENCES datasets(dataset_id),
-    status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'failed')),
-    created_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
-    started_at timestamptz,
-    ended_at timestamptz
-);
-CREATE INDEX idx_pipeline_jobs_status ON pipeline_jobs(status);

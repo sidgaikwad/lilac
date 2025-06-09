@@ -4,6 +4,7 @@ import { AuthToken } from '@/types/api/auth';
 import useAuthStore from '@/store/use-auth-store';
 import { ApiError } from '@/types';
 import { postHttp } from '@/lib/fetch';
+import { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 interface LoginRequest {
   email: string;
@@ -11,7 +12,15 @@ interface LoginRequest {
 }
 
 async function login(payload: LoginRequest): Promise<AuthToken> {
-  return postHttp('/auth/login', payload, false);
+  const resp = await postHttp<Sn<LoginRequest>, Sn<AuthToken>>(
+    '/auth/login',
+    payload,
+    false
+  );
+  return {
+    tokenType: resp.token_type,
+    accessToken: resp.access_token,
+  };
 }
 
 export interface UseLoginProps {

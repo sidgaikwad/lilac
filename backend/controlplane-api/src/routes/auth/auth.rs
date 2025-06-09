@@ -9,7 +9,6 @@ use validator::Validate;
 use crate::auth::{claims::Claims, error::AuthError, keys::KEYS};
 
 #[derive(Debug, Deserialize, Validate)]
-#[serde(rename_all = "camelCase")]
 pub struct AuthPayload {
     #[validate(email(message = "Invalid email format"))]
     #[validate(length(min = 1, message = "Email cannot be empty"))]
