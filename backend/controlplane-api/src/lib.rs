@@ -8,10 +8,12 @@ use common::{
 use openidconnect::{
     core::{CoreProviderMetadata},
     reqwest, ClientId, ClientSecret, RedirectUrl,
+    k8s::K8sWrapper,
 };
 
 pub mod auth;
 pub mod routes;
+mod tenants;
 
 #[derive(Clone)]
 pub struct OidcConfig {
@@ -43,6 +45,7 @@ pub struct AppState {
     pub oidc_configs: HashMap<String, OidcConfig>,
     pub oauth2_configs: HashMap<String, Oauth2Config>,
     pub http_client: reqwest::Client,
+    pub k8s: K8sWrapper,
 }
 
 impl FromRef<AppState> for Database {
@@ -66,5 +69,11 @@ impl FromRef<AppState> for STSWrapper {
 impl FromRef<AppState> for HashMap<String, OidcConfig> {
     fn from_ref(app_state: &AppState) -> HashMap<String, OidcConfig> {
         app_state.oidc_configs.clone()
+    }
+}
+
+impl FromRef<AppState> for K8sWrapper {
+    fn from_ref(app_state: &AppState) -> K8sWrapper {
+        app_state.k8s.clone()
     }
 }

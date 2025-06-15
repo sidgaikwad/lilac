@@ -4,6 +4,7 @@ mod datasets;
 mod integrations;
 mod organizations;
 mod projects;
+mod services;
 mod users;
 
 #[derive(Clone, Debug)]

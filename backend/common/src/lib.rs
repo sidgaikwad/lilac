@@ -5,8 +5,11 @@ use axum::{
 };
 use serde_json::json;
 
+use crate::k8s::K8sError;
+
 pub mod aws;
 pub mod database;
+pub mod k8s;
 pub mod model;
 
 #[derive(Debug, thiserror::Error)]
@@ -14,11 +17,14 @@ pub enum ServiceError {
     #[error("parse error: {0}")]
     ParseError(String),
 
-    #[error("serde error: {0}")]
+    #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
 
-    #[error("database error: {0}")]
+    #[error(transparent)]
     DatabaseError(#[from] sqlx::Error),
+
+    #[error(transparent)]
+    K8sError(#[from] K8sError),
 
     #[error("{id} not found")]
     NotFound { id: String },

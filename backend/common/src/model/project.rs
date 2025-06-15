@@ -63,7 +63,7 @@ pub struct Project {
     pub project_name: String,
     pub organization_id: OrganizationId,
     #[sqlx(json(nullable))]
-    pub aws_integration: Option<AWSIntegration>
+    pub aws_integration: Option<AWSIntegration>,
 }
 
 impl Project {

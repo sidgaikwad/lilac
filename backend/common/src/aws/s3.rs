@@ -2,14 +2,18 @@ use std::sync::Arc;
 
 use aws_config::{sts::AssumeRoleProvider, AppName, BehaviorVersion, Region, SdkConfig};
 use aws_sdk_s3::{
-    config::SharedCredentialsProvider, operation::{
+    config::SharedCredentialsProvider,
+    operation::{
         delete_objects::DeleteObjectsError, get_bucket_location::GetBucketLocationError,
         get_object::GetObjectError, list_objects_v2::ListObjectsV2Error,
         put_object::PutObjectError,
-    }, primitives::ByteStream, types::{CommonPrefix, Object, ObjectIdentifier}, Client as S3Client
+    },
+    primitives::ByteStream,
+    types::{CommonPrefix, Object, ObjectIdentifier},
+    Client as S3Client,
 };
 use aws_smithy_types_convert::date_time::DateTimeExt;
-use cached::{SizedCache, proc_macro::cached};
+use cached::{proc_macro::cached, SizedCache};
 use tracing::instrument;
 
 use crate::{

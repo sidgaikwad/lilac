@@ -3,9 +3,10 @@ use axum::{
     Json,
 };
 use common::{
-    aws::STSWrapper, database::Database, model::{
-        integration::AWSIntegration, project::ProjectId
-    }, ServiceError
+    aws::STSWrapper,
+    database::Database,
+    model::{integration::AWSIntegration, project::ProjectId},
+    ServiceError,
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -20,7 +21,10 @@ pub async fn set_aws_integration(
     Path(project_id): Path<ProjectId>,
     Json(request): Json<SetAWSAccessInfoRequest>,
 ) -> Result<Json<SetAWSAccessInfoResponse>, ServiceError> {
-    let SetAWSAccessInfoRequest { role_arn, placeholder_external_id } = request;
+    let SetAWSAccessInfoRequest {
+        role_arn,
+        placeholder_external_id,
+    } = request;
 
     let project = db.get_project(&project_id).await?;
 
@@ -28,10 +32,13 @@ pub async fn set_aws_integration(
     let _credentials = sts.assume_role(&role_arn, &placeholder_external_id).await?;
 
     let aws_integration = AWSIntegration::create(role_arn);
-    db.set_project_aws_integration(&project.project_id, &aws_integration).await?;
+    db.set_project_aws_integration(&project.project_id, &aws_integration)
+        .await?;
 
     // return actual generated external id
-    Ok(Json(SetAWSAccessInfoResponse { external_id: aws_integration.external_id().clone() }))
+    Ok(Json(SetAWSAccessInfoResponse {
+        external_id: aws_integration.external_id().clone(),
+    }))
 }
 
 #[derive(Debug, Deserialize)]

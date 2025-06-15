@@ -1,6 +1,7 @@
 use crate::{
     model::{
         organization::{Organization, OrganizationId},
+        roles::Role,
         user::UserId,
     },
     ServiceError,
@@ -67,35 +68,44 @@ impl Database {
         &self,
         organization_id: &OrganizationId,
         user_id: &UserId,
+        role: Role,
     ) -> Result<(), ServiceError> {
         let _ = sqlx::query!(
             // language=PostgreSQL
             r#"
-                INSERT INTO "organization_memberships" (organization_id, user_id) VALUES ($1, $2)
+                INSERT INTO "organization_memberships" (organization_id, user_id, role) VALUES ($1, $2, $3)
             "#,
             organization_id.inner(),
             user_id.inner(),
+            role.to_string(),
         )
         .execute(&self.pool)
         .await?;
         Ok(())
     }
-    pub async fn is_user_member_of_organization(
+    pub async fn get_user_role(
         &self,
         user_id: &UserId,
         organization_id: &OrganizationId,
-    ) -> Result<bool, ServiceError> {
+    ) -> Result<Role, ServiceError> {
         let result = sqlx::query!(
+
             // language=PostgreSQL
             r#"
-                SELECT EXISTS (SELECT 1 FROM "organization_memberships" WHERE user_id = $1 AND organization_id = $2) AS "exists!"
+                SELECT role FROM "organization_memberships" WHERE user_id = $1 AND organization_id = $2
             "#,
             user_id.inner(),
             organization_id.inner()
         )
+        .map(|r| match r.role.as_str() {
+            "admin" => Ok(Role::Admin),
+            "owner" => Ok(Role::Owner),
+            "member" => Ok(Role::Member),
+            _ => Err(ServiceError::ParseError("invalid role".to_string())),
+        })
         .fetch_one(&self.pool)
         .await?;
-        Ok(result.exists)
+        result
     }
 
     pub async fn delete_organization(

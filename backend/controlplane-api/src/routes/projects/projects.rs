@@ -5,7 +5,10 @@ use axum::{
 use common::{
     database::Database,
     model::{
-        integration::AWSIntegration, organization::OrganizationId, project::{Project, ProjectId}
+        integration::AWSIntegration,
+        organization::OrganizationId,
+        project::{Project, ProjectId},
+        roles::Role,
     },
     ServiceError,
 };
@@ -85,11 +88,13 @@ pub async fn delete_project(
     let project_id = ProjectId::try_from(project_id_str)?;
 
     let project = db.get_project(&project_id).await?;
-    let is_member = db
-        .is_user_member_of_organization(&claims.sub, &project.organization_id)
+    let role = db
+        .get_user_role(&claims.sub, &project.organization_id)
         .await?;
-    if !is_member {
-        return Err(ServiceError::Unauthorized);
+    match role {
+        Role::Owner => (),
+        Role::Admin => (),
+        Role::Member => return Err(ServiceError::Unauthorized),
     }
 
     db.delete_project(&project_id).await?;

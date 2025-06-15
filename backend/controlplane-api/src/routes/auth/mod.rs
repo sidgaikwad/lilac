@@ -46,3 +46,4 @@ pub fn router() -> Router<AppState> {
         .route("/auth/oauth2/{provider}/exchange", post(oauth2::exchange))
         .route("/auth/providers", get(providers))
 }
+

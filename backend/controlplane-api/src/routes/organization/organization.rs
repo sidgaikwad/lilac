@@ -1,19 +1,27 @@
-use axum::{extract::{Path, State}, Json};
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 use common::{
     database::Database,
-    model::organization::{Organization, OrganizationId},
+    k8s::K8sWrapper,
+    model::{
+        organization::{Organization, OrganizationId},
+        roles::Role,
+    },
     ServiceError,
 };
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use validator::Validate;
 
-use crate::auth::claims::Claims;
+use crate::{auth::claims::Claims, tenants::register_tenant};
 
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn create_organization(
     claims: Claims,
     State(db): State<Database>,
+    State(k8s): State<K8sWrapper>,
     Json(request): Json<CreateOrganizationRequest>,
 ) -> Result<Json<CreateOrganizationResponse>, ServiceError> {
     match request.validate() {
@@ -21,11 +29,10 @@ pub async fn create_organization(
         Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
     }
     let organization = Organization::create(request.name);
+    let org_id = organization.organization_id.clone();
 
-    let org_id = db.create_organization(organization).await?;
-
-    let user_id = claims.sub;
-    db.join_organization(&org_id, &user_id).await?;
+    let owner = db.get_user(&claims.sub).await?;
+    register_tenant(db, k8s, organization, owner).await?;
 
     Ok(Json(CreateOrganizationResponse { id: org_id }))
 }
@@ -94,11 +101,11 @@ pub async fn delete_organization(
 ) -> Result<(), ServiceError> {
     let organization_id = OrganizationId::try_from(organization_id_str)?;
 
-    let is_member = db
-        .is_user_member_of_organization(&claims.sub, &organization_id)
-        .await?;
-    if !is_member {
-        return Err(ServiceError::Unauthorized);
+    let role = db.get_user_role(&claims.sub, &organization_id).await?;
+    match role {
+        Role::Owner => (),
+        Role::Admin => return Err(ServiceError::Unauthorized),
+        Role::Member => return Err(ServiceError::Unauthorized),
     }
 
     db.delete_organization(&organization_id).await?;

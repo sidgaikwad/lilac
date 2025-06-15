@@ -4,6 +4,7 @@ mod auth;
 mod datasets;
 mod organization;
 mod projects;
+mod services;
 mod user;
 
 use crate::AppState;
@@ -15,4 +16,5 @@ pub fn router() -> Router<AppState> {
         .merge(auth::router())
         .merge(organization::router())
         .merge(datasets::router())
+        .merge(services::router())
 }

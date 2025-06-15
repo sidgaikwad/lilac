@@ -10,7 +10,8 @@ use common::{
     aws::{S3Wrapper, STSWrapper},
     database::Database,
 };
-use controlplane_api::{routes, AppState, Oauth2Config, OidcConfig};
+use controlplane_api::{routes, AppState, Oauth2Config, OidcConfig, k8s::K8sWrapper};
+use controlplane_api::{routes, AppState};
 use dotenv::dotenv;
 use hyper::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, USER_AGENT},
@@ -25,6 +26,8 @@ use oauth2::{
     AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl,
 };
 use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer};
+use rustls::crypto::ring::default_provider;
+use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer}; // Added ServeDir
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
@@ -46,6 +49,8 @@ async fn main() {
         .pretty()
         .with_env_filter(EnvFilter::from_default_env().add_directive(LevelFilter::INFO.into()))
         .init();
+
+    default_provider().install_default().unwrap();
 
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL to be set");
 
@@ -71,6 +76,7 @@ async fn main() {
         std::env::var("CUSTOMER_ASSETS_BUCKET").expect("CUSTOMER_ASSETS_BUCKET to be set");
     let s3 = S3Wrapper::new_from_default(bucket_name).await;
     let sts = STSWrapper::new_from_default().await;
+    let k8s = K8sWrapper::new(String::new()).await;
 
     let mut headers = hyper::HeaderMap::new();
     headers.insert(
@@ -165,10 +171,6 @@ async fn main() {
 
     let app = Router::new()
         .merge(routes::router())
-        .nest_service(
-            "/static/job_outputs",
-            ServeDir::new("/usr/local/app/data-pipeline/job_data"),
-        )
         .layer(
             CorsLayer::new()
                 .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
@@ -196,6 +198,7 @@ async fn main() {
             oidc_configs,
             oauth2_configs,
             http_client,
+            k8s
         });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

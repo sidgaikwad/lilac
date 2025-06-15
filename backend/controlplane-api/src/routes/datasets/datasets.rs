@@ -3,10 +3,13 @@ use axum::{
     Json,
 };
 use common::{
-    aws::{get_s3_client_with_role, S3Wrapper}, database::Database, model::{
+    aws::{get_s3_client_with_role, S3Wrapper},
+    database::Database,
+    model::{
         dataset::{Dataset, DatasetId, DatasetSource},
         project::ProjectId,
-    }, ServiceError
+    },
+    ServiceError,
 };
 
 use serde::{Deserialize, Serialize};
@@ -57,11 +60,16 @@ pub async fn create_dataset(
     let _project = db.get_project(&project_id).await?;
 
     let dataset_source = match request.source {
-        DatasetSourceRequest::Unknown => return Err(ServiceError::BadRequest("unknown source".into())),
+        DatasetSourceRequest::Unknown => {
+            return Err(ServiceError::BadRequest("unknown source".into()))
+        }
         DatasetSourceRequest::S3 { bucket_name } => {
             let region = s3.get_bucket_location(&bucket_name).await?;
-            DatasetSource::S3 { bucket_name: bucket_name, region: region }
-        },
+            DatasetSource::S3 {
+                bucket_name: bucket_name,
+                region: region,
+            }
+        }
     };
 
     let dataset = Dataset::create(
@@ -74,7 +82,6 @@ pub async fn create_dataset(
     Ok(Json(CreateDatasetResponse { id }))
 }
 
-
 #[derive(Clone, Debug, Deserialize, Default)]
 #[serde(tag = "source_type")]
 pub enum DatasetSourceRequest {
@@ -82,7 +89,7 @@ pub enum DatasetSourceRequest {
     Unknown,
     S3 {
         bucket_name: String,
-    }
+    },
 }
 
 #[derive(Deserialize, Debug)]
@@ -147,9 +154,19 @@ pub async fn list_dataset_s3_folders(
     let dataset = db.get_dataset(&dataset_id).await?;
     let project = db.get_project(&dataset.project_id).await?;
     match dataset.dataset_source {
-        DatasetSource::S3 { bucket_name, region } => {
-            let aws_integration = project.aws_integration.ok_or(ServiceError::BadRequest("AWS integration not configured".into()))?;
-            let s3_client = get_s3_client_with_role(&region, aws_integration.role_arn(), aws_integration.external_id()).await;
+        DatasetSource::S3 {
+            bucket_name,
+            region,
+        } => {
+            let aws_integration = project.aws_integration.ok_or(ServiceError::BadRequest(
+                "AWS integration not configured".into(),
+            ))?;
+            let s3_client = get_s3_client_with_role(
+                &region,
+                aws_integration.role_arn(),
+                aws_integration.external_id(),
+            )
+            .await;
             let start_key_ref = request.start_after_key.as_ref().map(|v| v.as_str());
             let (prefixes, objects) = s3
                 .list_dataset_prefixes(
@@ -161,18 +178,8 @@ pub async fn list_dataset_s3_folders(
                 .await?;
 
             Ok(Json(ListS3ObjectsResponse {
-                prefixes: prefixes
-                    .into_iter()
-                    .filter_map(|v| {
-                        v.prefix
-                    })
-                    .collect(),
-                objects: objects
-                    .into_iter()
-                    .filter_map(|v| {
-                        v.key
-                    })
-                    .collect(),
+                prefixes: prefixes.into_iter().filter_map(|v| v.prefix).collect(),
+                objects: objects.into_iter().filter_map(|v| v.key).collect(),
             }))
         }
         _ => {
