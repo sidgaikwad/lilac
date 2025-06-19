@@ -1,14 +1,33 @@
+use std::collections::HashMap;
+
 use axum::extract::FromRef;
-use common::{aws::{S3Wrapper, STSWrapper}, database::Database};
+use common::{
+    aws::{S3Wrapper, STSWrapper},
+    database::Database,
+};
+use openidconnect::{
+    core::{CoreProviderMetadata},
+    reqwest, ClientId, ClientSecret, RedirectUrl,
+};
 
 pub mod auth;
 pub mod routes;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
+pub struct OidcConfig {
+    pub provider_metadata: CoreProviderMetadata,
+    pub client_id: ClientId,
+    pub client_secret: Option<ClientSecret>,
+    pub redirect_uri: RedirectUrl,
+}
+
+#[derive(Clone)]
 pub struct AppState {
     pub db: Database,
     pub s3: S3Wrapper,
     pub sts: STSWrapper,
+    pub oidc_configs: HashMap<String, OidcConfig>,
+    pub http_client: reqwest::Client,
 }
 
 impl FromRef<AppState> for Database {
@@ -26,5 +45,11 @@ impl FromRef<AppState> for S3Wrapper {
 impl FromRef<AppState> for STSWrapper {
     fn from_ref(app_state: &AppState) -> STSWrapper {
         app_state.sts.clone()
+    }
+}
+
+impl FromRef<AppState> for HashMap<String, OidcConfig> {
+    fn from_ref(app_state: &AppState) -> HashMap<String, OidcConfig> {
+        app_state.oidc_configs.clone()
     }
 }

@@ -88,3 +88,16 @@ impl User {
         }
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type, strum::Display)]
+#[sqlx(type_name = "auth_provider")]
+#[sqlx(rename_all = "lowercase")]
+#[strum(serialize_all = "lowercase")]
+pub enum AuthProvider {
+    Email,
+    Google,
+    Github,
+    Gitlab,
+    Ldap,
+    Oidc,
+}
