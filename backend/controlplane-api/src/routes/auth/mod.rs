@@ -9,7 +9,7 @@ use auth::authorize;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/auth/login", post(authorize))
-        .route("/auth/oidc/login/:provider", get(oidc::login))
+        .route("/auth/oidc/login/{provider}", get(oidc::login))
         .route("/auth/oidc/callback", get(oidc::callback))
         .route("/auth/oidc/providers", get(oidc::providers))
 }
