@@ -8,7 +8,8 @@ import { Toaster } from '@/components/ui/toast';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSignUp } from '@/services';
+import { useSignUp, useGetOidcProviders } from '@/services';
+import OidcLoginButton from '../components/oidc-login-button';
 
 const registerSchema = z
   .object({
@@ -50,6 +51,8 @@ function SignUpPage() {
   const onSubmit = (data: RegisterFormInputs) => {
     signUp({ email: data.email, password: data.password });
   };
+
+  const { data: providers, isLoading: providersLoading } = useGetOidcProviders();
 
   return (
     <div className='bg-background flex h-screen items-center justify-center'>
@@ -121,6 +124,27 @@ function SignUpPage() {
             </span>
           </div>
         </form>
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {providersLoading ? (
+            <div className="flex justify-center">
+              <Spinner />
+            </div>
+          ) : (
+            providers?.map((provider) => (
+              <OidcLoginButton key={provider} provider={provider} />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
