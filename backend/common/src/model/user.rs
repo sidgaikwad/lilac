@@ -61,7 +61,9 @@ pub struct User {
     pub user_id: UserId,
     pub email: String,
     pub email_verified: bool,
-    pub password_hash: SecretString,
+    pub password_hash: Option<SecretString>,
+    pub oidc_provider: Option<String>,
+    pub oidc_provider_id: Option<String>,
 }
 
 impl User {
@@ -69,22 +71,39 @@ impl User {
         user_id: UserId,
         email: String,
         email_verified: bool,
-        password_hash: String,
+        password_hash: Option<String>,
+        oidc_provider: Option<String>,
+        oidc_provider_id: Option<String>,
     ) -> Self {
         Self {
             user_id,
             email,
             email_verified,
-            password_hash: SecretString::from(password_hash),
+            password_hash: password_hash.map(SecretString::from),
+            oidc_provider,
+            oidc_provider_id,
         }
     }
 
-    pub fn create(email: String, password: SecretString) -> Self {
+    pub fn create_password_user(email: String, password: SecretString) -> Self {
         Self {
             user_id: UserId::generate(),
             email,
             email_verified: false,
-            password_hash: SecretString::from(generate_hash(password.expose_secret())),
+            password_hash: Some(SecretString::from(generate_hash(password.expose_secret()))),
+            oidc_provider: None,
+            oidc_provider_id: None,
+        }
+    }
+
+    pub fn create_oidc_user(email: String, oidc_provider: String, oidc_provider_id: String) -> Self {
+        Self {
+            user_id: UserId::generate(),
+            email,
+            email_verified: true,
+            password_hash: None,
+            oidc_provider: Some(oidc_provider),
+            oidc_provider_id: Some(oidc_provider_id),
         }
     }
 }

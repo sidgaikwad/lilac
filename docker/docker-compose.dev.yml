@@ -5,11 +5,12 @@ services:
       dockerfile: ./docker/controlplane/Dockerfile.alpine
     command: /usr/local/app/controlplane-api
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     env_file:
       - ../.env
     environment:
-      - DATABASE_URL=postgres://postgres:12345@db/database
+      - DATABASE_URL=postgres://postgres:password@db/database
     ports:
       - '3000:3000'
     volumes:
@@ -22,14 +23,20 @@ services:
     restart: always
     environment:
       PGDATA: /var/lib/postgresql/data
-    env_file:
-      - ../.env
+      POSTGRES_DB: database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - '5432:5432'
     networks:
       - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata: {}

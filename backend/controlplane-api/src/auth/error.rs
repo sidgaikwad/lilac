@@ -1,6 +1,7 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
+use common::ServiceError;
 use serde_json::json;
 
 #[derive(Debug, thiserror::Error)]
@@ -67,5 +68,14 @@ impl IntoResponse for AuthError {
             "error": error_message,
         }));
         (status, body).into_response()
+    }
+}
+
+impl From<ServiceError> for AuthError {
+    fn from(err: ServiceError) -> Self {
+        match err {
+            ServiceError::DatabaseError(_) => AuthError::WrongCredentials,
+            _ => AuthError::WrongCredentials,
+        }
     }
 }

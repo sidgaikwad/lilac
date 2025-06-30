@@ -1,4 +1,4 @@
-use secrecy::ExposeSecret;
+use secrecy::{ExposeSecret, SecretString};
 
 use crate::{
     model::user::{User, UserId},
@@ -10,43 +10,59 @@ use super::Database;
 impl Database {
     pub async fn get_user(&self, user_id: &UserId) -> Result<User, ServiceError> {
         let id = user_id.inner();
-        let user = sqlx::query_as!(
-            User,
+        let user_record = sqlx::query!(
             // language=PostgreSQL
             r#"
-            SELECT user_id, email, email_verified, password_hash FROM "users" WHERE user_id = $1
+            SELECT user_id, email, email_verified, password_hash, oidc_provider, oidc_provider_id FROM "users" WHERE user_id = $1
         "#,
             id
         )
         .fetch_one(&self.pool)
         .await?;
-        Ok(user)
+
+        Ok(User {
+            user_id: UserId::new(user_record.user_id),
+            email: user_record.email,
+            email_verified: user_record.email_verified,
+            password_hash: user_record.password_hash.map(SecretString::from),
+            oidc_provider: user_record.oidc_provider,
+            oidc_provider_id: user_record.oidc_provider_id,
+        })
     }
 
     pub async fn get_user_by_email(&self, email: &String) -> Result<User, ServiceError> {
-        let user = sqlx::query_as!(
-            User,
+        let user_record = sqlx::query!(
             // language=PostgreSQL
             r#"
-            SELECT user_id, email, email_verified, password_hash FROM "users" WHERE email = $1
+            SELECT user_id, email, email_verified, password_hash, oidc_provider, oidc_provider_id FROM "users" WHERE email = $1
         "#,
             email
         )
         .fetch_one(&self.pool)
         .await?;
-        Ok(user)
+
+        Ok(User {
+            user_id: UserId::new(user_record.user_id),
+            email: user_record.email,
+            email_verified: user_record.email_verified,
+            password_hash: user_record.password_hash.map(SecretString::from),
+            oidc_provider: user_record.oidc_provider,
+            oidc_provider_id: user_record.oidc_provider_id,
+        })
     }
 
     pub async fn create_user(&self, user: User) -> Result<UserId, ServiceError> {
         let user_id = sqlx::query!(
         // language=PostgreSQL
         r#"
-            INSERT INTO "users" (user_id, email, email_verified, password_hash) VALUES ($1, $2, $3, $4) RETURNING user_id
+            INSERT INTO "users" (user_id, email, email_verified, password_hash, oidc_provider, oidc_provider_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING user_id
         "#,
         user.user_id.inner(),
         &user.email,
         &user.email_verified,
-        &user.password_hash.expose_secret(),
+        user.password_hash.as_ref().map(|s| s.expose_secret()),
+        user.oidc_provider,
+        user.oidc_provider_id,
     )
     .map(|row| UserId::new(row.user_id))
     .fetch_one(&self.pool)
@@ -65,19 +81,5 @@ impl Database {
         .execute(&self.pool)
         .await?;
         Ok(())
-    }
-
-    pub async fn create_oidc_user(&self, email: &String) -> Result<User, ServiceError> {
-        let user = sqlx::query_as!(
-            User,
-            // language=PostgreSQL
-            r#"
-            INSERT INTO "users" (email, email_verified, password_hash) VALUES ($1, true, 'oidc_user') RETURNING user_id, email, email_verified, password_hash
-        "#,
-            email
-        )
-        .fetch_one(&self.pool)
-        .await?;
-        Ok(user)
     }
 }

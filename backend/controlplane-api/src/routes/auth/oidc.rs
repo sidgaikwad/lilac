@@ -12,6 +12,7 @@ use openidconnect::{
 use serde::{Deserialize, Serialize};
 
 use crate::{auth::error::AuthError, AppState};
+use common::model::user::User;
 use openidconnect::core::CoreClient;
 pub async fn login(
     State(app_state): State<AppState>,
@@ -137,17 +138,23 @@ pub async fn callback(
     // }
 
     let user_email = claims.email().ok_or(AuthError::MissingEmail)?.to_string();
+    let oidc_provider_id = claims.subject().to_string();
 
     let user = match app_state.db.get_user_by_email(&user_email).await {
         Ok(user) => user,
         Err(_) => {
             // User doesn't exist, create a new one
-            let new_user = app_state
+            let new_user = User::create_oidc_user(
+                user_email.clone(),
+                oidc_cookie.provider.clone(),
+                oidc_provider_id,
+            );
+            app_state
                 .db
-                .create_oidc_user(&user_email)
+                .create_user(new_user)
                 .await
                 .map_err(|_| AuthError::UserCreation)?;
-            new_user
+            app_state.db.get_user_by_email(&user_email).await?
         }
     };
 

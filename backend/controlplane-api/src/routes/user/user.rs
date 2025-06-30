@@ -19,7 +19,7 @@ pub async fn create_user(
         Ok(_) => (),
         Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
     }
-    let user = User::create(request.email, request.password.into());
+    let user = User::create_password_user(request.email, request.password.into());
 
     let user_id = db.create_user(user).await?;
 

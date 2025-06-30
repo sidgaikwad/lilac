@@ -12,7 +12,9 @@ CREATE TABLE users (
     user_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     email text NOT NULL UNIQUE,
     email_verified boolean NOT NULL,
-    password_hash text NOT NULL,
+    password_hash text,
+    oidc_provider TEXT,
+    oidc_provider_id TEXT,
     created_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
     updated_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
     deleted_at timestamptz
@@ -84,3 +86,11 @@ CREATE TRIGGER update_datasets_updated_at
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();
 
+CREATE TYPE auth_provider AS ENUM (
+    'email',
+    'google',
+    'github',
+    'gitlab',
+    'ldap',
+    'oidc'
+);
