@@ -2,7 +2,6 @@ import { generatePath, useLocation, useParams } from 'react-router-dom';
 import {
   Settings,
   Home,
-  PanelsTopLeft,
   HardDrive,
   LayoutDashboard,
 } from 'lucide-react'; // Added LayoutDashboard
@@ -32,9 +31,6 @@ export default function Sidebar() {
   const paths = useMemo(() => {
     return {
       [Routes.PROJECT_DETAILS]: generatePath(Routes.PROJECT_DETAILS, {
-        projectId: projectId!,
-      }),
-      [Routes.PROJECT_PIPELINES]: generatePath(Routes.PROJECT_PIPELINES, {
         projectId: projectId!,
       }),
       [Routes.PROJECT_DATASETS]: generatePath(Routes.PROJECT_DATASETS, {
@@ -83,19 +79,6 @@ export default function Sidebar() {
                   <Link to={paths[Routes.PROJECT_DETAILS]}>
                     <LayoutDashboard /> {/* Changed Icon */}
                     <span>Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={
-                    location.pathname === paths[Routes.PROJECT_PIPELINES]
-                  }
-                >
-                  <Link to={paths[Routes.PROJECT_PIPELINES]}>
-                    <PanelsTopLeft />
-                    <span>Pipelines</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

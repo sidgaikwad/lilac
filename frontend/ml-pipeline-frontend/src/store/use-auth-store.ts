@@ -1,23 +1,23 @@
-import { createWithEqualityFn } from 'zustand/traditional';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AuthState {
-  token: string | undefined;
-  login: (token: string) => void;
-  logout: () => void;
+  token: string | null;
+  setToken: (token: string) => void;
+  clearToken: () => void;
 }
 
-const useAuthStore = createWithEqualityFn<AuthState>((set) => ({
-  token: localStorage.getItem('token') || undefined,
-
-  login: (token) => {
-    localStorage.setItem('token', token);
-    set({ token });
-  },
-
-  logout: () => {
-    localStorage.removeItem('token');
-    set({ token: undefined });
-  },
-}));
+const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      token: null,
+      setToken: (token) => set({ token }),
+      clearToken: () => set({ token: null }),
+    }),
+    {
+      name: 'auth-storage',
+    }
+  )
+);
 
 export default useAuthStore;

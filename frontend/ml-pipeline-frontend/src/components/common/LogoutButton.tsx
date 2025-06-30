@@ -14,7 +14,7 @@ export function LogoutButton({
   onClick: parentOnClick,
   ...restProps
 }: LogoutButtonProps) {
-  const logoutAction = useAuthStore((state) => state.logout);
+  const logoutAction = useAuthStore((state) => state.clearToken);
   const navigate = useNavigate();
 
   const handleLogoutClick = (event: React.MouseEvent<HTMLButtonElement>) => {

@@ -1,22 +1,24 @@
-import { BASE_URL } from '@/services';
+import useAuthStore from '@/store/use-auth-store';
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 export async function postHttp<Req, Resp>(
   path: string,
-  request: Req,
-  withAuth: boolean = true
+  request: Req
 ): Promise<Resp> {
   if (path[0] !== '/') {
     path = `/${path}`;
   }
-  const authHeader: HeadersInit = withAuth
-    ? { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    : {};
+  const token = useAuthStore.getState().token;
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   const resp = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeader,
-    },
+    headers,
     body: JSON.stringify(request),
   });
   if (!resp.ok) {
@@ -33,13 +35,11 @@ export async function postHttp<Req, Resp>(
 
 export async function getHttp<Resp>(
   path: string,
-  params?: Record<string, string>,
-  withAuth?: boolean
+  params?: Record<string, string>
 ): Promise<Resp>;
 export async function getHttp<Req extends Record<string, string>, Resp>(
   path: string,
-  params?: Req,
-  withAuth: boolean = true
+  params?: Req
 ): Promise<Resp> {
   if (path[0] !== '/') {
     path = `/${path}`;
@@ -48,12 +48,14 @@ export async function getHttp<Req extends Record<string, string>, Resp>(
   Object.entries(params ?? {}).forEach(([key, value]) =>
     searchParams.append(key, value)
   );
-  const authHeader: HeadersInit = withAuth
-    ? { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    : {};
+  const token = useAuthStore.getState().token;
+  const headers: HeadersInit = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   const resp = await fetch(`${BASE_URL}${path}?${searchParams.toString()}`, {
     method: 'GET',
-    headers: authHeader,
+    headers,
   });
   if (!resp.ok) {
     return Promise.reject({
@@ -64,21 +66,18 @@ export async function getHttp<Req extends Record<string, string>, Resp>(
   return await resp.json();
 }
 
-export async function deleteHttp<Resp = void>(
-  path: string,
-  withAuth: boolean = true
-): Promise<Resp> {
+export async function deleteHttp<Resp = void>(path: string): Promise<Resp> {
   if (path[0] !== '/') {
     path = `/${path}`;
   }
-  const authHeader: HeadersInit = withAuth
-    ? { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    : {};
+  const token = useAuthStore.getState().token;
+  const headers: HeadersInit = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
   const resp = await fetch(`${BASE_URL}${path}`, {
     method: 'DELETE',
-    headers: {
-      ...authHeader,
-    },
+    headers,
   });
 
   if (!resp.ok) {

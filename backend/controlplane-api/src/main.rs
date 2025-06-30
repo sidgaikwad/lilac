@@ -63,6 +63,9 @@ async fn main() {
     )
     .expect("Invalid redirect URL");
 
+    let frontend_redirect_url = std::env::var("FRONTEND_REDIRECT_URL")
+        .unwrap_or_else(|_| "http://localhost:5173/auth/callback".to_string());
+
     for provider_name in supported_providers.iter() {
         let client_id_var = format!("{}_CLIENT_ID", provider_name.to_uppercase());
         let client_secret_var = format!("{}_CLIENT_SECRET", provider_name.to_uppercase());
@@ -85,6 +88,7 @@ async fn main() {
                     client_id: ClientId::new(client_id),
                     client_secret: Some(ClientSecret::new(client_secret)),
                     redirect_uri: redirect_url.clone(),
+                    frontend_redirect_url: frontend_redirect_url.clone(),
                 },
             );
             tracing::info!("Successfully configured OIDC provider: {}", provider_name);

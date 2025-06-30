@@ -21,7 +21,7 @@ Ready to get started? Here’s how to kick things off:
 
 1.  **Upload Your Data**: The journey begins with your data. Navigate to the **Datasets** section (you'll find it in the sidebar to your left) to upload your first dataset. This will be the foundation for your project.
 
-2.  **Build Your Workflow**: Once your data is in, head over to the **Pipelines** section. Here, you can design and create a pipeline – a series of steps to process, transform, and analyze your dataset.
+2.  **Build Your Workflow**: Once your data is in, you can begin to process, transform, and analyze your dataset.
 
 Let's build something great!
 

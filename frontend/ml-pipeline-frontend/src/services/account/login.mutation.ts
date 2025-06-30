@@ -14,8 +14,7 @@ interface LoginRequest {
 async function login(payload: LoginRequest): Promise<AuthToken> {
   const resp = await postHttp<Sn<LoginRequest>, Sn<AuthToken>>(
     '/auth/login',
-    payload,
-    false
+    payload
   );
   return {
     tokenType: resp.token_type,
@@ -29,13 +28,13 @@ export interface UseLoginProps {
 }
 
 export function useLogin(props: UseLoginProps) {
-  const { login: loginAuthStore } = useAuthStore();
+  const { setToken } = useAuthStore();
 
   const mutation = useMutation({
     mutationKey: [QueryKeys.LOGIN],
-    mutationFn: login, // Use the mock function
+    mutationFn: login,
     onSuccess: (data) => {
-      loginAuthStore(data.accessToken);
+      setToken(data.accessToken);
 
       if (props.onSuccess) {
         props.onSuccess(data);

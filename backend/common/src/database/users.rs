@@ -66,4 +66,18 @@ impl Database {
         .await?;
         Ok(())
     }
+
+    pub async fn create_oidc_user(&self, email: &String) -> Result<User, ServiceError> {
+        let user = sqlx::query_as!(
+            User,
+            // language=PostgreSQL
+            r#"
+            INSERT INTO "users" (email, email_verified, password_hash) VALUES ($1, true, 'oidc_user') RETURNING user_id, email, email_verified, password_hash
+        "#,
+            email
+        )
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(user)
+    }
 }

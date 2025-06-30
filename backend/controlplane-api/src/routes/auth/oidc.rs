@@ -6,8 +6,8 @@ use axum::{
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use openidconnect::{
     core::{CoreResponseType},
-    AccessTokenHash, AuthenticationFlow, AuthorizationCode, CsrfToken, Nonce,
-    OAuth2TokenResponse, PkceCodeChallenge, Scope, TokenResponse,
+    AuthenticationFlow, AuthorizationCode, CsrfToken, Nonce,
+    PkceCodeChallenge, Scope, TokenResponse,
 };
 use serde::{Deserialize, Serialize};
 
@@ -136,14 +136,36 @@ pub async fn callback(
     //     }
     // }
 
-    tracing::info!(
-        "User {} with e-mail address {} has authenticated successfully",
-        claims.subject().as_str(),
-        claims.email().map(|email| email.as_str()).unwrap_or("<not provided>"),
-    );
+    let user_email = claims.email().ok_or(AuthError::MissingEmail)?.to_string();
 
-    // redirect to the frontend
-    Ok(Redirect::to("http://localhost:5173"))
+    let user = match app_state.db.get_user_by_email(&user_email).await {
+        Ok(user) => user,
+        Err(_) => {
+            // User doesn't exist, create a new one
+            let new_user = app_state
+                .db
+                .create_oidc_user(&user_email)
+                .await
+                .map_err(|_| AuthError::UserCreation)?;
+            new_user
+        }
+    };
+
+    let claims = crate::auth::claims::Claims::create(user.user_id);
+    let token = jsonwebtoken::encode(&jsonwebtoken::Header::default(), &claims, &crate::auth::keys::KEYS.encoding)
+        .map_err(|_| AuthError::TokenCreation)?;
+
+    let frontend_redirect_url = &app_state
+        .oidc_configs
+        .get(&oidc_cookie.provider)
+        .ok_or(AuthError::ProviderNotFound)?
+        .frontend_redirect_url;
+
+    let mut url = url::Url::parse(frontend_redirect_url).map_err(|_| AuthError::InvalidRedirectUri)?;
+    url.query_pairs_mut()
+        .append_pair("token", &token);
+
+    Ok(Redirect::to(url.as_str()))
 }
 
 #[derive(Debug, Deserialize)]

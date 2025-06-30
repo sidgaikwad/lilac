@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,8 +9,9 @@ import { Toaster } from '@/components/ui/toast';
 import { Spinner } from '@/components/ui/spinner';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useLogin } from '@/services';
+import { useLogin, useGetOidcProviders } from '@/services';
 import useAuthStore from '@/store/use-auth-store';
+import OidcLoginButton from '../components/oidc-login-button';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -20,11 +22,16 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 
 function LoginPage() {
   const navigate = useNavigate();
-  // Get auth store actions
-  const login = useAuthStore((state) => state.login);
+  const { token, setToken } = useAuthStore();
+
+  useEffect(() => {
+    if (token) {
+      navigate('/organizations');
+    }
+  }, [token, navigate]);
   const { mutate: loginUser, isPending } = useLogin({
     onSuccess: (token) => {
-      login(token.accessToken);
+      setToken(token.accessToken);
       navigate('/');
     },
     onError: (error) => {
@@ -46,6 +53,8 @@ function LoginPage() {
   const onSubmit = (data: LoginFormInputs) => {
     loginUser({ email: data.email, password: data.password });
   };
+
+  const { data: providers, isLoading: providersLoading } = useGetOidcProviders();
 
   return (
     <div className='bg-background flex h-screen items-center justify-center'>
@@ -105,6 +114,17 @@ function LoginPage() {
             </span>
           </div>
         </form>
+        <div className="mt-4 space-y-2">
+          {providersLoading ? (
+            <div className="flex justify-center">
+              <Spinner />
+            </div>
+          ) : (
+            providers?.map((provider) => (
+              <OidcLoginButton key={provider} provider={provider} />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

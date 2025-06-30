@@ -8,14 +8,12 @@ import {
 } from './components/layout';
 import ProjectsListPage from './features/projects/pages/projects-list-page';
 import ProjectDashboardPage from './features/projects/pages/project-dashboard-page';
-import PipelinesOverviewPage from './features/pipelines/pages/pipelines-overview-page';
-import PipelineEditorPage from './features/pipelines/pages/pipeline-editor-page';
 import DataSetsPage from './features/datasets/pages/datasets-page';
 import DataSetDetailPage from './features/datasets/pages/dataset-details-page';
 import ProtectedRoute from './components/router/protected-route';
 import LoginPage from './features/account/pages/login-page';
 import SignUpPage from './features/account/pages/sign-up-page';
-import OidcLoginPage from './features/account/pages/oidc-login-page';
+import OidcCallbackPage from './features/account/pages/oidc-callback-page';
 import ErrorBoundary from './error-boundary';
 import OrganizationSettingsPage from './features/organizations/pages/organization-settings-page';
 import AccountSettingsPage from './features/account/pages/account-settings-page';
@@ -34,8 +32,8 @@ export const router = createBrowserRouter([
         element: <SignUpPage />,
       },
       {
-        path: '/oidc-login',
-        element: <OidcLoginPage />,
+        path: '/auth/callback',
+        element: <OidcCallbackPage />,
       },
       {
         element: <ProtectedRoute />,
@@ -76,14 +74,6 @@ export const router = createBrowserRouter([
               {
                 path: Routes.PROJECT_DETAILS,
                 element: <ProjectDashboardPage />,
-              },
-              {
-                path: Routes.PROJECT_PIPELINES,
-                element: <PipelinesOverviewPage />,
-              },
-              {
-                path: Routes.PROJECT_PIPELINE_DETAILS,
-                element: <PipelineEditorPage />,
               },
               {
                 path: Routes.PROJECT_DATASETS,

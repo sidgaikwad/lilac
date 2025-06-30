@@ -19,6 +19,7 @@ pub struct OidcConfig {
     pub client_id: ClientId,
     pub client_secret: Option<ClientSecret>,
     pub redirect_uri: RedirectUrl,
+    pub frontend_redirect_url: String,
 }
 
 #[derive(Clone)]

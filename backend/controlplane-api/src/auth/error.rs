@@ -33,6 +33,12 @@ pub enum AuthError {
     InvalidAccessToken,
     #[error("Failed to get user info")]
     UserInfoFailed,
+    #[error("Missing email in OIDC claims")]
+    MissingEmail,
+    #[error("User creation failed")]
+    UserCreation,
+    #[error("Invalid redirect URI")]
+    InvalidRedirectUri,
 }
 
 impl IntoResponse for AuthError {
@@ -52,6 +58,9 @@ impl IntoResponse for AuthError {
             AuthError::ClaimsVerificationFailed => StatusCode::INTERNAL_SERVER_ERROR,
             AuthError::InvalidAccessToken => StatusCode::INTERNAL_SERVER_ERROR,
             AuthError::UserInfoFailed => StatusCode::INTERNAL_SERVER_ERROR,
+            AuthError::MissingEmail => StatusCode::INTERNAL_SERVER_ERROR,
+            AuthError::UserCreation => StatusCode::INTERNAL_SERVER_ERROR,
+            AuthError::InvalidRedirectUri => StatusCode::INTERNAL_SERVER_ERROR,
         };
         let error_message = self.to_string();
         let body = Json(json!({
