@@ -73,7 +73,10 @@ function OrganizationSettingsPage() {
             <CardDescription>Update organization details.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div key={organization.organizationId} className='max-w-sm space-y-2'>
+            <div
+              key={organization.organizationId}
+              className='max-w-sm space-y-2'
+            >
               <Label htmlFor='orgName'>Name</Label>
               <Input
                 id='orgName'

@@ -5,14 +5,12 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use common::model::user::{AuthProvider, User};
 use openidconnect::{
     core::{CoreClient, CoreResponseType},
     AuthenticationFlow, AuthorizationCode, CsrfToken, Nonce, PkceCodeChallenge, PkceCodeVerifier,
     TokenResponse,
 };
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use tower_sessions::Session;
 
 #[derive(Debug, Serialize)]
@@ -143,7 +141,7 @@ pub async fn exchange(
 
     let access_token = sso::generate_jwt(user.user_id)?;
 
-    session.clear();
+    session.clear().await;
 
     Ok(Json(ExchangeResponse { access_token }))
 }

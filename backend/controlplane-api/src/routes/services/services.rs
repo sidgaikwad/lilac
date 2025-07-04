@@ -181,8 +181,6 @@ impl From<Vec<Service>> for ListServicesResponse {
     }
 }
 
-
-
 #[instrument(level = "info", skip(db, k8s), ret, err)]
 pub async fn delete_service(
     State(db): State<Database>,
@@ -191,7 +189,8 @@ pub async fn delete_service(
 ) -> Result<(), ServiceError> {
     let service = db.get_service(&service_id).await?;
 
-    k8s.helm_uninstall(&service.organization_id.to_string(), &service.service_name).await?;
+    k8s.helm_uninstall(&service.organization_id.to_string(), &service.service_name)
+        .await?;
     db.delete_service(&service_id).await?;
     Ok(())
 }

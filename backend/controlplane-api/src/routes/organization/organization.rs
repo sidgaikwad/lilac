@@ -34,7 +34,9 @@ pub async fn create_organization(
     let owner = db.get_user(&claims.sub).await?;
     register_tenant(db, k8s, organization, owner).await?;
 
-    Ok(Json(CreateOrganizationResponse { organization_id: org_id }))
+    Ok(Json(CreateOrganizationResponse {
+        organization_id: org_id,
+    }))
 }
 
 #[derive(Debug, Deserialize, Validate)]

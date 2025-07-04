@@ -37,7 +37,10 @@ export default function ProjectSelectionDropdown() {
     useListOrganizations();
 
   const selectedOrgObject = React.useMemo(
-    () => organizations?.find((org) => org.organizationId === selectedOrganizationId),
+    () =>
+      organizations?.find(
+        (org) => org.organizationId === selectedOrganizationId
+      ),
     [organizations, selectedOrganizationId]
   );
 

@@ -4,7 +4,6 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use common::model::user::User;
 use oauth2::{
     basic::BasicClient, AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope,
     TokenResponse,
@@ -126,12 +125,11 @@ pub async fn exchange(
         .ok_or(AuthError::MissingIdToken)?
         .to_string();
 
-    let user =
-        sso::get_or_create_sso_user(&app_state, user_email, provider, provider_id).await?;
+    let user = sso::get_or_create_sso_user(&app_state, user_email, provider, provider_id).await?;
 
     let access_token = sso::generate_jwt(user.user_id)?;
 
-    session.clear();
+    session.clear().await;
 
     Ok(Json(ExchangeResponse { access_token }))
 }

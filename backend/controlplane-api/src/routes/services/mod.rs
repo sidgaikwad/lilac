@@ -12,5 +12,8 @@ pub fn router() -> Router<AppState> {
             "/organizations/{organization_id}/services",
             post(start_service).get(list_services),
         )
-        .route("/services/{service_id}", get(get_service).delete(delete_service))
+        .route(
+            "/services/{service_id}",
+            get(get_service).delete(delete_service),
+        )
 }

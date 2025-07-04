@@ -52,7 +52,8 @@ function SignUpPage() {
     signUp({ email: data.email, password: data.password });
   };
 
-  const { data: providers, isLoading: providersLoading } = useGetAuthProviders();
+  const { data: providers, isLoading: providersLoading } =
+    useGetAuthProviders();
 
   return (
     <div className='bg-background flex h-screen items-center justify-center'>
@@ -124,19 +125,17 @@ function SignUpPage() {
             </span>
           </div>
         </form>
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
+        <div className='relative my-4'>
+          <div className='absolute inset-0 flex items-center'>
+            <span className='w-full border-t' />
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
-              or
-            </span>
+          <div className='relative flex justify-center text-xs uppercase'>
+            <span className='bg-card text-muted-foreground px-2'>or</span>
           </div>
         </div>
-        <div className="space-y-2">
+        <div className='space-y-2'>
           {providersLoading ? (
-            <div className="flex justify-center">
+            <div className='flex justify-center'>
               <Spinner />
             </div>
           ) : (

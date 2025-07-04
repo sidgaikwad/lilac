@@ -24,7 +24,9 @@ function DeleteOrganizationModal(props: DeleteOrganizationModalProps) {
       }
       itemName={props.organization.organizationName}
       itemType='organization'
-      onConfirm={() => deleteOrg({ organizationId: props.organization.organizationId })}
+      onConfirm={() =>
+        deleteOrg({ organizationId: props.organization.organizationId })
+      }
       isLoading={isPending}
     />
   );

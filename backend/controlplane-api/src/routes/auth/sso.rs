@@ -16,8 +16,11 @@ pub async fn get_or_create_sso_user(
             Ok(user)
         }
         Err(_) => {
-            let new_user =
-                User::create_sso_user(email.clone(), AuthProvider::from_str(&provider).unwrap(), sso_id);
+            let new_user = User::create_sso_user(
+                email.clone(),
+                AuthProvider::from_str(&provider).unwrap(),
+                sso_id,
+            );
             app_state.db.create_user(new_user).await?;
             Ok(app_state.db.get_user_by_email(&email).await?)
         }

@@ -4,12 +4,9 @@ use axum::extract::FromRef;
 use common::{
     aws::{S3Wrapper, STSWrapper},
     database::Database,
-};
-use openidconnect::{
-    core::{CoreProviderMetadata},
-    reqwest, ClientId, ClientSecret, RedirectUrl,
     k8s::K8sWrapper,
 };
+use openidconnect::{core::CoreProviderMetadata, reqwest, ClientId, ClientSecret, RedirectUrl};
 
 pub mod auth;
 pub mod routes;
@@ -24,7 +21,10 @@ pub struct OidcConfig {
     pub frontend_redirect_url: String,
 }
 
-use oauth2::{AuthUrl, ClientId as Oauth2ClientId, ClientSecret as Oauth2ClientSecret, RedirectUrl as Oauth2RedirectUrl, TokenUrl};
+use oauth2::{
+    AuthUrl, ClientId as Oauth2ClientId, ClientSecret as Oauth2ClientSecret,
+    RedirectUrl as Oauth2RedirectUrl, TokenUrl,
+};
 
 #[derive(Clone)]
 pub struct Oauth2Config {

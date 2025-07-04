@@ -6,9 +6,12 @@ import { Provider } from '@/types';
 
 const ProviderLoginButton = ({ provider }: { provider: Provider }) => {
   const handleLogin = async () => {
-    const response = await fetch(`/api/auth/${provider.type}/${provider.name}/login`, {
-      method: 'POST',
-    });
+    const response = await fetch(
+      `/api/auth/${provider.type}/${provider.name}/login`,
+      {
+        method: 'POST',
+      }
+    );
     const data = await response.json();
 
     if (data.authorization_url) {
@@ -16,7 +19,8 @@ const ProviderLoginButton = ({ provider }: { provider: Provider }) => {
     }
   };
 
-  const providerName = provider.name.charAt(0).toUpperCase() + provider.name.slice(1);
+  const providerName =
+    provider.name.charAt(0).toUpperCase() + provider.name.slice(1);
 
   const providerIcons: { [key: string]: React.ReactNode } = {
     google: <GoogleIcon />,
@@ -24,11 +28,7 @@ const ProviderLoginButton = ({ provider }: { provider: Provider }) => {
   };
 
   return (
-    <Button
-      onClick={handleLogin}
-      variant="outline"
-      className="w-full"
-    >
+    <Button onClick={handleLogin} variant='outline' className='w-full'>
       {providerIcons[provider.name]}
       <span>Continue with {providerName}</span>
     </Button>

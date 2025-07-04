@@ -1,10 +1,5 @@
 import { generatePath, useLocation, useParams } from 'react-router-dom';
-import {
-  Settings,
-  Home,
-  HardDrive,
-  LayoutDashboard,
-} from 'lucide-react'; // Added LayoutDashboard
+import { Settings, Home, HardDrive, LayoutDashboard } from 'lucide-react'; // Added LayoutDashboard
 import {
   Sidebar as SidebarComponent,
   SidebarContent,

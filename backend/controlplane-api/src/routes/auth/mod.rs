@@ -1,14 +1,17 @@
-use axum::{routing::{get, post}, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 
 mod auth;
-mod oidc;
 mod oauth2;
+mod oidc;
 mod sso;
 
 use crate::AppState;
 use auth::authorize;
-use axum::response::IntoResponse;
 use axum::extract::State;
+use axum::response::IntoResponse;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -46,4 +49,3 @@ pub fn router() -> Router<AppState> {
         .route("/auth/oauth2/{provider}/exchange", post(oauth2::exchange))
         .route("/auth/providers", get(providers))
 }
-

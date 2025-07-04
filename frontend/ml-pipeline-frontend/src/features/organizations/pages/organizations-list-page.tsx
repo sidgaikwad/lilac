@@ -70,7 +70,9 @@ function OrganizationsListPage() {
                     key={org.organizationId}
                     to={`/organizations/${org.organizationId}/projects`}
                     className='hover:text-primary'
-                    onClick={() => setSelectedOrganizationId(org.organizationId)}
+                    onClick={() =>
+                      setSelectedOrganizationId(org.organizationId)
+                    }
                   >
                     <CardTitle className='flex items-center'>
                       <BuildingIcon className='text-primary mr-2 h-5 w-5' />

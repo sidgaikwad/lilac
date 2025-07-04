@@ -2,7 +2,7 @@ use std::{fmt::Debug, future::Future};
 
 use k8s_openapi::api::{
     core::v1::Namespace,
-    rbac::v1::{PolicyRule, Role},
+    rbac::v1::Role,
 };
 use kube::{
     api::{DeleteParams, ListParams, ObjectMeta, PostParams},

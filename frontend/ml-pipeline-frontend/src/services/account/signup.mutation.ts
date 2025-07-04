@@ -13,7 +13,7 @@ export interface SignUpResponse {
 }
 
 export async function signUp(payload: SignUpRequest): Promise<SignUpResponse> {
-  return postHttp('/auth/signup', payload, false);
+  return postHttp('/auth/signup', payload);
 }
 
 export interface UseSignUpProps {

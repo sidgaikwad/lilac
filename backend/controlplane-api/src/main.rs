@@ -9,32 +9,29 @@ use axum::{
 use common::{
     aws::{S3Wrapper, STSWrapper},
     database::Database,
+    k8s::K8sWrapper,
 };
-use controlplane_api::{routes, AppState, Oauth2Config, OidcConfig, k8s::K8sWrapper};
-use controlplane_api::{routes, AppState};
+use controlplane_api::{routes, AppState, Oauth2Config, OidcConfig};
 use dotenv::dotenv;
 use hyper::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, USER_AGENT},
     Method,
 };
+use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
+use openidconnect::reqwest;
 use openidconnect::{
     core::CoreProviderMetadata, ClientId as OidcClientId, ClientSecret as OidcClientSecret,
     IssuerUrl, RedirectUrl as OidcRedirectUrl,
 };
-use openidconnect::reqwest;
-use oauth2::{
-    AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl,
-};
-use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer};
 use rustls::crypto::ring::default_provider;
-use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer}; // Added ServeDir
+use time::Duration;
+use tokio::signal;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tower_sessions::{session_store::ExpiredDeletion, Expiry, SessionManagerLayer};
+use tower_sessions_sqlx_store::{sqlx::PgPool, PostgresStore};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
-use time::Duration;
-use tokio::signal;
-use tower_sessions::{session_store::ExpiredDeletion, Expiry, SessionManagerLayer};
-use tower_sessions_sqlx_store::{sqlx::PgPool, PostgresStore};
 
 #[tokio::main]
 async fn main() {
@@ -59,9 +56,14 @@ async fn main() {
     let db = Database::new(&db_url).await.expect("database to connect");
     db.migrate().await.expect("migrations to complete");
 
-    let pool = PgPool::connect(&db_url).await.expect("database pool to connect");
+    let pool = PgPool::connect(&db_url)
+        .await
+        .expect("database pool to connect");
     let session_store = PostgresStore::new(pool.clone());
-    session_store.migrate().await.expect("session store to migrate");
+    session_store
+        .migrate()
+        .await
+        .expect("session store to migrate");
 
     let deletion_task = tokio::task::spawn(
         session_store
@@ -80,10 +82,7 @@ async fn main() {
     let k8s = K8sWrapper::new(String::new()).await;
 
     let mut headers = hyper::HeaderMap::new();
-    headers.insert(
-        USER_AGENT,
-        HeaderValue::from_static("controlplane-api"),
-    );
+    headers.insert(USER_AGENT, HeaderValue::from_static("controlplane-api"));
     let http_client = reqwest::ClientBuilder::new()
         .redirect(reqwest::redirect::Policy::none())
         .default_headers(headers)
@@ -93,8 +92,8 @@ async fn main() {
     let mut oidc_configs = HashMap::new();
     let supported_providers = ["google"];
 
-    let frontend_redirect_url = std::env::var("FRONTEND_URL")
-        .unwrap_or_else(|_| "http://localhost:5173".to_string());
+    let frontend_redirect_url =
+        std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:5173".to_string());
 
     for provider_name in supported_providers.iter() {
         let client_id_var = format!("{}_CLIENT_ID", provider_name.to_uppercase());
@@ -112,10 +111,12 @@ async fn main() {
             std::env::var(&client_secret_var),
             std::env::var(&issuer_url_var),
         ) {
-            let provider_metadata =
-                CoreProviderMetadata::discover_async(IssuerUrl::new(issuer_url).unwrap(), &http_client)
-                    .await
-                    .unwrap();
+            let provider_metadata = CoreProviderMetadata::discover_async(
+                IssuerUrl::new(issuer_url).unwrap(),
+                &http_client,
+            )
+            .await
+            .unwrap();
 
             oidc_configs.insert(
                 provider_name.to_string(),
@@ -177,11 +178,10 @@ async fn main() {
                 .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
                 .allow_origin(
                     std::env::var("FRONTEND_URL")
-                        .unwrap_or_else(|_| "http://localhost:8080")
+                        .unwrap_or_else(|_| "http://localhost:8080".to_string())
                         .parse::<HeaderValue>()
                         .unwrap(),
                 )
-                .allow_origin()
                 .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE])
                 .allow_credentials(true),
         )
@@ -200,7 +200,7 @@ async fn main() {
             oidc_configs,
             oauth2_configs,
             http_client,
-            k8s
+            k8s,
         });
 
     // run our app with hyper
