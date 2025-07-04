@@ -8,8 +8,8 @@ import { Toaster } from '@/components/ui/toast';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSignUp, useGetOidcProviders } from '@/services';
-import OidcLoginButton from '../components/oidc-login-button';
+import { useSignUp, useGetAuthProviders } from '@/services';
+import ProviderLoginButton from '../components/provider-login-button';
 
 const registerSchema = z
   .object({
@@ -52,7 +52,7 @@ function SignUpPage() {
     signUp({ email: data.email, password: data.password });
   };
 
-  const { data: providers, isLoading: providersLoading } = useGetOidcProviders();
+  const { data: providers, isLoading: providersLoading } = useGetAuthProviders();
 
   return (
     <div className='bg-background flex h-screen items-center justify-center'>
@@ -141,7 +141,7 @@ function SignUpPage() {
             </div>
           ) : (
             providers?.map((provider) => (
-              <OidcLoginButton key={provider} provider={provider} />
+              <ProviderLoginButton key={provider.name} provider={provider} />
             ))
           )}
         </div>

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT user_id, email, email_verified, password_hash, oidc_provider, oidc_provider_id FROM \"users\" WHERE email = $1\n        ",
+  "query": "\n            SELECT user_id, email, email_verified, password_hash, login_method as \"login_method: _\", sso_provider_id FROM \"users\" WHERE email = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -25,12 +25,26 @@
       },
       {
         "ordinal": 4,
-        "name": "oidc_provider",
-        "type_info": "Text"
+        "name": "login_method: _",
+        "type_info": {
+          "Custom": {
+            "name": "auth_provider",
+            "kind": {
+              "Enum": [
+                "email",
+                "google",
+                "github",
+                "gitlab",
+                "ldap",
+                "oidc"
+              ]
+            }
+          }
+        }
       },
       {
         "ordinal": 5,
-        "name": "oidc_provider_id",
+        "name": "sso_provider_id",
         "type_info": "Text"
       }
     ],
@@ -48,5 +62,5 @@
       true
     ]
   },
-  "hash": "5ff360c65607b543cbc625bc10b500dd890de4fa8e311f23de650ec1746f8014"
+  "hash": "dc951362936b600c4f816bf9bc4afd59925abd550122ef85c338846ef46f0c56"
 }

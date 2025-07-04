@@ -62,8 +62,8 @@ pub struct User {
     pub email: String,
     pub email_verified: bool,
     pub password_hash: Option<SecretString>,
-    pub oidc_provider: Option<String>,
-    pub oidc_provider_id: Option<String>,
+    pub login_method: Option<AuthProvider>,
+    pub sso_provider_id: Option<String>,
 }
 
 impl User {
@@ -72,16 +72,16 @@ impl User {
         email: String,
         email_verified: bool,
         password_hash: Option<String>,
-        oidc_provider: Option<String>,
-        oidc_provider_id: Option<String>,
+        login_method: Option<AuthProvider>,
+        sso_provider_id: Option<String>,
     ) -> Self {
         Self {
             user_id,
             email,
             email_verified,
             password_hash: password_hash.map(SecretString::from),
-            oidc_provider,
-            oidc_provider_id,
+            login_method,
+            sso_provider_id,
         }
     }
 
@@ -91,24 +91,24 @@ impl User {
             email,
             email_verified: false,
             password_hash: Some(SecretString::from(generate_hash(password.expose_secret()))),
-            oidc_provider: None,
-            oidc_provider_id: None,
+            login_method: Some(AuthProvider::Email),
+            sso_provider_id: None,
         }
     }
 
-    pub fn create_oidc_user(email: String, oidc_provider: String, oidc_provider_id: String) -> Self {
+    pub fn create_sso_user(email: String, login_method: AuthProvider, sso_provider_id: String) -> Self {
         Self {
             user_id: UserId::generate(),
             email,
             email_verified: true,
             password_hash: None,
-            oidc_provider: Some(oidc_provider),
-            oidc_provider_id: Some(oidc_provider_id),
+            login_method: Some(login_method),
+            sso_provider_id: Some(sso_provider_id),
         }
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type, strum::Display)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type, strum::Display, strum::EnumString)]
 #[sqlx(type_name = "auth_provider")]
 #[sqlx(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]

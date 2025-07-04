@@ -1,4 +1,8 @@
-use axum::{extract::{Path, State}, Json};
+use crate::auth::{claims::Claims, error::AuthError};
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 use common::{
     database::Database,
     model::user::{User, UserId},
@@ -8,17 +12,19 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use validator::Validate;
 
-use crate::auth::claims::Claims;
-
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn create_user(
     State(db): State<Database>,
     Json(request): Json<CreateUserRequest>,
-) -> Result<Json<CreateUserResponse>, ServiceError> {
-    match request.validate() {
-        Ok(_) => (),
-        Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
+) -> Result<Json<CreateUserResponse>, AuthError> {
+    request
+        .validate()
+        .map_err(|e| AuthError::InvalidInput(e.to_string()))?;
+
+    if db.get_user_by_email(&request.email).await.is_ok() {
+        return Err(AuthError::DuplicateUser);
     }
+
     let user = User::create_password_user(request.email, request.password.into());
 
     let user_id = db.create_user(user).await?;

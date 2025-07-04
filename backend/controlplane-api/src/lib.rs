@@ -22,12 +22,26 @@ pub struct OidcConfig {
     pub frontend_redirect_url: String,
 }
 
+use oauth2::{AuthUrl, ClientId as Oauth2ClientId, ClientSecret as Oauth2ClientSecret, RedirectUrl as Oauth2RedirectUrl, TokenUrl};
+
+#[derive(Clone)]
+pub struct Oauth2Config {
+    pub client_id: Oauth2ClientId,
+    pub client_secret: Oauth2ClientSecret,
+    pub auth_url: AuthUrl,
+    pub token_url: TokenUrl,
+    pub redirect_url: Oauth2RedirectUrl,
+    pub user_info_url: String,
+    pub frontend_redirect_url: String,
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub db: Database,
     pub s3: S3Wrapper,
     pub sts: STSWrapper,
     pub oidc_configs: HashMap<String, OidcConfig>,
+    pub oauth2_configs: HashMap<String, Oauth2Config>,
     pub http_client: reqwest::Client,
 }
 

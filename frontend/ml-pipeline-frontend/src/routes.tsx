@@ -13,7 +13,7 @@ import DataSetDetailPage from './features/datasets/pages/dataset-details-page';
 import ProtectedRoute from './components/router/protected-route';
 import LoginPage from './features/account/pages/login-page';
 import SignUpPage from './features/account/pages/sign-up-page';
-import OidcCallbackPage from './features/account/pages/oidc-callback-page';
+import SsoCallbackPage from './features/account/pages/sso-callback-page';
 import ErrorBoundary from './error-boundary';
 import OrganizationSettingsPage from './features/organizations/pages/organization-settings-page';
 import AccountSettingsPage from './features/account/pages/account-settings-page';
@@ -32,8 +32,8 @@ export const router = createBrowserRouter([
         element: <SignUpPage />,
       },
       {
-        path: '/auth/callback',
-        element: <OidcCallbackPage />,
+        path: '/auth/callback/:type/:provider',
+        element: <SsoCallbackPage />,
       },
       {
         element: <ProtectedRoute />,

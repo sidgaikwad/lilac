@@ -7,7 +7,7 @@ members = [ "common", "controlplane-api"]
 common = { path = "./common" }
 argon2 = "0.5"
 aws-lc-rs = "1"
-axum = { version = "0.8", features = ["macros"] }
+axum = { version = "0.8.4", features = ["macros"] }
 axum-extra = { version = "0.10.1", features = ["typed-header", "cookie"] }
 aws-config = { version = "1.1", features = ["behavior-version-latest"] }
 aws-sdk-s3 = "1.85"
@@ -36,6 +36,8 @@ thiserror = "2.0.12"
 time = "0.3"
 tokio = { version = "1", features = ["full"] }
 tower-http = { version = "0.6.2", features = ["trace", "cors", "fs"] }
+tower-sessions = "0.14.0"
+tower-sessions-sqlx-store = { version = "0.15.0", features = ["postgres"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 uuid = { version = "1.16.0", features = ["serde", "v4"] }

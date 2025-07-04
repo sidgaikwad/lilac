@@ -30,6 +30,10 @@ pub async fn authorize(
         .get_user_by_email(&request.email)
         .await
         .map_err(|_db_error| AuthError::WrongCredentials)?; // Assuming db error implies wrong creds for simplicity
+    if user.login_method != Some(common::model::user::AuthProvider::Email) {
+        return Err(AuthError::WrongCredentials);
+    }
+
     if let Some(password_hash) = &user.password_hash {
         if verify_password(request.password, password_hash.expose_secret()).is_err() {
             return Err(AuthError::WrongCredentials);

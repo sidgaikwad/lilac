@@ -1,1 +1,1 @@
-export * from './get-oidc-providers.query';
+export * from './get-auth-providers.query';

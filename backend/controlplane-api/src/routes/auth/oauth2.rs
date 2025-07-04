@@ -1,18 +1,15 @@
 use super::sso;
 use crate::{auth::error::AuthError, AppState};
-use anyhow::anyhow;
 use axum::{
     extract::{Path, State},
     Json,
 };
-use common::model::user::{AuthProvider, User};
-use openidconnect::{
-    core::{CoreClient, CoreResponseType},
-    AuthenticationFlow, AuthorizationCode, CsrfToken, Nonce, PkceCodeChallenge, PkceCodeVerifier,
+use common::model::user::User;
+use oauth2::{
+    basic::BasicClient, AuthorizationCode, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, Scope,
     TokenResponse,
 };
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use tower_sessions::Session;
 
 #[derive(Debug, Serialize)]
@@ -26,36 +23,26 @@ pub async fn login(
     session: Session,
 ) -> Result<Json<LoginResponse>, AuthError> {
     let config = app_state
-        .oidc_configs
+        .oauth2_configs
         .get(&provider)
         .ok_or(AuthError::ProviderNotFound)?;
 
-    let client = CoreClient::from_provider_metadata(
-        config.provider_metadata.clone(),
-        config.client_id.clone(),
-        config.client_secret.clone(),
-    )
-    .set_redirect_uri(config.redirect_uri.clone());
+    let client = BasicClient::new(config.client_id.clone())
+        .set_client_secret(config.client_secret.clone())
+        .set_auth_uri(config.auth_url.clone())
+        .set_token_uri(config.token_url.clone())
+        .set_redirect_uri(config.redirect_url.clone());
 
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
-    let (auth_url, csrf_token, nonce) = client
-        .authorize_url(
-            AuthenticationFlow::<CoreResponseType>::AuthorizationCode,
-            CsrfToken::new_random,
-            Nonce::new_random,
-        )
-        .add_scope(openidconnect::Scope::new("email".to_string()))
-        .add_scope(openidconnect::Scope::new("profile".to_string()))
+    let (auth_url, csrf_token) = client
+        .authorize_url(CsrfToken::new_random)
+        .add_scope(Scope::new("user:email".to_string()))
         .set_pkce_challenge(pkce_challenge)
         .url();
 
     session
         .insert("pkce_verifier", pkce_verifier)
-        .await
-        .map_err(|_| AuthError::SessionError)?;
-    session
-        .insert("nonce", nonce.secret().clone())
         .await
         .map_err(|_| AuthError::SessionError)?;
     session
@@ -91,11 +78,6 @@ pub async fn exchange(
         .await
         .map_err(|_| AuthError::SessionError)?
         .ok_or(AuthError::SessionError)?;
-    let nonce: String = session
-        .get("nonce")
-        .await
-        .map_err(|_| AuthError::SessionError)?
-        .ok_or(AuthError::SessionError)?;
     let csrf_token: String = session
         .get("csrf_token")
         .await
@@ -107,39 +89,45 @@ pub async fn exchange(
     }
 
     let config = app_state
-        .oidc_configs
+        .oauth2_configs
         .get(&provider)
         .ok_or(AuthError::ProviderNotFound)?;
 
-    let client = CoreClient::from_provider_metadata(
-        config.provider_metadata.clone(),
-        config.client_id.clone(),
-        config.client_secret.clone(),
-    )
-    .set_redirect_uri(config.redirect_uri.clone());
+    let client = BasicClient::new(config.client_id.clone())
+        .set_client_secret(config.client_secret.clone())
+        .set_auth_uri(config.auth_url.clone())
+        .set_token_uri(config.token_url.clone())
+        .set_redirect_uri(config.redirect_url.clone());
 
     let token_response = client
         .exchange_code(AuthorizationCode::new(payload.code))
-        .map_err(|_| AuthError::CodeExchangeFailed)?
         .set_pkce_verifier(pkce_verifier)
         .request_async(&app_state.http_client)
         .await
         .map_err(|_| AuthError::CodeExchangeFailed)?;
 
-    let id_token = token_response
-        .id_token()
-        .ok_or_else(|| anyhow!("Server did not return an ID token"))
-        .map_err(|_| AuthError::MissingIdToken)?;
-
-    let claims = id_token
-        .claims(&client.id_token_verifier(), &Nonce::new(nonce))
+    let user_info: serde_json::Value = app_state
+        .http_client
+        .get(&config.user_info_url)
+        .bearer_auth(token_response.access_token().secret())
+        .send()
+        .await
+        .map_err(|_| AuthError::ClaimsVerificationFailed)?
+        .json()
+        .await
         .map_err(|_| AuthError::ClaimsVerificationFailed)?;
 
-    let user_email = claims.email().ok_or(AuthError::MissingEmail)?.to_string();
-    let sso_provider_id = claims.subject().to_string();
+    let user_email = user_info["email"]
+        .as_str()
+        .ok_or(AuthError::MissingEmail)?
+        .to_string();
+    let provider_id = user_info["id"]
+        .as_u64()
+        .ok_or(AuthError::MissingIdToken)?
+        .to_string();
 
     let user =
-        sso::get_or_create_sso_user(&app_state, user_email, provider, sso_provider_id).await?;
+        sso::get_or_create_sso_user(&app_state, user_email, provider, provider_id).await?;
 
     let access_token = sso::generate_jwt(user.user_id)?;
 

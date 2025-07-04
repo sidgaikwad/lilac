@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Toaster } from '@/components/ui/toast';
 import { Spinner } from '@/components/ui/spinner';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useLogin, useGetOidcProviders } from '@/services';
+import { useLogin, useGetAuthProviders } from '@/services';
 import useAuthStore from '@/store/use-auth-store';
-import OidcLoginButton from '../components/oidc-login-button';
+import ProviderLoginButton from '../components/provider-login-button';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -23,6 +23,16 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 function LoginPage() {
   const navigate = useNavigate();
   const { token, setToken } = useAuthStore();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const error = params.get('error');
+    console.log(location);
+    if (error === 'duplicate_user') {
+      toast.error('This email is already associated with another login method.');
+    }
+  }, [location]);
 
   useEffect(() => {
     if (token) {
@@ -54,7 +64,7 @@ function LoginPage() {
     loginUser({ email: data.email, password: data.password });
   };
 
-  const { data: providers, isLoading: providersLoading } = useGetOidcProviders();
+  const { data: providers, isLoading: providersLoading } = useGetAuthProviders();
 
   return (
     <div className='bg-background flex h-screen items-center justify-center'>
@@ -131,7 +141,7 @@ function LoginPage() {
             </div>
           ) : (
             providers?.map((provider) => (
-              <OidcLoginButton key={provider} provider={provider} />
+              <ProviderLoginButton key={provider.name} provider={provider} />
             ))
           )}
         </div>
@@ -141,3 +151,4 @@ function LoginPage() {
 }
 
 export default LoginPage;
+

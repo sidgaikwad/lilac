@@ -40,6 +40,12 @@ pub enum AuthError {
     UserCreation,
     #[error("Invalid redirect URI")]
     InvalidRedirectUri,
+    #[error("User already exists with a different login method")]
+    DuplicateUser,
+    #[error("Session error")]
+    SessionError,
+    #[error("CSRF mismatch")]
+    CsrfMismatch,
 }
 
 impl IntoResponse for AuthError {
@@ -62,6 +68,9 @@ impl IntoResponse for AuthError {
             AuthError::MissingEmail => StatusCode::INTERNAL_SERVER_ERROR,
             AuthError::UserCreation => StatusCode::INTERNAL_SERVER_ERROR,
             AuthError::InvalidRedirectUri => StatusCode::INTERNAL_SERVER_ERROR,
+            AuthError::DuplicateUser => StatusCode::CONFLICT,
+            AuthError::SessionError => StatusCode::INTERNAL_SERVER_ERROR,
+            AuthError::CsrfMismatch => StatusCode::BAD_REQUEST,
         };
         let error_message = self.to_string();
         let body = Json(json!({
