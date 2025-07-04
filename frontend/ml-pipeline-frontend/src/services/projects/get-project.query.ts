@@ -12,7 +12,7 @@ export interface GetProjectResponse {
   awsIntegration?: {
     roleArn: string;
     externalId: string;
-  }
+  };
 }
 
 export async function getProject(

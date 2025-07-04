@@ -54,7 +54,10 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = ({
         generatePath(Routes.ORGANIZATION_PROJECTS, { organizationId: data.id })
       ); // Added
     },
-    onError: (error) => toast.error(error.error),
+    onError: (error) => {
+      console.log(error);
+      toast.error(error.error);
+    },
   });
 
   const {
@@ -67,7 +70,7 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = ({
   });
 
   const onSubmit = (data: CreateOrgFormInputs) => {
-    createOrg({ name: data.orgName });
+    createOrg({ organizationName: data.orgName });
     reset();
   };
 

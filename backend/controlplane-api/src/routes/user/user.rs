@@ -29,7 +29,7 @@ pub async fn create_user(
 
     let user_id = db.create_user(user).await?;
 
-    Ok(Json(CreateUserResponse { id: user_id }))
+    Ok(Json(CreateUserResponse { user_id: user_id }))
 }
 
 #[derive(Debug, Deserialize, Validate)]
@@ -44,7 +44,7 @@ pub struct CreateUserRequest {
 #[derive(Debug, Serialize)]
 pub struct CreateUserResponse {
     #[serde(rename = "userId")]
-    id: UserId,
+    user_id: UserId,
 }
 
 #[instrument(level = "info", skip(db), ret, err)]
@@ -55,7 +55,7 @@ pub async fn get_current_user(
     let user = db.get_user(&claims.sub).await?;
 
     Ok(Json(GetUserResponse {
-        id: user.user_id,
+        user_id: user.user_id,
         email: user.email,
     }))
 }
@@ -75,14 +75,14 @@ pub async fn get_user(
     let user = db.get_user(&user_id).await?;
 
     Ok(Json(GetUserResponse {
-        id: user.user_id,
+        user_id: user.user_id,
         email: user.email,
     }))
 }
 
 #[derive(Debug, Serialize)]
 pub struct GetUserResponse {
-    id: UserId,
+    user_id: UserId,
     email: String,
 }
 #[instrument(level = "info", skip(db), ret, err)]

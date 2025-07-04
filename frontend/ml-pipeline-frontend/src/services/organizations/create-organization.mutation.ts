@@ -2,9 +2,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/types';
 import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface CreateOrganizationRequest {
-  name: string;
+  organizationName: string;
 }
 
 export interface CreateOrganizationResponse {
@@ -14,7 +15,12 @@ export interface CreateOrganizationResponse {
 async function createOrganization(
   payload: CreateOrganizationRequest
 ): Promise<CreateOrganizationResponse> {
-  return postHttp('/organizations', payload);
+  return postHttp<
+    Sn<Omit<CreateOrganizationRequest, 'projectId'>>,
+    Sn<CreateOrganizationResponse>
+  >('/organizations', {
+    organization_name: payload.organizationName,
+  });
 }
 
 export interface UseCreateOrganizationProps {

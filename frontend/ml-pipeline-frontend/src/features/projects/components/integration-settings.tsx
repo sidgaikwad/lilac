@@ -68,22 +68,28 @@ export function IntegrationSettings(props: IntegrationSettingsProps) {
           </TableHeader>
           <TableBody>
             {project.awsIntegration && (
-              <TableRow key="aws">
-                <TableCell className="font-medium">AWS</TableCell>
+              <TableRow key='aws'>
+                <TableCell className='font-medium'>AWS</TableCell>
                 <TableCell>
-                  <Badge className="bg-green-700">Connected</Badge>
+                  <Badge className='bg-green-700'>Connected</Badge>
                 </TableCell>
                 <TableCell>
                   <Popover>
                     <PopoverTrigger>
-                      <span className='bg-gray-300 py-1 px-3 rounded-full underline decoration-dotted hover:bg-gray-400/50'>Show metadata</span>
+                      <span className='rounded-full bg-gray-300 px-3 py-1 underline decoration-dotted hover:bg-gray-400/50'>
+                        Show metadata
+                      </span>
                     </PopoverTrigger>
-                    <PopoverContent className="w-fit">
-                      <div className="grid grid-cols-4 space-y-2">
-                          <Label>Role ARN</Label>
-                          <code className='col-span-3'>{project.awsIntegration.roleArn}</code>
-                          <Label>External ID</Label>
-                          <code className='col-span-3'>{project.awsIntegration.externalId}</code>
+                    <PopoverContent className='w-fit'>
+                      <div className='grid grid-cols-4 space-y-2'>
+                        <Label>Role ARN</Label>
+                        <code className='col-span-3'>
+                          {project.awsIntegration.roleArn}
+                        </code>
+                        <Label>External ID</Label>
+                        <code className='col-span-3'>
+                          {project.awsIntegration.externalId}
+                        </code>
                       </div>
                     </PopoverContent>
                   </Popover>

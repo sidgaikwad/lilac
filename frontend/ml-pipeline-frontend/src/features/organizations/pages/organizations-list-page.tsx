@@ -62,19 +62,19 @@ function OrganizationsListPage() {
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3'>
             {organizations.map((org) => (
               <Card
-                key={org.id}
+                key={org.organizationId}
                 className='h-full transition-shadow duration-200 ease-in-out hover:shadow-lg'
               >
                 <CardHeader>
                   <Link
-                    key={org.id}
-                    to={`/organizations/${org.id}/projects`}
+                    key={org.organizationId}
+                    to={`/organizations/${org.organizationId}/projects`}
                     className='hover:text-primary'
-                    onClick={() => setSelectedOrganizationId(org.id)}
+                    onClick={() => setSelectedOrganizationId(org.organizationId)}
                   >
                     <CardTitle className='flex items-center'>
                       <BuildingIcon className='text-primary mr-2 h-5 w-5' />
-                      {org.name}
+                      {org.organizationName}
                     </CardTitle>
                   </Link>
                   <CardDescription className='pt-1'>

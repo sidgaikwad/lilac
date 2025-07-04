@@ -1,0 +1,16 @@
+replicaCount: 1
+
+global:
+  postgresql:
+    auth:
+      postgresPassword: "password"
+      username: "lilac-user"
+      password: "password123"
+      database: "lilac"
+    enabled: true
+cilium:
+  hubble:
+    ui:
+      enabled: true
+    relay:
+      enabled: true

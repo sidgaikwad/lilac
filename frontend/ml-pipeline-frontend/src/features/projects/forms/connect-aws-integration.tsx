@@ -57,16 +57,16 @@ export function ConnectAwsIntegrationForm(
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
         <FormField
           control={form.control}
-          name="roleArn"
+          name='roleArn'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Role ARN</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="arn:aws:iam::123456789012:role/example-role"
+                  placeholder='arn:aws:iam::123456789012:role/example-role'
                   {...field}
                 />
               </FormControl>
@@ -76,22 +76,27 @@ export function ConnectAwsIntegrationForm(
         />
         <FormField
           control={form.control}
-          name="placeholderExternalId"
+          name='placeholderExternalId'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Placeholder External Id</FormLabel>
               <FormControl>
-                <Input placeholder="0000" {...field} />
+                <Input placeholder='0000' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button className="mr-1" variant="outline" disabled={isPending} onClick={props.onCancel}>
+        <Button
+          className='mr-1'
+          variant='outline'
+          disabled={isPending}
+          onClick={props.onCancel}
+        >
           <span>Cancel</span>
         </Button>
-        <Button type="submit" disabled={isPending}>
-          {isPending ? <Spinner size="small" /> : <span>Submit</span>}
+        <Button type='submit' disabled={isPending}>
+          {isPending ? <Spinner size='small' /> : <span>Submit</span>}
         </Button>
       </form>
     </Form>

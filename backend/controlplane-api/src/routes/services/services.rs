@@ -39,7 +39,7 @@ pub async fn start_service(
             k8s.helm_install(
                 &org.organization_id.to_string(),
                 &request.service_name,
-                "apache-airflow/airflow",
+                "airflow",
             )
             .await
             .map_err(|e| {

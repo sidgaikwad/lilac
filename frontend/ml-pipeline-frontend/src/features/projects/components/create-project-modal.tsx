@@ -66,7 +66,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   const form = useForm<CreateProjectFormInputs>({
     resolver: zodResolver(createProjectSchema),
     defaultValues: {
-      organizationId: organization.id,
+      organizationId: organization.organizationId,
       projectName: '',
     },
   });
@@ -74,7 +74,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   React.useEffect(() => {
     if (!isOpen) {
       form.reset({
-        organizationId: organization.id,
+        organizationId: organization.organizationId,
         projectName: '',
       });
     }
@@ -91,7 +91,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     setOpen(openState);
     if (!openState) {
       form.reset({
-        organizationId: organization.id,
+        organizationId: organization.organizationId,
         projectName: '',
       });
     }
@@ -114,7 +114,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             <FormItem>
               <FormLabel>Selected Organization</FormLabel>
               <FormControl>
-                <Input value={organization.name} disabled />
+                <Input value={organization.organizationName} disabled />
               </FormControl>
               <FormMessage />
             </FormItem>

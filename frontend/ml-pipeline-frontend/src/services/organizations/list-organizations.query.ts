@@ -3,16 +3,23 @@ import { QueryKeys } from '../constants';
 import { ApiError, Organization } from '@/types';
 import { useEffect } from 'react';
 import { getHttp } from '@/lib/fetch';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface ListOrganizationsResponse {
   organizations: {
-    id: string;
-    name: string;
+    organizationId: string;
+    organizationName: string;
   }[];
 }
 
 export async function listOrganizations(): Promise<ListOrganizationsResponse> {
-  return getHttp('/organizations');
+  const resp = await getHttp<Sn<ListOrganizationsResponse>>('/organizations');
+  return {
+    organizations: resp.organizations.map((org) => ({
+      organizationId: org.organization_id,
+      organizationName: org.organization_name,
+    })),
+  };
 }
 
 export function listOrganizationsQuery(enabled: boolean = true) {

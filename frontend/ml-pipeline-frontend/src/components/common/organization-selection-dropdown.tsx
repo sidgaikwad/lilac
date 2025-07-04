@@ -54,8 +54,8 @@ export default function OrganizationSelectionDropdown() {
               >
                 <span className='max-w-[100px] truncate'>
                   {organizations.find(
-                    (org) => org.id === selectedOrganizationId
-                  )?.name ?? 'Select Org'}
+                    (org) => org.organizationId === selectedOrganizationId
+                  )?.organizationName ?? 'Select Org'}
                 </span>
                 <ChevronDown className='text-muted-foreground ml-1 h-4 w-4' />
               </Button>
@@ -64,17 +64,17 @@ export default function OrganizationSelectionDropdown() {
               {organizations.length > 0 ? (
                 organizations.map((org) => (
                   <DropdownMenuItem
-                    key={org.id}
+                    key={org.organizationId}
                     onSelect={() => {
-                      setSelectedOrganizationId(org.id);
+                      setSelectedOrganizationId(org.organizationId);
                       navigate(
                         generatePath(Routes.ORGANIZATION_PROJECTS, {
-                          organizationId: org.id,
+                          organizationId: org.organizationId,
                         })
                       );
                     }}
                   >
-                    {org.name}
+                    {org.organizationName}
                   </DropdownMenuItem>
                 ))
               ) : (

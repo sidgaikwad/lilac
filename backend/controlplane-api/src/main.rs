@@ -52,6 +52,7 @@ async fn main() {
 
     default_provider().install_default().unwrap();
 
+    std::env::var("SECRET_KEY").expect("secret key to be set"); // fail early if secret not set
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL to be set");
 
     tracing::info!("database url: {}", db_url);
@@ -176,10 +177,11 @@ async fn main() {
                 .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
                 .allow_origin(
                     std::env::var("FRONTEND_URL")
-                        .unwrap_or_else(|_| "http://localhost:5173".to_string())
+                        .unwrap_or_else(|_| "http://localhost:8080")
                         .parse::<HeaderValue>()
                         .unwrap(),
                 )
+                .allow_origin()
                 .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE])
                 .allow_credentials(true),
         )
@@ -201,7 +203,8 @@ async fn main() {
             k8s
         });
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    // run our app with hyper
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8081").await.unwrap();
     tracing::info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app.into_make_service())
         .with_graceful_shutdown(shutdown_signal(deletion_task.abort_handle()))

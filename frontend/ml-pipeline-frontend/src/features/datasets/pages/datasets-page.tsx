@@ -30,7 +30,7 @@ const DatasetImagesGrid: React.FC<{ projectId: string; datasetId: string }> = ({
   datasetId,
 }) => {
   const {
-    data: dataset,
+    data: _dataset,
     isLoading,
     isError,
     error,
@@ -51,7 +51,7 @@ const DatasetImagesGrid: React.FC<{ projectId: string; datasetId: string }> = ({
   }
   return (
     <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
-      {dataset?.files?.map((file) => (
+      {/* {dataset?.files?.map((file) => (
         <div
           key={file.fileName}
           className='aspect-square overflow-hidden rounded-lg border'
@@ -63,7 +63,7 @@ const DatasetImagesGrid: React.FC<{ projectId: string; datasetId: string }> = ({
             crossOrigin='anonymous'
           />
         </div>
-      ))}
+      ))} */}
     </div>
   );
 };

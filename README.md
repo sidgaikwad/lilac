@@ -2,31 +2,35 @@
 
 ## Setup
 ### Requirements
-You will need either Docker or [Finch](https://runfinch.com/docs/getting-started/installation/) installed. If you use Docker, just replace `finch` with `docker` in the below commands.
+#### Docker
+Install Docker following the instructions at: https://docs.docker.com/engine/install/.
 
+#### Install Kubectl
+Install `kubectl` for managing your Kubernetes cluster: https://kubernetes.io/docs/tasks/tools/#kubectl
 
-To run both the controlplane API and Postgres database using docker:
-```sh
-$ finch compose -f docker/docker-compose.dev.yml build
-$ finch compose -f docker/docker-compose.dev.yml up -d
+#### Helm
+To install and run Lilac and its dependencies, we rely on Helm charts. You will need to install the Helm CLI: https://helm.sh/docs/intro/install/
 
-# later
-$ finch compose -f docker/docker-compose.dev.yml down
+#### Kind
+For local Kubernetes development, install Kind: https://kind.sigs.k8s.io/docs/user/quick-start/#installation
+
+### Development Environment
+To run Lilac on a local Kubernetes cluster, simply run the setup script: `./scripts/dev-setup.sh`. This will set up the following:
+- A local kubernetes cluster using Kind
+- A local Docker registry that the Kubernetes will pull images from
+- Build and push the docker images for Lilac to the local registry
+- Install and setup Cilium on the cluster
+- Install and setup Postgresql on the cluster
+    - Note: for production environments we recommend hosting Postgresql outside of the cluster
+- Sets up Lilac on the local Kubernets cluster
+
+After the cluster is deployed, you will need to forward the local ports 8080 and 8081 to be able to reach Lilac from your localhost. First run `kubectl get pods -n lilac` and record the IDs of the `lilac-api` and `lilac-web` pods. Then run the following:
+```
+$ kubectl port-forward -n lilac <lilac-web-pod> 8080:8080 &
+$ kubectl port-forward -n lilac <lilac-api-pod> 8081:8081 &
 ```
 
-The above is useful for example when you are developing the frontend and don't need to make changes to the controlplane API. However, if you are making changes to the API, it's usually easier to only start the Postgres container and run the API locally using `cargo run`:
-```sh
-# only runs DB container
-$ finch compose -f docker/docker-compose.dev.yml up -d db
-
-# run the control plane API
-$ cargo run
-
-# or to automatically reload binary when code changes
-$ cargo install cargo-watch
-$ cargo watch -x run
-```
-
+After this, you should be able to visit `localhost:8080` in your browser and begin interacting with your local version of Lilac.
 
 ### Usage
 Once the controlplane API and Database are up and running, you can make queries against the API. I recommend installing [HTTPie](https://httpie.io/cli).

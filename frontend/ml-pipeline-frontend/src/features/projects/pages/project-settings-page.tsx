@@ -26,13 +26,13 @@ function ProjectSettingsPage() {
         <Tabs defaultValue='general' className='w-full'>
           <TabsList className='bg-background w-full justify-start rounded-none border-b p-0'>
             <TabsTrigger
-              className='hover:text-primary hover:cursor-pointer bg-background data-[state=active]:border-b-primary h-full rounded-none border-b-2 data-[state=active]:shadow-none data-[state=active]:text-primary'
+              className='hover:text-primary bg-background data-[state=active]:border-b-primary data-[state=active]:text-primary h-full rounded-none border-b-2 hover:cursor-pointer data-[state=active]:shadow-none'
               value='general'
             >
               General
             </TabsTrigger>
             <TabsTrigger
-              className='hover:text-primary hover:cursor-pointer bg-background data-[state=active]:border-b-primary h-full rounded-none border-b-2 data-[state=active]:shadow-none data-[state=active]:text-primary'
+              className='hover:text-primary bg-background data-[state=active]:border-b-primary data-[state=active]:text-primary h-full rounded-none border-b-2 hover:cursor-pointer data-[state=active]:shadow-none'
               value='integrations'
             >
               Integrations

@@ -71,7 +71,7 @@ function ProjectsListPage() {
                 link: '/organizations',
               },
               {
-                content: organization.name,
+                content: organization.organizationName,
                 link: `/organizations/${organizationId}/projects`,
               },
               {
@@ -104,7 +104,7 @@ function ProjectsListPage() {
         ) : (
           <EmptyCardSection
             title='No Projects'
-            description={`Get started by creating your first project in ${organization.name}.`}
+            description={`Get started by creating your first project in ${organization.organizationName}.`}
             buttonText='Create Project'
             onClick={() => setCreateProjectModalOpen(true)}
           />

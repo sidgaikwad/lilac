@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT service_id, service_name, organization_id, service_type, service_configuration\n                FROM \"services\" WHERE organization_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "service_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "service_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "organization_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "service_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "service_configuration",
+        "type_info": "Json"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "2a530b6f18a0aeee4e45b435e6d7a7fdfde8b5e51eac79acbd91fff7b3be4526"
+}

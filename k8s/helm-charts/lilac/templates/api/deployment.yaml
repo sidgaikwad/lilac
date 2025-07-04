@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lilac-api
+  labels:
+    app.kubernetes.io/name: lilac
+    app.kubernetes.io/component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lilac
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+      labels:
+        app.kubernetes.io/name: lilac
+        app.kubernetes.io/component: api
+    spec:
+      serviceAccountName: lilac-api-sa
+      containers:
+      - name: lilac-api
+        image: localhost:5001/lilac-api:local
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+        env:
+        - name: DATABASE_URL
+          value: "postgres://{{ .Values.global.postgresql.auth.username }}:{{ .Values.global.postgresql.auth.password }}@lilac-postgresql.lilac:5432/{{ .Values.global.postgresql.auth.database }}"
+        - name: CUSTOMER_ASSETS_BUCKET
+          value: "mock-bucket"
+        - name: SECRET_KEY
+          value: "mysecret"

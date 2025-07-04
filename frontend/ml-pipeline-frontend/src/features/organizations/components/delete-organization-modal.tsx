@@ -22,9 +22,9 @@ function DeleteOrganizationModal(props: DeleteOrganizationModalProps) {
           <Trash2 className='text-destructive hover:text-destructive/80' />
         </Button>
       }
-      itemName={props.organization.name}
+      itemName={props.organization.organizationName}
       itemType='organization'
-      onConfirm={() => deleteOrg({ organizationId: props.organization.id })}
+      onConfirm={() => deleteOrg({ organizationId: props.organization.organizationId })}
       isLoading={isPending}
     />
   );

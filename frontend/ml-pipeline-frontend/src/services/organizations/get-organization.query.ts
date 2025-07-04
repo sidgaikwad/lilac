@@ -3,16 +3,23 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
 import { ApiError, Organization } from '@/types';
 import { useEffect } from 'react';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 interface GetOrganizationResponse {
-  id: string;
-  name: string;
+  organizationId: string;
+  organizationName: string;
 }
 
 export async function getOrganization(
   organizationId: string
 ): Promise<GetOrganizationResponse> {
-  return getHttp(`/organizations/${organizationId}`);
+  const resp = await getHttp<Sn<GetOrganizationResponse>>(
+    `/organizations/${organizationId}`
+  );
+  return {
+    organizationId: resp.organization_id,
+    organizationName: resp.organization_name,
+  };
 }
 
 export function getOrganizationQuery(

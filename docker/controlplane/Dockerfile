@@ -1,7 +1,7 @@
 # Builder Stage
-FROM rust:latest as builder
+FROM rust:latest AS builder
 
-WORKDIR /usr/local/app
+WORKDIR /opt/lilac/api
 
 # Install the application dependencies
 COPY ./backend/Cargo.toml ./backend/Cargo.lock ./
@@ -18,8 +18,12 @@ RUN cargo build --package controlplane-api --target-dir ./build/
 # Final Stage
 FROM rust:latest
 
-WORKDIR /usr/local/app
-COPY --from=builder /usr/local/app/build/debug/controlplane-api ./controlplane-api
+WORKDIR /opt/lilac/api
+COPY --from=builder /opt/lilac/api/build/debug/controlplane-api ./controlplane-api
 RUN groupadd --system appgroup && \
     useradd --system --gid appgroup --no-create-home appuser
 USER appuser
+
+EXPOSE 8081
+
+CMD [ "./controlplane-api" ]

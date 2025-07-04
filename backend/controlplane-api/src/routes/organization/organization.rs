@@ -28,24 +28,24 @@ pub async fn create_organization(
         Ok(_) => (),
         Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
     }
-    let organization = Organization::create(request.name);
+    let organization = Organization::create(request.organization_name);
     let org_id = organization.organization_id.clone();
 
     let owner = db.get_user(&claims.sub).await?;
     register_tenant(db, k8s, organization, owner).await?;
 
-    Ok(Json(CreateOrganizationResponse { id: org_id }))
+    Ok(Json(CreateOrganizationResponse { organization_id: org_id }))
 }
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct CreateOrganizationRequest {
     #[validate(length(min = 1, message = "Organization name cannot be empty"))]
-    name: String,
+    organization_name: String,
 }
 
 #[derive(Debug, Serialize)]
 pub struct CreateOrganizationResponse {
-    id: OrganizationId,
+    organization_id: OrganizationId,
 }
 
 #[instrument(level = "info", skip(db), ret, err)]
@@ -61,15 +61,15 @@ pub async fn get_organization(
 
 #[derive(Debug, Serialize)]
 pub struct GetOrganizationResponse {
-    id: OrganizationId,
-    name: String,
+    organization_id: OrganizationId,
+    organization_name: String,
 }
 
 impl From<Organization> for GetOrganizationResponse {
     fn from(organization: Organization) -> Self {
         GetOrganizationResponse {
-            id: organization.organization_id,
-            name: organization.organization_name,
+            organization_id: organization.organization_id,
+            organization_name: organization.organization_name,
         }
     }
 }

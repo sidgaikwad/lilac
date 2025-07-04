@@ -58,13 +58,16 @@ export function ConnectIntegrationModal({
           <div>
             <Card
               data-disabled={project.awsIntegration !== undefined}
-              className="max-w-xs max-h-xs data-[disabled=false]:hover:cursor-pointer data-[disabled=false]:hover:bg-muted data-[disabled=true]:bg-muted data-[disabled=true]:text-muted-foreground"
-              onClick={() => project.awsIntegration === undefined && setSelectedIntegration('aws')}
+              className='max-h-xs data-[disabled=false]:hover:bg-muted data-[disabled=true]:bg-muted data-[disabled=true]:text-muted-foreground max-w-xs data-[disabled=false]:hover:cursor-pointer'
+              onClick={() =>
+                project.awsIntegration === undefined &&
+                setSelectedIntegration('aws')
+              }
             >
               <CardHeader>
-                <div className="flex flex-row">
-                  <AwsLogo className="self-center pr-2 max-w-16 max-h-16 w-full h-full" />
-                  <div className="flex flex-col pl-2 border-l h-full">
+                <div className='flex flex-row'>
+                  <AwsLogo className='h-full max-h-16 w-full max-w-16 self-center pr-2' />
+                  <div className='flex h-full flex-col border-l pl-2'>
                     <CardTitle>AWS</CardTitle>
                     <CardDescription>
                       Configure access to your AWS account
@@ -82,7 +85,7 @@ export function ConnectIntegrationModal({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       {showTrigger && (
         <DialogTrigger asChild>
-          <Button variant="default">Connect services</Button>
+          <Button variant='default'>Connect services</Button>
         </DialogTrigger>
       )}
       <DialogContent>

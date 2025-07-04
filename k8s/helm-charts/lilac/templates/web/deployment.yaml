@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lilac-web
+  labels:
+    app.kubernetes.io/name: lilac
+    app.kubernetes.io/component: web
+    app.kubernetes.io/version: 0.1.1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lilac
+      app.kubernetes.io/component: web
+  template:
+    metadata:
+      annotations:
+        timestamp: {{ now | quote }}
+      labels:
+        app.kubernetes.io/name: lilac
+        app.kubernetes.io/component: web
+    spec:
+      containers:
+      - name: lilac-web
+        image: localhost:5001/lilac-web:local
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080

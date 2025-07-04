@@ -1,4 +1,4 @@
-export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+export const BASE_URL = import.meta.env.VITE_LILAC_API_ENDPOINT || 'http://localhost:8081';
 export const API_URL = BASE_URL;
 
 export enum QueryKeys {
@@ -22,19 +22,8 @@ export enum QueryKeys {
 
   CONNECT_AWS_INTEGRATION = 'ConnectAwsIntegration',
 
-  GET_PIPELINE = 'GetPipeline',
-  CREATE_PIPELINE = 'CreatePipeline',
-  UPDATE_PIPELINE = 'UpdatePipeline',
-  LIST_PIPELINES = 'ListPipelines',
-  DELETE_PIPELINE = 'DeletePipeline',
-  RUN_PIPELINE = 'RunPipeline',
-
   GET_DATASET = 'GetDataset',
   CREATE_DATASET = 'CreateDataset',
   LIST_DATASETS = 'ListDatasets',
   LIST_DATASET_S3_OBJECTS = 'ListDatsetS3Objects',
-
-  LIST_JOBS = 'ListJobs',
-
-  LIST_STEP_DEFINITIONS = 'ListStepDefinitions',
 }

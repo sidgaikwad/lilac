@@ -32,7 +32,8 @@ impl Helm for K8sWrapper {
     async fn helm_install(&self, namespace: &str, name: &str, chart: &str) -> Result<(), K8sError> {
         let namespace = shlex::try_quote(namespace).map_err(|e| K8sError::Helm(e.to_string()))?;
         let name = shlex::try_quote(name).map_err(|e| K8sError::Helm(e.to_string()))?;
-        let chart = shlex::try_quote(chart).map_err(|e| K8sError::Helm(e.to_string()))?;
+        let chart = format!("oci://registry-1.docker.io/bitnamicharts/{chart}");
+        let chart = shlex::try_quote(&chart).map_err(|e| K8sError::Helm(e.to_string()))?;
         let helm_cmd = Command::new(HELM_CMD)
             .args(&["install", &name, &chart, "--namespace", &namespace])
             .output()

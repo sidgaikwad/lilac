@@ -7,8 +7,6 @@ export enum Routes {
   ORGANIZATION_SETTINGS = '/organizations/:organizationId/settings',
   ORGANIZATION_PROJECTS = '/organizations/:organizationId/projects',
   PROJECT_DETAILS = '/projects/:projectId',
-  PROJECT_PIPELINES = '/projects/:projectId/pipelines',
-  PROJECT_PIPELINE_DETAILS = '/projects/:projectId/pipelines/:pipelineId',
   PROJECT_DATASETS = '/projects/:projectId/datasets',
   PROJECT_DATASET_DETAILS = '/projects/:projectId/datasets/:datasetId',
   PROJECT_SETTINGS = '/projects/:projectId/settings',

@@ -17,16 +17,16 @@ export interface ConnectAwsIntegrationResponse {
 async function connectAwsIntegration(
   payload: ConnectAwsIntegrationRequest
 ): Promise<ConnectAwsIntegrationResponse> {
-  const resp = await postHttp<Sn<Omit<ConnectAwsIntegrationRequest, 'projectId'>>, Sn<ConnectAwsIntegrationResponse>>(
-    `/projects/${payload.projectId}/integrations/s3`,
-    {
-      role_arn: payload.roleArn,
-      placeholder_external_id: payload.placeholderExternalId,
-    }
-  );
+  const resp = await postHttp<
+    Sn<Omit<ConnectAwsIntegrationRequest, 'projectId'>>,
+    Sn<ConnectAwsIntegrationResponse>
+  >(`/projects/${payload.projectId}/integrations/s3`, {
+    role_arn: payload.roleArn,
+    placeholder_external_id: payload.placeholderExternalId,
+  });
   return {
     externalId: resp.external_id,
-  }
+  };
 }
 
 export interface UseConnectAwsIntegrationProps {

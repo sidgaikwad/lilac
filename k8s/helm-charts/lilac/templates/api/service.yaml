@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lilac-api
+spec:
+  selector:
+    app.kubernetes.io/name: lilac
+    app.kubernetes.io/component: api
+  ports:
+    - port: 8081

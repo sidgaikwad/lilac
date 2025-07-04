@@ -15,9 +15,9 @@ import { useGetAccountDetails } from '@/services';
 function AccountSettingsPage() {
   const { data: user } = useGetAccountDetails({});
 
-  const _handleProfileSave = () => {
-    console.log('Saving profile...');
-  };
+  // const _handleProfileSave = () => {
+  //   console.log('Saving profile...');
+  // };
 
   const handlePasswordUpdate = () => {
     console.log('Updating password...');
