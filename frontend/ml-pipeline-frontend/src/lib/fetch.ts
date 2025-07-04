@@ -1,6 +1,5 @@
 import useAuthStore from '@/store/use-auth-store';
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+import { BASE_URL } from '@/services/constants';
 
 export async function postHttp<Req, Resp>(
   path: string,
