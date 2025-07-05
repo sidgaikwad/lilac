@@ -24,10 +24,10 @@ To run Lilac on a local Kubernetes cluster, simply run the setup script: `./scri
     - Note: for production environments we recommend hosting Postgresql outside of the cluster
 - Sets up Lilac on the local Kubernets cluster
 
-After the cluster is deployed, you will need to forward the local ports 8080 and 8081 to be able to reach Lilac from your localhost. First run `kubectl get pods -n lilac` and record the IDs of the `lilac-api` and `lilac-web` pods. Then run the following:
+After the cluster is deployed, you will need to forward the local ports 8080 and 8081 to be able to reach Lilac from your localhost. Run the following:
 ```
-$ kubectl port-forward -n lilac <lilac-web-pod> 8080:8080 &
-$ kubectl port-forward -n lilac <lilac-api-pod> 8081:8081 &
+$ kubectl port-forward -n lilac svc/lilac-web 8080:8080 &
+$ kubectl port-forward -n lilac svc/lilac-api 8081:8081 &
 ```
 
 After this, you should be able to visit `localhost:8080` in your browser and begin interacting with your local version of Lilac.

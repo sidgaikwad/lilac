@@ -9,18 +9,21 @@ export interface CreateOrganizationRequest {
 }
 
 export interface CreateOrganizationResponse {
-  id: string;
+  organizationId: string;
 }
 
 async function createOrganization(
   payload: CreateOrganizationRequest
 ): Promise<CreateOrganizationResponse> {
-  return postHttp<
+  const resp = await postHttp<
     Sn<Omit<CreateOrganizationRequest, 'projectId'>>,
     Sn<CreateOrganizationResponse>
   >('/organizations', {
     organization_name: payload.organizationName,
   });
+  return {
+    organizationId: resp.organization_id,
+  }
 }
 
 export interface UseCreateOrganizationProps {

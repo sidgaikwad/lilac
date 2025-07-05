@@ -49,10 +49,13 @@ const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = ({
     onSuccess: (data) => {
       toast.success('Successfully created organization!');
       setOpen(false);
-      setSelectedOrganizationId(data.id);
+      setSelectedOrganizationId(data.organizationId);
+      console.log('Created organization with ID:', data.organizationId);
       navigate(
-        generatePath(Routes.ORGANIZATION_PROJECTS, { organizationId: data.id })
-      ); // Added
+        generatePath(Routes.ORGANIZATION_PROJECTS, {
+          organizationId: data.organizationId,
+        })
+      );
     },
     onError: (error) => {
       console.log(error);

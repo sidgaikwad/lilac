@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 import useAuthStore from '@/store/use-auth-store';
 import { useNavigate } from 'react-router-dom';
 import { postHttp } from '@/lib/fetch';
-import { Toaster } from '@/components/ui/toast';
 interface SsoLoginRequest {
   provider: string;
   type: string;
