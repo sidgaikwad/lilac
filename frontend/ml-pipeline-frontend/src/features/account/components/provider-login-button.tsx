@@ -4,19 +4,13 @@ import { GoogleIcon } from '@/icons/google';
 import { GithubIcon } from '@/icons/github';
 import { Provider } from '@/types';
 
-const ProviderLoginButton = ({ provider }: { provider: Provider }) => {
-  const handleLogin = async () => {
-    const response = await fetch(
-      `/api/auth/${provider.type}/${provider.name}/login`,
-      {
-        method: 'POST',
-      }
-    );
-    const data = await response.json();
+import { useSsoLogin } from '@/services';
 
-    if (data.authorization_url) {
-      window.location.href = data.authorization_url;
-    }
+const ProviderLoginButton = ({ provider }: { provider: Provider }) => {
+  const { mutate: ssoLogin } = useSsoLogin();
+
+  const handleLogin = () => {
+    ssoLogin({ provider: provider.name, type: provider.type });
   };
 
   const providerName =

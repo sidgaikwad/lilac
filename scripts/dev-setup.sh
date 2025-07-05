@@ -12,6 +12,7 @@ docker build . -f ./docker/web/Dockerfile -t lilac-web:local
 docker tag lilac-web:local localhost:5001/lilac-web:local
 docker push localhost:5001/lilac-web:local
 
+helm repo add cilium https://helm.cilium.io/
 helm upgrade --install --wait --debug cilium cilium/cilium --version 1.17.5 --namespace lilac --create-namespace --values - << EOF
 kubeProxyReplacement: true
 k8sServiceHost: lilac-control-plane
@@ -36,4 +37,7 @@ hubble:
     enabled: true
 EOF
 
+pushd ./k8s/helm-charts/lilac
+helm dependency update
+popd
 helm upgrade --install --wait lilac ./k8s/helm-charts/lilac --namespace lilac --create-namespace

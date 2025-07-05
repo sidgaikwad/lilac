@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Toaster } from '@/components/ui/toast';
 import { Spinner } from '@/components/ui/spinner';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useLogin, useGetAuthProviders } from '@/services';
 import useAuthStore from '@/store/use-auth-store';
@@ -23,18 +23,6 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 function LoginPage() {
   const navigate = useNavigate();
   const { token, setToken } = useAuthStore();
-  const location = useLocation();
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const error = params.get('error');
-    console.log(location);
-    if (error === 'duplicate_user') {
-      toast.error(
-        'This email is already associated with another login method.'
-      );
-    }
-  }, [location]);
 
   useEffect(() => {
     if (token) {

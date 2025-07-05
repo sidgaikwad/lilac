@@ -27,9 +27,8 @@ use rustls::crypto::ring::default_provider;
 use time::Duration;
 use tokio::signal;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tower_sessions::{session_store::ExpiredDeletion, Expiry, SessionManagerLayer};
+use tower_sessions::{ session_store::ExpiredDeletion, Expiry, SessionManagerLayer};
 use tower_sessions_sqlx_store::{sqlx::PgPool, PostgresStore};
-use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
 
@@ -44,7 +43,7 @@ async fn main() {
     // initialize tracing
     tracing_subscriber::fmt()
         .pretty()
-        .with_env_filter(EnvFilter::from_default_env().add_directive(LevelFilter::INFO.into()))
+        .with_env_filter(EnvFilter::from_default_env())
         .init();
 
     default_provider().install_default().unwrap();
@@ -93,7 +92,7 @@ async fn main() {
     let supported_providers = ["google"];
 
     let frontend_redirect_url =
-        std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:5173".to_string());
+        std::env::var("FRONTEND_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
 
     for provider_name in supported_providers.iter() {
         let client_id_var = format!("{}_CLIENT_ID", provider_name.to_uppercase());

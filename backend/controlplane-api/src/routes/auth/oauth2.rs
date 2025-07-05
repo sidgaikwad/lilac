@@ -16,6 +16,7 @@ pub struct LoginResponse {
     authorization_url: String,
 }
 
+#[tracing::instrument(level = "debug", skip(app_state), ret, err)]
 pub async fn login(
     State(app_state): State<AppState>,
     Path(provider): Path<String>,
@@ -39,7 +40,7 @@ pub async fn login(
         .add_scope(Scope::new("user:email".to_string()))
         .set_pkce_challenge(pkce_challenge)
         .url();
-
+    tracing::debug!("Generated authorization URL: {}", auth_url);
     session
         .insert("pkce_verifier", pkce_verifier)
         .await
@@ -65,18 +66,20 @@ pub struct ExchangeResponse {
     access_token: String,
 }
 
-#[axum::debug_handler]
+#[tracing::instrument(level = "debug", skip(app_state), ret, err)]
 pub async fn exchange(
     State(app_state): State<AppState>,
     Path(provider): Path<String>,
     session: Session,
     Json(payload): Json<ExchangePayload>,
 ) -> Result<Json<ExchangeResponse>, AuthError> {
+    tracing::debug!("get pkce verifier from session");
     let pkce_verifier: PkceCodeVerifier = session
         .get("pkce_verifier")
         .await
         .map_err(|_| AuthError::SessionError)?
         .ok_or(AuthError::SessionError)?;
+    tracing::debug!("Retrieving csrf token from session");
     let csrf_token: String = session
         .get("csrf_token")
         .await
@@ -98,6 +101,7 @@ pub async fn exchange(
         .set_token_uri(config.token_url.clone())
         .set_redirect_uri(config.redirect_url.clone());
 
+    tracing::debug!("Exchanging code for token");
     let token_response = client
         .exchange_code(AuthorizationCode::new(payload.code))
         .set_pkce_verifier(pkce_verifier)
@@ -105,6 +109,7 @@ pub async fn exchange(
         .await
         .map_err(|_| AuthError::CodeExchangeFailed)?;
 
+    tracing::debug!("Getting user info");
     let user_info: serde_json::Value = app_state
         .http_client
         .get(&config.user_info_url)
@@ -129,7 +134,9 @@ pub async fn exchange(
 
     let access_token = sso::generate_jwt(user.user_id)?;
 
-    session.clear().await;
+    tracing::debug!("Generated access token for user");
+    session.remove::<PkceCodeVerifier>("pkce_verifier").await.map_err(|_| AuthError::SessionError)?;
+    session.remove::<String>("csrf_token").await.map_err(|_| AuthError::SessionError)?;
 
     Ok(Json(ExchangeResponse { access_token }))
 }

@@ -1,9 +1,6 @@
 dependencies:
-- name: cilium
-  repository: https://helm.cilium.io/
-  version: 1.17.5
 - name: postgresql
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 16.7.14
-digest: sha256:8122367725f234c0175ad69f5b2f4320ee3150f3192c72efe72d9b87f8083a32
-generated: "2025-06-30T15:33:19.048857-07:00"
+digest: sha256:a02dade9b441c9d73eb231489d25bd036e2f76f6a124024e7d3067f033184228
+generated: "2025-07-04T13:55:53.074841-07:00"

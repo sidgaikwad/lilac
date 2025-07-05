@@ -33,3 +33,23 @@ spec:
           value: "mock-bucket"
         - name: SECRET_KEY
           value: "mysecret"
+        - name: GOOGLE_CLIENT_ID
+          value: "{{ .Values.google.clientId }}"
+        - name: GOOGLE_CLIENT_SECRET
+          value: "{{ .Values.google.clientSecret }}"
+        - name: GOOGLE_ISSUER_URL
+          value: "{{ .Values.google.issuerUrl }}"
+        - name: OAUTH_REDIRECT_URI
+          value: "{{ .Values.oauth.redirectUri }}"
+        - name: FRONTEND_URL
+          value: "{{ .Values.frontend.url }}"
+        - name: GITHUB_AUTH_URL
+          value: "{{ .Values.github.authUrl }}"
+        - name: GITHUB_TOKEN_URL
+          value: "{{ .Values.github.tokenUrl }}"
+        - name: GITHUB_CLIENT_ID
+          value: "{{ .Values.github.clientId }}"
+        - name: GITHUB_CLIENT_SECRET
+          value: "{{ .Values.github.clientSecret }}"
+        - name: GITHUB_USER_INFO_URL
+          value: "{{ .Values.github.userInfoUrl }}"

@@ -27,6 +27,7 @@ pub async fn login(
         .oidc_configs
         .get(&provider)
         .ok_or(AuthError::ProviderNotFound)?;
+    
 
     let client = CoreClient::from_provider_metadata(
         config.provider_metadata.clone(),
@@ -47,9 +48,9 @@ pub async fn login(
         .add_scope(openidconnect::Scope::new("profile".to_string()))
         .set_pkce_challenge(pkce_challenge)
         .url();
-
+    tracing::debug!("Generated authorization URL: {}", auth_url);
     session
-        .insert("pkce_verifier", pkce_verifier)
+        .insert("pkce_verifier", pkce_verifier.secret().clone())
         .await
         .map_err(|_| AuthError::SessionError)?;
     session
@@ -77,29 +78,32 @@ pub struct ExchangeResponse {
     access_token: String,
 }
 
-#[axum::debug_handler]
+#[tracing::instrument(level = "debug", skip(app_state), ret, err)]
 pub async fn exchange(
     State(app_state): State<AppState>,
     Path(provider): Path<String>,
     session: Session,
     Json(payload): Json<ExchangePayload>,
 ) -> Result<Json<ExchangeResponse>, AuthError> {
+    tracing::debug!("get pkce verifier from session");
     let pkce_verifier: PkceCodeVerifier = session
         .get("pkce_verifier")
         .await
         .map_err(|_| AuthError::SessionError)?
         .ok_or(AuthError::SessionError)?;
+    tracing::debug!("Retrieving nonce and csrf token from session");
     let nonce: String = session
         .get("nonce")
         .await
         .map_err(|_| AuthError::SessionError)?
         .ok_or(AuthError::SessionError)?;
+    tracing::debug!("Retrieving csrf token from session");
     let csrf_token: String = session
         .get("csrf_token")
         .await
         .map_err(|_| AuthError::SessionError)?
         .ok_or(AuthError::SessionError)?;
-
+ 
     if csrf_token != payload.state {
         return Err(AuthError::CsrfMismatch);
     }
@@ -116,6 +120,7 @@ pub async fn exchange(
     )
     .set_redirect_uri(config.redirect_uri.clone());
 
+    tracing::debug!("Exchanging code for token");
     let token_response = client
         .exchange_code(AuthorizationCode::new(payload.code))
         .map_err(|_| AuthError::CodeExchangeFailed)?
@@ -124,11 +129,13 @@ pub async fn exchange(
         .await
         .map_err(|_| AuthError::CodeExchangeFailed)?;
 
+    tracing::debug!("Verifying ID token");
     let id_token = token_response
         .id_token()
         .ok_or_else(|| anyhow!("Server did not return an ID token"))
         .map_err(|_| AuthError::MissingIdToken)?;
 
+    tracing::debug!("Verifying claims in ID token");
     let claims = id_token
         .claims(&client.id_token_verifier(), &Nonce::new(nonce))
         .map_err(|_| AuthError::ClaimsVerificationFailed)?;
@@ -141,7 +148,10 @@ pub async fn exchange(
 
     let access_token = sso::generate_jwt(user.user_id)?;
 
-    session.clear().await;
+    tracing::debug!("Generated access token for user");
+    session.remove::<PkceCodeVerifier>("pkce_verifier").await.map_err(|_| AuthError::SessionError)?;
+    session.remove::<String>("csrf_token").await.map_err(|_| AuthError::SessionError)?;
+    session.remove::<String>("nonce").await.map_err(|_| AuthError::SessionError)?;
 
     Ok(Json(ExchangeResponse { access_token }))
 }
