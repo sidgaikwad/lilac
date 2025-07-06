@@ -27,7 +27,6 @@ pub async fn login(
         .oidc_configs
         .get(&provider)
         .ok_or(AuthError::ProviderNotFound)?;
-    
 
     let client = CoreClient::from_provider_metadata(
         config.provider_metadata.clone(),
@@ -103,7 +102,7 @@ pub async fn exchange(
         .await
         .map_err(|_| AuthError::SessionError)?
         .ok_or(AuthError::SessionError)?;
- 
+
     if csrf_token != payload.state {
         return Err(AuthError::CsrfMismatch);
     }
@@ -149,9 +148,18 @@ pub async fn exchange(
     let access_token = sso::generate_jwt(user.user_id)?;
 
     tracing::debug!("Generated access token for user");
-    session.remove::<PkceCodeVerifier>("pkce_verifier").await.map_err(|_| AuthError::SessionError)?;
-    session.remove::<String>("csrf_token").await.map_err(|_| AuthError::SessionError)?;
-    session.remove::<String>("nonce").await.map_err(|_| AuthError::SessionError)?;
+    session
+        .remove::<PkceCodeVerifier>("pkce_verifier")
+        .await
+        .map_err(|_| AuthError::SessionError)?;
+    session
+        .remove::<String>("csrf_token")
+        .await
+        .map_err(|_| AuthError::SessionError)?;
+    session
+        .remove::<String>("nonce")
+        .await
+        .map_err(|_| AuthError::SessionError)?;
 
     Ok(Json(ExchangeResponse { access_token }))
 }

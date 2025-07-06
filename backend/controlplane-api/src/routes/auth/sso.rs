@@ -32,7 +32,7 @@ pub fn generate_jwt(user_id: UserId) -> Result<String, AuthError> {
     jsonwebtoken::encode(
         &jsonwebtoken::Header::default(),
         &claims,
-        &crate::auth::keys::KEYS.encoding,
+        &crate::auth::keys::KEYS.get().unwrap().encoding,
     )
     .map_err(|_| AuthError::TokenCreation)
 }

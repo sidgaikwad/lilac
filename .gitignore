@@ -6,5 +6,6 @@ output_images/
 backend/data-pipeline/job_data
 *.png
 
-
+*.pem
 *.tgz
+lilac.toml

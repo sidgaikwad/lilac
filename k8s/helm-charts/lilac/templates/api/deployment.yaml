@@ -27,29 +27,29 @@ spec:
         ports:
         - containerPort: 8081
         env:
-        - name: DATABASE_URL
+        - name: LILAC__HTTP_PORT
+          value: "8081"
+        - name: LILAC__DATABASE_URL
           value: "postgres://{{ .Values.global.postgresql.auth.username }}:{{ .Values.global.postgresql.auth.password }}@lilac-postgresql.lilac:5432/{{ .Values.global.postgresql.auth.database }}"
         - name: CUSTOMER_ASSETS_BUCKET
           value: "mock-bucket"
-        - name: SECRET_KEY
+        - name: LILAC__SECRET_KEY
           value: "mysecret"
-        - name: GOOGLE_CLIENT_ID
-          value: "{{ .Values.google.clientId }}"
-        - name: GOOGLE_CLIENT_SECRET
-          value: "{{ .Values.google.clientSecret }}"
-        - name: GOOGLE_ISSUER_URL
-          value: "{{ .Values.google.issuerUrl }}"
-        - name: OAUTH_REDIRECT_URI
-          value: "{{ .Values.oauth.redirectUri }}"
-        - name: FRONTEND_URL
-          value: "{{ .Values.frontend.url }}"
-        - name: GITHUB_AUTH_URL
-          value: "{{ .Values.github.authUrl }}"
-        - name: GITHUB_TOKEN_URL
-          value: "{{ .Values.github.tokenUrl }}"
-        - name: GITHUB_CLIENT_ID
-          value: "{{ .Values.github.clientId }}"
-        - name: GITHUB_CLIENT_SECRET
-          value: "{{ .Values.github.clientSecret }}"
-        - name: GITHUB_USER_INFO_URL
-          value: "{{ .Values.github.userInfoUrl }}"
+        - name: LILAC__SSO__GOOGLE__CLIENT_ID
+          value: "{{ .Values.lilac.api.auth.google.clientId }}"
+        - name: LILAC__SSO__GOOGLE__CLIENT_SECRET
+          value: "{{ .Values.lilac.api.auth.google.clientSecret }}"
+        - name: LILAC__SSO__GOOGLE__ISSUER_URL
+          value: "{{ .Values.lilac.api.auth.google.issuerUrl }}"
+        - name: LILAC__FRONTEND_URL
+          value: "{{ .Values.lilac.api.frontend.url }}"
+        - name: LILAC__SSO__GITHUB__AUTH_URL
+          value: "{{ .Values.lilac.api.auth.github.authUrl }}"
+        - name: LILAC__SSO__GITHUB__TOKEN_URL
+          value: "{{ .Values.lilac.api.auth.github.tokenUrl }}"
+        - name: LILAC__SSO__GITHUB__CLIENT_ID
+          value: "{{ .Values.lilac.api.auth.github.clientId }}"
+        - name: LILAC__SSO__GITHUB__CLIENT_SECRET
+          value: "{{ .Values.lilac.api.auth.github.clientSecret }}"
+        - name: LILAC__SSO__GITHUB__USER_INFO_URL
+          value: "{{ .Values.lilac.api.auth.github.userInfoUrl }}"

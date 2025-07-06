@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use axum::extract::FromRef;
 use common::{
@@ -6,6 +6,7 @@ use common::{
     database::Database,
     k8s::K8sWrapper,
 };
+use config::Config;
 use openidconnect::{core::CoreProviderMetadata, reqwest, ClientId, ClientSecret, RedirectUrl};
 use serde::Deserialize;
 
@@ -32,6 +33,7 @@ use oauth2::{
     AuthUrl, ClientId as Oauth2ClientId, ClientSecret as Oauth2ClientSecret,
     RedirectUrl as Oauth2RedirectUrl, TokenUrl,
 };
+use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct Oauth2Config {
@@ -86,8 +88,103 @@ impl FromRef<AppState> for K8sWrapper {
     }
 }
 
-impl FromRef<AppState> for ServiceConfig {
-    fn from_ref(app_state: &AppState) -> ServiceConfig {
-        app_state.service_config.clone()
+#[derive(Clone, Debug, Deserialize)]
+pub struct TlsConfig {
+    #[serde(default)]
+    pub enabled: bool,
+    pub cert_file: PathBuf,
+    pub key_file: PathBuf,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(untagged)]
+pub enum SsoConfig {
+    Oidc {
+        client_id: String,
+        client_secret: String,
+        issuer_url: String,
+    },
+    Oauth2 {
+        client_id: String,
+        client_secret: String,
+        auth_url: String,
+        token_url: String,
+        user_info_url: String,
+    },
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct LilacConfig {
+    pub database_url: String,
+    pub tls: Option<TlsConfig>,
+    pub http_port: u16,
+    pub sso: HashMap<String, SsoConfig>,
+    pub secret_key: String,
+    pub frontend_url: String,
+}
+
+impl LilacConfig {
+    pub fn new() -> Option<Self> {
+        let config_file_path = std::env::var("LILAC_CONFIG_FILE");
+        match config_file_path {
+            Ok(path) => Config::builder()
+                .add_source(config::File::with_name(&path))
+                .add_source(config::Environment::with_prefix("LILAC").separator("__"))
+                .build()
+                .map_err(|e| println!("{e:?}"))
+                .ok()?
+                .try_deserialize()
+                .map_err(|e| println!("{e:?}"))
+                .ok(),
+            Err(_) => Config::builder()
+                .add_source(config::Environment::with_prefix("LILAC").separator("__"))
+                .build()
+                .map_err(|e| println!("{e:?}"))
+                .ok()?
+                .try_deserialize()
+                .map_err(|e| println!("{e:?}"))
+                .ok(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{LilacConfig, SsoConfig};
+
+    #[test]
+    pub fn load_lilac_config() {
+        std::env::set_var("LILAC__DATABASE_URL", "db_url");
+        std::env::set_var("LILAC__HTTP_PORT", "8080");
+        std::env::set_var("LILAC__SECRET_KEY", "secret");
+        std::env::set_var("LILAC__FRONTEND_URL", "frontend_url");
+        std::env::set_var("LILAC__TLS__CERT_FILE", "./cert.pem");
+        std::env::set_var("LILAC__TLS__KEY_FILE", "./key.pem");
+        std::env::set_var("LILAC__SSO__GITHUB__CLIENT_ID", "github_id");
+        std::env::set_var("LILAC__SSO__GITHUB__CLIENT_SECRET", "github_secret");
+        std::env::set_var("LILAC__SSO__GITHUB__AUTH_URL", "github_auth_url");
+        std::env::set_var("LILAC__SSO__GITHUB__TOKEN_URL", "github_token_url");
+        std::env::set_var("LILAC__SSO__GITHUB__USER_INFO_URL", "github_user_info_url");
+        std::env::set_var("LILAC__SSO__GOOGLE__CLIENT_ID", "google_id");
+        std::env::set_var("LILAC__SSO__GOOGLE__CLIENT_SECRET", "google_secret");
+        std::env::set_var("LILAC__SSO__GOOGLE__ISSUER_URL", "google_issuer_url");
+
+        let config = LilacConfig::new().unwrap();
+
+        assert_eq!(config.database_url, "db_url");
+        assert_eq!(config.http_port, 8080);
+        assert_eq!(config.secret_key, "secret");
+
+        let tls = config.tls.unwrap();
+        assert_eq!(tls.enabled, false);
+        assert_eq!(tls.cert_file.to_str().unwrap(), "./cert.pem");
+        assert_eq!(tls.key_file.to_str().unwrap(), "./key.pem");
+
+        assert_eq!(config.sso.len(), 2);
+        assert!(config.sso.contains_key("google"));
+        assert!(config.sso.contains_key("github"));
+
+        assert!(matches!(config.sso["google"], SsoConfig::Oidc { .. }));
+        assert!(matches!(config.sso["github"], SsoConfig::Oauth2 { .. }));
     }
 }

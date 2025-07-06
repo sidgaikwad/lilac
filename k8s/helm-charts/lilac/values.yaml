@@ -31,36 +31,15 @@ cilium:
     relay:
       enabled: true
 
-google:
-  clientId: <GOOGLE_CLIENT_ID>
-  clientSecret: <GOOGLE_CLIENT_SECRET>
-  issuerUrl: https://accounts.google.com
-oauth:
-  redirectUri: http://localhost:8080/auth/callback
-frontend:
-  url: http://localhost:8080
-github:
-  authUrl: https://github.com/login/oauth/authorize
-  tokenUrl: https://github.com/login/oauth/access_token
-  clientId: <GITHUB_CLIENT_ID>
-  clientSecret: <GITHUB_CLIENT_SECRET>
-  userInfoUrl: https://api.github.com/user
+lilac:
+  api:
+    frontend:
+      url:
+        localhost:8080
+    secret_key: mysecret
 
-mlflow:
-  tracking:
-    auth:
-      password: "password12345"
-  postgresql:
-    enabled: false
-  externalDatabase:
-    host: lilac-postgresql
-    port: 5432
-    user: "lilac-mlflow"
-    password: "password123"
-    database: "lilac-mlflow"
-    authDatabase: "lilac-mlflow-auth"
-  ingress:
-    enabled: false
-  service:
-    type: ClusterIP
-    port: 5000
+  web:
+    port: 8080
+    tls:
+      enabled: true
+      tlsSecret: 

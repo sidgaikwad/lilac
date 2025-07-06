@@ -50,7 +50,7 @@ where
             .await
             .map_err(|_| AuthError::MissingCredentials)?;
         // Decode the user data
-        let token_data = decode::<Claims>(bearer.token(), &KEYS.decoding, &Validation::default())
+        let token_data = decode::<Claims>(bearer.token(), &KEYS.get().unwrap().decoding, &Validation::default())
             .map_err(|_| AuthError::InvalidToken)?;
 
         Ok(token_data.claims)

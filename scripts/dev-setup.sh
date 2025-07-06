@@ -2,7 +2,7 @@
 
 set -euxo pipefail
 
-./k8s/kind-setup.sh
+# ./scripts/kind-setup.sh
 
 docker build . -f ./docker/controlplane/Dockerfile -t lilac-api:local
 docker tag lilac-api:local localhost:5001/lilac-api:local
@@ -13,8 +13,7 @@ docker tag lilac-web:local localhost:5001/lilac-web:local
 docker push localhost:5001/lilac-web:local
 
 helm repo add cilium https://helm.cilium.io/
-helm repo add community-charts https://community-charts.github.io/helm-charts
-helm upgrade --install --wait --debug cilium cilium/cilium --version 1.17.5 --namespace lilac --create-namespace --values - << EOF
+helm upgrade --install --wait --debug cilium cilium/cilium --version 1.17.5 --namespace cilium --create-namespace --values - << EOF
 kubeProxyReplacement: true
 k8sServiceHost: lilac-control-plane
 k8sServicePort: 6443
@@ -41,6 +40,9 @@ hubble:
   relay:
     enabled: true
 EOF
+
+helm repo add external-secrets https://charts.external-secrets.io
+helm install external-secrets external-secrets/external-secrets -n external-secrets --create-namespace
 
 pushd ./k8s/helm-charts/lilac
 helm dependency update

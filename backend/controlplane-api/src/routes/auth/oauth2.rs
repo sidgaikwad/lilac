@@ -135,8 +135,14 @@ pub async fn exchange(
     let access_token = sso::generate_jwt(user.user_id)?;
 
     tracing::debug!("Generated access token for user");
-    session.remove::<PkceCodeVerifier>("pkce_verifier").await.map_err(|_| AuthError::SessionError)?;
-    session.remove::<String>("csrf_token").await.map_err(|_| AuthError::SessionError)?;
+    session
+        .remove::<PkceCodeVerifier>("pkce_verifier")
+        .await
+        .map_err(|_| AuthError::SessionError)?;
+    session
+        .remove::<String>("csrf_token")
+        .await
+        .map_err(|_| AuthError::SessionError)?;
 
     Ok(Json(ExchangeResponse { access_token }))
 }

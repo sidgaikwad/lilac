@@ -44,7 +44,7 @@ pub async fn authorize(
 
     let claims = Claims::create(user.user_id);
     // Create the authorization token
-    let token = encode(&Header::default(), &claims, &KEYS.encoding)
+    let token = encode(&Header::default(), &claims, &KEYS.get().unwrap().encoding)
         .map_err(|_encode_error| AuthError::TokenCreation)?;
 
     // Send the authorized token
