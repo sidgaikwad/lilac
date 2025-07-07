@@ -1,6 +1,5 @@
 use crate::{
     model::{
-        organization::OrganizationId,
         project::{Project, ProjectId},
         user::UserId,
     },
@@ -10,18 +9,40 @@ use crate::{
 use super::Database;
 
 impl Database {
-    pub async fn get_project(&self, project_id: &ProjectId) -> Result<Project, ServiceError> {
-        let id = project_id.inner();
-        let project: Project = sqlx::query_as(
+    pub async fn create_project_with_membership(
+        &self,
+        project: Project,
+        user_id: &UserId,
+    ) -> Result<(), ServiceError> {
+        let mut tx = self.pool.begin().await?;
+
+        let project_id = project.project_id.clone();
+
+        sqlx::query!(
+            // language=PostgreSQL
             r#"
-                SELECT project_id, project_name, organization_id, aws_integration
-                FROM "projects" WHERE project_id = $1
+                INSERT INTO "projects" (project_id, project_name) VALUES ($1, $2)
             "#,
+            project.project_id.inner(),
+            &project.project_name
         )
-        .bind(id)
-        .fetch_one(&self.pool)
+        .execute(&mut *tx)
         .await?;
-        Ok(project)
+
+        sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                INSERT INTO "project_memberships" (project_id, user_id, role) VALUES ($1, $2, $3)
+            "#,
+            project_id.inner(),
+            user_id.inner(),
+            "owner"
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
     }
 
     pub async fn list_projects_for_user(
@@ -29,83 +50,122 @@ impl Database {
         user_id: &UserId,
     ) -> Result<Vec<Project>, ServiceError> {
         let id = user_id.inner();
-        let projects = sqlx::query_as(
-            r#"
-                SELECT project_id, project_name, organization_id, aws_integration FROM "projects" WHERE organization_id = ANY(SELECT organization_id FROM "organization_memberships" WHERE user_id = $1)
-            "#
-        )
-        .bind(id)
-        .fetch_all(&self.pool)
-        .await?;
-        Ok(projects)
-    }
+        #[derive(sqlx::FromRow)]
+        struct ProjectRow {
+            project_id: uuid::Uuid,
+            project_name: String,
+            aws_integration: Option<serde_json::Value>,
+        }
 
-    pub async fn list_projects(
-        &self,
-        organization_id: &OrganizationId,
-    ) -> Result<Vec<Project>, ServiceError> {
-        let id = organization_id.inner();
-        let projects = sqlx::query_as(
-            r#"
-                SELECT project_id, project_name, organization_id, aws_integration FROM "projects" WHERE organization_id = $1
-            "#
-        )
-        .bind(id)
-        .fetch_all(&self.pool)
-        .await?;
-        Ok(projects)
-    }
-
-    pub async fn create_project(&self, project: Project) -> Result<ProjectId, ServiceError> {
-        let proj_id = sqlx::query!(
+        let rows = sqlx::query_as!(
+            ProjectRow,
             // language=PostgreSQL
             r#"
-                INSERT INTO "projects" (project_id, project_name, organization_id) VALUES ($1, $2, $3) RETURNING project_id
+                SELECT p.project_id, p.project_name, p.aws_integration
+                FROM "project_memberships" m
+                INNER JOIN projects p ON m.project_id = p.project_id
+                WHERE m.user_id = $1
             "#,
-            project.project_id.inner(),
-            &project.project_name,
-            project.organization_id.inner()
+            id
         )
-        .map(|row| ProjectId::new(row.project_id))
+        .fetch_all(&self.pool)
+        .await?;
+
+        let projects = rows
+            .into_iter()
+            .map(|row| Project {
+                project_id: row.project_id.into(),
+                project_name: row.project_name,
+                aws_integration: row
+                    .aws_integration
+                    .and_then(|v| serde_json::from_value(v).ok()),
+            })
+            .collect();
+
+        Ok(projects)
+    }
+
+    pub async fn get_project(&self, project_id: &ProjectId) -> Result<Project, ServiceError> {
+        #[derive(sqlx::FromRow)]
+        struct ProjectRow {
+            project_id: uuid::Uuid,
+            project_name: String,
+            aws_integration: Option<serde_json::Value>,
+        }
+
+        let id = project_id.inner();
+        let row = sqlx::query_as!(
+            ProjectRow,
+            // language=PostgreSQL
+            r#"
+                SELECT project_id, project_name, aws_integration
+                FROM "projects"
+                WHERE project_id = $1
+            "#,
+            id
+        )
         .fetch_one(&self.pool)
         .await?;
-        Ok(proj_id)
+
+        let project = Project {
+            project_id: row.project_id.into(),
+            project_name: row.project_name,
+            aws_integration: row
+                .aws_integration
+                .and_then(|v| serde_json::from_value(v).ok()),
+        };
+
+        Ok(project)
     }
 
     pub async fn delete_project(&self, project_id: &ProjectId) -> Result<(), ServiceError> {
         let mut tx = self.pool.begin().await?;
-        let project_id_inner = project_id.inner();
+        let id = project_id.inner();
 
-        // Step 1: Check for child Datasets
-        let dataset_exists = sqlx::query!(
+        sqlx::query!(
             // language=PostgreSQL
             r#"
-                SELECT EXISTS (SELECT 1 FROM "datasets" WHERE project_id = $1 LIMIT 1) AS "exists!"
+                DELETE FROM "project_memberships" WHERE project_id = $1
             "#,
-            project_id_inner
+            id
         )
-        .fetch_one(&mut *tx)
-        .await?
-        .exists;
+        .execute(&mut *tx)
+        .await?;
 
-        if dataset_exists {
-            return Err(ServiceError::Conflict(
-                "Project cannot be deleted as it still contains datasets. Please delete them first.".to_string(),
-            ));
-        }
-
-        // Step 2: Delete Project
         sqlx::query!(
             // language=PostgreSQL
             r#"
                 DELETE FROM "projects" WHERE project_id = $1
             "#,
-            project_id_inner
+            id
         )
         .execute(&mut *tx)
         .await?;
 
         tx.commit().await?;
         Ok(())
+    }
+
+    pub async fn is_user_project_member(
+        &self,
+        user_id: &UserId,
+        project_id: &ProjectId,
+    ) -> Result<bool, ServiceError> {
+        let user_id = user_id.inner();
+        let project_id = project_id.inner();
+
+        let count = sqlx::query!(
+            // language=PostgreSQL
+            r#"
+                SELECT count(*) as "count!" FROM "project_memberships" WHERE user_id = $1 AND project_id = $2
+            "#,
+            user_id,
+            project_id
+        )
+        .fetch_one(&self.pool)
+        .await?
+        .count;
+
+        Ok(count > 0)
     }
 }

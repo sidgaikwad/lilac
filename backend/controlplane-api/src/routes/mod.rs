@@ -2,7 +2,6 @@ use axum::Router;
 
 mod auth;
 mod datasets;
-mod organization;
 mod projects;
 mod services;
 mod user;
@@ -14,7 +13,6 @@ pub fn router() -> Router<AppState> {
         .merge(projects::router())
         .merge(user::router())
         .merge(auth::router())
-        .merge(organization::router())
         .merge(datasets::router())
         .merge(services::router())
 }

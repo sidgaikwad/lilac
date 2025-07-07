@@ -57,7 +57,7 @@ export const useSsoExchange = () => {
       }),
     onSuccess: (data) => {
       setToken(data.access_token);
-      navigate('/organizations');
+      navigate('/');
     },
     onError: (error) => {
     useAuthStore.getState().clearToken();

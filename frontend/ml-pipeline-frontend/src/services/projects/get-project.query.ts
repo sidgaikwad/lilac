@@ -8,7 +8,6 @@ import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 export interface GetProjectResponse {
   id: string;
   name: string;
-  organizationId: string;
   awsIntegration?: {
     roleArn: string;
     externalId: string;
@@ -22,7 +21,6 @@ export async function getProject(
   return {
     id: resp.id,
     name: resp.name,
-    organizationId: resp.organization_id,
     awsIntegration: resp.aws_integration && {
       roleArn: resp.aws_integration.role_arn,
       externalId: resp.aws_integration.external_id,

@@ -6,7 +6,6 @@ import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface CreateProjectRequest {
   name: string;
-  organizationId: string;
 }
 
 export interface CreateProjectResponse {
@@ -20,7 +19,6 @@ async function createProject(
     '/projects',
     {
       name: payload.name,
-      organization_id: payload.organizationId,
     }
   );
 }

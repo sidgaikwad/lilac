@@ -1,5 +1,5 @@
 import { generatePath, useLocation, useParams } from 'react-router-dom';
-import { Settings, Home, HardDrive, LayoutDashboard } from 'lucide-react'; // Added LayoutDashboard
+import { Settings, HardDrive, LayoutDashboard, Home } from 'lucide-react'; // Added LayoutDashboard
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -58,11 +58,11 @@ export default function Sidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={location.pathname === Routes.ORGANIZATIONS}
+                  isActive={location.pathname === '/'}
                 >
-                  <Link to={Routes.ORGANIZATIONS}>
+                  <Link to='/'>
                     <Home />
-                    <span>Organizations</span>
+                    <span>Projects</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

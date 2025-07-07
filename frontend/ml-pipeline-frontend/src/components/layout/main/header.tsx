@@ -1,4 +1,3 @@
-import OrganizationSelectionDropdown from '@/components/common/organization-selection-dropdown';
 import { ThemeToggle } from '@/components/common/theme-toggle';
 import { UserProfileDropdown } from '@/components/common/UserProfileDropdown';
 import { useGetAccountDetails } from '@/services/account/get-account-details.query';
@@ -14,7 +13,6 @@ export default function Header() {
       <div className='flex h-(--header-height) w-full items-center justify-between gap-2 px-4'>
         <div className='flex h-full flex-row items-center'>
           <div className='flex h-full flex-row items-center'>
-            <OrganizationSelectionDropdown />
           </div>
         </div>
         <div className='flex items-center gap-2'>

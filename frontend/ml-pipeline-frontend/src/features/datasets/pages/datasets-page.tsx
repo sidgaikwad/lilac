@@ -89,7 +89,7 @@ function DataSetsPage() {
             breadcrumbs={[
               {
                 content: 'Projects',
-                link: `/organizations/${project?.organizationId}/projects`,
+                link: `/`,
               },
               {
                 content: project?.name ?? projectId,

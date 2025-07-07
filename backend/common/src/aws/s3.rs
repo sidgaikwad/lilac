@@ -19,7 +19,6 @@ use tracing::instrument;
 use crate::{
     model::{
         dataset::{DatasetFile, DatasetId},
-        organization::OrganizationId,
         project::ProjectId,
     },
     ServiceError,
@@ -92,13 +91,12 @@ impl S3Wrapper {
 
     pub fn get_dataset_s3_path(
         &self,
-        org_id: &OrganizationId,
         project_id: &ProjectId,
         dataset_id: &DatasetId,
     ) -> String {
         format!(
-            "customer_assets/organizations/{}/projects/{}/datasets/{}",
-            org_id, project_id, dataset_id
+            "customer_assets/projects/{}/datasets/{}",
+            project_id, dataset_id
         )
     }
 

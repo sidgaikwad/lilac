@@ -2,7 +2,6 @@ use sqlx::{postgres::PgPoolOptions, PgPool};
 
 mod datasets;
 mod integrations;
-mod organizations;
 mod projects;
 mod services;
 mod users;

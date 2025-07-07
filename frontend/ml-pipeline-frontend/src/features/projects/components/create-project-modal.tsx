@@ -21,7 +21,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useCreateProject } from '@/services';
-import { Organization } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -30,7 +29,6 @@ import { useNavigate, generatePath } from 'react-router-dom';
 import { Routes } from '@/constants';
 
 const createProjectSchema = z.object({
-  organizationId: z.string().nonempty(),
   projectName: z
     .string()
     .min(3, { message: 'Project name must be at least 3 characters' }),
@@ -41,14 +39,12 @@ type CreateProjectFormInputs = z.infer<typeof createProjectSchema>;
 export interface CreateProjectModalProps {
   isOpen: boolean;
   setOpen: (input: boolean) => void;
-  organization: Organization;
   showTrigger?: boolean;
 }
 
 const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   isOpen,
   setOpen,
-  organization,
   showTrigger = true,
 }: CreateProjectModalProps) => {
   const navigate = useNavigate();
@@ -56,7 +52,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     onSuccess: (data) => {
       toast.success('Successfully created project!');
       setOpen(false);
-      navigate(generatePath(Routes.PROJECT_DATASETS, { projectId: data.id }), {
+      navigate(generatePath(Routes.PROJECT_DETAILS, { projectId: data.id }), {
         replace: true,
       });
     },
@@ -66,7 +62,6 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   const form = useForm<CreateProjectFormInputs>({
     resolver: zodResolver(createProjectSchema),
     defaultValues: {
-      organizationId: organization.organizationId,
       projectName: '',
     },
   });
@@ -74,16 +69,14 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   React.useEffect(() => {
     if (!isOpen) {
       form.reset({
-        organizationId: organization.organizationId,
         projectName: '',
       });
     }
-  }, [organization, isOpen, form]);
+  }, [isOpen, form]);
 
   const onSubmit = (data: CreateProjectFormInputs) => {
     createProject({
       name: data.projectName,
-      organizationId: data.organizationId,
     });
   };
 
@@ -91,7 +84,6 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     setOpen(openState);
     if (!openState) {
       form.reset({
-        organizationId: organization.organizationId,
         projectName: '',
       });
     }
@@ -111,13 +103,6 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-            <FormItem>
-              <FormLabel>Selected Organization</FormLabel>
-              <FormControl>
-                <Input value={organization.organizationName} disabled />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
             <FormField
               control={form.control}
               name='projectName'

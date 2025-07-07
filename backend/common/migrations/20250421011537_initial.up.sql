@@ -35,46 +35,31 @@ CREATE TRIGGER update_users_updated_at
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();
 
--- organization tables
-CREATE TABLE organizations (
-    organization_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    organization_name text NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
-    updated_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
-    deleted_at timestamptz
-);
-CREATE TABLE organization_memberships (
-    organization_id uuid NOT NULL REFERENCES organizations(organization_id),
-    user_id uuid NOT NULL REFERENCES users(user_id),
-    role text NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'member')),
-    joined_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
-    PRIMARY KEY (organization_id, user_id)
-);
-CREATE INDEX idx_organization_memberships_user_id ON organization_memberships(user_id);
-CREATE TRIGGER update_organizations_updated_at
-    BEFORE UPDATE
-    ON
-        organizations
-    FOR EACH ROW
-EXECUTE PROCEDURE set_updated_at_now();
-
 -- project tables
 CREATE TABLE projects (
     project_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     project_name text NOT NULL,
-    organization_id uuid NOT NULL REFERENCES organizations(organization_id),
     aws_integration jsonb,
     created_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
     updated_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
     deleted_at timestamptz
 );
-CREATE INDEX idx_projects_organization_id ON projects(organization_id);
 CREATE TRIGGER update_projects_updated_at
     BEFORE UPDATE
     ON
         projects
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();
+
+-- project_memberships table
+CREATE TABLE project_memberships (
+    project_id uuid NOT NULL REFERENCES projects(project_id) ON DELETE CASCADE,
+    user_id uuid NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    role text,
+    PRIMARY KEY (project_id, user_id)
+);
+CREATE INDEX idx_project_memberships_user_id ON project_memberships(user_id);
+CREATE INDEX idx_project_memberships_project_id ON project_memberships(project_id);
 
 -- datasets tables
 CREATE TABLE datasets (
@@ -92,5 +77,24 @@ CREATE TRIGGER update_datasets_updated_at
     BEFORE UPDATE
     ON
         datasets
+    FOR EACH ROW
+EXECUTE PROCEDURE set_updated_at_now();
+
+-- services table
+CREATE TABLE services (
+    service_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    service_name text NOT NULL,
+    project_id uuid NOT NULL REFERENCES projects(project_id),
+    service_type text NOT NULL,
+    service_configuration json NOT NULL DEFAULT '{}'::json,
+    created_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
+    updated_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
+    deleted_at timestamptz
+);
+CREATE INDEX idx_services_project_id ON services(project_id);
+CREATE TRIGGER update_services_updated_at
+    BEFORE UPDATE
+    ON
+        services
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();

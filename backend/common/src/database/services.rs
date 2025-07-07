@@ -2,7 +2,7 @@ use sqlx::query;
 
 use crate::{
     model::{
-        organization::OrganizationId,
+        project::ProjectId,
         service::{Service, ServiceId},
     },
     ServiceError,
@@ -15,7 +15,7 @@ impl Database {
         let id = service_id.inner();
         let service= query!(
             r#"
-                SELECT service_id, service_name, organization_id, service_type, service_configuration
+                SELECT service_id, service_name, project_id, service_type, service_configuration
                 FROM "services" WHERE service_id = $1
             "#,
             id,
@@ -23,7 +23,7 @@ impl Database {
         .map(|row| Service {
             service_id: row.service_id.into(),
             service_name: row.service_name,
-            organization_id: row.organization_id.into(),
+            project_id: row.project_id.into(),
             service_type: serde_json::from_value(row.service_configuration).unwrap_or_default(),
         })
         .fetch_one(&self.pool)
@@ -33,20 +33,20 @@ impl Database {
 
     pub async fn list_services(
         &self,
-        organization_id: &OrganizationId,
+        project_id: &ProjectId,
     ) -> Result<Vec<Service>, ServiceError> {
-        let id = organization_id.inner();
+        let id = project_id.inner();
         let services= query!(
             r#"
-                SELECT service_id, service_name, organization_id, service_type, service_configuration
-                FROM "services" WHERE organization_id = $1
+                SELECT service_id, service_name, project_id, service_type, service_configuration
+                FROM "services" WHERE project_id = $1
             "#,
             id,
         )
         .map(|row| Service {
             service_id: row.service_id.into(),
             service_name: row.service_name,
-            organization_id: row.organization_id.into(),
+            project_id: row.project_id.into(),
             service_type: serde_json::from_value(row.service_configuration).unwrap_or_default(),
         })
         .fetch_all(&self.pool)
@@ -57,11 +57,11 @@ impl Database {
     pub async fn create_service(&self, service: Service) -> Result<ServiceId, ServiceError> {
         let proj_id = sqlx::query!(
             r#"
-                INSERT INTO "services" (service_id, service_name, organization_id, service_type, service_configuration) VALUES ($1, $2, $3, $4, $5) RETURNING service_id
+                INSERT INTO "services" (service_id, service_name, project_id, service_type, service_configuration) VALUES ($1, $2, $3, $4, $5) RETURNING service_id
             "#,
             service.service_id.inner(),
             &service.service_name,
-            service.organization_id.inner(),
+            service.project_id.inner(),
             service.service_type.get_type(),
             serde_json::to_value(service.service_type)?,
         )

@@ -9,33 +9,26 @@ export interface ListProjectsResponse {
   projects: {
     id: string;
     name: string;
-    organizationId: string;
   }[];
 }
 
 export async function listProjects(
-  organizationId?: string
 ): Promise<ListProjectsResponse> {
-  const resp = await getHttp<Sn<ListProjectsResponse>>(
-    '/projects',
-    organizationId ? { organization_id: organizationId } : undefined
-  );
+  const resp = await getHttp<Sn<ListProjectsResponse>>('/projects');
   return {
     projects: resp.projects.map((proj) => ({
       id: proj.id,
       name: proj.name,
-      organizationId: proj.organization_id,
     })),
   };
 }
 
 export function listProjectsQuery(
-  organizationId?: string,
   enabled: boolean = true
 ) {
   return queryOptions({
-    queryKey: [QueryKeys.LIST_PROJECTS, organizationId],
-    queryFn: () => listProjects(organizationId!),
+    queryKey: [QueryKeys.LIST_PROJECTS],
+    queryFn: () => listProjects(),
     enabled,
     staleTime: 1000 * 60 * 5,
     select: (data) => data.projects as Project[],
@@ -43,7 +36,6 @@ export function listProjectsQuery(
 }
 
 interface UseListProjectsProps {
-  organizationId?: string;
   enabled?: boolean;
   onSuccess?: (projects: Project[]) => void;
   onError?: (error: ApiError) => void;
@@ -51,7 +43,7 @@ interface UseListProjectsProps {
 
 export function useListProjects(props?: UseListProjectsProps) {
   const query = useQuery(
-    listProjectsQuery(props?.organizationId, props?.enabled)
+    listProjectsQuery(props?.enabled)
   );
 
   useEffect(() => {

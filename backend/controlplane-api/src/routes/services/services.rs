@@ -8,7 +8,7 @@ use common::{
     database::Database,
     k8s::{helm::Helm, K8sWrapper},
     model::{
-        organization::OrganizationId,
+        project::ProjectId,
         service::{Service, ServiceId, ServiceType},
     },
     ServiceError,
@@ -18,14 +18,23 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use validator::Validate;
 
+use crate::auth::claims::Claims;
+
 #[instrument(level = "info", skip(db, k8s), ret, err)]
 pub async fn start_service(
+    claims: Claims,
     State(db): State<Database>,
     State(k8s): State<K8sWrapper>,
-    Path(org_id): Path<OrganizationId>,
+    Path(project_id): Path<ProjectId>,
     Json(request): Json<StartServiceRequest>,
 ) -> Result<Json<StartServiceResponse>, ServiceError> {
-    let org = db.get_organization(&org_id).await?;
+    let is_member = db.is_user_project_member(&claims.sub, &project_id).await?;
+
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
+    }
+
+    let project = db.get_project(&project_id).await?;
     match request {
         StartServiceRequest::Airflow(request) => {
             request
@@ -33,11 +42,11 @@ pub async fn start_service(
                 .map_err(|_| ServiceError::BadRequest("invalid request".into()))?;
             let service = Service::create(
                 request.service_name.clone(),
-                org.organization_id.clone(),
+                project.project_id.clone(),
                 ServiceType::Airflow {},
             );
             k8s.helm_install(
-                &org.organization_id.to_string(),
+                &project.project_id.to_string(),
                 &request.service_name,
                 "airflow",
             )
@@ -55,11 +64,11 @@ pub async fn start_service(
                 .map_err(|_| ServiceError::BadRequest("invalid request".into()))?;
             let service = Service::create(
                 request.service_name.clone(),
-                org.organization_id.clone(),
+                project.project_id.clone(),
                 ServiceType::JupyterHub {},
             );
             k8s.helm_install(
-                &org.organization_id.to_string(),
+                &project.project_id.to_string(),
                 &request.service_name,
                 "oci://registry-1.docker.io/bitnamicharts/jupyterhub",
             )
@@ -74,7 +83,7 @@ pub async fn start_service(
         StartServiceRequest::Noop { service_name } => {
             let service = Service::create(
                 service_name.clone(),
-                org.organization_id.clone(),
+                project.project_id.clone(),
                 ServiceType::Unknown,
             );
             let service_id = db.create_service(service).await?;
@@ -115,10 +124,20 @@ pub struct StartServiceResponse {
 
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn get_service(
+    claims: Claims,
     State(db): State<Database>,
     Path(service_id): Path<ServiceId>,
 ) -> Result<Json<GetServiceResponse>, ServiceError> {
     let service = db.get_service(&service_id).await?;
+
+    let is_member = db
+        .is_user_project_member(&claims.sub, &service.project_id)
+        .await?;
+
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
+    }
+
     Ok(Json(GetServiceResponse::from(service)))
 }
 
@@ -126,7 +145,7 @@ pub async fn get_service(
 pub struct GetServiceResponse {
     service_id: ServiceId,
     pub service_name: String,
-    pub organization_id: OrganizationId,
+    pub project_id: ProjectId,
     pub service_type: String,
     pub service_configuration: ServiceType,
 }
@@ -136,7 +155,7 @@ impl From<Service> for GetServiceResponse {
         GetServiceResponse {
             service_id: service.service_id,
             service_name: service.service_name,
-            organization_id: service.organization_id,
+            project_id: service.project_id,
             service_type: service.service_type.get_type().to_string(),
             service_configuration: service.service_type,
         }
@@ -145,17 +164,24 @@ impl From<Service> for GetServiceResponse {
 
 #[instrument(level = "info", skip(db), ret, err)]
 pub async fn list_services(
+    claims: Claims,
     State(db): State<Database>,
-    Path(organization_id): Path<OrganizationId>,
+    Path(project_id): Path<ProjectId>,
 ) -> Result<Json<ListServicesResponse>, ServiceError> {
-    let services = db.list_services(&organization_id).await?;
+    let is_member = db.is_user_project_member(&claims.sub, &project_id).await?;
+
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
+    }
+
+    let services = db.list_services(&project_id).await?;
     Ok(Json(ListServicesResponse::from(services)))
 }
 
 #[derive(Debug, Serialize)]
 pub struct ServiceSummary {
     pub service_id: ServiceId,
-    pub organization_id: OrganizationId,
+    pub project_id: ProjectId,
     pub service_name: String,
     pub service_type: String,
 }
@@ -172,7 +198,7 @@ impl From<Vec<Service>> for ListServicesResponse {
                 .into_iter()
                 .map(|v| ServiceSummary {
                     service_id: v.service_id,
-                    organization_id: v.organization_id,
+                    project_id: v.project_id,
                     service_name: v.service_name,
                     service_type: v.service_type.get_type().to_string(),
                 })
@@ -183,13 +209,22 @@ impl From<Vec<Service>> for ListServicesResponse {
 
 #[instrument(level = "info", skip(db, k8s), ret, err)]
 pub async fn delete_service(
+    claims: Claims,
     State(db): State<Database>,
     State(k8s): State<K8sWrapper>,
     Path(service_id): Path<ServiceId>,
 ) -> Result<(), ServiceError> {
     let service = db.get_service(&service_id).await?;
 
-    k8s.helm_uninstall(&service.organization_id.to_string(), &service.service_name)
+    let is_member = db
+        .is_user_project_member(&claims.sub, &service.project_id)
+        .await?;
+
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
+    }
+
+    k8s.helm_uninstall(&service.project_id.to_string(), &service.service_name)
         .await?;
     db.delete_service(&service_id).await?;
     Ok(())

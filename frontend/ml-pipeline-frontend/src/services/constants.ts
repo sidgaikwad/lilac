@@ -9,11 +9,6 @@ export enum QueryKeys {
 
   GET_USER = 'GetUser',
 
-  GET_ORGANIZATION = 'GetOrganization',
-  CREATE_ORGANIZATION = 'CreateOrganization',
-  UPDATE_ORGANIZATION = 'UpdateOrganization',
-  LIST_ORGANIZATIONS = 'ListOrganizations',
-  DELETE_ORGANIZATION = 'DeleteOrganization',
 
   GET_PROJECT = 'GetProject',
   CREATE_PROJECT = 'CreateProject',

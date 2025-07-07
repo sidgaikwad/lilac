@@ -26,7 +26,6 @@ function DeleteProjectModal(props: DeleteProjectModalProps) {
       itemType='project'
       onConfirm={() =>
         deleteProject({
-          organizationId: props.project.organizationId,
           projectId: props.project.id,
         })
       }

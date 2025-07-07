@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import useOrganizationStore from '@/store/use-organization-store';
 import { useParams } from 'react-router-dom';
 import { getProjectQuery } from '@/services';
+import useProjectStore from '@/store/use-project-store';
 import {
   Container,
   ContainerContent,
@@ -42,8 +42,7 @@ type ProjectParams = {
 function ProjectDashboardPage() {
   const { projectId } = useParams<ProjectParams>();
   const { data: project } = useSuspenseQuery(getProjectQuery(projectId));
-  const { setSelectedProjectId, setSelectedOrganizationId } =
-    useOrganizationStore();
+  const { setSelectedProjectId } = useProjectStore();
 
   const getProjectSpecificDefaultContent = useCallback(() => {
     return BASE_DEFAULT_MARKDOWN_CONTENT.replace(
@@ -58,14 +57,8 @@ function ProjectDashboardPage() {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    setSelectedOrganizationId(project?.organizationId);
     setSelectedProjectId(project?.id);
-  }, [
-    setSelectedOrganizationId,
-    setSelectedProjectId,
-    project?.id,
-    project?.organizationId,
-  ]);
+  }, [setSelectedProjectId, project?.id]);
 
   useEffect(() => {
     if (projectId) {
@@ -94,7 +87,7 @@ function ProjectDashboardPage() {
             breadcrumbs={[
               {
                 content: 'Projects',
-                link: `/organizations/${project?.organizationId}/projects`,
+                link: `/`,
               },
               {
                 content: project.name,

@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::ServiceError;
 
-use super::organization::OrganizationId;
+use super::project::ProjectId;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(transparent)]
@@ -80,7 +80,7 @@ impl ServiceType {
 pub struct Service {
     pub service_id: ServiceId,
     pub service_name: String,
-    pub organization_id: OrganizationId,
+    pub project_id: ProjectId,
     pub service_type: ServiceType,
 }
 
@@ -88,26 +88,26 @@ impl Service {
     pub fn new(
         service_id: ServiceId,
         service_name: String,
-        organization_id: OrganizationId,
+        project_id: ProjectId,
         service_type: ServiceType,
     ) -> Self {
         Self {
             service_id,
             service_name,
-            organization_id,
+            project_id,
             service_type,
         }
     }
 
     pub fn create(
         service_name: String,
-        organization_id: OrganizationId,
+        project_id: ProjectId,
         service_type: ServiceType,
     ) -> Self {
         Self {
             service_id: ServiceId::generate(),
             service_name,
-            organization_id,
+            project_id,
             service_type,
         }
     }

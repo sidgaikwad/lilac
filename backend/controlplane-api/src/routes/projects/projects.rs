@@ -1,14 +1,12 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     Json,
 };
 use common::{
     database::Database,
     model::{
         integration::AWSIntegration,
-        organization::OrganizationId,
         project::{Project, ProjectId},
-        roles::Role,
     },
     ServiceError,
 };
@@ -28,9 +26,11 @@ pub async fn create_project(
         Ok(_) => (),
         Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
     }
-    let project = Project::create(request.name, request.organization_id);
+    let project = Project::create(request.name);
+    let project_id = project.project_id.clone();
 
-    let project_id = db.create_project(project).await?;
+    db.create_project_with_membership(project, &claims.sub)
+        .await?;
 
     Ok(Json(CreateProjectResponse { id: project_id }))
 }
@@ -39,7 +39,6 @@ pub async fn create_project(
 pub struct CreateProjectRequest {
     #[validate(length(min = 1, message = "Project name cannot be empty"))]
     name: String,
-    organization_id: OrganizationId,
 }
 
 #[derive(Debug, Serialize)]
@@ -54,16 +53,21 @@ pub async fn get_project(
     Path(project_id): Path<String>,
 ) -> Result<Json<GetProjectResponse>, ServiceError> {
     let project_id = ProjectId::try_from(project_id)?;
+    let is_member = db.is_user_project_member(&claims.sub, &project_id).await?;
+
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
+    }
+
     let project = db.get_project(&project_id).await?;
 
     Ok(Json(project.into()))
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GetProjectResponse {
     id: ProjectId,
     name: String,
-    organization_id: OrganizationId,
     #[serde(skip_serializing_if = "Option::is_none")]
     aws_integration: Option<AWSIntegration>,
 }
@@ -73,7 +77,6 @@ impl From<Project> for GetProjectResponse {
         Self {
             id: project.project_id,
             name: project.project_name,
-            organization_id: project.organization_id,
             aws_integration: project.aws_integration,
         }
     }
@@ -87,14 +90,12 @@ pub async fn delete_project(
 ) -> Result<(), ServiceError> {
     let project_id = ProjectId::try_from(project_id_str)?;
 
-    let project = db.get_project(&project_id).await?;
-    let role = db
-        .get_user_role(&claims.sub, &project.organization_id)
+    let is_member = db
+        .is_user_project_member(&claims.sub, &project_id)
         .await?;
-    match role {
-        Role::Owner => (),
-        Role::Admin => (),
-        Role::Member => return Err(ServiceError::Unauthorized),
+
+    if !is_member {
+        return Err(ServiceError::Unauthorized);
     }
 
     db.delete_project(&project_id).await?;
@@ -106,31 +107,18 @@ pub async fn delete_project(
 pub async fn list_projects(
     claims: Claims,
     State(db): State<Database>,
-    Query(request): Query<ListProjectsRequest>,
 ) -> Result<Json<ListProjectsResponse>, ServiceError> {
-    let projects = if let Some(org_id) = request.organization_id {
-        db.list_projects(&org_id)
-            .await?
-            .into_iter()
-            .map(|org| org.into())
-            .collect()
-    } else {
-        db.list_projects_for_user(&claims.sub)
-            .await?
-            .into_iter()
-            .map(|org| org.into())
-            .collect()
-    };
+    let projects = db
+        .list_projects_for_user(&claims.sub)
+        .await?
+        .into_iter()
+        .map(|project| project.into())
+        .collect();
 
     Ok(Json(ListProjectsResponse { projects }))
 }
 
-#[derive(Debug, Deserialize)]
-pub struct ListProjectsRequest {
-    organization_id: Option<OrganizationId>,
-}
-
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ListProjectsResponse {
     projects: Vec<GetProjectResponse>,
 }

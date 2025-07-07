@@ -1,8 +1,6 @@
-import OrganizationSelectionDropdown from '@/components/common/organization-selection-dropdown';
 import ProjectSelectionDropdown from '@/components/common/project-selection-dropdown';
 import { ThemeToggle } from '@/components/common/theme-toggle';
 import { UserProfileDropdown } from '@/components/common/UserProfileDropdown';
-import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useGetAccountDetails } from '@/services/account/get-account-details.query';
 import useAuthStore from '@/store/use-auth-store';
@@ -18,11 +16,6 @@ export default function Header() {
         <div className='flex h-full flex-row items-center'>
           <SidebarTrigger className='visible md:invisible' />
           <div className='flex h-full flex-row items-center'>
-            <OrganizationSelectionDropdown />
-            <Separator
-              orientation='vertical'
-              className='mr-2 data-[orientation=vertical]:h-[40%]'
-            />
             <ProjectSelectionDropdown />
           </div>
         </div>

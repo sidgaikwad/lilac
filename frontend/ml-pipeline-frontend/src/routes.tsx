@@ -1,11 +1,6 @@
 import { createBrowserRouter } from 'react-router';
 import { Routes } from './constants';
-import OrganizationsListPage from './features/organizations/pages/organizations-list-page';
-import {
-  MainLayout,
-  OrganizationLayout,
-  ProjectLayout,
-} from './components/layout';
+import { MainLayout, ProjectLayout } from './components/layout';
 import ProjectsListPage from './features/projects/pages/projects-list-page';
 import ProjectDashboardPage from './features/projects/pages/project-dashboard-page';
 import DataSetsPage from './features/datasets/pages/datasets-page';
@@ -15,7 +10,6 @@ import LoginPage from './features/account/pages/login-page';
 import SignUpPage from './features/account/pages/sign-up-page';
 import SsoCallbackPage from './features/account/pages/sso-callback-page';
 import ErrorBoundary from './error-boundary';
-import OrganizationSettingsPage from './features/organizations/pages/organization-settings-page';
 import AccountSettingsPage from './features/account/pages/account-settings-page';
 import ProjectSettingsPage from './features/projects/pages/project-settings-page';
 
@@ -43,28 +37,11 @@ export const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: <OrganizationsListPage />,
-              },
-              {
-                path: '/organizations',
-                element: <OrganizationsListPage />,
+                element: <ProjectsListPage />,
               },
               {
                 path: Routes.ACCOUNT_SETTINGS,
                 element: <AccountSettingsPage />,
-              },
-            ],
-          },
-          {
-            element: <OrganizationLayout />,
-            children: [
-              {
-                path: Routes.ORGANIZATION_PROJECTS,
-                element: <ProjectsListPage />,
-              },
-              {
-                path: Routes.ORGANIZATION_SETTINGS,
-                element: <OrganizationSettingsPage />,
               },
             ],
           },

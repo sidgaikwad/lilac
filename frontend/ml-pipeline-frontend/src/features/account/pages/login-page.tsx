@@ -26,7 +26,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (token) {
-      navigate('/organizations');
+      navigate('/');
     }
   }, [token, navigate]);
   const { mutate: loginUser, isPending } = useLogin({

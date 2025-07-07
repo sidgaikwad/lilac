@@ -10,7 +10,6 @@ use openidconnect::{core::CoreProviderMetadata, reqwest, ClientId, ClientSecret,
 
 pub mod auth;
 pub mod routes;
-mod tenants;
 
 #[derive(Clone)]
 pub struct OidcConfig {

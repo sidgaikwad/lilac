@@ -21,7 +21,7 @@ function ProjectCard(props: ProjectCardProps) {
     >
       <CardHeader>
         <Link
-          to={`/projects/${props.project.id}/datasets`}
+          to={`/projects/${props.project.id}`}
           className='text-primary hover:underline'
         >
           <CardTitle>{props.project.name}</CardTitle>

@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::ServiceError;
 
-use super::{integration::AWSIntegration, organization::OrganizationId};
+use super::integration::AWSIntegration;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(transparent)]
@@ -61,7 +61,6 @@ impl TryFrom<String> for ProjectId {
 pub struct Project {
     pub project_id: ProjectId,
     pub project_name: String,
-    pub organization_id: OrganizationId,
     #[sqlx(json(nullable))]
     pub aws_integration: Option<AWSIntegration>,
 }
@@ -70,22 +69,19 @@ impl Project {
     pub fn new(
         project_id: ProjectId,
         project_name: String,
-        organization_id: OrganizationId,
         aws_integration: Option<AWSIntegration>,
     ) -> Self {
         Self {
             project_id,
             project_name,
-            organization_id,
             aws_integration,
         }
     }
 
-    pub fn create(project_name: String, organization_id: OrganizationId) -> Self {
+    pub fn create(project_name: String) -> Self {
         Self {
             project_id: ProjectId::generate(),
             project_name,
-            organization_id,
             aws_integration: None,
         }
     }

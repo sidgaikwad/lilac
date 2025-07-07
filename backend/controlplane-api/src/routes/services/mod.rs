@@ -9,7 +9,7 @@ use services::*;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route(
-            "/organizations/{organization_id}/services",
+            "/projects/{project_id}/services",
             post(start_service).get(list_services),
         )
         .route(

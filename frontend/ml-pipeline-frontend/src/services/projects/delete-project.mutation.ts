@@ -5,7 +5,6 @@ import { QueryKeys } from '../constants';
 
 export interface DeleteProjectRequest {
   projectId: string;
-  organizationId: string;
 }
 
 export async function deleteProject(
@@ -26,7 +25,7 @@ export function useDeleteProject(props?: UseDeleteProjectProps) {
     mutationFn: deleteProject,
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.LIST_PROJECTS, variables.organizationId],
+        queryKey: [QueryKeys.LIST_PROJECTS],
       });
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.GET_PROJECT, variables.projectId],
