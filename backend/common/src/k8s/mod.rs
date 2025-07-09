@@ -12,6 +12,7 @@ use kube::{Client, Config};
 
 pub mod helm;
 pub mod policies;
+pub mod gateway_api;
 
 #[derive(Clone)]
 pub struct K8sWrapper {
@@ -40,7 +41,15 @@ pub enum K8sError {
     Helm(String),
 }
 
+use self::gateway_api::HTTPRoute;
+
 pub trait K8sApi {
+    fn create_http_route(
+        &self,
+        namespace: &str,
+        route: &HTTPRoute,
+    ) -> impl Future<Output = Result<(), K8sError>> + Send;
+
     fn create_namespace(
         &self,
         namespace: &str,
@@ -92,6 +101,12 @@ pub trait K8sApi {
 }
 
 impl K8sApi for K8sWrapper {
+    async fn create_http_route(&self, namespace: &str, route: &HTTPRoute) -> Result<(), K8sError> {
+        let client: Api<HTTPRoute> = Api::namespaced(self.client.clone(), namespace);
+        client.create(&PostParams::default(), route).await?;
+        Ok(())
+    }
+
     async fn create_namespace(&self, namespace: &str) -> Result<(), super::K8sError> {
         let client: Api<Namespace> = Api::all(self.client.clone());
         client
@@ -131,36 +146,36 @@ impl K8sApi for K8sWrapper {
         Ok(())
     }
 
-    async fn delete_role(&self, namespace: &str, role_name: &str) -> Result<(), K8sError> {
+    async fn delete_role(&self, _namespace: &str, _role_name: &str) -> Result<(), K8sError> {
         todo!()
     }
 
-    async fn list_roles(&self, namespace: &str) -> Result<Vec<String>, K8sError> {
+    async fn list_roles(&self, _namespace: &str) -> Result<Vec<String>, K8sError> {
         todo!()
     }
 
     async fn create_role_binding(
         &self,
-        namespace: &str,
-        role_name: &str,
-        user: &str,
+        _namespace: &str,
+        _role_name: &str,
+        _user: &str,
     ) -> Result<(), K8sError> {
         todo!()
     }
 
     async fn delete_role_binding(
         &self,
-        namespace: &str,
-        role_name: &str,
-        user: &str,
+        _namespace: &str,
+        _role_name: &str,
+        _user: &str,
     ) -> Result<(), K8sError> {
         todo!()
     }
 
     async fn list_role_bindings(
         &self,
-        namespace: &str,
-        user: &str,
+        _namespace: &str,
+        _user: &str,
     ) -> Result<Vec<String>, K8sError> {
         todo!()
     }

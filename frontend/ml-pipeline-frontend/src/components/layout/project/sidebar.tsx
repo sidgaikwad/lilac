@@ -1,5 +1,5 @@
 import { generatePath, useLocation, useParams } from 'react-router-dom';
-import { Settings, HardDrive, LayoutDashboard, Home } from 'lucide-react'; // Added LayoutDashboard
+import { Settings, HardDrive, LayoutDashboard, Home, FlaskConical } from 'lucide-react'; // Added LayoutDashboard
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -13,7 +13,7 @@ import {
   SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Routes } from '@/constants';
+import { Routes } from '@/services/constants/routes';
 import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 
@@ -29,6 +29,9 @@ export default function Sidebar() {
         projectId: projectId!,
       }),
       [Routes.PROJECT_DATASETS]: generatePath(Routes.PROJECT_DATASETS, {
+        projectId: projectId!,
+      }),
+      [Routes.PROJECT_EXPERIMENTS]: generatePath(Routes.PROJECT_EXPERIMENTS, {
         projectId: projectId!,
       }),
       [Routes.PROJECT_SETTINGS]: generatePath(Routes.PROJECT_SETTINGS, {
@@ -87,6 +90,19 @@ export default function Sidebar() {
                   <Link to={paths[Routes.PROJECT_DATASETS]}>
                     <HardDrive />
                     <span>Datasets</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={
+                    location.pathname === paths[Routes.PROJECT_EXPERIMENTS]
+                  }
+                >
+                  <Link to={paths[Routes.PROJECT_EXPERIMENTS]}>
+                    <FlaskConical />
+                    <span>Experiments</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

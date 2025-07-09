@@ -87,6 +87,7 @@ CREATE TABLE services (
     project_id uuid NOT NULL REFERENCES projects(project_id),
     service_type text NOT NULL,
     service_configuration json NOT NULL DEFAULT '{}'::json,
+    url TEXT,
     created_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
     updated_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
     deleted_at timestamptz

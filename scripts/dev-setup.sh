@@ -13,6 +13,7 @@ docker tag lilac-web:local localhost:5001/lilac-web:local
 docker push localhost:5001/lilac-web:local
 
 helm repo add cilium https://helm.cilium.io/
+helm repo add community-charts https://community-charts.github.io/helm-charts
 helm upgrade --install --wait --debug cilium cilium/cilium --version 1.17.5 --namespace lilac --create-namespace --values - << EOF
 kubeProxyReplacement: true
 k8sServiceHost: lilac-control-plane
@@ -27,6 +28,10 @@ hostPort:
   enabled: true
 gatewayAPI:
   enabled: true
+  service:
+    type: NodePort
+    nodePorts:
+      http: 30080
 image:
   pullPolicy: IfNotPresent
 ipam:

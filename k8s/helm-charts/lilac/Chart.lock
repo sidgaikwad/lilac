@@ -2,5 +2,8 @@ dependencies:
 - name: postgresql
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 16.7.14
-digest: sha256:a02dade9b441c9d73eb231489d25bd036e2f76f6a124024e7d3067f033184228
-generated: "2025-07-04T13:55:53.074841-07:00"
+- name: mlflow
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 5.1.0
+digest: sha256:3cf69d131c7edcf7f4462cdd59dace520c7452f76857825729dcba837a7250a9
+generated: "2025-07-07T12:29:57.838282-07:00"

@@ -1,7 +1,8 @@
 import { createBrowserRouter } from 'react-router';
-import { Routes } from './constants';
+import { Routes } from './services/constants/routes';
 import { MainLayout, ProjectLayout } from './components/layout';
 import ProjectsListPage from './features/projects/pages/projects-list-page';
+import ExperimentsPage from './features/experiments/pages/experiments-page';
 import ProjectDashboardPage from './features/projects/pages/project-dashboard-page';
 import DataSetsPage from './features/datasets/pages/datasets-page';
 import DataSetDetailPage from './features/datasets/pages/dataset-details-page';
@@ -63,6 +64,10 @@ export const router = createBrowserRouter([
               {
                 path: Routes.PROJECT_SETTINGS,
                 element: <ProjectSettingsPage />,
+              },
+              {
+                path: Routes.PROJECT_EXPERIMENTS,
+                element: <ExperimentsPage />,
               },
             ],
           },

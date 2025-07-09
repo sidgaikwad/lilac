@@ -3,7 +3,7 @@ use axum::Router;
 mod auth;
 mod datasets;
 mod projects;
-mod services;
+pub mod services;
 mod user;
 
 use crate::AppState;

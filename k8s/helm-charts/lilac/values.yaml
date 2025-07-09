@@ -8,6 +8,22 @@ global:
       password: "password123"
       database: "lilac"
     enabled: true
+postgresql:
+  image:
+    debug: true
+  primary:
+    initdb:
+      user: "postgres"
+      password: "password"
+      scripts:
+        init.sql: |
+          CREATE USER "lilac-mlflow" WITH ENCRYPTED PASSWORD 'password123';
+          CREATE DATABASE "lilac-mlflow-auth";
+          GRANT ALL PRIVILEGES ON DATABASE "lilac-mlflow-auth" TO "lilac-mlflow";
+          ALTER DATABASE "lilac-mlflow-auth" OWNER TO "lilac-mlflow";
+          CREATE DATABASE "lilac-mlflow";
+          GRANT ALL PRIVILEGES ON DATABASE "lilac-mlflow" TO "lilac-mlflow";
+          ALTER DATABASE "lilac-mlflow" OWNER TO "lilac-mlflow";
 cilium:
   hubble:
     ui:
@@ -29,3 +45,22 @@ github:
   clientId: <GITHUB_CLIENT_ID>
   clientSecret: <GITHUB_CLIENT_SECRET>
   userInfoUrl: https://api.github.com/user
+
+mlflow:
+  tracking:
+    auth:
+      password: "password12345"
+  postgresql:
+    enabled: false
+  externalDatabase:
+    host: lilac-postgresql
+    port: 5432
+    user: "lilac-mlflow"
+    password: "password123"
+    database: "lilac-mlflow"
+    authDatabase: "lilac-mlflow-auth"
+  ingress:
+    enabled: false
+  service:
+    type: ClusterIP
+    port: 5000

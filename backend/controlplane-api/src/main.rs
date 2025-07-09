@@ -11,7 +11,7 @@ use common::{
     database::Database,
     k8s::K8sWrapper,
 };
-use controlplane_api::{routes, AppState, Oauth2Config, OidcConfig};
+use controlplane_api::{routes, AppState, Oauth2Config, OidcConfig, ServiceConfig};
 use dotenv::dotenv;
 use hyper::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, USER_AGENT},
@@ -170,6 +170,13 @@ async fn main() {
         }
     }
 
+    let service_config = ServiceConfig {
+        gateway_name: std::env::var("GATEWAY_NAME").unwrap_or_else(|_| "lilac-gateway".to_string()),
+        gateway_namespace: std::env::var("GATEWAY_NAMESPACE")
+            .unwrap_or_else(|_| "lilac-system".to_string()),
+        gateway_url: std::env::var("GATEWAY_URL").unwrap_or_else(|_| "http://localhost:30080".to_string()),
+    };
+
     let app = Router::new()
         .merge(routes::router())
         .layer(
@@ -200,6 +207,7 @@ async fn main() {
             oauth2_configs,
             http_client,
             k8s,
+            service_config,
         });
 
     // run our app with hyper

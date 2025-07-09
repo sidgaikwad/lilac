@@ -7,9 +7,17 @@ use common::{
     k8s::K8sWrapper,
 };
 use openidconnect::{core::CoreProviderMetadata, reqwest, ClientId, ClientSecret, RedirectUrl};
+use serde::Deserialize;
 
 pub mod auth;
 pub mod routes;
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ServiceConfig {
+    pub gateway_name: String,
+    pub gateway_namespace: String,
+    pub gateway_url: String,
+}
 
 #[derive(Clone)]
 pub struct OidcConfig {
@@ -45,6 +53,7 @@ pub struct AppState {
     pub oauth2_configs: HashMap<String, Oauth2Config>,
     pub http_client: reqwest::Client,
     pub k8s: K8sWrapper,
+    pub service_config: ServiceConfig,
 }
 
 impl FromRef<AppState> for Database {
@@ -74,5 +83,11 @@ impl FromRef<AppState> for HashMap<String, OidcConfig> {
 impl FromRef<AppState> for K8sWrapper {
     fn from_ref(app_state: &AppState) -> K8sWrapper {
         app_state.k8s.clone()
+    }
+}
+
+impl FromRef<AppState> for ServiceConfig {
+    fn from_ref(app_state: &AppState) -> ServiceConfig {
+        app_state.service_config.clone()
     }
 }

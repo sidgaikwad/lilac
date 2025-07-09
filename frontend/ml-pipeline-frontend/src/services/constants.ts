@@ -16,6 +16,9 @@ export enum QueryKeys {
   LIST_PROJECTS = 'ListProjects',
   DELETE_PROJECT = 'DeleteProject',
 
+  LIST_SERVICES = 'ListServices',
+  CREATE_SERVICE = 'CreateService',
+
   CONNECT_AWS_INTEGRATION = 'ConnectAwsIntegration',
 
   GET_DATASET = 'GetDataset',

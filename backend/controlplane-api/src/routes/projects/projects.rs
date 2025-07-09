@@ -3,7 +3,7 @@ use axum::{
     Json,
 };
 use common::{
-    database::Database,
+    k8s::K8sApi,
     model::{
         integration::AWSIntegration,
         project::{Project, ProjectId},
@@ -16,12 +16,17 @@ use validator::Validate;
 
 use crate::auth::claims::Claims;
 
-#[instrument(level = "info", skip(db), ret, err)]
+use crate::AppState;
+
+#[instrument(level = "info", skip(app_state), ret, err)]
 pub async fn create_project(
     claims: Claims,
-    State(db): State<Database>,
+    State(app_state): State<AppState>,
     Json(request): Json<CreateProjectRequest>,
 ) -> Result<Json<CreateProjectResponse>, ServiceError> {
+    let db = &app_state.db;
+    let k8s = &app_state.k8s;
+
     match request.validate() {
         Ok(_) => (),
         Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
@@ -31,6 +36,8 @@ pub async fn create_project(
 
     db.create_project_with_membership(project, &claims.sub)
         .await?;
+
+    k8s.create_namespace(&project_id.to_string()).await?;
 
     Ok(Json(CreateProjectResponse { id: project_id }))
 }
@@ -46,12 +53,13 @@ pub struct CreateProjectResponse {
     id: ProjectId,
 }
 
-#[instrument(level = "info", skip(db), ret, err)]
+#[instrument(level = "info", skip(app_state), ret, err)]
 pub async fn get_project(
     claims: Claims,
-    State(db): State<Database>,
+    State(app_state): State<AppState>,
     Path(project_id): Path<String>,
 ) -> Result<Json<GetProjectResponse>, ServiceError> {
+    let db = &app_state.db;
     let project_id = ProjectId::try_from(project_id)?;
     let is_member = db.is_user_project_member(&claims.sub, &project_id).await?;
 
@@ -82,12 +90,13 @@ impl From<Project> for GetProjectResponse {
     }
 }
 
-#[instrument(level = "info", skip(db), ret, err)]
+#[instrument(level = "info", skip(app_state), ret, err)]
 pub async fn delete_project(
     claims: Claims,
-    State(db): State<Database>,
+    State(app_state): State<AppState>,
     Path(project_id_str): Path<String>,
 ) -> Result<(), ServiceError> {
+    let db = &app_state.db;
     let project_id = ProjectId::try_from(project_id_str)?;
 
     let is_member = db
@@ -103,11 +112,12 @@ pub async fn delete_project(
     Ok(())
 }
 
-#[instrument(level = "info", skip(db), ret, err)]
+#[instrument(level = "info", skip(app_state), ret, err)]
 pub async fn list_projects(
     claims: Claims,
-    State(db): State<Database>,
+    State(app_state): State<AppState>,
 ) -> Result<Json<ListProjectsResponse>, ServiceError> {
+    let db = &app_state.db;
     let projects = db
         .list_projects_for_user(&claims.sub)
         .await?

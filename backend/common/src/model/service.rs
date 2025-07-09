@@ -62,6 +62,7 @@ impl TryFrom<String> for ServiceId {
 pub enum ServiceType {
     Airflow {},
     JupyterHub {},
+    MLflow {},
     #[default]
     Unknown,
 }
@@ -71,6 +72,7 @@ impl ServiceType {
         match self {
             ServiceType::Airflow {} => "airflow",
             Self::JupyterHub {} => "jupyterhub",
+            Self::MLflow {} => "mlflow",
             ServiceType::Unknown => "unknown",
         }
     }
@@ -82,6 +84,7 @@ pub struct Service {
     pub service_name: String,
     pub project_id: ProjectId,
     pub service_type: ServiceType,
+    pub url: Option<String>,
 }
 
 impl Service {
@@ -96,6 +99,7 @@ impl Service {
             service_name,
             project_id,
             service_type,
+            url: None,
         }
     }
 
@@ -109,6 +113,7 @@ impl Service {
             service_name,
             project_id,
             service_type,
+            url: None,
         }
     }
 }

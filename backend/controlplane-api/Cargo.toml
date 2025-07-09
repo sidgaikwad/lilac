@@ -30,6 +30,7 @@ hyper.workspace = true
 image = "0.25"
 jsonschema.workspace = true
 jsonwebtoken.workspace = true
+kube.workspace = true
 nanoid.workspace = true
 once_cell.workspace = true
 password-auth.workspace = true
