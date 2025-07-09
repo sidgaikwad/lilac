@@ -1,5 +1,5 @@
 import { generatePath, useLocation, useParams } from 'react-router-dom';
-import { Settings, HardDrive, LayoutDashboard, Home, FlaskConical } from 'lucide-react'; // Added LayoutDashboard
+import { Settings, HardDrive, LayoutDashboard, Home, FlaskConical, BookText } from 'lucide-react'; // Added LayoutDashboard
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -35,6 +35,9 @@ export default function Sidebar() {
         projectId: projectId!,
       }),
       [Routes.PROJECT_SETTINGS]: generatePath(Routes.PROJECT_SETTINGS, {
+        projectId: projectId!,
+      }),
+      [Routes.PROJECT_NOTEBOOKS]: generatePath(Routes.PROJECT_NOTEBOOKS, {
         projectId: projectId!,
       }),
     };
@@ -103,6 +106,19 @@ export default function Sidebar() {
                   <Link to={paths[Routes.PROJECT_EXPERIMENTS]}>
                     <FlaskConical />
                     <span>Experiments</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={
+                    location.pathname === paths[Routes.PROJECT_NOTEBOOKS]
+                  }
+                >
+                  <Link to={paths[Routes.PROJECT_NOTEBOOKS]}>
+                    <BookText />
+                    <span>Notebooks</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

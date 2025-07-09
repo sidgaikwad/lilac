@@ -70,6 +70,16 @@ pub async fn start_service(
                 8000,
             )
         }
+        StartServiceRequest::JupyterLab(req) => {
+            req.validate()
+                .map_err(|_| ServiceError::BadRequest("invalid request".into()))?;
+            (
+                req.service_name,
+                ServiceType::JupyterLab {},
+                "dquadrant/jupyterlab",
+                8888,
+            )
+        }
         StartServiceRequest::MLflow(req) => {
             req.validate()
                 .map_err(|_| ServiceError::BadRequest("invalid request".into()))?;
@@ -226,6 +236,12 @@ pub struct MLflowRequest {
     service_name: String,
 }
 
+#[derive(Debug, Deserialize, Validate)]
+pub struct JupyterLabRequest {
+    #[validate(length(min = 3, message = "Name must be at least 3 characters"), regex(path = *NAME_REGEX))]
+    service_name: String,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(tag = "service")]
 pub enum StartServiceRequest {
@@ -233,6 +249,8 @@ pub enum StartServiceRequest {
     Airflow(AirflowRequest),
     #[serde(rename = "jupyterhub")]
     JupyterHub(JupyterHubRequest),
+    #[serde(rename = "jupyterlab")]
+    JupyterLab(JupyterLabRequest),
     #[serde(rename = "mlflow")]
     MLflow(MLflowRequest),
     #[serde(rename = "noop")]

@@ -2,7 +2,7 @@
 
 set -euxo pipefail
 
-# ./scripts/kind-setup.sh
+./k8s/kind-setup.sh
 
 docker build . -f ./docker/controlplane/Dockerfile -t lilac-api:local
 docker tag lilac-api:local localhost:5001/lilac-api:local

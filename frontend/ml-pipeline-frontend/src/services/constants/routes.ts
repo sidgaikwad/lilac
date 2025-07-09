@@ -8,4 +8,5 @@ export const Routes = {
   PROJECT_DATASET_DETAILS: '/projects/:projectId/datasets/:datasetId',
   PROJECT_SETTINGS: '/projects/:projectId/settings',
   PROJECT_EXPERIMENTS: '/projects/:projectId/experiments',
+  PROJECT_NOTEBOOKS: '/projects/:projectId/notebooks',
 };

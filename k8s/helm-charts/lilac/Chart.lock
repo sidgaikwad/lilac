@@ -5,5 +5,8 @@ dependencies:
 - name: mlflow
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 5.1.0
-digest: sha256:3cf69d131c7edcf7f4462cdd59dace520c7452f76857825729dcba837a7250a9
-generated: "2025-07-07T12:29:57.838282-07:00"
+- name: jupyterhub
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 9.0.16
+digest: sha256:6b381dcfd17ccd40f623d6879c820a6033ecb632e6e6dd1185f0ed7928c08d4f
+generated: "2025-07-08T13:27:48.689461-07:00"

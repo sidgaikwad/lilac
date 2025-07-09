@@ -3,6 +3,7 @@ import { Routes } from './services/constants/routes';
 import { MainLayout, ProjectLayout } from './components/layout';
 import ProjectsListPage from './features/projects/pages/projects-list-page';
 import ExperimentsPage from './features/experiments/pages/experiments-page';
+import NotebooksPage from './features/notebooks/pages/notebooks-page';
 import ProjectDashboardPage from './features/projects/pages/project-dashboard-page';
 import DataSetsPage from './features/datasets/pages/datasets-page';
 import DataSetDetailPage from './features/datasets/pages/dataset-details-page';
@@ -68,6 +69,10 @@ export const router = createBrowserRouter([
               {
                 path: Routes.PROJECT_EXPERIMENTS,
                 element: <ExperimentsPage />,
+              },
+              {
+                path: Routes.PROJECT_NOTEBOOKS,
+                element: <NotebooksPage />,
               },
             ],
           },

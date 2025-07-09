@@ -62,6 +62,7 @@ impl TryFrom<String> for ServiceId {
 pub enum ServiceType {
     Airflow {},
     JupyterHub {},
+    JupyterLab {},
     MLflow {},
     #[default]
     Unknown,
@@ -72,6 +73,7 @@ impl ServiceType {
         match self {
             ServiceType::Airflow {} => "airflow",
             Self::JupyterHub {} => "jupyterhub",
+            Self::JupyterLab {} => "jupyterlab",
             Self::MLflow {} => "mlflow",
             ServiceType::Unknown => "unknown",
         }
