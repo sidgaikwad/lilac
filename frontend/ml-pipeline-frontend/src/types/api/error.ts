@@ -1,9 +1,9 @@
-export interface ApiError {
+export interface ServiceError {
   error: string;
   statusCode: number;
 }
 
-export function isApiError(error: unknown): error is ApiError {
+export function isServiceError(error: unknown): error is ServiceError {
   if (
     !!error &&
     typeof error === 'object' &&

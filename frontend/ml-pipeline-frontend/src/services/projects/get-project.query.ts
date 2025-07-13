@@ -1,7 +1,7 @@
 import { getHttp } from '@/lib/fetch';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
-import { ApiError, Project } from '@/types';
+import { ServiceError, Project } from '@/types';
 import { useEffect } from 'react';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
@@ -42,7 +42,7 @@ interface UseGetProjectProps {
   projectId: string | undefined;
   enabled?: boolean;
   onSuccess?: (project: Project) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
 export function useGetProject(props: UseGetProjectProps) {

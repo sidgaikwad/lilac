@@ -1,4 +1,4 @@
-use std::{collections::HashMap, net::SocketAddr};
+use std::net::SocketAddr;
 
 use axum::{
     body::Body,
@@ -7,24 +7,20 @@ use axum::{
     Router,
 };
 use axum_server::tls_rustls::RustlsConfig;
-use common::{
-    aws::{S3Wrapper, STSWrapper},
+
+use controlplane_api::{
+    auth::keys::{Keys, KEYS},
+    aws::S3Wrapper,
     database::Database,
-    k8s::K8sWrapper,
+    routes, AppState, LilacConfig,
 };
-use controlplane_api::{auth::keys::{Keys, KEYS}, routes, AppState, LilacConfig, Oauth2Config, OidcConfig, SsoConfig};
 use dotenv::dotenv;
 
 use hyper::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE, USER_AGENT},
     Method,
 };
-use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
 use openidconnect::reqwest;
-use openidconnect::{
-    core::CoreProviderMetadata, ClientId as OidcClientId, ClientSecret as OidcClientSecret,
-    IssuerUrl, RedirectUrl as OidcRedirectUrl,
-};
 use rustls::crypto::ring::default_provider;
 use time::Duration;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
@@ -39,17 +35,17 @@ async fn main() {
     // initialize tracing
     tracing_subscriber::fmt()
         .pretty()
-        .with_env_filter(EnvFilter::builder()
-            .with_default_directive(LevelFilter::INFO.into())
-            .from_env_lossy())
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
         .init();
 
     // load .env and config files
     dotenv().ok();
     let config = LilacConfig::new().expect("failed to parse config");
-    KEYS.get_or_init(|| {
-        Keys::new(config.secret_key.as_bytes())
-    });
+    KEYS.get_or_init(|| Keys::new(config.secret_key.as_bytes()));
 
     default_provider().install_default().unwrap();
 
@@ -77,11 +73,7 @@ async fn main() {
         .with_secure(false)
         .with_expiry(Expiry::OnInactivity(Duration::minutes(10)));
 
-    let bucket_name =
-        std::env::var("CUSTOMER_ASSETS_BUCKET").expect("CUSTOMER_ASSETS_BUCKET to be set");
-    let s3 = S3Wrapper::new_from_default(bucket_name).await;
-    let sts = STSWrapper::new_from_default().await;
-    let k8s = K8sWrapper::new(String::new()).await;
+    let s3 = S3Wrapper::new_from_default().await;
 
     let mut headers = hyper::HeaderMap::new();
     headers.insert(USER_AGENT, HeaderValue::from_static("lilac"));
@@ -90,76 +82,6 @@ async fn main() {
         .default_headers(headers)
         .build()
         .expect("Client should build");
-
-    let mut oidc_configs = HashMap::new();
-    let mut oauth2_configs = HashMap::new();
-
-    for (provider_name, sso_cfg) in config.sso.clone().into_iter() {
-        match sso_cfg {
-            SsoConfig::Oidc {
-                client_id,
-                client_secret,
-                issuer_url,
-            } => {
-                let oidc_redirect_url = OidcRedirectUrl::new(format!(
-                    "{}/auth/callback/oidc/{}",
-                    config.frontend_url, provider_name
-                ))
-                .expect("Invalid OIDC redirect URL");
-                let provider_metadata = CoreProviderMetadata::discover_async(
-                    IssuerUrl::new(issuer_url).unwrap(),
-                    &http_client,
-                )
-                .await
-                .unwrap();
-
-                oidc_configs.insert(
-                    provider_name.to_string(),
-                    OidcConfig {
-                        provider_metadata,
-                        client_id: OidcClientId::new(client_id),
-                        client_secret: Some(OidcClientSecret::new(client_secret)),
-                        redirect_uri: oidc_redirect_url.clone(),
-                        frontend_redirect_url: config.frontend_url.clone(),
-                    },
-                );
-                tracing::info!("Successfully configured OIDC provider: {}", provider_name);
-            }
-            SsoConfig::Oauth2 {
-                client_id,
-                client_secret,
-                auth_url,
-                token_url,
-                user_info_url,
-            } => {
-                let oauth2_redirect_url = RedirectUrl::new(format!(
-                    "{}/auth/callback/oauth2/{}",
-                    config.frontend_url, provider_name
-                ))
-                .expect("Invalid OAuth2 redirect URL");
-                oauth2_configs.insert(
-                    provider_name.to_string(),
-                    Oauth2Config {
-                        client_id: ClientId::new(client_id),
-                        client_secret: ClientSecret::new(client_secret),
-                        auth_url: AuthUrl::new(auth_url).expect("Invalid auth URL"),
-                        token_url: TokenUrl::new(token_url).expect("Invalid token URL"),
-                        redirect_url: oauth2_redirect_url.clone(),
-                        user_info_url,
-                        frontend_redirect_url: config.frontend_url.clone(),
-                    },
-                );
-                tracing::info!("Successfully configured Oauth2 provider: {}", provider_name);
-            }
-        }
-    }
-
-    let service_config = ServiceConfig {
-        gateway_name: std::env::var("GATEWAY_NAME").unwrap_or_else(|_| "lilac-gateway".to_string()),
-        gateway_namespace: std::env::var("GATEWAY_NAMESPACE")
-            .unwrap_or_else(|_| "lilac-system".to_string()),
-        gateway_url: std::env::var("GATEWAY_URL").unwrap_or_else(|_| "http://localhost:30080".to_string()),
-    };
 
     let app = Router::new()
         .merge(routes::router())
@@ -181,12 +103,7 @@ async fn main() {
         .with_state(AppState {
             db,
             s3,
-            sts,
-            oidc_configs,
-            oauth2_configs,
             http_client,
-            k8s,
-            service_config,
         });
 
     let addr = SocketAddr::from(([0, 0, 0, 0], config.http_port));

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiError } from '@/types';
+import { ServiceError } from '@/types';
 import { deleteHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
 
@@ -15,7 +15,7 @@ export async function deleteProject(
 
 export interface UseDeleteProjectProps {
   onSuccess?: () => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
 export function useDeleteProject(props?: UseDeleteProjectProps) {

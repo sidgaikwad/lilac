@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
-import { ApiError, User } from '@/types';
+import { ServiceError, User } from '@/types';
 import { useEffect } from 'react';
 import { getHttp } from '@/lib/fetch';
 
@@ -27,7 +27,7 @@ export function getAccountDetailsQuery(enabled: boolean = true) {
 interface UseGetAccountDetailsProps {
   enabled?: boolean;
   onSuccess?: (user: User) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
 export function useGetAccountDetails(props: UseGetAccountDetailsProps) {

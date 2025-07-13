@@ -1,5 +1,12 @@
 import { generatePath, useLocation, useParams } from 'react-router-dom';
-import { Settings, HardDrive, LayoutDashboard, Home, FlaskConical, BookText } from 'lucide-react'; // Added LayoutDashboard
+import {
+  Settings,
+  HardDrive,
+  LayoutDashboard,
+  Home,
+  FlaskConical,
+  BookText,
+} from 'lucide-react'; // Added LayoutDashboard
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -62,10 +69,7 @@ export default function Sidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={location.pathname === '/'}
-                >
+                <SidebarMenuButton asChild isActive={location.pathname === '/'}>
                   <Link to='/'>
                     <Home />
                     <span>Projects</span>

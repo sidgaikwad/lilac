@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
 import { AuthToken } from '@/types/api/auth';
 import useAuthStore from '@/store/use-auth-store';
-import { ApiError } from '@/types';
+import { ServiceError } from '@/types';
 import { postHttp } from '@/lib/fetch';
 import { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
@@ -24,7 +24,7 @@ async function login(payload: LoginRequest): Promise<AuthToken> {
 
 export interface UseLoginProps {
   onSuccess?: (token: AuthToken) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
 export function useLogin(props: UseLoginProps) {

@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
-import { ApiError, Service } from '@/types';
+import { ServiceError, Service } from '@/types';
 import { getHttp } from '@/lib/fetch';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
@@ -11,7 +11,9 @@ export interface ListServicesResponse {
 export async function listServices(
   projectId: string
 ): Promise<ListServicesResponse> {
-  const resp = await getHttp<Sn<ListServicesResponse>>(`/projects/${projectId}/services`);
+  const resp = await getHttp<Sn<ListServicesResponse>>(
+    `/projects/${projectId}/services`
+  );
   return {
     services: resp.services.map((service) => ({
       serviceId: service.service_id,
@@ -23,10 +25,7 @@ export async function listServices(
   };
 }
 
-export function listServicesQuery(
-  projectId: string,
-  enabled: boolean = true
-) {
+export function listServicesQuery(projectId: string, enabled: boolean = true) {
   return queryOptions({
     queryKey: [QueryKeys.LIST_SERVICES, projectId],
     queryFn: () => listServices(projectId),
@@ -39,10 +38,13 @@ export function listServicesQuery(
 interface UseListServicesProps {
   enabled?: boolean;
   onSuccess?: (services: Service[]) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
-export function useListServices(projectId: string, props?: UseListServicesProps) {
+export function useListServices(
+  projectId: string,
+  props?: UseListServicesProps
+) {
   const query = useQuery({
     ...listServicesQuery(projectId, props?.enabled),
     ...props,

@@ -1,5 +1,5 @@
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
-import { isApiError } from '@/types';
+import { isServiceError } from '@/types';
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -19,7 +19,7 @@ function ErrorBoundary() {
         <p>{error.message}</p>
       </div>
     );
-  } else if (isApiError(error)) {
+  } else if (isServiceError(error)) {
     return (
       <div>
         <h1>Oops! Something went wrong.</h1>

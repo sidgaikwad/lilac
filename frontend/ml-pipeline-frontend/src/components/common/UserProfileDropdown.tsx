@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogoutButton } from '@/components/common/LogoutButton';
+import { LogoutButton } from '@/components/common/logout-button';
 import { User } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 

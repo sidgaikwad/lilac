@@ -5,8 +5,8 @@ export default function ExperimentsPage() {
   return (
     <iframe
       src={mlflowUrl}
-      className="h-full w-full border-0"
-      title="MLflow Experiments"
+      className='h-full w-full border-0'
+      title='MLflow Experiments'
     />
   );
 }

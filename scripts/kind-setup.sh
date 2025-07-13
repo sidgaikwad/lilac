@@ -29,9 +29,13 @@ containerdConfigPatches:
     endpoint = ["http://kind-registry:5000"]
 nodes:
 - role: control-plane
-- role: worker
-- role: worker
-- role: worker
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
 networking:
   disableDefaultCNI: true
   kubeProxyMode: "none"

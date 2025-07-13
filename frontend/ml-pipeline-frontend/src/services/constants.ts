@@ -9,7 +9,6 @@ export enum QueryKeys {
 
   GET_USER = 'GetUser',
 
-
   GET_PROJECT = 'GetProject',
   CREATE_PROJECT = 'CreateProject',
   UPDATE_PROJECT = 'UpdateProject',
@@ -23,6 +22,7 @@ export enum QueryKeys {
 
   GET_DATASET = 'GetDataset',
   CREATE_DATASET = 'CreateDataset',
+  TEST_DATASET_CONNECTION = 'TestDatasetConnection',
   LIST_DATASETS = 'ListDatasets',
   LIST_DATASET_S3_OBJECTS = 'ListDatsetS3Objects',
 }

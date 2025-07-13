@@ -3,7 +3,6 @@ use axum::Router;
 mod auth;
 mod datasets;
 mod projects;
-pub mod services;
 mod user;
 
 use crate::AppState;
@@ -14,5 +13,4 @@ pub fn router() -> Router<AppState> {
         .merge(user::router())
         .merge(auth::router())
         .merge(datasets::router())
-        .merge(services::router())
 }

@@ -40,7 +40,7 @@ interface SsoExchangeResponse {
   access_token: string;
 }
 
-interface ApiError {
+interface ServiceError {
   error: string;
   statusCode: number;
 }
@@ -49,7 +49,7 @@ export const useSsoExchange = () => {
   const navigate = useNavigate();
   const { setToken } = useAuthStore();
 
-  return useMutation<SsoExchangeResponse, ApiError, SsoExchangeRequest>({
+  return useMutation<SsoExchangeResponse, ServiceError, SsoExchangeRequest>({
     mutationFn: (request) =>
       postHttp(`/auth/${request.type}/${request.provider}/exchange`, {
         code: request.code,
@@ -60,13 +60,13 @@ export const useSsoExchange = () => {
       navigate('/');
     },
     onError: (error) => {
-    useAuthStore.getState().clearToken();
-    setTimeout(() => {
-      toast.error('Login failed', {
-        description: error.error,
-      });
-    }, 50);
-    navigate(`/login`);
+      useAuthStore.getState().clearToken();
+      setTimeout(() => {
+        toast.error('Login failed', {
+          description: error.error,
+        });
+      }, 50);
+      navigate(`/login`);
     },
   });
 };

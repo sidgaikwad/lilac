@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lilac-ingress
+spec:
+  ingressClassName: cilium
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: lilac-api
+            port:
+              number: 8081
+        path: /api
+        pathType: Prefix
+      - backend:
+          service:
+            name: lilac-web
+            port:
+              number: 8080
+        path: /
+        pathType: Prefix

@@ -1,20 +1,23 @@
-use axum::{routing::get, Router};
+use axum::{routing::{get, post}, Router};
 mod datasets;
 use crate::AppState;
 use datasets::{
-    create_dataset, delete_dataset_handler, get_dataset, list_dataset_s3_folders,
-    list_datasets_handler,
+    connect_data_source, delete_dataset_handler, get_dataset, list_datasets_handler,
+    test_data_source_connection,
 };
 
 pub fn router() -> Router<AppState> {
     Router::new()
         .route(
             "/projects/{projectId}/datasets",
-            get(list_datasets_handler).post(create_dataset),
+            get(list_datasets_handler).post(connect_data_source),
         )
         .route(
             "/datasets/{datasetId}",
             get(get_dataset).delete(delete_dataset_handler),
         )
-        .route("/datasets/{datasetId}/s3", get(list_dataset_s3_folders))
+        .route(
+            "/projects/{projectId}/datasets/test",
+            post(test_data_source_connection),
+        )
 }

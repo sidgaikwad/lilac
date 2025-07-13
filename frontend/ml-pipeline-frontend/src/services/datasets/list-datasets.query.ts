@@ -1,21 +1,30 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'; // Import UseQueryOptions
 import { QueryKeys } from '../constants';
-import { ApiError, DatasetSummary } from '@/types';
+import { ServiceError, DatasetSummary } from '@/types';
 import { useEffect } from 'react';
 import { getHttp } from '@/lib/fetch';
+import { camelCaseObject } from '@/lib/utils';
+import { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface ListDatasetsResponse {
   datasets: {
     id: string;
     name: string;
     description?: string;
+    datasetSource: string;
   }[];
 }
 
 export async function listDatasets(
   projectId: string
 ): Promise<ListDatasetsResponse> {
-  return getHttp(`/projects/${projectId}/datasets`);
+  const resp = await getHttp<Sn<ListDatasetsResponse>>(
+    `/projects/${projectId}/datasets`
+  );
+  console.log(resp);
+  const cc = camelCaseObject(resp);
+  console.log(cc);
+  return cc;
 }
 
 export function listDatasetsQuery(projectId?: string, enabled: boolean = true) {
@@ -32,7 +41,7 @@ interface UseListDatasetsProps {
   projectId?: string;
   enabled?: boolean;
   onSuccess?: (datasets: DatasetSummary[]) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
 export function useListDatasets(props?: UseListDatasetsProps) {

@@ -25,7 +25,7 @@ function SsoCallbackPage() {
   }, [location, provider, type, ssoExchange]);
 
   return (
-    <div className="flex h-screen items-center justify-center">
+    <div className='flex h-screen items-center justify-center'>
       <Spinner />
     </div>
   );

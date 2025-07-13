@@ -2,16 +2,16 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use common::{
+use serde::{Deserialize, Serialize};
+use tracing::instrument;
+
+use crate::{
+    auth::claims::Claims,
     aws::STSWrapper,
     database::Database,
     model::{integration::AWSIntegration, project::ProjectId},
     ServiceError,
 };
-use serde::{Deserialize, Serialize};
-use tracing::instrument;
-
-use crate::auth::claims::Claims;
 
 #[instrument(level = "info", skip(db, sts), ret, err)]
 pub async fn set_aws_integration(

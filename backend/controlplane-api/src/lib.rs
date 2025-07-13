@@ -1,17 +1,21 @@
-use std::{collections::HashMap, path::PathBuf};
-
 use axum::extract::FromRef;
-use common::{
-    aws::{S3Wrapper, STSWrapper},
-    database::Database,
-    k8s::K8sWrapper,
-};
 use config::Config;
 use openidconnect::{core::CoreProviderMetadata, reqwest, ClientId, ClientSecret, RedirectUrl};
-use serde::Deserialize;
+use secrecy::{zeroize::Zeroize, ExposeSecret, SecretBox};
+use serde::{Deserialize, Serialize, Serializer};
+use std::{collections::HashMap, path::PathBuf};
+
+use crate::{aws::S3Wrapper, database::Database, k8s::K8sError};
 
 pub mod auth;
+pub mod aws;
+pub mod data_sources;
+pub mod database;
+mod error;
+pub mod k8s;
+pub mod model;
 pub mod routes;
+pub use error::*;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ServiceConfig {
@@ -33,7 +37,6 @@ use oauth2::{
     AuthUrl, ClientId as Oauth2ClientId, ClientSecret as Oauth2ClientSecret,
     RedirectUrl as Oauth2RedirectUrl, TokenUrl,
 };
-use serde::Deserialize;
 
 #[derive(Clone)]
 pub struct Oauth2Config {
@@ -50,12 +53,7 @@ pub struct Oauth2Config {
 pub struct AppState {
     pub db: Database,
     pub s3: S3Wrapper,
-    pub sts: STSWrapper,
-    pub oidc_configs: HashMap<String, OidcConfig>,
-    pub oauth2_configs: HashMap<String, Oauth2Config>,
     pub http_client: reqwest::Client,
-    pub k8s: K8sWrapper,
-    pub service_config: ServiceConfig,
 }
 
 impl FromRef<AppState> for Database {
@@ -67,24 +65,6 @@ impl FromRef<AppState> for Database {
 impl FromRef<AppState> for S3Wrapper {
     fn from_ref(app_state: &AppState) -> S3Wrapper {
         app_state.s3.clone()
-    }
-}
-
-impl FromRef<AppState> for STSWrapper {
-    fn from_ref(app_state: &AppState) -> STSWrapper {
-        app_state.sts.clone()
-    }
-}
-
-impl FromRef<AppState> for HashMap<String, OidcConfig> {
-    fn from_ref(app_state: &AppState) -> HashMap<String, OidcConfig> {
-        app_state.oidc_configs.clone()
-    }
-}
-
-impl FromRef<AppState> for K8sWrapper {
-    fn from_ref(app_state: &AppState) -> K8sWrapper {
-        app_state.k8s.clone()
     }
 }
 
@@ -118,7 +98,7 @@ pub struct LilacConfig {
     pub database_url: String,
     pub tls: Option<TlsConfig>,
     pub http_port: u16,
-    pub sso: HashMap<String, SsoConfig>,
+    pub sso: Option<HashMap<String, SsoConfig>>,
     pub secret_key: String,
     pub frontend_url: String,
 }
@@ -146,6 +126,13 @@ impl LilacConfig {
                 .ok(),
         }
     }
+}
+
+pub fn serialize_secret<T: Zeroize + Serialize + ?Sized, S: Serializer>(
+    secret: &SecretBox<T>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    secret.expose_secret().serialize(serializer)
 }
 
 #[cfg(test)]
@@ -176,15 +163,16 @@ mod tests {
         assert_eq!(config.secret_key, "secret");
 
         let tls = config.tls.unwrap();
-        assert_eq!(tls.enabled, false);
+        assert!(!tls.enabled);
         assert_eq!(tls.cert_file.to_str().unwrap(), "./cert.pem");
         assert_eq!(tls.key_file.to_str().unwrap(), "./key.pem");
 
-        assert_eq!(config.sso.len(), 2);
-        assert!(config.sso.contains_key("google"));
-        assert!(config.sso.contains_key("github"));
+        let sso = config.sso.unwrap();
+        assert_eq!(sso.len(), 2);
+        assert!(sso.contains_key("google"));
+        assert!(sso.contains_key("github"));
 
-        assert!(matches!(config.sso["google"], SsoConfig::Oidc { .. }));
-        assert!(matches!(config.sso["github"], SsoConfig::Oauth2 { .. }));
+        assert!(matches!(sso["google"], SsoConfig::Oidc { .. }));
+        assert!(matches!(sso["github"], SsoConfig::Oauth2 { .. }));
     }
 }

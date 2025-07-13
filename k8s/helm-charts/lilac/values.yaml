@@ -15,25 +15,8 @@ postgresql:
     initdb:
       user: "postgres"
       password: "password"
-      scripts:
-        init.sql: |
-          CREATE USER "lilac-mlflow" WITH ENCRYPTED PASSWORD 'password123';
-          CREATE DATABASE "lilac-mlflow-auth";
-          GRANT ALL PRIVILEGES ON DATABASE "lilac-mlflow-auth" TO "lilac-mlflow";
-          ALTER DATABASE "lilac-mlflow-auth" OWNER TO "lilac-mlflow";
-          CREATE DATABASE "lilac-mlflow";
-          GRANT ALL PRIVILEGES ON DATABASE "lilac-mlflow" TO "lilac-mlflow";
-          ALTER DATABASE "lilac-mlflow" OWNER TO "lilac-mlflow";
-          CREATE USER "lilac-jupyterhub" WITH ENCRYPTED PASSWORD 'jupyter-password';
-          CREATE DATABASE "lilac-jupyterhub";
-          GRANT ALL PRIVILEGES ON DATABASE "lilac-jupyterhub" TO "lilac-jupyterhub";
-          ALTER DATABASE "lilac-jupyterhub" OWNER TO "lilac-jupyterhub";
-cilium:
-  hubble:
-    ui:
-      enabled: true
-    relay:
-      enabled: true
+      # scripts:
+      #   init.sql: |
 
 lilac:
   api:
@@ -41,58 +24,8 @@ lilac:
       url:
         localhost:8080
     secret_key: mysecret
-
   web:
     port: 8080
     tls:
       enabled: true
       tlsSecret: 
-jupyterhub:
-  auth:
-    type: dummy
-  hub:
-    password: "password123"
-    cookieSecret: "a-very-long-and-randomly-generated-hex-string-for-security"
-    service:
-      type: ClusterIP
-      port: 8888
-    port: 8888
-    hub:
-  extraConfig:
-    hub: |
-      c.JupyterHub.tornado_settings = { 'headers': { 'Content-Security-Policy': 'frame-ancestors *'}}
-    spawner: |
-      c.Spawner.args = ['--NotebookApp.tornado_settings={"headers":{"Content-Security-Policy": "frame-ancestors *"}}']
-      
-  proxy:
-    chp:
-      extraArgs:
-        - --log-level=debug
-    service:
-      csp:
-        frameAncestors:
-          - "*"
-  postgresql:
-    enabled: false
-  externalDatabase:
-    host: lilac-postgresql
-    port: 5432
-    user: "lilac-jupyterhub"
-    password: "jupyter-password"
-    database: "lilac-jupyterhub"
-  singleuser:
-    image:
-      name: jupyter/base-notebook
-      tag: latest
-    extraConfig:
-      hub: |
-        c.JupyterHub.tornado_settings = { 'headers': { 'Content-Security-Policy': 'frame-ancestors *'}}
-      spawner: |
-        c.Spawner.args = ['--NotebookApp.tornado_settings={"headers":{"Content-Security-Policy": "frame-ancestors *"}}']
-      
-      c.NotebookApp.tornado_settings: |
-        {
-          "headers": {
-            "Content-Security-Policy": "frame-ancestors *"
-          }
-        }

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiError } from '@/types';
+import { ServiceError } from '@/types';
 import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
@@ -25,14 +25,18 @@ async function createService(
 
 export interface UseCreateServiceProps {
   onSuccess?: (data: CreateServiceResponse) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
-export function useCreateService(projectId: string, props: UseCreateServiceProps) {
+export function useCreateService(
+  projectId: string,
+  props: UseCreateServiceProps
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: [QueryKeys.CREATE_SERVICE],
-    mutationFn: (payload: CreateServiceRequest) => createService(projectId, payload),
+    mutationFn: (payload: CreateServiceRequest) =>
+      createService(projectId, payload),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.LIST_SERVICES, projectId],

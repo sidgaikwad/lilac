@@ -12,8 +12,7 @@ export default function Header() {
     <header className='bg-sidebar sticky top-0 z-50 flex w-full items-center border-b'>
       <div className='flex h-(--header-height) w-full items-center justify-between gap-2 px-4'>
         <div className='flex h-full flex-row items-center'>
-          <div className='flex h-full flex-row items-center'>
-          </div>
+          <div className='flex h-full flex-row items-center'></div>
         </div>
         <div className='flex items-center gap-2'>
           <ThemeToggle />

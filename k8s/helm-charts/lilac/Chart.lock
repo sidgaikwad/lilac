@@ -2,11 +2,5 @@ dependencies:
 - name: postgresql
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 16.7.14
-- name: mlflow
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 5.1.0
-- name: jupyterhub
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 9.0.16
-digest: sha256:6b381dcfd17ccd40f623d6879c820a6033ecb632e6e6dd1185f0ed7928c08d4f
-generated: "2025-07-08T13:27:48.689461-07:00"
+digest: sha256:a02dade9b441c9d73eb231489d25bd036e2f76f6a124024e7d3067f033184228
+generated: "2025-07-09T21:42:06.288543-07:00"

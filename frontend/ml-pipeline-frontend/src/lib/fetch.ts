@@ -8,7 +8,7 @@ function handleUnauthorized() {
 
 export async function postHttp<Req, Resp>(
   path: string,
-  request: Req,
+  request: Req
 ): Promise<Resp> {
   if (path[0] !== '/') {
     path = `/${path}`;
@@ -53,7 +53,7 @@ export async function getHttp<Req extends Record<string, string>, Resp>(
   }
   const searchParams = new URLSearchParams();
   Object.entries(params ?? {}).forEach(([key, value]) =>
-    searchParams.append(key, value),
+    searchParams.append(key, value)
   );
   const token = useAuthStore.getState().token;
   const headers: HeadersInit = {};

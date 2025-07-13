@@ -2,19 +2,18 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use common::{
-    k8s::K8sApi,
+use serde::{Deserialize, Serialize};
+use tracing::instrument;
+use validator::Validate;
+
+use crate::{
+    auth::claims::Claims,
     model::{
         integration::AWSIntegration,
         project::{Project, ProjectId},
     },
     ServiceError,
 };
-use serde::{Deserialize, Serialize};
-use tracing::instrument;
-use validator::Validate;
-
-use crate::auth::claims::Claims;
 
 use crate::AppState;
 
@@ -25,19 +24,16 @@ pub async fn create_project(
     Json(request): Json<CreateProjectRequest>,
 ) -> Result<Json<CreateProjectResponse>, ServiceError> {
     let db = &app_state.db;
-    let k8s = &app_state.k8s;
 
     match request.validate() {
         Ok(_) => (),
-        Err(e) => return Err(ServiceError::SchemaValidationError(e.to_string())),
+        Err(e) => return Err(ServiceError::BadRequest(e.to_string())),
     }
     let project = Project::create(request.name);
     let project_id = project.project_id.clone();
 
     db.create_project_with_membership(project, &claims.sub)
         .await?;
-
-    k8s.create_namespace(&project_id.to_string()).await?;
 
     Ok(Json(CreateProjectResponse { id: project_id }))
 }
@@ -64,7 +60,9 @@ pub async fn get_project(
     let is_member = db.is_user_project_member(&claims.sub, &project_id).await?;
 
     if !is_member {
-        return Err(ServiceError::Unauthorized);
+        return Err(ServiceError::Unauthorized {
+            reason: String::from("user is not a member of project"),
+        });
     }
 
     let project = db.get_project(&project_id).await?;
@@ -99,12 +97,12 @@ pub async fn delete_project(
     let db = &app_state.db;
     let project_id = ProjectId::try_from(project_id_str)?;
 
-    let is_member = db
-        .is_user_project_member(&claims.sub, &project_id)
-        .await?;
+    let is_member = db.is_user_project_member(&claims.sub, &project_id).await?;
 
     if !is_member {
-        return Err(ServiceError::Unauthorized);
+        return Err(ServiceError::Unauthorized {
+            reason: String::from("user is not a member of project"),
+        });
     }
 
     db.delete_project(&project_id).await?;

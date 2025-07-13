@@ -8,7 +8,7 @@ use jsonwebtoken::{decode, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use common::model::user::UserId;
+use crate::model::user::UserId;
 
 use super::{error::AuthError, keys::KEYS};
 
@@ -50,8 +50,12 @@ where
             .await
             .map_err(|_| AuthError::MissingCredentials)?;
         // Decode the user data
-        let token_data = decode::<Claims>(bearer.token(), &KEYS.get().unwrap().decoding, &Validation::default())
-            .map_err(|_| AuthError::InvalidToken)?;
+        let token_data = decode::<Claims>(
+            bearer.token(),
+            &KEYS.get().unwrap().decoding,
+            &Validation::default(),
+        )
+        .map_err(|_| AuthError::InvalidToken)?;
 
         Ok(token_data.claims)
     }

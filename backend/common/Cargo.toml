@@ -4,31 +4,3 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-aws-config.workspace = true
-aws-sdk-s3.workspace = true
-aws-sdk-sts.workspace = true
-aws-smithy-types-convert.workspace = true
-axum.workspace = true
-cached.workspace = true
-chrono.workspace = true
-getset.workspace = true
-jsonschema.workspace = true
-secrecy.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-schemars.workspace = true
-shlex.workspace = true
-strum.workspace = true
-sqlx.workspace = true
-thiserror.workspace = true
-tracing.workspace = true
-password-auth.workspace = true
-uuid.workspace = true
-k8s-openapi.workspace = true
-kube.workspace = true
-tokio.workspace = true
-rustls.workspace = true
-
-[dev-dependencies]
-test-log = { version = "0.2.17", features = ["trace"] }
-mockito = "1.7.0"

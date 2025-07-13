@@ -74,7 +74,7 @@ function ContainerContent({
   return (
     <div
       data-slot='container-content'
-      className={cn('flex-1 h-full w-full space-y-8 px-6', className)}
+      className={cn('h-full w-full flex-1 space-y-8 px-6', className)}
       {...props}
     />
   );

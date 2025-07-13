@@ -1,9 +1,5 @@
 import { useParams } from 'react-router-dom';
-import {
-  getProjectQuery,
-  useGetDataset,
-  useListDatasetS3Prefixes,
-} from '@/services';
+import { getProjectQuery, useGetDataset } from '@/services';
 import {
   Container,
   ContainerAction,
@@ -15,7 +11,6 @@ import {
 import Breadcrumbs from '@/components/common/breadcrumbs';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { FileBrowser } from '../components/file-browser';
 
 function DataSetDetailPage() {
   const { projectId, datasetId } = useParams<{
@@ -30,13 +25,6 @@ function DataSetDetailPage() {
       toast.error('Failed to load dataset', {
         description: error.error,
       }),
-  });
-  const { data: _objects } = useListDatasetS3Prefixes({
-    datasetId,
-    params: {
-      prefix: '',
-    },
-    onSuccess: (objects) => console.log(objects),
   });
 
   return (
@@ -71,16 +59,7 @@ function DataSetDetailPage() {
         <ContainerAction></ContainerAction>
       </ContainerHeader>
 
-      <ContainerContent>
-        {dataset && (
-          <FileBrowser
-            bucketName={dataset?.datasetSource.bucketName}
-            datasetId={dataset.id}
-            rootPrefix=''
-            name='/'
-          />
-        )}
-      </ContainerContent>
+      <ContainerContent></ContainerContent>
     </Container>
   );
 }

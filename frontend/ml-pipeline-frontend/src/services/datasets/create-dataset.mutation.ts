@@ -1,19 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiError } from '@/types';
+import { ServiceError } from '@/types';
 import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
-
-export interface S3Source {
-  sourceType: 'S3';
-  bucketName: string;
-}
+import { snakeCaseObject } from '@/lib/utils';
+import { S3Source, SnowflakeSource } from './types';
 
 export interface CreateDatasetRequest {
   datasetName: string;
   description?: string;
   projectId: string;
-  source: S3Source;
+  source: S3Source | SnowflakeSource;
 }
 
 export interface CreateDatasetResponse {
@@ -24,16 +21,14 @@ async function createDataset(
   payload: CreateDatasetRequest
 ): Promise<CreateDatasetResponse> {
   const { projectId, ...request } = payload;
+
   const resp = await postHttp<
     Sn<Omit<CreateDatasetRequest, 'projectId'>>,
     Sn<CreateDatasetResponse>
   >(`/projects/${projectId}/datasets`, {
     dataset_name: request.datasetName,
     description: request.description,
-    source: {
-      source_type: request.source.sourceType,
-      bucket_name: request.source.bucketName,
-    },
+    source: snakeCaseObject(request.source),
   });
   return {
     id: resp.id,
@@ -42,7 +37,7 @@ async function createDataset(
 
 export interface UseCreateDatasetProps {
   onSuccess?: (data: CreateDatasetResponse) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
 export function useCreateDataset(props?: UseCreateDatasetProps) {

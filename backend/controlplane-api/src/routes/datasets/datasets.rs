@@ -1,27 +1,28 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     Json,
-};
-use common::{
-    aws::{get_s3_client_with_role, S3Wrapper},
-    database::Database,
-    model::{
-        dataset::{Dataset, DatasetId, DatasetSource},
-        project::ProjectId,
-    },
-    ServiceError,
 };
 
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
-use crate::auth::claims::Claims;
+use crate::{
+    auth::claims::Claims,
+    data_sources::{check_s3_bucket_access, check_snowflake_access, get_bucket_location},
+    database::Database,
+    model::{
+        dataset::{Dataset, DatasetId, DatasetSource, S3Bucket, SnowflakeConnector},
+        project::ProjectId,
+    },
+    ServiceError,
+};
 
 #[derive(Serialize, Debug)]
 pub struct DatasetSummary {
     pub id: DatasetId,
     pub name: String,
     pub description: Option<String>,
+    pub dataset_source: String,
 }
 
 #[derive(Serialize, Debug)]
@@ -43,16 +44,16 @@ pub async fn list_datasets_handler(
                 id: v.dataset_id,
                 name: v.dataset_name,
                 description: v.description,
+                dataset_source: v.dataset_source.get_type(),
             })
             .collect(),
     }))
 }
 
-#[instrument(level = "info", skip(_claims, db, s3, request), ret, err)]
-pub async fn create_dataset(
+#[instrument(level = "info", skip(_claims, db, request), ret, err)]
+pub async fn connect_data_source(
     _claims: Claims,
     State(db): State<Database>,
-    State(s3): State<S3Wrapper>,
     Path(project_id): Path<ProjectId>,
     Json(request): Json<CreateDatasetRequest>,
 ) -> Result<Json<CreateDatasetResponse>, ServiceError> {
@@ -63,12 +64,37 @@ pub async fn create_dataset(
         DatasetSourceRequest::Unknown => {
             return Err(ServiceError::BadRequest("unknown source".into()))
         }
-        DatasetSourceRequest::S3 { bucket_name } => {
-            let region = s3.get_bucket_location(&bucket_name).await?;
-            DatasetSource::S3 {
-                bucket_name: bucket_name,
-                region: region,
-            }
+        DatasetSourceRequest::S3 {
+            bucket_name,
+            access_key,
+            secret_key,
+        } => {
+            let secret_key = secret_key.into();
+            let region = get_bucket_location(&bucket_name, &access_key, &secret_key).await?;
+            let s3_bucket = S3Bucket::new(
+                bucket_name,
+                access_key,
+                secret_key,
+                region.to_string(),
+            );
+            check_s3_bucket_access(&s3_bucket).await?;
+            DatasetSource::S3(s3_bucket)
+        }
+        DatasetSourceRequest::Snowflake {
+            username,
+            password,
+            account,
+            warehouse,
+            database,
+            schema,
+            role,
+        } => {
+            let password = password.into();
+            let snowflake_connector = SnowflakeConnector::new(
+                username, password, account, warehouse, database, schema, role,
+            );
+            check_snowflake_access(&snowflake_connector).await?;
+            DatasetSource::Snowflake(snowflake_connector)
         }
     };
 
@@ -82,6 +108,61 @@ pub async fn create_dataset(
     Ok(Json(CreateDatasetResponse { id }))
 }
 
+#[instrument(level = "info", skip(_claims, db, request), ret, err)]
+pub async fn test_data_source_connection(
+    _claims: Claims,
+    State(db): State<Database>,
+    Path(project_id): Path<ProjectId>,
+    Json(request): Json<CreateDatasetRequest>,
+) -> Result<Json<TestDatasetResponse>, ServiceError> {
+    // verify project exists
+    let _project = db.get_project(&project_id).await?;
+
+    let result = match request.source {
+        DatasetSourceRequest::Unknown => {
+            return Err(ServiceError::BadRequest("unknown source".into()))
+        }
+        DatasetSourceRequest::S3 {
+            bucket_name,
+            access_key,
+            secret_key,
+        } => {
+            let secret_key = secret_key.into();
+            let region = get_bucket_location(&bucket_name, &access_key, &secret_key).await?;
+            let s3_bucket = S3Bucket::new(
+                bucket_name,
+                access_key,
+                secret_key,
+                region.to_string(),
+            );
+            check_s3_bucket_access(&s3_bucket).await
+        }
+        DatasetSourceRequest::Snowflake {
+            username,
+            password,
+            account,
+            warehouse,
+            database,
+            schema,
+            role,
+        } => {
+            let password = password.into();
+            let snowflake_connector = SnowflakeConnector::new(
+                username, password, account, warehouse, database, schema, role,
+            );
+            check_snowflake_access(&snowflake_connector).await
+        }
+    };
+    Ok(Json(TestDatasetResponse {
+        success: result.is_ok(),
+    }))
+}
+
+#[derive(Serialize, Debug)]
+pub struct TestDatasetResponse {
+    success: bool,
+}
+
 #[derive(Clone, Debug, Deserialize, Default)]
 #[serde(tag = "source_type")]
 pub enum DatasetSourceRequest {
@@ -89,6 +170,17 @@ pub enum DatasetSourceRequest {
     Unknown,
     S3 {
         bucket_name: String,
+        access_key: String,
+        secret_key: String,
+    },
+    Snowflake {
+        username: String,
+        password: String,
+        account: String,
+        warehouse: Option<String>,
+        database: Option<String>,
+        schema: Option<String>,
+        role: Option<String>,
     },
 }
 
@@ -141,65 +233,4 @@ pub async fn delete_dataset_handler(
     db.delete_dataset(&dataset_id).await?;
 
     Ok(())
-}
-
-#[instrument(level = "info", skip_all, fields(dataset_id = dataset_id.to_string(), user_id = _claims.sub.to_string()), err)]
-pub async fn list_dataset_s3_folders(
-    _claims: Claims,
-    State(db): State<Database>,
-    State(s3): State<S3Wrapper>,
-    Path(dataset_id): Path<DatasetId>,
-    Query(request): Query<ListS3ObjectsRequest>,
-) -> Result<Json<ListS3ObjectsResponse>, ServiceError> {
-    let dataset = db.get_dataset(&dataset_id).await?;
-    let project = db.get_project(&dataset.project_id).await?;
-    match dataset.dataset_source {
-        DatasetSource::S3 {
-            bucket_name,
-            region,
-        } => {
-            let aws_integration = project.aws_integration.ok_or(ServiceError::BadRequest(
-                "AWS integration not configured".into(),
-            ))?;
-            let s3_client = get_s3_client_with_role(
-                &region,
-                aws_integration.role_arn(),
-                aws_integration.external_id(),
-            )
-            .await;
-            let start_key_ref = request.start_after_key.as_ref().map(|v| v.as_str());
-            let (prefixes, objects) = s3
-                .list_dataset_prefixes(
-                    Some(&s3_client),
-                    &bucket_name,
-                    &request.prefix,
-                    start_key_ref,
-                )
-                .await?;
-
-            Ok(Json(ListS3ObjectsResponse {
-                prefixes: prefixes.into_iter().filter_map(|v| v.prefix).collect(),
-                objects: objects.into_iter().filter_map(|v| v.key).collect(),
-            }))
-        }
-        _ => {
-            return Err(ServiceError::BadRequest(
-                "dataset is not an S3 dataset".into(),
-            ))
-        }
-    }
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ListS3ObjectsRequest {
-    #[allow(dead_code)]
-    prefix: String,
-    #[allow(dead_code)]
-    start_after_key: Option<String>,
-}
-
-#[derive(Serialize, Debug)]
-pub struct ListS3ObjectsResponse {
-    prefixes: Vec<String>,
-    objects: Vec<String>,
 }

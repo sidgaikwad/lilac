@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiError } from '@/types';
+import { ServiceError } from '@/types';
 import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
@@ -25,7 +25,7 @@ async function createProject(
 
 export interface UseCreateProjectProps {
   onSuccess?: (data: CreateProjectResponse) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
 export function useCreateProject(props: UseCreateProjectProps) {

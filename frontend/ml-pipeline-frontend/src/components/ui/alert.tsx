@@ -9,6 +9,19 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: 'bg-card text-card-foreground',
+        info: 'bg-blue-300/10 text-blue-500 border-blue-500 [&>svg]:text-current *:data-[slot=alert-description]:text-blue-500/90',
+        pending:
+          'bg-gray-300/10 border-gray-700 text-gray-700 [&>svg]:text-current *:data-[slot=alert-description]:text-gray-700/90',
+        loading:
+          'bg-gray-300/10 border-gray-700 text-gray-700 [&>svg]:text-current *:data-[slot=alert-description]:text-gray-700/90',
+        warn: 'bg-orange-300/10 text-orange-500 border-orange-500 [&>svg]:text-current *:data-[slot=alert-description]:text-orange-500/90',
+        alert:
+          'bg-card text-orange-500 [&>svg]:text-current *:data-[slot=alert-description]:text-orange-500/90',
+        success:
+          'bg-green-300/10 text-green-600 border-green-600 [&>svg]:text-current *:data-[slot=alert-description]:text-green-600/90',
+        help: 'bg-slate-300/10 border-slate-700 text-slate-700 [&>svg]:text-current *:data-[slot=alert-description]:text-slate-700/90',
+        error:
+          'text-destructive bg-red-300/10 border-red-500 [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90',
         destructive:
           'text-destructive bg-card [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90',
       },

@@ -1,6 +1,6 @@
 import './index.css';
 import '@tanstack/react-query';
-import { ApiError } from '@/types';
+import { ServiceError } from '@/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; // Import QueryClient stuff
 import { ThemeProvider } from './components/providers/theme-provider.tsx';
 import React from 'react';
@@ -9,7 +9,7 @@ import App from './App.tsx';
 
 declare module '@tanstack/react-query' {
   interface Register {
-    defaultError: ApiError;
+    defaultError: ServiceError;
   }
 }
 

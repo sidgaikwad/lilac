@@ -1,12 +1,16 @@
 use axum::{extract::State, Json};
-use common::{database::Database, model::auth::AuthBody};
 use jsonwebtoken::{encode, Header};
 use password_auth::verify_password;
 use secrecy::ExposeSecret;
 use serde::Deserialize;
 use validator::Validate;
 
-use crate::auth::{claims::Claims, error::AuthError, keys::KEYS};
+use crate::{
+    auth::{claims::Claims, error::AuthError, keys::KEYS},
+    database::Database,
+    model::{auth::AuthBody, user::AuthProvider},
+    ServiceError,
+};
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct AuthPayload {
@@ -20,26 +24,26 @@ pub struct AuthPayload {
 pub async fn authorize(
     State(db): State<Database>,
     Json(request): Json<AuthPayload>,
-) -> Result<Json<AuthBody>, AuthError> {
+) -> Result<Json<AuthBody>, ServiceError> {
     match request.validate() {
         Ok(_) => (),
-        Err(e) => return Err(AuthError::InvalidInput(e.to_string())),
+        Err(e) => return Err(AuthError::InvalidInput(e.to_string()).into()),
     };
 
     let user = db
         .get_user_by_email(&request.email)
         .await
         .map_err(|_db_error| AuthError::WrongCredentials)?; // Assuming db error implies wrong creds for simplicity
-    if user.login_method != Some(common::model::user::AuthProvider::Email) {
-        return Err(AuthError::WrongCredentials);
+    if user.login_method != Some(AuthProvider::Email) {
+        return Err(AuthError::WrongCredentials.into());
     }
 
     if let Some(password_hash) = &user.password_hash {
         if verify_password(request.password, password_hash.expose_secret()).is_err() {
-            return Err(AuthError::WrongCredentials);
+            return Err(AuthError::WrongCredentials.into());
         }
     } else {
-        return Err(AuthError::WrongCredentials);
+        return Err(AuthError::WrongCredentials.into());
     }
 
     let claims = Claims::create(user.user_id);

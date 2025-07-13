@@ -1,9 +1,10 @@
 import { getHttp } from '@/lib/fetch';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
-import { ApiError } from '@/types';
+import { ServiceError } from '@/types';
 import { useEffect } from 'react';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
+import { camelCaseObject } from '@/lib/utils';
 
 export interface GetDatasetResponse {
   id: string;
@@ -17,17 +18,7 @@ export async function getDataset(
   datasetId: string
 ): Promise<GetDatasetResponse> {
   const resp = await getHttp<Sn<GetDatasetResponse>>(`/datasets/${datasetId}`);
-  return {
-    id: resp.id,
-    projectId: resp.project_id,
-    name: resp.name,
-    description: resp.description,
-    datasetSource: {
-      sourceType: resp.dataset_source.source_type,
-      bucketName: resp.dataset_source.bucket_name,
-      region: resp.dataset_source.region,
-    },
-  };
+  return camelCaseObject(resp);
 }
 
 export function getDatasetQuery(datasetId?: string, enabled: boolean = true) {
@@ -43,7 +34,7 @@ interface UseGetDatasetProps {
   datasetId: string | undefined;
   enabled?: boolean;
   onSuccess?: (dataset: GetDatasetResponse) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
 export function useGetDataset(props: UseGetDatasetProps) {

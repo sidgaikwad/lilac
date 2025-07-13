@@ -2,7 +2,7 @@
 
 set -euxo pipefail
 
-./k8s/kind-setup.sh
+./scripts/kind-setup.sh
 
 docker build . -f ./docker/controlplane/Dockerfile -t lilac-api:local
 docker tag lilac-api:local localhost:5001/lilac-api:local
@@ -13,31 +13,24 @@ docker tag lilac-web:local localhost:5001/lilac-web:local
 docker push localhost:5001/lilac-web:local
 
 helm repo add cilium https://helm.cilium.io/
-helm upgrade --install --wait --debug cilium cilium/cilium --version 1.17.5 --namespace cilium --create-namespace --values - << EOF
-kubeProxyReplacement: true
+helm repo add community-charts https://community-charts.github.io/helm-charts
+helm upgrade --install --debug cilium cilium/cilium --version 1.17.5 --namespace cilium --create-namespace --values - << EOF
 k8sServiceHost: lilac-control-plane
 k8sServicePort: 6443
-hostServices:
-  enabled: false
-externalIPs:
+kubeProxyReplacement: true
+l2announcements:
   enabled: true
-nodePort:
+encryption:
   enabled: true
-hostPort:
+  type: wireguard
+ingressController:
   enabled: true
-gatewayAPI:
-  enabled: true
-  service:
-    type: NodePort
-    nodePorts:
-      http: 30080
-image:
-  pullPolicy: IfNotPresent
-ipam:
-  mode: kubernetes
+  loadbalancerMode: dedicated
+  default: true
 hubble:
-  enabled: true
   relay:
+    enabled: true
+  ui:
     enabled: true
 EOF
 

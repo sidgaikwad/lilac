@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'; // Import UseQueryOptions
 import { QueryKeys } from '../constants';
-import { ApiError } from '@/types';
+import { ServiceError } from '@/types';
 import { useEffect } from 'react';
 import { getHttp } from '@/lib/fetch';
 
@@ -39,7 +39,7 @@ interface UseListDatasetS3PrefixesProps {
   params?: S3QueryParams;
   enabled?: boolean;
   onSuccess?: (prefixes: ListDatasetsS3PrefixesResponse) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: ServiceError) => void;
 }
 
 export function useListDatasetS3Prefixes(
