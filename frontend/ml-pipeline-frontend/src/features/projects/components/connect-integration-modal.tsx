@@ -34,7 +34,6 @@ export function ConnectIntegrationModal({
   showTrigger = true,
 }: ConnectIntegrationModalProps) {
   const [selectedIntegration, setSelectedIntegration] = useState<string>();
-  console.log(project);
   const handleOpenChange = (openState: boolean) => {
     setOpen(openState);
   };
@@ -58,7 +57,7 @@ export function ConnectIntegrationModal({
           <div>
             <Card
               data-disabled={project.awsIntegration !== undefined}
-              className='max-h-xs data-[disabled=false]:hover:bg-muted data-[disabled=true]:bg-muted data-[disabled=true]:text-muted-foreground max-w-xs data-[disabled=false]:hover:cursor-pointer'
+              className='max-h-xs data-[disabled=false]:hover:bg-muted data-[disabled=true]:bg-muted data-[disabled=true]:text-gray-text-muted max-w-xs data-[disabled=false]:hover:cursor-pointer'
               onClick={() =>
                 project.awsIntegration === undefined &&
                 setSelectedIntegration('aws')

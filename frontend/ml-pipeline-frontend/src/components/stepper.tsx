@@ -285,7 +285,7 @@ const Description = ({
   return (
     <Comp
       date-component='stepper-step-description'
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn('text-gray-text-muted text-sm', className)}
       {...props}
     >
       {children}
@@ -349,7 +349,7 @@ const CircleStepIndicator = ({
           fill='none'
           stroke='currentColor'
           strokeWidth={strokeWidth}
-          className='text-muted-foreground'
+          className='text-gray-text-muted'
         />
         <circle
           cx={size / 2}
@@ -386,7 +386,7 @@ const classForNavigationList = cva('flex gap-2', {
 const classForSeparator = cva(
   [
     'bg-muted',
-    'data-[state=completed]:bg-primary data-[disabled]:opacity-50',
+    'data-[state=completed]:bg-accent data-[disabled]:opacity-50',
     'transition-all duration-300 ease-in-out',
   ],
   {

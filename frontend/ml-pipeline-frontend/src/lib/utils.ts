@@ -34,4 +34,3 @@ export function camelCaseObject<T extends object>(
 ): CamelCasedPropertiesDeep<T> {
   return mapObject(obj, camelCase) as CamelCasedPropertiesDeep<T>;
 }
-

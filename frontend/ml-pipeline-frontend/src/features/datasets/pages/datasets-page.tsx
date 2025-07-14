@@ -1,11 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import CreateDatasetModal from '../components/connect-dataset-modal';
 import { getProjectQuery } from '@/services';
 import { useListDatasets } from '@/services';
@@ -19,10 +15,9 @@ import {
 } from '@/components/ui/container';
 import Breadcrumbs from '@/components/common/breadcrumbs';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/components/toast';
 import EmptyCardSection from '@/components/common/empty-card-section';
 import { DatasetCard } from '../components/dataset-card';
-
 
 function DataSetsPage() {
   const { projectId } = useParams<{ projectId: string }>();
@@ -94,7 +89,11 @@ function DataSetsPage() {
         )}
         {datasets !== undefined && datasets.length > 0 ? (
           datasets.map((dataset) => (
-            <DatasetCard key={dataset.id} projectId={projectId!} dataset={dataset} />
+            <DatasetCard
+              key={dataset.id}
+              projectId={projectId!}
+              dataset={dataset}
+            />
           ))
         ) : (
           <EmptyCardSection

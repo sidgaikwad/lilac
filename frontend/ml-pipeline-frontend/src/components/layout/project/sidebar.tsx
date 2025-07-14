@@ -6,6 +6,7 @@ import {
   Home,
   FlaskConical,
   BookText,
+  Shapes,
 } from 'lucide-react'; // Added LayoutDashboard
 import {
   Sidebar as SidebarComponent,
@@ -18,17 +19,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import { Routes } from '@/services/constants/routes';
 import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
+import ProjectSelectionDropdown from '@/components/common/project-selection-dropdown';
 
 export default function Sidebar() {
   const { projectId } = useParams<{ projectId: string }>();
 
   const location = useLocation();
-  const { setOpen } = useSidebar();
 
   const paths = useMemo(() => {
     return {
@@ -58,13 +58,28 @@ export default function Sidebar() {
   return (
     <SidebarComponent
       variant='sidebar'
-      collapsible='icon'
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      collapsible='none'
       className='top-(--header-height) !h-[calc(100svh-var(--header-height))]'
     >
       <SidebarHeader></SidebarHeader>
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem className='bg-accent-secondary border border-accent-border rounded-md'>
+                <SidebarMenuButton asChild>
+                  <div>
+                    <Shapes />
+                    <ProjectSelectionDropdown />
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className='mx-0' />
+
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>

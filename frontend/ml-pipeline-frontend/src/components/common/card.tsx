@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 export type CardProps = {
   className?: string;
@@ -30,7 +31,7 @@ export function Card(props: CardProps) {
     ...divProps
   } = props;
   return (
-    <CardComponent {...divProps} className={className}>
+    <CardComponent {...divProps} className={cn('h-fit w-fit', className)}>
       <CardHeader>
         <div className='flex flex-row items-center gap-4'>
           {icon}

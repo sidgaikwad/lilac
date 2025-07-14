@@ -41,7 +41,7 @@ function AccountSettingsPage() {
               defaultValue={user?.email ?? ''}
               disabled
             />
-            <p className='text-muted-foreground text-xs'>
+            <p className='text-gray-text-muted text-xs'>
               Email address cannot be changed.
             </p>
           </div>

@@ -36,7 +36,7 @@ export function UserProfileDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className='focus:ring-ring rounded-full focus:ring-2 focus:ring-offset-2 focus:outline-none'>
+        <button className='focus:ring-accent-ring rounded-full focus:ring-2 focus:ring-offset-2 focus:outline-none'>
           <Avatar>
             {/* <AvatarImage src={user.avatarUrl} alt={user.name || user.email} /> */}
             <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
@@ -47,7 +47,7 @@ export function UserProfileDropdown({
         <DropdownMenuLabel className='truncate font-normal'>
           <div className='flex flex-col space-y-1'>
             <p className='text-sm leading-none font-medium'>Signed in as</p>
-            <p className='text-muted-foreground truncate text-xs leading-none'>
+            <p className='text-gray-text-muted truncate text-xs leading-none'>
               {user.email}
             </p>
           </div>

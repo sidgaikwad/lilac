@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useCreateDataset } from '@/services';
-import { toast } from 'sonner';
+import { toast } from '@/components/toast';
 import ConnectDatasetForm, {
   DataSetFormValues,
 } from '../forms/connect-dataset-form';

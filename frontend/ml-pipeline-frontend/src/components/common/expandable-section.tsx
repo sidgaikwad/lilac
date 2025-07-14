@@ -13,7 +13,7 @@ export function ExpandableSection(props: ExpandableSectionProps) {
   return (
     <div className='flex flex-col space-y-2'>
       <button
-        className='text-muted-foreground flex flex-row items-center gap-x-2 text-sm'
+        className='text-gray-text-muted flex flex-row items-center gap-x-2 text-sm'
         type='button'
         onClick={toggleExpanded}
       >

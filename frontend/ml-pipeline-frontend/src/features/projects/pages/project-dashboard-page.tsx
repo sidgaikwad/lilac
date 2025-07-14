@@ -127,7 +127,7 @@ function ProjectDashboardPage() {
           <textarea
             value={markdownContent}
             onChange={(e) => setMarkdownContent(e.target.value)}
-            className='focus:ring-primary focus:border-primary h-96 w-full rounded-md border p-2 shadow-sm'
+            className='focus:ring-primary focus:border-accent h-96 w-full rounded-md border p-2 shadow-sm'
             placeholder='Enter your project notes in Markdown...'
           />
         ) : (

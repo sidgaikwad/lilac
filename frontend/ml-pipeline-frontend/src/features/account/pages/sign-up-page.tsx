@@ -4,12 +4,12 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Toaster } from '@/components/ui/toast';
+import { Toaster } from '@/components/ui/sonner';
 import { Spinner } from '@/components/ui/spinner';
-import { toast } from 'sonner';
+import { toast } from '@/components/toast';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSignUp, useGetAuthProviders } from '@/services';
-import ProviderLoginButton from '../components/provider-login-button';
+import { useSignUp } from '@/services';
+import { Card } from '@/components/common/card';
 
 const registerSchema = z
   .object({
@@ -52,103 +52,84 @@ function SignUpPage() {
     signUp({ email: data.email, password: data.password });
   };
 
-  const { data: providers, isLoading: providersLoading } =
-    useGetAuthProviders();
-
   return (
-    <div className='bg-background flex h-screen items-center justify-center'>
-      <div className='bg-card text-card-foreground w-96 rounded p-8 shadow-md'>
-        <h2 className='mb-6 text-center text-2xl font-bold'>Sign Up</h2>
-        <Toaster />
-        <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
-          {/* Removed general auth error display as we bypass API */}
-          <div className='space-y-1'>
-            <Label htmlFor='email'>Email</Label>
-            <Input
-              id='email'
-              type='email'
-              placeholder='Enter your email'
-              {...register('email')}
-              aria-invalid={errors.email ? 'true' : 'false'}
-              disabled={isPending}
-            />
-            {errors.email && (
-              <p className='text-destructive text-sm'>{errors.email.message}</p>
-            )}
-          </div>
-          <div className='space-y-1'>
-            <Label htmlFor='password'>Password</Label>
-            <Input
-              id='password'
-              type='password'
-              placeholder='Enter password'
-              {...register('password')}
-              aria-invalid={errors.password ? 'true' : 'false'}
-              disabled={isPending}
-            />
-            {errors.password && (
-              <p className='text-destructive text-sm'>
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-          <div className='space-y-1'>
-            <Label htmlFor='password'>Confirm Password</Label>
-            <Input
-              id='confirm-password'
-              type='password'
-              placeholder='Confirm password'
-              {...register('password2')}
-              aria-invalid={errors.password2 ? 'true' : 'false'}
-              disabled={isPending}
-            />
-            {errors.password2 && (
-              <p className='text-destructive text-sm'>
-                {errors.password2.message}
-              </p>
-            )}
-          </div>
-
-          <div className='space-y-2'>
-            <Button type='submit' className='w-full' disabled={isPending}>
-              {isPending ? (
-                <Spinner size='small' />
-              ) : (
-                <span className='text-background'>Sign Up</span>
-              )}
-            </Button>
-            <span className='flex justify-center-safe text-xs'>
-              Already have an account?&nbsp;
-              <Link className='underline' to={{ pathname: '/login' }}>
-                Sign In Now
-              </Link>
-            </span>
-          </div>
-        </form>
-        {providers && providers.length > 0 && (
-        <>
-          <div className='relative my-4'>
-            <div className='absolute inset-0 flex items-center'>
-              <span className='w-full border-t' />
-            </div>
-            <div className='relative flex justify-center text-xs uppercase'>
-              <span className='bg-card text-muted-foreground px-2'>or</span>
-            </div>
-          </div>
-          <div className='space-y-2'>
-            {providersLoading ? (
-              <div className='flex justify-center'>
-                <Spinner />
+    <div className='flex h-screen w-full items-center justify-center'>
+      <Toaster />
+      <Card
+        className='min-w-sm'
+        title='Sign Up'
+        content={
+          <div>
+            <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+              {/* Removed general auth error display as we bypass API */}
+              <div className='space-y-1'>
+                <Label htmlFor='email'>Email</Label>
+                <Input
+                  id='email'
+                  type='email'
+                  placeholder='Enter your email'
+                  {...register('email')}
+                  aria-invalid={errors.email ? 'true' : 'false'}
+                  disabled={isPending}
+                />
+                {errors.email && (
+                  <p className='text-destructive text-sm'>
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
-            ) : (
-              providers?.map((provider) => (
-                <ProviderLoginButton key={provider.name} provider={provider} />
-              ))
-            )}
+              <div className='space-y-1'>
+                <Label htmlFor='password'>Password</Label>
+                <Input
+                  id='password'
+                  type='password'
+                  placeholder='Enter password'
+                  {...register('password')}
+                  aria-invalid={errors.password ? 'true' : 'false'}
+                  disabled={isPending}
+                />
+                {errors.password && (
+                  <p className='text-destructive text-sm'>
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+              <div className='space-y-1'>
+                <Label htmlFor='password'>Confirm Password</Label>
+                <Input
+                  id='confirm-password'
+                  type='password'
+                  placeholder='Confirm password'
+                  {...register('password2')}
+                  aria-invalid={errors.password2 ? 'true' : 'false'}
+                  disabled={isPending}
+                />
+                {errors.password2 && (
+                  <p className='text-destructive text-sm'>
+                    {errors.password2.message}
+                  </p>
+                )}
+              </div>
+
+              <div className='space-y-2'>
+                <Button type='submit' className='w-full' disabled={isPending}>
+                  {isPending ? (
+                    <Spinner size='small' />
+                  ) : (
+                    <span className='text-background'>Sign Up</span>
+                  )}
+                </Button>
+                <span className='flex justify-center-safe text-xs'>
+                  Already have an account?&nbsp;
+                  <Link className='underline' to={{ pathname: '/login' }}>
+                    Sign In Now
+                  </Link>
+                </span>
+              </div>
+            </form>
           </div>
-        </>
-        )}
-      </div>
+        }
+      />
     </div>
   );
 }

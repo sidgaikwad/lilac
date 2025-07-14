@@ -23,20 +23,10 @@ function ProjectSettingsPage() {
         <ContainerDescription>Configure your project</ContainerDescription>
       </ContainerHeader>
       <ContainerContent>
-        <Tabs defaultValue='general' className='w-full'>
-          <TabsList className='bg-background w-full justify-start rounded-none border-b p-0'>
-            <TabsTrigger
-              className='hover:text-primary bg-background data-[state=active]:border-b-primary data-[state=active]:text-primary h-full rounded-none border-b-2 hover:cursor-pointer data-[state=active]:shadow-none'
-              value='general'
-            >
-              General
-            </TabsTrigger>
-            <TabsTrigger
-              className='hover:text-primary bg-background data-[state=active]:border-b-primary data-[state=active]:text-primary h-full rounded-none border-b-2 hover:cursor-pointer data-[state=active]:shadow-none'
-              value='integrations'
-            >
-              Integrations
-            </TabsTrigger>
+        <Tabs defaultValue='general'>
+          <TabsList>
+            <TabsTrigger value='general'>General</TabsTrigger>
+            <TabsTrigger value='integrations'>Integrations</TabsTrigger>
           </TabsList>
           <TabsContent value='general'>
             <GeneralSettings project={project} />

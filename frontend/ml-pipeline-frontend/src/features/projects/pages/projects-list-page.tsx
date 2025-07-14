@@ -4,7 +4,7 @@ import CreateProjectModal from '@/features/projects/components/create-project-mo
 import EmptyCardSection from '@/components/common/empty-card-section';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useListProjects } from '@/services';
-import { toast } from 'sonner';
+import { toast } from '@/components/toast';
 import {
   Container,
   ContainerAction,

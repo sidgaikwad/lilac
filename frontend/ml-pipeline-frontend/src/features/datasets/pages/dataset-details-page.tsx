@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/container';
 import Breadcrumbs from '@/components/common/breadcrumbs';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/components/toast';
 
 function DataSetDetailPage() {
   const { projectId, datasetId } = useParams<{

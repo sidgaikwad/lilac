@@ -21,10 +21,7 @@ export async function listDatasets(
   const resp = await getHttp<Sn<ListDatasetsResponse>>(
     `/projects/${projectId}/datasets`
   );
-  console.log(resp);
-  const cc = camelCaseObject(resp);
-  console.log(cc);
-  return cc;
+  return camelCaseObject(resp);
 }
 
 export function listDatasetsQuery(projectId?: string, enabled: boolean = true) {

@@ -27,6 +27,7 @@ export interface AlertProps {
   title: React.ReactNode;
   description?: React.ReactNode;
   icon?: React.ReactNode;
+  action?: React.ReactNode;
 }
 
 function getIcon(variant: AlertProps['variant']) {
@@ -58,6 +59,7 @@ export function Alert(props: AlertProps) {
       {props.description && (
         <AlertDescription>{props.description}</AlertDescription>
       )}
+      <div className='col-start-2'>{props.action}</div>
     </AlertComponent>
   );
 }

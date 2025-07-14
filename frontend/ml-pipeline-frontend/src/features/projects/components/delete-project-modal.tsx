@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useDeleteProject } from '@/services';
-import { toast } from 'sonner';
+import { toast } from '@/components/toast';
 import { Trash2 } from 'lucide-react';
 import { Project } from '@/types';
 import DestructiveActionConfirmationModal from '@/components/common/destructive-action-confirmation-dialog';

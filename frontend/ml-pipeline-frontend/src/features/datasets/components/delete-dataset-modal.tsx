@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useDeleteDataset } from '@/services';
-import { toast } from 'sonner';
+import { toast } from '@/components/toast';
 import { Trash2 } from 'lucide-react';
 import { DatasetSummary } from '@/types';
 import DestructiveActionConfirmationModal from '@/components/common/destructive-action-confirmation-dialog';

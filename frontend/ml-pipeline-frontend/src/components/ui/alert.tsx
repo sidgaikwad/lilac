@@ -4,26 +4,26 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const alertVariants = cva(
-  'relative w-full rounded-lg border px-4 py-3 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current',
+  'relative w-full shadow-sm rounded-lg border border-accent-border-subtle ring-accent-ring px-4 py-3 text-sm grid has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] grid-cols-[0_1fr] has-[>svg]:gap-x-3 gap-y-0.5 items-start [&>svg]:size-5 [&>svg]:translate-y-0.5 [&>svg]:text-current',
   {
     variants: {
       variant: {
-        default: 'bg-card text-card-foreground',
-        info: 'bg-blue-300/10 text-blue-500 border-blue-500 [&>svg]:text-current *:data-[slot=alert-description]:text-blue-500/90',
+        default: 'bg-accent-background-1 text-gray-text',
+        info: 'bg-blue-2 text-blue-12 border-blue-8 [&>svg]:text-blue-11 *:data-[slot=alert-description]:text-blue-11',
         pending:
-          'bg-gray-300/10 border-gray-700 text-gray-700 [&>svg]:text-current *:data-[slot=alert-description]:text-gray-700/90',
+          'bg-slate-2 border-slate-8 text-slate-12 [&>svg]:text-slate-11 *:data-[slot=alert-description]:text-slate-11',
         loading:
-          'bg-gray-300/10 border-gray-700 text-gray-700 [&>svg]:text-current *:data-[slot=alert-description]:text-gray-700/90',
-        warn: 'bg-orange-300/10 text-orange-500 border-orange-500 [&>svg]:text-current *:data-[slot=alert-description]:text-orange-500/90',
+          'bg-slate-2 border-slate-8 text-slate-12 [&>svg]:text-slate-11 *:data-[slot=alert-description]:text-slate-11',
+        warn: 'bg-orange-2 text-orange-12 border-orange-8 [&>svg]:text-orange-11 *:data-[slot=alert-description]:text-orange-11',
         alert:
-          'bg-card text-orange-500 [&>svg]:text-current *:data-[slot=alert-description]:text-orange-500/90',
+          'bg-orange-2 text-orange-12 border-orange-8 [&>svg]:text-orange-11 *:data-[slot=alert-description]:text-orange-11',
         success:
-          'bg-green-300/10 text-green-600 border-green-600 [&>svg]:text-current *:data-[slot=alert-description]:text-green-600/90',
-        help: 'bg-slate-300/10 border-slate-700 text-slate-700 [&>svg]:text-current *:data-[slot=alert-description]:text-slate-700/90',
+          'bg-green-2 border-green-8 text-green-12  [&>svg]:text-green-11 *:data-[slot=alert-description]:text-green-11',
+        help: 'bg-iris-2 border-iris-8 text-iris-12 [&>svg]:text-iris-11 *:data-[slot=alert-description]:text-iris-11',
         error:
-          'text-destructive bg-red-300/10 border-red-500 [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90',
+          'bg-red-2 border-red-8 text-red-12 [&>svg]:text-red-11 *:data-[slot=alert-description]:text-red-11',
         destructive:
-          'text-destructive bg-card [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90',
+          'bg-red-2 border-red-8 text-red-12 [&>svg]:text-red-11 *:data-[slot=alert-description]:text-red-11',
       },
     },
     defaultVariants: {
@@ -68,7 +68,7 @@ function AlertDescription({
     <div
       data-slot='alert-description'
       className={cn(
-        'text-muted-foreground col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed',
+        'text-gray-foreground-muted col-start-2 grid justify-items-start gap-1 text-sm [&_p]:leading-relaxed',
         className
       )}
       {...props}

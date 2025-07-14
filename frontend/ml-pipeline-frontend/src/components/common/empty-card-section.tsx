@@ -18,7 +18,7 @@ interface EmptyCardSectionProps {
 function EmptyCardSection(props: EmptyCardSectionProps) {
   return (
     <Card
-      className='border-input w-full flex-1 basis-full border-dashed text-center'
+      className='border-gray-border-subtle w-full flex-1 basis-full border-dashed text-center'
       key={'empty-card-section'}
     >
       <CardHeader>

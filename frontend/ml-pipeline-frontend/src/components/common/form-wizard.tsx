@@ -67,7 +67,7 @@ function FormWizard(props: FormWizardProps) {
         <div className='flex justify-between'>
           <h2 className='text-lg font-medium'>Checkout</h2>
           <div className='flex items-center gap-2'>
-            <span className='text-muted-foreground text-sm'>
+            <span className='text-gray-text-muted text-sm'>
               Step {currentIndex + 1} of {steps.length}
             </span>
           </div>

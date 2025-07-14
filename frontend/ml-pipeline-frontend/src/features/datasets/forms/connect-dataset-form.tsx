@@ -28,7 +28,6 @@ import {
 } from '@/services/datasets/test-dataset-connection.mutation';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert } from '@/components/common/alert';
-import { Spinner } from '@/components/ui/spinner';
 import { RotateCcw } from 'lucide-react';
 
 const dataSourceTypeSchema = z.object({
@@ -155,7 +154,9 @@ function ConnectDatasetForm(props: ConnectDatasetFormProps) {
                       <Separator
                         orientation='vertical'
                         className={`h-full w-[1px] ${
-                          index < currentIndex ? 'bg-primary' : 'bg-muted'
+                          index < currentIndex
+                            ? 'bg-accent'
+                            : 'bg-accent-border'
                         }`}
                       />
                     )}
@@ -189,6 +190,7 @@ function ConnectDatasetForm(props: ConnectDatasetFormProps) {
               variant='secondary'
               onClick={stepper.prev}
               disabled={stepper.isFirst}
+              type='button'
             >
               Back
             </Button>
@@ -219,13 +221,13 @@ function SelectDataSource() {
                 className='grid grid-cols-2 gap-4'
               >
                 <FormItem className='flex items-center gap-3'>
-                  <div className='h-full w-full'>
+                  <div>
                     <RadioGroupPrimitive.Item
                       key='S3'
                       value='S3'
                       className={cn(
-                        'group ring-border relative h-full w-full rounded-xl text-start ring-[1px]',
-                        'data-[state=checked]:ring-primary data-[state=checked]:ring-2'
+                        'group relative rounded-xl text-start',
+                        'data-[state=checked]:ring-accent-border-hover data-[state=checked]:ring-2'
                       )}
                     >
                       <Card
@@ -237,13 +239,13 @@ function SelectDataSource() {
                   </div>
                 </FormItem>
                 <FormItem className='flex items-center gap-3'>
-                  <div className='h-full w-full'>
+                  <div>
                     <RadioGroupPrimitive.Item
                       key='Snowflake'
                       value='Snowflake'
                       className={cn(
-                        'group ring-border relative h-full w-full rounded-xl text-start ring-[1px]',
-                        'data-[state=checked]:ring-primary data-[state=checked]:ring-2'
+                        'group relative rounded-xl text-start',
+                        'data-[state=checked]:ring-accent-border-hover data-[state=checked]:ring-2'
                       )}
                     >
                       <Card
@@ -380,7 +382,7 @@ function ConfigureSnowflake() {
             <FormItem className='space-y-3'>
               <FormLabel>
                 Warehouse
-                <span className='text-muted-foreground text-xs font-light italic'>
+                <span className='text-gray-text-muted text-xs font-light italic'>
                   optional
                 </span>
               </FormLabel>
@@ -400,7 +402,7 @@ function ConfigureSnowflake() {
             <FormItem className='space-y-3'>
               <FormLabel>
                 Database
-                <span className='text-muted-foreground text-xs font-light italic'>
+                <span className='text-gray-text-muted text-xs font-light italic'>
                   optional
                 </span>
               </FormLabel>
@@ -420,7 +422,7 @@ function ConfigureSnowflake() {
             <FormItem className='space-y-3'>
               <FormLabel>
                 Schema
-                <span className='text-muted-foreground text-xs font-light italic'>
+                <span className='text-gray-text-muted text-xs font-light italic'>
                   optional
                 </span>
               </FormLabel>
@@ -440,7 +442,7 @@ function ConfigureSnowflake() {
             <FormItem className='space-y-3'>
               <FormLabel>
                 Role
-                <span className='text-muted-foreground text-xs font-light italic'>
+                <span className='text-gray-text-muted text-xs font-light italic'>
                   optional
                 </span>
               </FormLabel>
@@ -512,7 +514,9 @@ function TestDataset(props: { projectId: string }) {
     testConnection(
       { projectId: props.projectId, ...(formValues as DataSetFormValues) },
       {
-        onSuccess: (data) => setResult(data),
+        onSuccess: (data) => {
+          setResult(data);
+        },
       }
     );
   }, [props.projectId, formValues, testConnection]);
@@ -520,60 +524,47 @@ function TestDataset(props: { projectId: string }) {
     runTest();
   }, [runTest]);
   const getAlertVariant = () => {
-    if (isError)
+    const error = isError || (isSuccess && !result?.success);
+    const success = isSuccess && result?.success;
+    if (success) {
+      return (
+        <Alert
+          className='w-fit'
+          variant='success'
+          title='Connection successful'
+          description='We were successfully able to connect to your data source! Please submit the form to create your data source.'
+        />
+      );
+    } else if (error) {
       return (
         <Alert
           variant='error'
           title='Failed to connect'
           description={<div>Error connecting to data source</div>}
+          action={
+            error ? (
+              <Button
+                className='hover:bg-red-4 mt-2 w-fit'
+                variant='ghost'
+                type='button'
+                onClick={runTest}
+              >
+                <RotateCcw />
+                Retry
+              </Button>
+            ) : undefined
+          }
         />
       );
-    if (isPending)
-      return (
-        <Alert
-          variant='pending'
-          title='Testing Connection'
-          description={<Spinner>Loading</Spinner>}
-        />
-      );
-    if (isSuccess) {
-      if (result?.success)
-        return (
-          <Alert
-            variant='success'
-            title='Connection successful'
-            description='We were successfully able to connect to your data source! Please submit the form to create your data source.'
-          />
-        );
-      return (
-        <Alert
-          variant='error'
-          title='Testing Connection'
-          description={'Failed to connect.'}
-        />
-      );
+    } else if (isPending) {
+      return <Alert variant='loading' title='Testing connection' />;
     }
-    return (
-      <Alert
-        variant='error'
-        title='Failed to connect'
-        description='Unable to test connection.'
-      />
-    );
+    return undefined;
   };
 
   return (
-    <div className='flex flex-col justify-center space-y-2'>
+    <div className='flex flex-col items-center justify-center space-y-2'>
       {getAlertVariant()}
-      <Button
-        className='w-fit'
-        variant='outline'
-        type='button'
-        onClick={runTest}
-      >
-        <RotateCcw />
-        Retry
-      </Button>
     </div>
   );
 }

@@ -33,25 +33,25 @@ export default function ProjectSelectionDropdown() {
 
   return (
     <>
-      <div className='flex flex-1'>
+      <div className='flex w-full'>
         {isLoadingProjects ? (
-          <Skeleton className='bg-muted h-6 w-24' />
+          <Skeleton className='h-6' />
         ) : (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 ref={triggerRef}
                 variant='ghost'
-                size='sm'
-                className='flex h-7 items-center gap-1 px-2 text-xs'
+                size='icon'
+                className='grow justify-around'
               >
-                <span className='max-w-[100px] truncate'>
+                <span className='truncate'>
                   {selectedProject?.name ?? 'Select Project'}
                 </span>
-                <ChevronDown className='text-muted-foreground ml-1 h-4 w-4' />
+                <ChevronDown className='text-gray-text-muted' />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align='start'>
+            <DropdownMenuContent side='bottom' align='start'>
               {projects && projects.length > 0 ? (
                 projects.map((project) => (
                   <DropdownMenuItem

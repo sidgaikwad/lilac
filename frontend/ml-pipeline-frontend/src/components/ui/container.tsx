@@ -7,7 +7,7 @@ function Container({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot='container'
       className={cn(
-        'bg-container text-container-foreground @container flex h-full w-full flex-col gap-6 py-6 shadow-sm md:px-12',
+        'bg-background text-gray-text flex h-full w-full flex-col gap-6 py-6 md:px-12',
         className
       )}
       {...props}
@@ -20,7 +20,7 @@ function ContainerHeader({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot='container-header'
       className={cn(
-        '@container/container-header flex flex-row flex-wrap items-center justify-between gap-x-8 gap-y-2 px-6 [.border-b]:pb-6',
+        'container-header flex flex-row flex-wrap items-center justify-between gap-x-8 gap-y-2 px-6 [.border-b]:pb-6',
         className
       )}
       {...props}
@@ -46,7 +46,7 @@ function ContainerDescription({
     <div
       data-slot='container-description'
       className={cn(
-        'text-muted-foreground pt-1 align-bottom text-sm font-normal peer-[[data-slot=container-title]]:basis-full',
+        'text-gray-text-muted pt-1 align-bottom text-sm font-normal peer-[[data-slot=container-title]]:basis-full',
         className
       )}
       {...props}
