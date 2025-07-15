@@ -70,7 +70,10 @@ pub trait DatasetService: Send + Sync {
         user_id: &UserId,
         id: &DatasetId,
     ) -> Result<(), DatasetServiceError>;
-    async fn test_data_source_connection(&self, source: &DatasetSource) -> Result<(), DataSourceError>;
+    async fn test_data_source_connection(
+        &self,
+        source: &DatasetSource,
+    ) -> Result<(), DataSourceError>;
 }
 
 #[derive(Debug, Error)]

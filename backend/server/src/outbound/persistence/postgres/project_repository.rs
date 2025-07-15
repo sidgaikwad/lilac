@@ -26,7 +26,11 @@ impl ProjectRepository for PostgresProjectRepository {
         &self,
         req: &CreateProjectRequest,
     ) -> Result<Project, ProjectRepositoryError> {
-        let mut tx = self.pool.begin().await.map_err(|e| ProjectRepositoryError::Unknown(e.into()))?;
+        let mut tx = self
+            .pool
+            .begin()
+            .await
+            .map_err(|e| ProjectRepositoryError::Unknown(e.into()))?;
 
         let project_id = ProjectId(uuid::Uuid::new_v4());
 
@@ -56,7 +60,9 @@ impl ProjectRepository for PostgresProjectRepository {
         .await
         .map_err(|e| ProjectRepositoryError::Unknown(e.into()))?;
 
-        tx.commit().await.map_err(|e| ProjectRepositoryError::Unknown(e.into()))?;
+        tx.commit()
+            .await
+            .map_err(|e| ProjectRepositoryError::Unknown(e.into()))?;
 
         self.get_project_by_id(&project_id).await
     }
@@ -99,12 +105,19 @@ impl ProjectRepository for PostgresProjectRepository {
     }
 
     async fn delete_project(&self, id: &ProjectId) -> Result<(), ProjectRepositoryError> {
-        let mut tx = self.pool.begin().await.map_err(|e| ProjectRepositoryError::Unknown(e.into()))?;
-
-        sqlx::query!("DELETE FROM project_memberships WHERE project_id = $1", id.0)
-            .execute(&mut *tx)
+        let mut tx = self
+            .pool
+            .begin()
             .await
             .map_err(|e| ProjectRepositoryError::Unknown(e.into()))?;
+
+        sqlx::query!(
+            "DELETE FROM project_memberships WHERE project_id = $1",
+            id.0
+        )
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| ProjectRepositoryError::Unknown(e.into()))?;
 
         sqlx::query!("DELETE FROM projects WHERE project_id = $1", id.0)
             .execute(&mut *tx)
@@ -112,7 +125,9 @@ impl ProjectRepository for PostgresProjectRepository {
             .map(|_| ())
             .map_err(|e: sqlx::Error| ProjectRepositoryError::Unknown(anyhow::anyhow!(e)))?;
 
-        tx.commit().await.map_err(|e| ProjectRepositoryError::Unknown(e.into()))
+        tx.commit()
+            .await
+            .map_err(|e| ProjectRepositoryError::Unknown(e.into()))
     }
 
     async fn is_user_project_member(

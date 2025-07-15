@@ -20,7 +20,10 @@ pub async fn helm_install(
             helm_cmd.arg(v);
         }
     }
-    let output = helm_cmd.output().await.map_err(|e| K8sPortError::Helm(e.to_string()))?;
+    let output = helm_cmd
+        .output()
+        .await
+        .map_err(|e| K8sPortError::Helm(e.to_string()))?;
     match output.status.success() {
         true => Ok(()),
         false => {

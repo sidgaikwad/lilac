@@ -4,7 +4,6 @@ use aws_sdk_s3::Client as S3Client;
 
 use crate::domain::integration::ports::S3Port;
 
-
 #[derive(Clone, Debug)]
 pub struct S3Adapter {
     client: S3Client,

@@ -1,10 +1,10 @@
-use serde::{Deserialize, Serialize};
 use axum::{
     extract::FromRequestParts,
     http::{request::Parts, StatusCode},
 };
+use serde::{Deserialize, Serialize};
 
-use headers::{HeaderMapExt, Authorization, authorization::Bearer};
+use headers::{authorization::Bearer, Authorization, HeaderMapExt};
 use uuid::Uuid;
 
 use crate::domain::user::models::UserId;
@@ -40,14 +40,12 @@ impl Token {
     }
 }
 
-
 #[derive(Debug)]
 pub struct Claims {
     pub sub: Uuid,
     pub exp: usize,
     pub iat: usize,
 }
-
 
 impl FromRequestParts<AppState> for Claims {
     type Rejection = (StatusCode, &'static str);

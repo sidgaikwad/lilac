@@ -1,4 +1,3 @@
-
 use axum::{
     extract::State,
     response::{IntoResponse, Redirect},
@@ -7,7 +6,10 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{domain::auth::models::Token, inbound::http::{responses::ApiError, AppState}};
+use crate::{
+    domain::auth::models::Token,
+    inbound::http::{responses::ApiError, AppState},
+};
 use tower_sessions::Session;
 
 use super::user::create_user;

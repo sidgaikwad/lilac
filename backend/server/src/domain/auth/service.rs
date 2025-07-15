@@ -38,10 +38,7 @@ pub struct AuthServiceImpl {
 }
 
 impl AuthServiceImpl {
-    pub fn new(
-        user_repo: Arc<dyn UserRepository>,
-        token_manager: Arc<dyn TokenManager>,
-    ) -> Self {
+    pub fn new(user_repo: Arc<dyn UserRepository>, token_manager: Arc<dyn TokenManager>) -> Self {
         Self {
             user_repo,
             token_manager,
@@ -66,11 +63,7 @@ impl AuthServiceImpl {
 }
 #[async_trait]
 impl AuthService for AuthServiceImpl {
-    async fn login_with_email(
-        &self,
-        email: &str,
-        password: &str,
-    ) -> Result<Token, LoginError> {
+    async fn login_with_email(&self, email: &str, password: &str) -> Result<Token, LoginError> {
         let user = self.user_repo.get_user_by_email(email).await?;
         self.verify_password(password, &user).await?;
 
@@ -83,7 +76,7 @@ impl AuthService for AuthServiceImpl {
         let token_str = self
             .token_manager
             .create_token(&auth_user)
-            .map_err(|e| LoginError::InternalError(e))?;
+            .map_err(LoginError::InternalError)?;
         Ok(Token::new(token_str))
     }
 

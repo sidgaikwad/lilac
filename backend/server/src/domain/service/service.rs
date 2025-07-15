@@ -18,7 +18,10 @@ pub struct ServiceServiceImpl {
 }
 
 impl ServiceServiceImpl {
-    pub fn new(repository: Arc<dyn ServiceRepository>, project_repo: Arc<dyn ProjectRepository>) -> Self {
+    pub fn new(
+        repository: Arc<dyn ServiceRepository>,
+        project_repo: Arc<dyn ProjectRepository>,
+    ) -> Self {
         Self {
             repository,
             project_repo,
@@ -28,7 +31,11 @@ impl ServiceServiceImpl {
 
 #[async_trait]
 impl ServiceService for ServiceServiceImpl {
-    async fn create_service(&self, user_id: &UserId, service: &CreateService) -> anyhow::Result<Service> {
+    async fn create_service(
+        &self,
+        user_id: &UserId,
+        service: &CreateService,
+    ) -> anyhow::Result<Service> {
         self.project_repo
             .is_user_project_member(user_id, &service.project_id.into())
             .await?;
@@ -48,8 +55,15 @@ impl ServiceService for ServiceServiceImpl {
             .await
     }
 
-    async fn get_service_by_id(&self, user_id: &UserId, service_id: Uuid) -> anyhow::Result<Option<Service>> {
-        let service = self.repository.get_service_by_id(user_id, service_id).await?;
+    async fn get_service_by_id(
+        &self,
+        user_id: &UserId,
+        service_id: Uuid,
+    ) -> anyhow::Result<Option<Service>> {
+        let service = self
+            .repository
+            .get_service_by_id(user_id, service_id)
+            .await?;
         if let Some(service) = &service {
             self.project_repo
                 .is_user_project_member(user_id, &service.project_id.into())
@@ -64,7 +78,10 @@ impl ServiceService for ServiceServiceImpl {
         service_id: Uuid,
         service: &UpdateService,
     ) -> anyhow::Result<Service> {
-        let existing_service = self.repository.get_service_by_id(user_id, service_id).await?;
+        let existing_service = self
+            .repository
+            .get_service_by_id(user_id, service_id)
+            .await?;
         if let Some(existing_service) = existing_service {
             self.project_repo
                 .is_user_project_member(user_id, &existing_service.project_id.into())
@@ -76,7 +93,10 @@ impl ServiceService for ServiceServiceImpl {
     }
 
     async fn delete_service(&self, user_id: &UserId, service_id: Uuid) -> anyhow::Result<()> {
-        let service = self.repository.get_service_by_id(user_id, service_id).await?;
+        let service = self
+            .repository
+            .get_service_by_id(user_id, service_id)
+            .await?;
         if let Some(service) = service {
             self.project_repo
                 .is_user_project_member(user_id, &service.project_id.into())

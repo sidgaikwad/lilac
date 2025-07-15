@@ -1,11 +1,15 @@
-use axum::{http::StatusCode, response::{IntoResponse, Response}, Json};
-use serde::Serialize;
-use serde_json::json;
 use crate::domain::{
     dataset::ports::{DatasetRepositoryError, DatasetServiceError},
-    user::ports::UserRepositoryError,
     project::ports::ProjectRepositoryError,
+    user::ports::UserRepositoryError,
 };
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
+use serde::Serialize;
+use serde_json::json;
 
 #[derive(Debug)]
 pub struct ApiSuccess<T> {
@@ -37,9 +41,11 @@ impl From<UserRepositoryError> for ApiError {
     fn from(err: UserRepositoryError) -> Self {
         match err {
             UserRepositoryError::Duplicate(field, value) => {
-                Self::UnprocessableEntity(format!("User with {} {} already exists", field, value))
+                Self::UnprocessableEntity(format!("User with {field} {value} already exists"))
             }
-            UserRepositoryError::NotFound(id) => Self::NotFound(format!("User with id {} not found", id)),
+            UserRepositoryError::NotFound(id) => {
+                Self::NotFound(format!("User with id {id} not found"))
+            }
             UserRepositoryError::InvalidInput(msg) => Self::UnprocessableEntity(msg),
             UserRepositoryError::Unauthorized => Self::Forbidden,
             UserRepositoryError::Unknown(cause) => {
@@ -53,10 +59,12 @@ impl From<UserRepositoryError> for ApiError {
 impl From<ProjectRepositoryError> for ApiError {
     fn from(err: ProjectRepositoryError) -> Self {
         match err {
-            ProjectRepositoryError::Duplicate(field, value) => {
-                Self::UnprocessableEntity(format!("Project with {} {} already exists", field, value))
+            ProjectRepositoryError::Duplicate(field, value) => Self::UnprocessableEntity(format!(
+                "Project with {field} {value} already exists"
+            )),
+            ProjectRepositoryError::NotFound(id) => {
+                Self::NotFound(format!("Project with id {id} not found"))
             }
-            ProjectRepositoryError::NotFound(id) => Self::NotFound(format!("Project with id {} not found", id)),
             ProjectRepositoryError::InvalidInput(msg) => Self::UnprocessableEntity(msg),
             ProjectRepositoryError::Unauthorized => Self::Forbidden,
             ProjectRepositoryError::Unknown(cause) => {
@@ -72,7 +80,7 @@ impl From<DatasetServiceError> for ApiError {
         match err {
             DatasetServiceError::Repository(repo_err) => match repo_err {
                 DatasetRepositoryError::NotFound(id) => {
-                    Self::NotFound(format!("Dataset with id {} not found", id))
+                    Self::NotFound(format!("Dataset with id {id} not found"))
                 }
                 DatasetRepositoryError::Unknown(cause) => {
                     tracing::error!("{:?}\n{}", cause, cause.backtrace());

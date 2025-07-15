@@ -1,8 +1,8 @@
 use secrecy::SecretString;
 use serde::Deserialize;
+use std::{collections::HashMap, path::PathBuf};
 use tracing::{level_filters::LevelFilter, Level};
 use tracing_subscriber::filter::Directive;
-use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]

@@ -55,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
 
     // 3. Construct outbound adapters
     let db_pool = PgPoolOptions::new()
-        .connect(&config.database_url.expose_secret())
+        .connect(config.database_url.expose_secret())
         .await?;
     let user_repo = Arc::new(PostgresUserRepository::new(db_pool.clone()));
     let project_repo = Arc::new(PostgresProjectRepository::new(db_pool.clone()));

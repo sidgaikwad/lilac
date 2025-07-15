@@ -26,7 +26,7 @@ impl TokenManager for JwtManager {
     fn create_token(&self, user: &AuthUser) -> Result<String, anyhow::Error> {
         let now = Utc::now();
         let claims = TokenClaims {
-            sub: user.id.clone(),
+            sub: user.id,
             exp: (now + Duration::hours(6)).timestamp() as usize,
             iat: now.timestamp() as usize,
             jti: uuid::Uuid::new_v4().to_string(),

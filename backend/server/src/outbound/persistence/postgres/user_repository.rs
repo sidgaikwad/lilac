@@ -77,7 +77,6 @@ impl UserRepository for PostgresUserRepository {
             })
     }
 
-
     async fn delete_user(&self, id: &UserId) -> Result<(), UserRepositoryError> {
         sqlx::query!("DELETE FROM users WHERE user_id = $1", id.0)
             .execute(&self.pool)

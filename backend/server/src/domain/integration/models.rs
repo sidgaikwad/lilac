@@ -3,7 +3,9 @@ use uuid::Uuid;
 
 use crate::domain::project::models::ProjectId;
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, sqlx::Type)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, sqlx::Type,
+)]
 #[sqlx(transparent)]
 pub struct IntegrationId(pub Uuid);
 

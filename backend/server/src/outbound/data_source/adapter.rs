@@ -34,7 +34,10 @@ impl DataSourceImpl {
         Ok(())
     }
 
-    async fn test_snowflake_connection(&self, snowflake: &Snowflake) -> Result<(), DataSourceError> {
+    async fn test_snowflake_connection(
+        &self,
+        snowflake: &Snowflake,
+    ) -> Result<(), DataSourceError> {
         // In a real application, we would use the Snowflake driver to check if we can
         // connect to the database and if the schema and table exist.
         let api = SnowflakeApi::with_password_auth(
@@ -44,7 +47,7 @@ impl DataSourceImpl {
             snowflake.schema.as_deref(),
             &snowflake.username,
             snowflake.role.as_deref(),
-            &snowflake.password.expose_secret(),
+            snowflake.password.expose_secret(),
         )
         .map_err(|e| DataSourceError::InvalidConnection(e.to_string()))?;
 

@@ -3,15 +3,10 @@ use std::sync::Arc;
 use async_trait::async_trait;
 
 use super::{
-    models::{
-        AWSIntegration, CreateAWSIntegrationRequest, Integration, IntegrationId,
-    },
+    models::{AWSIntegration, CreateAWSIntegrationRequest, Integration, IntegrationId},
     ports::{IntegrationRepository, IntegrationRepositoryError, StsPort},
 };
-use crate::domain::{
-    project::models::ProjectId,
-    user::models::UserId,
-};
+use crate::domain::{project::models::ProjectId, user::models::UserId};
 
 #[async_trait]
 pub trait IntegrationService: Send + Sync {
@@ -35,29 +30,19 @@ pub trait IntegrationService: Send + Sync {
 }
 
 #[derive(Clone)]
-pub struct IntegrationServiceImpl<
-    R: IntegrationRepository,
-    S: StsPort,
-> {
+pub struct IntegrationServiceImpl<R: IntegrationRepository, S: StsPort> {
     repo: Arc<R>,
     sts: Arc<S>,
 }
 
-impl<R: IntegrationRepository, S: StsPort>
-    IntegrationServiceImpl<R, S>
-{
+impl<R: IntegrationRepository, S: StsPort> IntegrationServiceImpl<R, S> {
     pub fn new(repo: Arc<R>, sts: Arc<S>) -> Self {
-        Self {
-            repo,
-            sts,
-        }
+        Self { repo, sts }
     }
 }
 
 #[async_trait]
-impl<R: IntegrationRepository, S: StsPort> IntegrationService
-    for IntegrationServiceImpl<R, S>
-{
+impl<R: IntegrationRepository, S: StsPort> IntegrationService for IntegrationServiceImpl<R, S> {
     async fn create_aws_integration(
         &self,
         user_id: &UserId,
@@ -66,7 +51,7 @@ impl<R: IntegrationRepository, S: StsPort> IntegrationService
         self.sts
             .assume_role(&req.role_arn, "lilac-placeholder")
             .await
-            .map_err(|e| IntegrationRepositoryError::Unknown(e.into()))?;
+            .map_err(IntegrationRepositoryError::Unknown)?;
 
         self.repo.create_aws_integration(user_id, req).await
     }

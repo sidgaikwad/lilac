@@ -7,19 +7,19 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
-    domain::{
-        user::{
-            models::{CreateUserRequest, UserId},
-            service::UserService,
-        },
+    domain::user::{
+        models::{CreateUserRequest, UserId},
+        service::UserService,
     },
-    inbound::http::{responses::{ApiError, UserResponse}, AppState},
+    inbound::http::{
+        responses::{ApiError, UserResponse},
+        AppState,
+    },
 };
 
 use crate::domain::auth::models::Claims;
 
-
-use axum::routing::{get};
+use axum::routing::get;
 use axum::Router;
 
 pub fn router() -> Router<AppState> {

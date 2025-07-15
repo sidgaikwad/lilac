@@ -29,7 +29,9 @@ pub fn routes() -> Router<AppState> {
         )
         .route(
             "/projects/{project_id}/services/{service_id}",
-            get(get_service).patch(update_service).delete(delete_service),
+            get(get_service)
+                .patch(update_service)
+                .delete(delete_service),
         )
 }
 
@@ -91,7 +93,10 @@ pub async fn get_service(
     claims: Claims,
     Path((_project_id, service_id)): Path<(Uuid, Uuid)>,
 ) -> impl IntoResponse {
-    match service.get_service_by_id(&UserId(claims.sub), service_id).await {
+    match service
+        .get_service_by_id(&UserId(claims.sub), service_id)
+        .await
+    {
         Ok(Some(found)) => (StatusCode::OK, Json(found)).into_response(),
         Ok(None) => (StatusCode::NOT_FOUND).into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
@@ -126,7 +131,10 @@ pub async fn delete_service(
     claims: Claims,
     Path((_project_id, service_id)): Path<(Uuid, Uuid)>,
 ) -> impl IntoResponse {
-    match service.delete_service(&UserId(claims.sub), service_id).await {
+    match service
+        .delete_service(&UserId(claims.sub), service_id)
+        .await
+    {
         Ok(_) => (StatusCode::NO_CONTENT).into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     }

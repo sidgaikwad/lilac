@@ -2,9 +2,7 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 
 use crate::domain::{
-    project::{
-        ports::ProjectRepository,
-    },
+    project::ports::ProjectRepository,
     service::{
         models::{CreateService, Service, UpdateService},
         ports::ServiceRepository,

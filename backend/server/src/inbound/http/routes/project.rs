@@ -7,6 +7,7 @@ use axum::{
 use uuid::Uuid;
 
 use crate::{
+    domain::auth::models::Claims,
     domain::{
         project::{
             models::{CreateProjectRequest, ProjectId},
@@ -15,7 +16,6 @@ use crate::{
         user::models::UserId,
     },
     inbound::http::{responses::ApiError, AppState},
-    domain::auth::models::Claims,
 };
 
 use axum::{
@@ -26,10 +26,7 @@ use axum::{
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/projects", post(create_project).get(list_projects))
-        .route(
-            "/projects/{id}",
-            get(get_project).delete(delete_project),
-        )
+        .route("/projects/{id}", get(get_project).delete(delete_project))
 }
 
 #[axum::debug_handler(state = AppState)]
@@ -38,7 +35,9 @@ pub async fn create_project(
     claims: Claims,
     Json(req): Json<CreateProjectRequest>,
 ) -> Result<Json<crate::inbound::http::responses::ProjectResponse>, ApiError> {
-    let project = project_service.create_project(&UserId(claims.sub), &req).await?;
+    let project = project_service
+        .create_project(&UserId(claims.sub), &req)
+        .await?;
     Ok(Json(project.into()))
 }
 
@@ -65,7 +64,9 @@ pub async fn list_projects(
         .into_iter()
         .map(|p| p.into())
         .collect();
-    Ok(Json(crate::inbound::http::responses::ListProjectsResponse { projects }))
+    Ok(Json(
+        crate::inbound::http::responses::ListProjectsResponse { projects },
+    ))
 }
 
 #[axum::debug_handler(state = AppState)]

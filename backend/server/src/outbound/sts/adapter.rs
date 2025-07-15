@@ -5,7 +5,6 @@ use tracing::instrument;
 
 use crate::domain::integration::ports::StsPort;
 
-
 #[derive(Clone, Debug)]
 pub struct StsAdapter {
     client: STSClient,
@@ -40,6 +39,7 @@ impl StsPort for StsAdapter {
             .send()
             .await
             .map_err(|e| e.into_service_error())?;
-        resp.credentials.ok_or_else(|| anyhow::anyhow!("Invalid credentials"))
+        resp.credentials
+            .ok_or_else(|| anyhow::anyhow!("Invalid credentials"))
     }
 }

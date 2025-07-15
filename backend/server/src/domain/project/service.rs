@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use async_trait::async_trait;
+use std::sync::Arc;
 use validator::Validate;
 
 use crate::domain::user::models::UserId;
@@ -16,12 +16,20 @@ pub trait ProjectService: Send + Sync {
         user_id: &UserId,
         req: &CreateProjectRequest,
     ) -> Result<Project, ProjectRepositoryError>;
-    async fn get_project_by_id(&self, user_id: &UserId, id: &ProjectId) -> Result<Project, ProjectRepositoryError>;
+    async fn get_project_by_id(
+        &self,
+        user_id: &UserId,
+        id: &ProjectId,
+    ) -> Result<Project, ProjectRepositoryError>;
     async fn list_projects_by_user_id(
         &self,
         user_id: &UserId,
     ) -> Result<Vec<Project>, ProjectRepositoryError>;
-    async fn delete_project(&self, user_id: &UserId, id: &ProjectId) -> Result<(), ProjectRepositoryError>;
+    async fn delete_project(
+        &self,
+        user_id: &UserId,
+        id: &ProjectId,
+    ) -> Result<(), ProjectRepositoryError>;
 }
 
 #[derive(Clone)]
@@ -47,13 +55,17 @@ impl<R: ProjectRepository> ProjectService for ProjectServiceImpl<R> {
 
         let mut req = req.clone();
         if req.owner_id.is_none() {
-            req.owner_id = Some(user_id.clone());
+            req.owner_id = Some(*user_id);
         }
 
         self.repo.create_project(&req).await
     }
 
-    async fn get_project_by_id(&self, user_id: &UserId, id: &ProjectId) -> Result<Project, ProjectRepositoryError> {
+    async fn get_project_by_id(
+        &self,
+        user_id: &UserId,
+        id: &ProjectId,
+    ) -> Result<Project, ProjectRepositoryError> {
         if !self.repo.is_user_project_member(user_id, id).await? {
             return Err(ProjectRepositoryError::Unauthorized);
         }
@@ -67,7 +79,11 @@ impl<R: ProjectRepository> ProjectService for ProjectServiceImpl<R> {
         self.repo.list_projects_by_user_id(user_id).await
     }
 
-    async fn delete_project(&self, user_id: &UserId, id: &ProjectId) -> Result<(), ProjectRepositoryError> {
+    async fn delete_project(
+        &self,
+        user_id: &UserId,
+        id: &ProjectId,
+    ) -> Result<(), ProjectRepositoryError> {
         if !self.repo.is_user_project_member(user_id, id).await? {
             return Err(ProjectRepositoryError::Unauthorized);
         }

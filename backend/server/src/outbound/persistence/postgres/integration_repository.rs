@@ -4,15 +4,10 @@ use uuid::Uuid;
 
 use crate::domain::{
     integration::{
-        models::{
-            AWSIntegration, CreateAWSIntegrationRequest, Integration, IntegrationId,
-        },
+        models::{AWSIntegration, CreateAWSIntegrationRequest, Integration, IntegrationId},
         ports::{IntegrationRepository, IntegrationRepositoryError},
     },
-    project::{
-        models::ProjectId,
-        ports::ProjectRepository,
-    },
+    project::{models::ProjectId, ports::ProjectRepository},
     user::models::UserId,
 };
 

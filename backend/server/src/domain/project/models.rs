@@ -5,7 +5,9 @@ use validator::Validate;
 
 use crate::domain::user::models::UserId;
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, sqlx::Type)]
+#[derive(
+    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, sqlx::Type,
+)]
 #[sqlx(transparent)]
 pub struct ProjectId(pub Uuid);
 impl From<Uuid> for ProjectId {

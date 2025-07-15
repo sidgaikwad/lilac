@@ -108,9 +108,7 @@ pub async fn test_data_source_connection(
     State(dataset_service): State<Arc<dyn DatasetService>>,
     Json(source): Json<DatasetSource>,
 ) -> Result<Json<TestConnectionResponse>, ApiError> {
-    dataset_service
-        .test_data_source_connection(&source)
-        .await?;
+    dataset_service.test_data_source_connection(&source).await?;
     Ok(Json(TestConnectionResponse { success: true }))
 }
 

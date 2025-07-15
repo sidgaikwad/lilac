@@ -1,9 +1,7 @@
 use async_trait::async_trait;
 use thiserror::Error;
 
-use super::models::{
-    AWSIntegration, CreateAWSIntegrationRequest, Integration, IntegrationId,
-};
+use super::models::{AWSIntegration, CreateAWSIntegrationRequest, Integration, IntegrationId};
 use crate::domain::project::models::ProjectId;
 
 #[derive(Debug, Error)]
@@ -62,7 +60,11 @@ pub trait K8sPort: Clone + Send + Sync + 'static {
     async fn create_namespace(&self, namespace: &str) -> Result<(), K8sPortError>;
     async fn delete_namespace(&self, namespace: &str) -> Result<(), K8sPortError>;
     async fn list_namespaces(&self) -> Result<Vec<String>, K8sPortError>;
-    async fn create_role(&self, namespace: &str, role: k8s_openapi::api::rbac::v1::Role) -> Result<(), K8sPortError>;
+    async fn create_role(
+        &self,
+        namespace: &str,
+        role: k8s_openapi::api::rbac::v1::Role,
+    ) -> Result<(), K8sPortError>;
     async fn delete_role(&self, namespace: &str, role_name: &str) -> Result<(), K8sPortError>;
     async fn list_roles(&self, namespace: &str) -> Result<Vec<String>, K8sPortError>;
     async fn create_role_binding(

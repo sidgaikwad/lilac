@@ -1,16 +1,13 @@
 use async_trait::async_trait;
-use sqlx::PgPool;
 use chrono::TimeZone;
+use sqlx::PgPool;
 
 use crate::domain::{
     dataset::{
         models::{CreateDatasetRequest, Dataset, DatasetId},
         ports::{DatasetRepository, DatasetRepositoryError},
     },
-    project::{
-        models::ProjectId,
-        ports::ProjectRepository,
-    },
+    project::{models::ProjectId, ports::ProjectRepository},
     user::models::UserId,
 };
 
@@ -127,7 +124,7 @@ impl DatasetRepository for PostgresDatasetRepository {
 
         let dataset: Dataset = record
             .try_into()
-            .map_err(|e| DatasetRepositoryError::Unknown(e))?;
+            .map_err(DatasetRepositoryError::Unknown)?;
 
         Ok(dataset)
     }
@@ -153,11 +150,12 @@ impl DatasetRepository for PostgresDatasetRepository {
             _ => DatasetRepositoryError::Unknown(anyhow::anyhow!(e)),
         })?;
 
-        ensure_user_is_project_member(&self.project_repo, user_id, &ProjectId(record.project_id)).await?;
+        ensure_user_is_project_member(&self.project_repo, user_id, &ProjectId(record.project_id))
+            .await?;
 
         let dataset: Dataset = record
             .try_into()
-            .map_err(|e| DatasetRepositoryError::Unknown(e))?;
+            .map_err(DatasetRepositoryError::Unknown)?;
 
         Ok(dataset)
     }
@@ -186,7 +184,7 @@ impl DatasetRepository for PostgresDatasetRepository {
             .into_iter()
             .map(|r| r.try_into())
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| DatasetRepositoryError::Unknown(e))?;
+            .map_err(DatasetRepositoryError::Unknown)?;
 
         Ok(datasets)
     }

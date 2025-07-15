@@ -12,10 +12,6 @@ pub trait TokenManager: Send + Sync {
 
 #[async_trait]
 pub trait AuthService: Send + Sync {
-    async fn login_with_email(
-        &self,
-        email: &str,
-        password: &str,
-    ) -> Result<Token, LoginError>;
+    async fn login_with_email(&self, email: &str, password: &str) -> Result<Token, LoginError>;
     fn validate_token(&self, token: &str) -> Result<TokenClaims, anyhow::Error>;
 }

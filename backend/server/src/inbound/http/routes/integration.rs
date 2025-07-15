@@ -1,7 +1,6 @@
-use std::sync::Arc;
 
 use axum::{
-    extract::{Path, State},
+    extract::Path,
     response::IntoResponse,
     routing::post,
     Json, Router,
@@ -11,12 +10,8 @@ use uuid::Uuid;
 
 use crate::domain::{
     auth::models::Claims,
-    integration::{
-        models::CreateAWSIntegrationRequest,
-        service::IntegrationService,
-    },
+    integration::models::CreateAWSIntegrationRequest,
     project::models::ProjectId,
-    user::models::UserId,
 };
 
 use super::super::AppState;

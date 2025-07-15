@@ -6,8 +6,7 @@ use crate::domain::{
     dataset::{
         models::{CreateDatasetRequest, Dataset, DatasetId, DatasetSource},
         ports::{
-            DataSource, DatasetRepository, DatasetService, DatasetServiceError,
-            DataSourceError,
+            DataSource, DataSourceError, DatasetRepository, DatasetService, DatasetServiceError,
         },
     },
     project::models::ProjectId,
@@ -21,19 +20,14 @@ pub struct DatasetServiceImpl<R: DatasetRepository, D: DataSource> {
 
 impl<R: DatasetRepository, D: DataSource> DatasetServiceImpl<R, D> {
     pub fn new(repo: Arc<R>, data_source: Arc<D>) -> Self {
-        Self {
-            repo,
-            data_source,
-        }
+        Self { repo, data_source }
     }
 }
 
 use crate::domain::user::models::UserId;
 
 #[async_trait]
-impl<R: DatasetRepository, D: DataSource> DatasetService
-    for DatasetServiceImpl<R, D>
-{
+impl<R: DatasetRepository, D: DataSource> DatasetService for DatasetServiceImpl<R, D> {
     async fn create_dataset(
         &self,
         user_id: &UserId,
@@ -70,7 +64,11 @@ impl<R: DatasetRepository, D: DataSource> DatasetService
             .map_err(|e| e.into())
     }
 
-    async fn delete_dataset(&self, user_id: &UserId, id: &DatasetId) -> Result<(), DatasetServiceError> {
+    async fn delete_dataset(
+        &self,
+        user_id: &UserId,
+        id: &DatasetId,
+    ) -> Result<(), DatasetServiceError> {
         self.repo
             .delete_dataset(user_id, id)
             .await

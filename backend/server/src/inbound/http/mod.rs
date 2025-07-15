@@ -2,21 +2,21 @@ pub mod requests;
 pub mod responses;
 pub mod routes;
 
+use axum::{extract::FromRef, Router};
 use std::sync::Arc;
-use axum::{
-    extract::FromRef,
-    Router,
-};
 use tokio::net::TcpListener;
 
-use crate::{config::LilacConfig, domain::{
-    auth::ports::AuthService,
-    dataset::ports::DatasetService,
-    integration::{ports::StsPort, service::IntegrationService},
-    project::{ports::ProjectRepository, service::ProjectService},
-    service::ports::ServiceService,
-    user::service::UserService,
-}};
+use crate::{
+    config::LilacConfig,
+    domain::{
+        auth::ports::AuthService,
+        dataset::ports::DatasetService,
+        integration::{ports::StsPort, service::IntegrationService},
+        project::{ports::ProjectRepository, service::ProjectService},
+        service::ports::ServiceService,
+        user::service::UserService,
+    },
+};
 // use tower_sessions_sqlx_store::PostgresStore;
 
 use self::routes::{auth, dataset, integration, project, service, user};
@@ -82,10 +82,7 @@ pub struct HttpServer {
 }
 
 impl HttpServer {
-    pub async fn new(
-        app_state: AppState,
-        port: u16,
-    ) -> anyhow::Result<Self> {
+    pub async fn new(app_state: AppState, port: u16) -> anyhow::Result<Self> {
         let app: Router = Router::new()
             .merge(user::router())
             .merge(project::router())
@@ -95,7 +92,7 @@ impl HttpServer {
             .merge(auth::router())
             .with_state(app_state);
 
-        let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
+        let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
         Ok(Self { app, listener })
     }
 
