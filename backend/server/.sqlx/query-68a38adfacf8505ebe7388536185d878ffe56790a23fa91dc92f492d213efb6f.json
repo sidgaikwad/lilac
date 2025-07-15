@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO \"services\" (service_id, service_name, project_id, service_type, service_configuration, url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING service_id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "service_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Text",
+        "Json",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "68a38adfacf8505ebe7388536185d878ffe56790a23fa91dc92f492d213efb6f"
+}
