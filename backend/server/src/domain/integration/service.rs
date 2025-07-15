@@ -35,34 +35,28 @@ pub trait IntegrationService: Send + Sync {
 }
 
 #[derive(Clone)]
-// TODO: Delete STS and K8s
 pub struct IntegrationServiceImpl<
     R: IntegrationRepository,
     S: StsPort,
-    K: K8sPort,
 > {
     repo: Arc<R>,
     sts: Arc<S>,
-    k8s: Arc<K>,
 }
 
-use super::ports::K8sPort;
-
-impl<R: IntegrationRepository, S: StsPort, K: K8sPort>
-    IntegrationServiceImpl<R, S, K>
+impl<R: IntegrationRepository, S: StsPort>
+    IntegrationServiceImpl<R, S>
 {
-    pub fn new(repo: Arc<R>, sts: Arc<S>, k8s: Arc<K>) -> Self {
+    pub fn new(repo: Arc<R>, sts: Arc<S>) -> Self {
         Self {
             repo,
             sts,
-            k8s,
         }
     }
 }
 
 #[async_trait]
-impl<R: IntegrationRepository, S: StsPort, K: K8sPort> IntegrationService
-    for IntegrationServiceImpl<R, S, K>
+impl<R: IntegrationRepository, S: StsPort> IntegrationService
+    for IntegrationServiceImpl<R, S>
 {
     async fn create_aws_integration(
         &self,

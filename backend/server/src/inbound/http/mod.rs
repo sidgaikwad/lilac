@@ -9,20 +9,21 @@ use axum::{
 };
 use tokio::net::TcpListener;
 
-use crate::domain::{
+use crate::{config::LilacConfig, domain::{
     auth::ports::AuthService,
     dataset::ports::DatasetService,
     integration::{ports::StsPort, service::IntegrationService},
     project::{ports::ProjectRepository, service::ProjectService},
     service::ports::ServiceService,
     user::service::UserService,
-};
+}};
 // use tower_sessions_sqlx_store::PostgresStore;
 
 use self::routes::{auth, dataset, integration, project, service, user};
 
 #[derive(Clone)]
 pub struct AppState {
+    pub config: Arc<LilacConfig>,
     pub user_service: Arc<dyn UserService>,
     pub project_service: Arc<dyn ProjectService>,
     pub dataset_service: Arc<dyn DatasetService>,

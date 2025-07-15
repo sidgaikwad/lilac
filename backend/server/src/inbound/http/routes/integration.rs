@@ -40,7 +40,7 @@ struct SetAWSAccessInfoResponse {
 
 #[axum::debug_handler(state = AppState)]
 async fn create_aws_integration(
-    State(service): State<Arc<dyn IntegrationService>>,
+    // State(service): State<Arc<dyn IntegrationService>>,
     claims: Claims,
     Path(project_id): Path<Uuid>,
     Json(payload): Json<CreateAWSIntegrationPayload>,
@@ -50,17 +50,18 @@ async fn create_aws_integration(
         role_arn: payload.role_arn,
     };
 
-    let result = service
-        .create_aws_integration(&UserId(claims.sub), &req)
-        .await;
+    // let result = service
+    //     .create_aws_integration(&UserId(claims.sub), &req)
+    //     .await;
 
-    match result {
-        Ok(integration) => {
-            let response = SetAWSAccessInfoResponse {
-                external_id: integration.external_id,
-            };
-            (axum::http::StatusCode::CREATED, Json(response)).into_response()
-        }
-        Err(_) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR).into_response(),
-    }
+    // match result {
+    //     Ok(integration) => {
+    //         let response = SetAWSAccessInfoResponse {
+    //             external_id: integration.external_id,
+    //         };
+    //         (axum::http::StatusCode::CREATED, Json(response)).into_response()
+    //     }
+    //     Err(_) => (axum::http::StatusCode::INTERNAL_SERVER_ERROR).into_response(),
+    // }
+    axum::http::StatusCode::INTERNAL_SERVER_ERROR.into_response()
 }
