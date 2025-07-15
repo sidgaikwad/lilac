@@ -1,20 +1,17 @@
-import { cva } from "class-variance-authority";
+import { cva } from 'class-variance-authority';
 
-const keyValueVariants = cva(
-  "gap-y-2",
-  {
-    variants: {
-      layout: {
-        vertical: 'flex flex-col',
-        horizontal: 'flex flex-col',
-        grid: 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4',
-      },
+const keyValueVariants = cva('gap-y-2', {
+  variants: {
+    layout: {
+      vertical: 'flex flex-col',
+      horizontal: 'flex flex-col',
+      grid: 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4',
     },
-    defaultVariants: {
-      layout: 'vertical',
-    },
-  }
-);
+  },
+  defaultVariants: {
+    layout: 'vertical',
+  },
+});
 
 export interface KeyValueItem {
   key: React.ReactNode;
@@ -35,9 +32,9 @@ export function KeyValueDisplay({
       <div
         data-layout={layout}
         key={key}
-        className="flex flex-col [[data-layout=horizontal]]:flex-row [[data-layout=horizontal]]:items-center [[data-layout=horizontal]]:gap-2"
+        className='flex flex-col [[data-layout=horizontal]]:flex-row [[data-layout=horizontal]]:items-center [[data-layout=horizontal]]:gap-2'
       >
-        <span className='font-semibold text-gray-text-muted'>{item.key}:</span>
+        <span className='text-gray-text-muted font-semibold'>{item.key}:</span>
         <span className='text-gray-text'>{item.value}</span>
       </div>
     );
@@ -48,4 +45,4 @@ export function KeyValueDisplay({
       {items.map((item, index) => renderItem(index.toString(), item))}
     </div>
   );
-};
+}

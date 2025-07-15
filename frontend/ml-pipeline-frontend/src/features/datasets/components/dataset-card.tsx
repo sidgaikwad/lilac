@@ -31,20 +31,25 @@ export function DatasetCard(props: DatasetCardProps) {
         navigate(`/projects/${props.projectId}/datasets/${props.dataset.id}`)
       }
       title={props.dataset.name}
-      content={<KeyValueDisplay items={[
-        {
-          key: 'Name',
-          value: props.dataset.name,
-        },
-        {
-          key: 'Description',
-          value: props.dataset.description,
-        },
-        {
-          key: 'Source',
-          value: props.dataset.datasetSource,
-        },
-      ]} layout='vertical' />}
+      content={
+        <KeyValueDisplay
+          items={[
+            {
+              key: 'Name',
+              value: props.dataset.name,
+            },
+            {
+              key: 'Description',
+              value: props.dataset.description,
+            },
+            {
+              key: 'Source',
+              value: props.dataset.datasetSource,
+            },
+          ]}
+          layout='vertical'
+        />
+      }
       icon={getIcon(props.dataset.datasetSource)}
       action={
         <DeleteDatasetModal

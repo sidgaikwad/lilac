@@ -170,7 +170,7 @@ function Sidebar({
       <div
         data-slot='sidebar'
         className={cn(
-          'bg-accent-background-1 text-gray-text flex h-full w-(--sidebar-width) flex-col border-gray-border-subtle',
+          'bg-accent-background-1 text-gray-text border-gray-border-subtle flex h-full w-(--sidebar-width) flex-col',
           side === 'left' ? 'border-r' : 'border-l',
           className
         )}

@@ -66,7 +66,7 @@ export default function Sidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem className='bg-accent-secondary border border-accent-border rounded-md'>
+              <SidebarMenuItem className='bg-accent-secondary border-accent-border rounded-md border'>
                 <SidebarMenuButton asChild>
                   <div>
                     <Shapes />

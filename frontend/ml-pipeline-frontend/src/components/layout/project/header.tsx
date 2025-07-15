@@ -1,4 +1,3 @@
-import ProjectSelectionDropdown from '@/components/common/project-selection-dropdown';
 import { ThemeToggle } from '@/components/common/theme-toggle';
 import { UserProfileDropdown } from '@/components/common/user-profile-dropdown';
 import { SidebarTrigger } from '@/components/ui/sidebar';

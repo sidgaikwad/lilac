@@ -6,21 +6,20 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@import "@radix-ui/colors/slate.css";
-@import "@radix-ui/colors/sand.css";
-@import "@radix-ui/colors/blue.css";
-@import "@radix-ui/colors/green.css";
-@import "@radix-ui/colors/red.css";
-@import "@radix-ui/colors/iris.css";
-@import "@radix-ui/colors/orange.css";
-@import "@radix-ui/colors/slate-dark.css";
-@import "@radix-ui/colors/sand-dark.css";
-@import "@radix-ui/colors/blue-dark.css";
-@import "@radix-ui/colors/green-dark.css";
-@import "@radix-ui/colors/red-dark.css";
-@import "@radix-ui/colors/iris-dark.css";
-@import "@radix-ui/colors/orange-dark.css";
-
+@import '@radix-ui/colors/slate.css';
+@import '@radix-ui/colors/sand.css';
+@import '@radix-ui/colors/blue.css';
+@import '@radix-ui/colors/green.css';
+@import '@radix-ui/colors/red.css';
+@import '@radix-ui/colors/iris.css';
+@import '@radix-ui/colors/orange.css';
+@import '@radix-ui/colors/slate-dark.css';
+@import '@radix-ui/colors/sand-dark.css';
+@import '@radix-ui/colors/blue-dark.css';
+@import '@radix-ui/colors/green-dark.css';
+@import '@radix-ui/colors/red-dark.css';
+@import '@radix-ui/colors/iris-dark.css';
+@import '@radix-ui/colors/orange-dark.css';
 
 /* 
 :root {
@@ -116,7 +115,6 @@
   --chart-3: oklch(39.8% 0.07 227.392);
   --chart-4: oklch(82.8% 0.189 84.429);
   --chart-5: oklch(76.9% 0.188 70.08);
-  
 }
 
 .dark {
@@ -193,7 +191,6 @@
   --color-accent-surface: var(--accent-surface);
   --color-accent-indicator: var(--accent-indicator);
   --color-accent-track: var(--accent-track);
-
 
   --color-slate-1: var(--slate-1);
   --color-slate-2: var(--slate-2);
@@ -292,6 +289,6 @@
     @apply border-border outline-ring/50;
   } */
   body {
-    @apply bg-background h-screen text-foreground;
+    @apply bg-background text-foreground h-screen;
   }
 }
