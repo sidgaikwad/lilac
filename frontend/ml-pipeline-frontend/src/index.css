@@ -76,6 +76,7 @@
   --chart-5: oklch(76.9% 0.188 70.08);
 }
 
+
 .dark {
   --accent-secondary-foreground: white;
   --background: var(--accent-background-2);

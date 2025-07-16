@@ -17,6 +17,7 @@ export type CardProps = {
   content?: React.ReactNode;
   footer?: React.ReactNode;
   action?: React.ReactNode;
+  footerAction?: React.ReactNode;
 } & Omit<React.ComponentProps<'div'>, 'content'>;
 
 export function Card(props: CardProps) {
@@ -28,6 +29,7 @@ export function Card(props: CardProps) {
     content,
     footer,
     action,
+    footerAction,
     ...divProps
   } = props;
   return (
@@ -35,15 +37,20 @@ export function Card(props: CardProps) {
       <CardHeader>
         <div className='flex flex-row items-center gap-4'>
           {icon}
-          <div className='flex flex-col'>
-            <CardTitle>{title}</CardTitle>
+          <div className='flex min-w-0 flex-col'>
+            <CardTitle className='break-words'>{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
         </div>
         {action && <CardAction>{action}</CardAction>}
       </CardHeader>
       {content && <CardContent>{content}</CardContent>}
-      {footer && <CardFooter>{footer}</CardFooter>}
+      {footer && (
+        <CardFooter>
+          {footer}
+          {footerAction && <div className='ml-auto'>{footerAction}</div>}
+        </CardFooter>
+      )}
     </CardComponent>
   );
 }

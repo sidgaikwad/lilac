@@ -116,15 +116,7 @@ function FormWizard(props: FormWizardProps) {
           </ol>
         </nav>
         <div className='space-y-4'>
-          {stepper.switch(
-            Object.values(props.steps).reduce(
-              (obj, step) => ({
-                [step.id]: step.formContent,
-                ...obj,
-              }),
-              {}
-            )
-          )}
+          {stepper.current.formContent}
           {!stepper.isLast ? (
             <div className='flex justify-end gap-4'>
               <Button

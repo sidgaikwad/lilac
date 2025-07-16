@@ -1,9 +1,10 @@
 import { createBrowserRouter } from 'react-router';
-import { Routes } from './services/constants/routes';
+import { Routes } from './constants/routes';
 import { MainLayout, ProjectLayout } from './components/layout';
 import ProjectsListPage from './features/projects/pages/projects-list-page';
 import ExperimentsPage from './features/experiments/pages/experiments-page';
 import NotebooksPage from './features/notebooks/pages/notebooks-page';
+import ProjectWorkspacesPage from './features/workspaces/pages/project-workspaces-page';
 import ProjectDashboardPage from './features/projects/pages/project-dashboard-page';
 import ProtectedRoute from './components/router/protected-route';
 import LoginPage from './features/account/pages/login-page';
@@ -84,6 +85,10 @@ export const router = createBrowserRouter([
               {
                 path: Routes.PROJECT_NOTEBOOKS,
                 element: <NotebooksPage />,
+              },
+              {
+                path: Routes.PROJECT_WORKSPACES,
+                element: <ProjectWorkspacesPage />,
               },
             ],
           },
