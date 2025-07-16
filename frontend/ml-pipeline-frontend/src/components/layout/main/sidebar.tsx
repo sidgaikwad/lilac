@@ -18,9 +18,9 @@ import {
   SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Routes } from '@/services/constants/routes';
 import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
+import { Routes } from '@/constants';
 
 export default function Sidebar() {
   const location = useLocation();
@@ -31,6 +31,7 @@ export default function Sidebar() {
       [Routes.PROJECTS]: Routes.PROJECTS,
       [Routes.DATA_SOURCES]: Routes.DATA_SOURCES,
       [Routes.CLUSTERS]: Routes.CLUSTERS,
+      [Routes.ORG_SETTINGS]: Routes.ORG_SETTINGS,
     };
   }, []);
 
@@ -90,7 +91,7 @@ export default function Sidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={
-                    location.pathname === paths[Routes.PROJECT_SETTINGS]
+                    location.pathname === paths[Routes.ORG_SETTINGS]
                   }
                 >
                   <Link to={paths[Routes.ORG_SETTINGS]}>

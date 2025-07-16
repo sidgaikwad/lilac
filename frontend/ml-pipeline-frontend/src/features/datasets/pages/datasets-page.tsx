@@ -42,7 +42,7 @@ function DataSetsPage() {
                 link: `/`,
               },
               {
-                content: project?.name ?? projectId,
+                content: project?.projectName ?? projectId,
                 link: `/projects/${projectId}`,
               },
               {
@@ -90,7 +90,7 @@ function DataSetsPage() {
         {datasets !== undefined && datasets.length > 0 ? (
           datasets.map((dataset) => (
             <DatasetCard
-              key={dataset.id}
+              key={dataset.datasetId}
               projectId={projectId!}
               dataset={dataset}
             />

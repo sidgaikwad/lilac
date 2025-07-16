@@ -27,7 +27,7 @@ export default function ProjectSelectionDropdown() {
   };
 
   const selectedProject = useMemo(() => {
-    return projects?.find((proj) => proj.id === projectId);
+    return projects?.find((proj) => proj.projectId === projectId);
   }, [projectId, projects]);
 
   return (
@@ -45,7 +45,7 @@ export default function ProjectSelectionDropdown() {
                 className='w-fit justify-around'
               >
                 <span className='truncate'>
-                  {selectedProject?.name ?? 'Select Project'}
+                  {selectedProject?.projectName ?? 'Select Project'}
                 </span>
                 <ChevronDown className='text-gray-text-muted' />
               </Button>
@@ -53,8 +53,8 @@ export default function ProjectSelectionDropdown() {
             <DropdownMenuContent side='bottom' align='start'>
               {projects && projects.length > 0 ? (
                 projects.map((project) => (
-                  <DropdownMenuItem asChild key={project.id}>
-                    <Link to={`/projects/${project.id}`}>{project.name}</Link>
+                  <DropdownMenuItem asChild key={project.projectId}>
+                    <Link to={`/projects/${project.projectId}`}>{project.projectName}</Link>
                   </DropdownMenuItem>
                 ))
               ) : (

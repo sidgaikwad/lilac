@@ -61,7 +61,7 @@ function ProjectsListPage() {
         {projects.length > 0 ? (
           <div className='m-auto flex flex-wrap gap-4'>
             {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard key={project.projectId} project={project} />
             ))}
           </div>
         ) : (

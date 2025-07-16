@@ -5,22 +5,25 @@ import { QueryKeys } from '../constants';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface CreateProjectRequest {
-  name: string;
+  projectName: string;
 }
 
 export interface CreateProjectResponse {
-  id: string;
+  projectId: string;
 }
 
 async function createProject(
   payload: CreateProjectRequest
 ): Promise<CreateProjectResponse> {
-  return postHttp<Sn<CreateProjectRequest>, Sn<CreateProjectResponse>>(
+  const resp = await postHttp<Sn<CreateProjectRequest>, Sn<CreateProjectResponse>>(
     '/projects',
     {
-      name: payload.name,
+      project_name: payload.projectName,
     }
   );
+  return {
+    projectId: resp.project_id
+  };
 }
 
 export interface UseCreateProjectProps {

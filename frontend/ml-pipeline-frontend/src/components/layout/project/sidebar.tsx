@@ -1,11 +1,8 @@
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import {
   Settings,
-  HardDrive,
   LayoutDashboard,
   Home,
-  FlaskConical,
-  BookText,
   ArrowLeft,
   Laptop,
 } from 'lucide-react';
@@ -29,6 +26,7 @@ import { useMemo } from 'react';
 export default function Sidebar() {
   const { projectId } = useParams<{ projectId: string }>();
   const location = useLocation();
+  const { setOpen } = useSidebar();
 
   const paths = useMemo(() => {
     if (!projectId) {
@@ -41,19 +39,9 @@ export default function Sidebar() {
       [Routes.PROJECT_WORKSPACES]: generatePath(Routes.PROJECT_WORKSPACES, {
         projectId: projectId!,
       }),
-      [Routes.PROJECT_DATASETS]: generatePath(Routes.PROJECT_DATASETS, {
-        projectId,
-      }),
-      [Routes.PROJECT_EXPERIMENTS]: generatePath(Routes.PROJECT_EXPERIMENTS, {
-        projectId,
-      }),
       [Routes.PROJECT_SETTINGS]: generatePath(Routes.PROJECT_SETTINGS, {
         projectId,
       }),
-      [Routes.PROJECT_NOTEBOOKS]: generatePath(Routes.PROJECT_NOTEBOOKS, {
-        projectId,
-      }),
-
     };
   }, [projectId]);
 
@@ -110,45 +98,6 @@ export default function Sidebar() {
                   <Link to={paths[Routes.PROJECT_DETAILS]}>
                     <LayoutDashboard />
                     <span>Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={
-                    location.pathname === paths[Routes.PROJECT_DATASETS]
-                  }
-                >
-                  <Link to={paths[Routes.PROJECT_DATASETS]}>
-                    <HardDrive />
-                    <span>Datasets</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={
-                    location.pathname === paths[Routes.PROJECT_EXPERIMENTS]
-                  }
-                >
-                  <Link to={paths[Routes.PROJECT_EXPERIMENTS]}>
-                    <FlaskConical />
-                    <span>Experiments</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={
-                    location.pathname === paths[Routes.PROJECT_NOTEBOOKS]
-                  }
-                >
-                  <Link to={paths[Routes.PROJECT_NOTEBOOKS]}>
-                    <BookText />
-                    <span>Notebooks</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

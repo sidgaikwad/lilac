@@ -97,16 +97,16 @@ impl From<DatasetSource> for HttpDatasetSource {
 /// The body of a [Dataset] creation request.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateDatasetHttpRequest {
-    name: String,
-    description: Option<String>,
+    dataset_name: String,
+    dataset_description: Option<String>,
     data_source: HttpDatasetSource,
 }
 
 impl From<CreateDatasetHttpRequest> for CreateDatasetRequest {
     fn from(value: CreateDatasetHttpRequest) -> Self {
         CreateDatasetRequest {
-            name: value.name,
-            description: value.description,
+            name: value.dataset_name,
+            description: value.dataset_description,
             source: value.data_source.into(),
         }
     }
@@ -140,9 +140,9 @@ impl From<Dataset> for GetDatasetHttpResponse {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct HttpDatasetSummary {
-    pub id: DatasetId,
-    pub name: String,
-    pub description: Option<String>,
+    pub dataset_id: DatasetId,
+    pub dataset_name: String,
+    pub dataset_description: Option<String>,
     pub source_type: String,
 }
 
@@ -154,9 +154,9 @@ impl From<Dataset> for HttpDatasetSummary {
         };
 
         Self {
-            id: dataset.id,
-            name: dataset.name,
-            description: dataset.description,
+            dataset_id: dataset.id,
+            dataset_name: dataset.name,
+            dataset_description: dataset.description,
             source_type,
         }
     }

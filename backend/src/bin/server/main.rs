@@ -10,7 +10,7 @@ use server::{
     },
     inbound::http::{AppState, HttpServer},
     outbound::{
-        data_source::adapter::DataSourceImpl,
+        data_source::adapter::DataSourceTesterImpl,
         jwt::JwtManager,
         persistence::postgres::{
             dataset_repository::PostgresDatasetRepository,
@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
     let project_service = Arc::new(ProjectServiceImpl::new(project_repo.clone()));
     let dataset_service = Arc::new(DatasetServiceImpl::new(
         dataset_repo.clone(),
-        Arc::new(DataSourceImpl),
+        Arc::new(DataSourceTesterImpl),
     ));
     let session_store = PostgresSessionStore::new(db_pool.clone());
     session_store.migrate().await?;

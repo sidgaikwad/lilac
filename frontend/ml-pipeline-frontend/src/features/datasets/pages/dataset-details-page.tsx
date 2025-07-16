@@ -38,7 +38,7 @@ function DataSetDetailPage() {
                 link: `/`,
               },
               {
-                content: project?.name ?? projectId,
+                content: project?.projectName ?? projectId,
                 link: `/projects/${projectId}`,
               },
               {
@@ -46,14 +46,14 @@ function DataSetDetailPage() {
                 link: `/projects/${projectId}/datasets`,
               },
               {
-                content: dataset?.name,
+                content: dataset?.datasetName,
                 link: `/projects/${projectId}/datasets/${datasetId}`,
               },
             ]}
           />
         </div>
         <ContainerTitle>
-          {dataset?.name}
+          {dataset?.datasetName}
           <ContainerDescription>Browse your S3 bucket</ContainerDescription>
         </ContainerTitle>
         <ContainerAction></ContainerAction>

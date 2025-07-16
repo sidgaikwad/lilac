@@ -14,7 +14,7 @@ export interface CreateDatasetRequest {
 }
 
 export interface CreateDatasetResponse {
-  id: string;
+  projectId: string;
 }
 
 async function createDataset(
@@ -31,7 +31,7 @@ async function createDataset(
     source: snakeCaseObject(request.source),
   });
   return {
-    id: resp.id,
+    projectId: resp.project_id,
   };
 }
 

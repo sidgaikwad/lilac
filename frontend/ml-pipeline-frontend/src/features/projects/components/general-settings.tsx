@@ -25,11 +25,11 @@ export function GeneralSettings(props: GeneralSettingsProps) {
         <CardDescription>Update project details.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div key={project.id} className='max-w-sm space-y-2'>
+        <div key={project.projectId} className='max-w-sm space-y-2'>
           <Label htmlFor='projectName'>Name</Label>
           <Input
             id='projectName'
-            defaultValue={project.name}
+            defaultValue={project.projectName}
             disabled={!project}
           />
         </div>

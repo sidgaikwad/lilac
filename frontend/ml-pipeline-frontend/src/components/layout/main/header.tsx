@@ -1,6 +1,6 @@
 import { ThemeToggle } from '@/components/common/theme-toggle';
 import { UserProfileDropdown } from '@/components/common/user-profile-dropdown';
-import { useGetAccountDetails } from '@/services/account/get-account-details.query';
+import { useGetAccountDetails } from '@/services/auth/get-account-details.query';
 import useAuthStore from '@/store/use-auth-store';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarTrigger } from '@/components/ui/sidebar';

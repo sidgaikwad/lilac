@@ -10,7 +10,6 @@ import {
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { GeneralSettings } from '../components/general-settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { IntegrationSettings } from '../components/integration-settings';
 
 function ProjectSettingsPage() {
   const { projectId } = useParams<'projectId'>();
@@ -26,13 +25,9 @@ function ProjectSettingsPage() {
         <Tabs defaultValue='general'>
           <TabsList>
             <TabsTrigger value='general'>General</TabsTrigger>
-            <TabsTrigger value='integrations'>Integrations</TabsTrigger>
           </TabsList>
           <TabsContent value='general'>
             <GeneralSettings project={project} />
-          </TabsContent>
-          <TabsContent value='integrations'>
-            <IntegrationSettings project={project} />
           </TabsContent>
         </Tabs>
       </ContainerContent>

@@ -3,15 +3,17 @@ import { QueryKeys } from '../constants';
 import { ServiceError, User } from '@/types';
 import { useEffect } from 'react';
 import { getHttp } from '@/lib/fetch';
+import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
+import { camelCaseObject } from '@/lib/utils';
 
 export interface GetAccountDetailsResponse {
-  id: string;
+  userId: string;
   email: string;
   emailVerified: boolean;
 }
 
 export async function getAccountDetails(): Promise<GetAccountDetailsResponse> {
-  return getHttp('/account/details');
+  return camelCaseObject(await getHttp<Sn<GetAccountDetailsResponse>>('/account/details'));
 }
 
 export function getAccountDetailsQuery(enabled: boolean = true) {

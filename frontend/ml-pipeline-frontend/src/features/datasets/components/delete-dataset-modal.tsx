@@ -23,12 +23,12 @@ function DeleteDatasetModal(props: DeleteDatasetModalProps) {
           <Trash2 className='text-destructive hover:text-destructive/80' />
         </Button>
       }
-      itemName={props.dataset.name}
+      itemName={props.dataset.datasetName}
       itemType='dataset'
       onConfirm={() =>
         deleteDataset({
           projectId: props.projectId,
-          datasetId: props.dataset.id,
+          datasetId: props.dataset.datasetId,
         })
       }
       isLoading={isPending}

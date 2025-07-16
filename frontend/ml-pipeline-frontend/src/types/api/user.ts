@@ -1,7 +1,5 @@
 export interface User {
-  id: string;
+  userId: string;
   email: string;
   emailVerified: boolean;
-  oidcProvider?: string;
-  oidcProviderId?: string;
 }

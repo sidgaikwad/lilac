@@ -28,29 +28,29 @@ export function DatasetCard(props: DatasetCardProps) {
     <Card
       className='hover:bg-muted h-fit w-fit cursor-pointer'
       onClick={() =>
-        navigate(`/projects/${props.projectId}/datasets/${props.dataset.id}`)
+        navigate(`/projects/${props.projectId}/datasets/${props.dataset.datasetId}`)
       }
-      title={props.dataset.name}
+      title={props.dataset.datasetName}
       content={
         <KeyValueDisplay
           items={[
             {
               key: 'Name',
-              value: props.dataset.name,
+              value: props.dataset.datasetName,
             },
             {
               key: 'Description',
-              value: props.dataset.description,
+              value: props.dataset.datasetDescription,
             },
             {
               key: 'Source',
-              value: props.dataset.datasetSource,
+              value: props.dataset.sourceType,
             },
           ]}
           layout='vertical'
         />
       }
-      icon={getIcon(props.dataset.datasetSource)}
+      icon={getIcon(props.dataset.sourceType)}
       action={
         <DeleteDatasetModal
           projectId={props.projectId}

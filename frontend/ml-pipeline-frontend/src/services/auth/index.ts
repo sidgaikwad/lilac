@@ -1,2 +1,3 @@
-export * from './get-auth-providers.query';
-export * from './sso.mutations';
+export * from './get-account-details.query';
+export * from './login.mutation';
+export * from './signup.mutation';

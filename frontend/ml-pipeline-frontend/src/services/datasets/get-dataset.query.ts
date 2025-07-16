@@ -7,9 +7,9 @@ import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 import { camelCaseObject } from '@/lib/utils';
 
 export interface GetDatasetResponse {
-  id: string;
-  name: string;
-  description?: string;
+  datasetId: string;
+  datasetName: string;
+  datasetDescription?: string;
   projectId: string;
   datasetSource: { sourceType: 'S3'; bucketName: string; region: string };
 }

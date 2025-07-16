@@ -17,14 +17,14 @@ function ProjectCard(props: ProjectCardProps) {
   return (
     <Card
       className='w-full max-w-[300px] basis-full md:basis-1/2 lg:basis-1/4'
-      key={props.project.id}
+      key={props.project.projectId}
     >
       <CardHeader>
         <Link
-          to={`/projects/${props.project.id}`}
+          to={`/projects/${props.project.projectId}`}
           className='text-primary hover:underline'
         >
-          <CardTitle>{props.project.name}</CardTitle>
+          <CardTitle>{props.project.projectName}</CardTitle>
         </Link>
         <CardDescription>Description</CardDescription>
         <CardAction>

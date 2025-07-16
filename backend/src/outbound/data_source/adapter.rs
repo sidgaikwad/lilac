@@ -7,10 +7,10 @@ use crate::domain::dataset::{
     ports::{DataSourceError, DataSourceTester},
 };
 
-pub struct DataSourceImpl;
+pub struct DataSourceTesterImpl;
 
 #[async_trait]
-impl DataSourceTester for DataSourceImpl {
+impl DataSourceTester for DataSourceTesterImpl {
     async fn test_connection(&self, source: &DatasetSource) -> Result<(), DataSourceError> {
         match source {
             DatasetSource::S3(s3_bucket) => self.test_s3_connection(s3_bucket).await,
@@ -19,7 +19,7 @@ impl DataSourceTester for DataSourceImpl {
     }
 }
 
-impl DataSourceImpl {
+impl DataSourceTesterImpl {
     async fn test_s3_connection(&self, s3_bucket: &S3Bucket) -> Result<(), DataSourceError> {
         // In a real application, we would use the AWS SDK to check if the bucket exists
         // and if we have the necessary permissions to access it.

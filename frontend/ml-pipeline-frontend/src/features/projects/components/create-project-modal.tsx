@@ -52,7 +52,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     onSuccess: (data) => {
       toast.success('Successfully created project!');
       setOpen(false);
-      navigate(generatePath(Routes.PROJECT_DETAILS, { projectId: data.id }), {
+      navigate(generatePath(Routes.PROJECT_DETAILS, { projectId: data.projectId }), {
         replace: true,
       });
     },
@@ -76,7 +76,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
   const onSubmit = (data: CreateProjectFormInputs) => {
     createProject({
-      name: data.projectName,
+      projectName: data.projectName,
     });
   };
 

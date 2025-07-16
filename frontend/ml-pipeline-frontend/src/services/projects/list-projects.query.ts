@@ -7,8 +7,8 @@ import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface ListProjectsResponse {
   projects: {
-    id: string;
-    name: string;
+    projectId: string;
+    projectName: string;
   }[];
 }
 
@@ -16,8 +16,8 @@ export async function listProjects(): Promise<ListProjectsResponse> {
   const resp = await getHttp<Sn<ListProjectsResponse>>('/projects');
   return {
     projects: resp.projects.map((proj) => ({
-      id: proj.id,
-      name: proj.name,
+      projectId: proj.project_id,
+      projectName: proj.project_name,
     })),
   };
 }

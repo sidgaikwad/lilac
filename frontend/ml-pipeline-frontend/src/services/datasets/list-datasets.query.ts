@@ -8,10 +8,10 @@ import { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface ListDatasetsResponse {
   datasets: {
-    id: string;
-    name: string;
-    description?: string;
-    datasetSource: string;
+    datasetId: string;
+    datasetName: string;
+    datasetDescription?: string;
+    sourceType: string;
   }[];
 }
 

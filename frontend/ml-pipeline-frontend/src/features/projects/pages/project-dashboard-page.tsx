@@ -47,9 +47,9 @@ function ProjectDashboardPage() {
   const getProjectSpecificDefaultContent = useCallback(() => {
     return BASE_DEFAULT_MARKDOWN_CONTENT.replace(
       '{{projectName}}',
-      project?.name || 'this project'
+      project?.projectName || 'this project'
     );
-  }, [project?.name]);
+  }, [project?.projectName]);
 
   const [markdownContent, setMarkdownContent] = useState(
     getProjectSpecificDefaultContent()
@@ -57,8 +57,8 @@ function ProjectDashboardPage() {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    setSelectedProjectId(project?.id);
-  }, [setSelectedProjectId, project?.id]);
+    setSelectedProjectId(project?.projectId);
+  }, [setSelectedProjectId, project?.projectId]);
 
   useEffect(() => {
     if (projectId) {
@@ -90,7 +90,7 @@ function ProjectDashboardPage() {
                 link: `/`,
               },
               {
-                content: project.name,
+                content: project.projectName,
                 link: `/projects/${projectId}`,
               },
             ]}
@@ -102,7 +102,7 @@ function ProjectDashboardPage() {
         <div className='mb-6 flex items-center justify-between border-b pb-4'>
           <h1 className='text-3xl font-bold'>
             <span className='text-primary'>
-              {project?.name || 'Your Project'}
+              {project?.projectName || 'Your Project'}
             </span>
           </h1>
           <img

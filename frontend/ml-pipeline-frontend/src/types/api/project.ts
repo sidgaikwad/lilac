@@ -1,6 +1,6 @@
 export interface Project {
-  id: string;
-  name: string;
+  projectId: string;
+  projectName: string;
   awsIntegration?: {
     roleArn: string;
     externalId: string;

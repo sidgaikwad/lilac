@@ -22,11 +22,11 @@ function DeleteProjectModal(props: DeleteProjectModalProps) {
           <Trash2 className='text-destructive hover:text-destructive/80' />
         </Button>
       }
-      itemName={props.project.name}
+      itemName={props.project.projectName}
       itemType='project'
       onConfirm={() =>
         deleteProject({
-          projectId: props.project.id,
+          projectId: props.project.projectId,
         })
       }
       isLoading={isPending}

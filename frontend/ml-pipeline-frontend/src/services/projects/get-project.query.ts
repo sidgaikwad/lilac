@@ -6,12 +6,8 @@ import { useEffect } from 'react';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 export interface GetProjectResponse {
-  id: string;
-  name: string;
-  awsIntegration?: {
-    roleArn: string;
-    externalId: string;
-  };
+  projectId: string;
+  projectName: string;
 }
 
 export async function getProject(
@@ -19,12 +15,8 @@ export async function getProject(
 ): Promise<GetProjectResponse> {
   const resp = await getHttp<Sn<GetProjectResponse>>(`/projects/${projectId}`);
   return {
-    id: resp.id,
-    name: resp.name,
-    awsIntegration: resp.aws_integration && {
-      roleArn: resp.aws_integration.role_arn,
-      externalId: resp.aws_integration.external_id,
-    },
+    projectId: resp.project_id,
+    projectName: resp.project_name,
   };
 }
 
