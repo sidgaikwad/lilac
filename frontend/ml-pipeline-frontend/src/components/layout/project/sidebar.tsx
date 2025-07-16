@@ -6,7 +6,7 @@ import {
   Home,
   FlaskConical,
   BookText,
-  Shapes,
+  ArrowLeft,
 } from 'lucide-react'; // Added LayoutDashboard
 import {
   Sidebar as SidebarComponent,
@@ -19,20 +19,24 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Routes } from '@/services/constants/routes';
 import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
-import ProjectSelectionDropdown from '@/components/common/project-selection-dropdown';
 
 export default function Sidebar() {
   const { projectId } = useParams<{ projectId: string }>();
+  const { setOpen } = useSidebar();
 
   const location = useLocation();
 
   const paths = useMemo(() => {
     return {
       [Routes.PROJECT_DETAILS]: generatePath(Routes.PROJECT_DETAILS, {
+        projectId: projectId!,
+      }),
+      [Routes.PROJECT_WORKSPACES]: generatePath(Routes.PROJECT_WORKSPACES, {
         projectId: projectId!,
       }),
       [Routes.PROJECT_DATASETS]: generatePath(Routes.PROJECT_DATASETS, {
@@ -50,15 +54,12 @@ export default function Sidebar() {
     };
   }, [projectId]);
 
-  if (projectId === undefined) {
-    console.error('Expected projectId in URL params');
-    return undefined;
-  }
-
   return (
     <SidebarComponent
       variant='sidebar'
-      collapsible='none'
+      collapsible='icon'
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
       className='top-(--header-height) !h-[calc(100svh-var(--header-height))]'
     >
       <SidebarHeader></SidebarHeader>
@@ -66,12 +67,15 @@ export default function Sidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem className='bg-accent-secondary border-accent-border rounded-md border'>
-                <SidebarMenuButton asChild>
-                  <div>
-                    <Shapes />
-                    <ProjectSelectionDropdown />
-                  </div>
+              <SidebarMenuItem className='w-fit'>
+                <SidebarMenuButton
+                  asChild
+                  className='hover:bg-accent-background-1 hover:text-gray-text-muted hover:cursor-pointer'
+                >
+                  <Link to='/'>
+                    <ArrowLeft />
+                    <span>Back</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -97,7 +101,7 @@ export default function Sidebar() {
                   isActive={location.pathname === paths[Routes.PROJECT_DETAILS]}
                 >
                   <Link to={paths[Routes.PROJECT_DETAILS]}>
-                    <LayoutDashboard /> {/* Changed Icon */}
+                    <LayoutDashboard />
                     <span>Dashboard</span>
                   </Link>
                 </SidebarMenuButton>

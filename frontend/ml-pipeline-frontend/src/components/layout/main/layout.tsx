@@ -1,27 +1,34 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from '@/components/ui/sonner';
 import Header from './header';
 import Footer from './footer';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import Sidebar from './sidebar';
+import { SkeletonCards } from '@/components/common/skeleton-cards';
 
 export default function Layout() {
   return (
     <div className='[--header-height:calc(theme(spacing.14))]'>
-      <Header />
+      <SidebarProvider className='flex flex-col' defaultOpen={false}>
+        <Header />
 
-      <div className='flex flex-1'>
-        <div className='@container flex flex-1 flex-row md:flex-col'>
-          <Toaster position='top-center' richColors closeButton />
-          <React.Suspense fallback={<Skeleton className='h-full w-full' />}>
-            <Outlet />
-          </React.Suspense>
+        <div className='flex flex-1'>
+          <Sidebar />
+          <SidebarInset>
+            <div className='@container flex flex-1 flex-row md:flex-col'>
+              <Toaster position='top-center' richColors closeButton />
+              <React.Suspense fallback={<SkeletonCards />}>
+                <Outlet />
+              </React.Suspense>
+            </div>
+          </SidebarInset>
         </div>
-      </div>
 
-      <footer>
-        <Footer />
-      </footer>
+        <footer>
+          <Footer />
+        </footer>
+      </SidebarProvider>
     </div>
   );
 }

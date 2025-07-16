@@ -10,12 +10,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronDown, PlusIcon } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import CreateProjectModal from '@/features/projects/components/create-project-modal';
 
 export default function ProjectSelectionDropdown() {
   const { projectId } = useParams<'projectId'>();
-  const navigate = useNavigate();
   const { data: projects, isLoading: isLoadingProjects } = useListProjects();
   const [isCreateProjectModalOpen, setCreateProjectModalOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -32,7 +31,7 @@ export default function ProjectSelectionDropdown() {
   }, [projectId, projects]);
 
   return (
-    <>
+    <div>
       <div className='flex w-full'>
         {isLoadingProjects ? (
           <Skeleton className='h-6' />
@@ -43,7 +42,7 @@ export default function ProjectSelectionDropdown() {
                 ref={triggerRef}
                 variant='ghost'
                 size='icon'
-                className='grow justify-around'
+                className='w-fit justify-around'
               >
                 <span className='truncate'>
                   {selectedProject?.name ?? 'Select Project'}
@@ -54,26 +53,24 @@ export default function ProjectSelectionDropdown() {
             <DropdownMenuContent side='bottom' align='start'>
               {projects && projects.length > 0 ? (
                 projects.map((project) => (
-                  <DropdownMenuItem
-                    key={project.id}
-                    onSelect={() => {
-                      navigate(`/projects/${project.id}`);
-                    }}
-                  >
-                    {project.name}
+                  <DropdownMenuItem asChild key={project.id}>
+                    <Link to={`/projects/${project.id}`}>{project.name}</Link>
                   </DropdownMenuItem>
                 ))
               ) : (
                 <DropdownMenuItem disabled>No projects found</DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => {
-                  setCreateProjectModalOpen(true);
-                }}
-              >
-                <PlusIcon className='mr-2 h-4 w-4' />
-                <span>Create project</span>
+              <DropdownMenuItem asChild>
+                <Button
+                  variant='ghost'
+                  onClick={() => {
+                    setCreateProjectModalOpen(true);
+                  }}
+                >
+                  <PlusIcon className='mr-2 h-4 w-4' />
+                  <span>Create project</span>
+                </Button>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -84,6 +81,6 @@ export default function ProjectSelectionDropdown() {
         setOpen={handleModalOpenChange}
         showTrigger={false}
       />
-    </>
+    </div>
   );
 }

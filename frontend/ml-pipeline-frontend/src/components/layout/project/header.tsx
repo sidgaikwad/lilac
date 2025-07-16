@@ -4,6 +4,8 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useGetAccountDetails } from '@/services/account/get-account-details.query';
 import useAuthStore from '@/store/use-auth-store';
 import { Skeleton } from '@/components/ui/skeleton';
+import ProjectSelectionDropdown from '@/components/common/project-selection-dropdown';
+import { Shapes } from 'lucide-react';
 
 export default function Header() {
   const token = useAuthStore((state) => state.token);
@@ -14,6 +16,10 @@ export default function Header() {
       <div className='flex h-(--header-height) w-full items-center justify-between gap-2 px-4'>
         <div className='flex h-full flex-row items-center'>
           <SidebarTrigger className='visible md:invisible' />
+          <Shapes className='text-gray-text pr-1' />
+          <div className='bg-accent-secondary px-2 border-accent-border w-fit rounded-md border'>
+            <ProjectSelectionDropdown />
+          </div>
         </div>
         <div className='flex items-center gap-2'>
           <ThemeToggle />

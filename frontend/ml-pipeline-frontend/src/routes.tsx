@@ -5,8 +5,6 @@ import ProjectsListPage from './features/projects/pages/projects-list-page';
 import ExperimentsPage from './features/experiments/pages/experiments-page';
 import NotebooksPage from './features/notebooks/pages/notebooks-page';
 import ProjectDashboardPage from './features/projects/pages/project-dashboard-page';
-import DataSetsPage from './features/datasets/pages/datasets-page';
-import DataSetDetailPage from './features/datasets/pages/dataset-details-page';
 import ProtectedRoute from './components/router/protected-route';
 import LoginPage from './features/account/pages/login-page';
 import SignUpPage from './features/account/pages/sign-up-page';
@@ -14,6 +12,7 @@ import SsoCallbackPage from './features/account/pages/sso-callback-page';
 import ErrorBoundary from './error-boundary';
 import AccountSettingsPage from './features/account/pages/account-settings-page';
 import ProjectSettingsPage from './features/projects/pages/project-settings-page';
+import DataSetsPage from './features/datasets/pages/datasets-page';
 
 export const router = createBrowserRouter([
   {
@@ -42,6 +41,18 @@ export const router = createBrowserRouter([
                 element: <ProjectsListPage />,
               },
               {
+                path: Routes.PROJECTS,
+                element: <ProjectsListPage />,
+              },
+              {
+                path: Routes.DATA_SOURCES,
+                element: <div>TODO</div>,
+              },
+              {
+                path: Routes.CLUSTERS,
+                element: <div>TODO</div>,
+              },
+              {
                 path: Routes.ACCOUNT_SETTINGS,
                 element: <AccountSettingsPage />,
               },
@@ -55,12 +66,12 @@ export const router = createBrowserRouter([
                 element: <ProjectDashboardPage />,
               },
               {
-                path: Routes.PROJECT_DATASETS,
-                element: <DataSetsPage />,
+                path: Routes.PROJECT_WORKSPACES,
+                element: <div>TODO</div>,
               },
               {
-                path: Routes.PROJECT_DATASET_DETAILS,
-                element: <DataSetDetailPage />,
+                path: Routes.PROJECT_DATASETS,
+                element: <DataSetsPage />,
               },
               {
                 path: Routes.PROJECT_SETTINGS,
