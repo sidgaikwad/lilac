@@ -2,54 +2,25 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use crate::domain::{
-    dataset::{
-        models::{CreateDatasetRequest, Dataset, DatasetId},
-        ports::{DatasetRepository, DatasetRepositoryError},
-    },
-    project::{models::ProjectId, ports::ProjectRepository},
-    user::models::UserId,
+use crate::domain::dataset::{
+    models::{CreateDatasetRequest, Dataset, DatasetId},
+    ports::{DatasetRepository, DatasetRepositoryError},
 };
-
-use super::project_repository::PostgresProjectRepository;
 
 #[derive(Clone)]
 pub struct PostgresDatasetRepository {
     pool: PgPool,
-    project_repo: PostgresProjectRepository,
 }
 
 impl PostgresDatasetRepository {
     pub fn new(pool: PgPool) -> Self {
-        Self {
-            pool: pool.clone(),
-            project_repo: PostgresProjectRepository::new(pool),
-        }
+        Self { pool: pool.clone() }
     }
-}
-
-async fn ensure_user_is_project_member(
-    project_repo: &PostgresProjectRepository,
-    user_id: &UserId,
-    project_id: &ProjectId,
-) -> Result<(), DatasetRepositoryError> {
-    let is_member = project_repo
-        .is_user_project_member(user_id, project_id)
-        .await
-        .map_err(|e| DatasetRepositoryError::Unknown(e.into()))?;
-
-    if !is_member {
-        return Err(DatasetRepositoryError::Unknown(anyhow::anyhow!(
-            "User is not a member of the project"
-        )));
-    }
-    Ok(())
 }
 
 #[derive(sqlx::FromRow)]
 struct DatasetRecord {
     dataset_id: uuid::Uuid,
-    project_id: uuid::Uuid,
     dataset_name: String,
     description: Option<String>,
     dataset_source: serde_json::Value,
@@ -66,8 +37,7 @@ impl TryFrom<DatasetRecord> for Dataset {
         let source: DatasetSource = serde_json::from_value(record.dataset_source)?;
 
         Ok(Self {
-            id: DatasetId(record.dataset_id),
-            project_id: ProjectId(record.project_id),
+            id: record.dataset_id.into(),
             name: record.dataset_name,
             description: record.description,
             source,
@@ -81,22 +51,18 @@ impl TryFrom<DatasetRecord> for Dataset {
 impl DatasetRepository for PostgresDatasetRepository {
     async fn create_dataset(
         &self,
-        user_id: &UserId,
         req: &CreateDatasetRequest,
     ) -> Result<Dataset, DatasetRepositoryError> {
-        ensure_user_is_project_member(&self.project_repo, user_id, &req.project_id).await?;
-
-        let id = DatasetId(uuid::Uuid::new_v4());
+        let id = DatasetId::generate();
 
         let record = sqlx::query_as!(
             DatasetRecord,
             r#"
-            INSERT INTO datasets (dataset_id, project_id, dataset_name, description, dataset_source)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING dataset_id, project_id, dataset_name, description, dataset_source, created_at, updated_at
+            INSERT INTO datasets (dataset_id, dataset_name, description, dataset_source)
+            VALUES ($1, $2, $3, $4)
+            RETURNING dataset_id, dataset_name, description, dataset_source, created_at, updated_at
             "#,
-            id.0,
-            req.project_id.0,
+            id.inner(),
             req.name,
             req.description,
             serde_json::to_value(&req.source)
@@ -106,59 +72,40 @@ impl DatasetRepository for PostgresDatasetRepository {
         .await
         .map_err(|e: sqlx::Error| DatasetRepositoryError::Unknown(anyhow::anyhow!(e)))?;
 
-        let dataset: Dataset = record
-            .try_into()
-            .map_err(DatasetRepositoryError::Unknown)?;
+        let dataset: Dataset = record.try_into().map_err(DatasetRepositoryError::Unknown)?;
 
         Ok(dataset)
     }
 
-    async fn get_dataset_by_id(
-        &self,
-        user_id: &UserId,
-        id: &DatasetId,
-    ) -> Result<Dataset, DatasetRepositoryError> {
+    async fn get_dataset_by_id(&self, id: &DatasetId) -> Result<Dataset, DatasetRepositoryError> {
         let record = sqlx::query_as!(
             DatasetRecord,
             r#"
-            SELECT dataset_id, project_id, dataset_name, description, dataset_source, created_at, updated_at
+            SELECT dataset_id, dataset_name, description, dataset_source, created_at, updated_at
             FROM datasets
             WHERE dataset_id = $1
             "#,
-            id.0
+            id.inner()
         )
         .fetch_one(&self.pool)
         .await
         .map_err(|e| match e {
-            sqlx::Error::RowNotFound => DatasetRepositoryError::NotFound(id.0.to_string()),
+            sqlx::Error::RowNotFound => DatasetRepositoryError::NotFound(id.to_string()),
             _ => DatasetRepositoryError::Unknown(anyhow::anyhow!(e)),
         })?;
 
-        ensure_user_is_project_member(&self.project_repo, user_id, &ProjectId(record.project_id))
-            .await?;
-
-        let dataset: Dataset = record
-            .try_into()
-            .map_err(DatasetRepositoryError::Unknown)?;
+        let dataset: Dataset = record.try_into().map_err(DatasetRepositoryError::Unknown)?;
 
         Ok(dataset)
     }
 
-    async fn list_datasets_by_project_id(
-        &self,
-        user_id: &UserId,
-        project_id: &ProjectId,
-    ) -> Result<Vec<Dataset>, DatasetRepositoryError> {
-        ensure_user_is_project_member(&self.project_repo, user_id, project_id).await?;
-
+    async fn list_datasets(&self) -> Result<Vec<Dataset>, DatasetRepositoryError> {
         let records = sqlx::query_as!(
             DatasetRecord,
             r#"
-            SELECT dataset_id, project_id, dataset_name, description, dataset_source, created_at, updated_at
+            SELECT dataset_id, dataset_name, description, dataset_source, created_at, updated_at
             FROM datasets
-            WHERE project_id = $1
             "#,
-            project_id.0
         )
         .fetch_all(&self.pool)
         .await
@@ -173,15 +120,8 @@ impl DatasetRepository for PostgresDatasetRepository {
         Ok(datasets)
     }
 
-    async fn delete_dataset(
-        &self,
-        user_id: &UserId,
-        id: &DatasetId,
-    ) -> Result<(), DatasetRepositoryError> {
-        let dataset = self.get_dataset_by_id(user_id, id).await?;
-        ensure_user_is_project_member(&self.project_repo, user_id, &dataset.project_id).await?;
-
-        sqlx::query!("DELETE FROM datasets WHERE dataset_id = $1", id.0)
+    async fn delete_dataset(&self, id: &DatasetId) -> Result<(), DatasetRepositoryError> {
+        sqlx::query!("DELETE FROM datasets WHERE dataset_id = $1", id.inner())
             .execute(&self.pool)
             .await
             .map(|_| ())

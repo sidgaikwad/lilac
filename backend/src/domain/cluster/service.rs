@@ -1,29 +1,45 @@
-use async_trait::async_trait;
 use std::sync::Arc;
-use validator::Validate;
+
+use async_trait::async_trait;
 
 use super::{
-    models::{CreateClusterRequest, Cluster, ClusterId},
+    models::{Cluster, ClusterId, CreateClusterRequest},
     ports::{ClusterRepository, ClusterRepositoryError},
 };
+
+#[derive(Debug, thiserror::Error)]
+pub enum ClusterServiceError {
+    #[error("invalid permissions")]
+    InvalidPermissions,
+    #[error("cluster with {field} {value} already exists")]
+    ClusterExists { field: String, value: String },
+    #[error("cluster {0} not found")]
+    ClusterNotFound(String),
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
+}
+
+impl From<ClusterRepositoryError> for ClusterServiceError {
+    fn from(error: ClusterRepositoryError) -> Self {
+        match error {
+            ClusterRepositoryError::Duplicate { field, value } => {
+                Self::ClusterExists { field, value }
+            }
+            ClusterRepositoryError::NotFound(id) => Self::ClusterNotFound(id),
+            ClusterRepositoryError::Unknown(error) => Self::Unknown(error),
+        }
+    }
+}
 
 #[async_trait]
 pub trait ClusterService: Send + Sync {
     async fn create_cluster(
         &self,
         req: &CreateClusterRequest,
-    ) -> Result<Cluster, ClusterRepositoryError>;
-    async fn get_cluster_by_id(
-        &self,
-        id: &ClusterId,
-    ) -> Result<Cluster, ClusterRepositoryError>;
-    async fn list_clusters(
-        &self,
-    ) -> Result<Vec<Cluster>, ClusterRepositoryError>;
-    async fn delete_cluster(
-        &self,
-        id: &ClusterId,
-    ) -> Result<(), ClusterRepositoryError>;
+    ) -> Result<Cluster, ClusterServiceError>;
+    async fn get_cluster_by_id(&self, id: &ClusterId) -> Result<Cluster, ClusterServiceError>;
+    async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterServiceError>;
+    async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterServiceError>;
 }
 
 #[derive(Clone)]
@@ -42,30 +58,19 @@ impl<R: ClusterRepository> ClusterService for ClusterServiceImpl<R> {
     async fn create_cluster(
         &self,
         req: &CreateClusterRequest,
-    ) -> Result<Cluster, ClusterRepositoryError> {
-        req.validate()
-            .map_err(|e| ClusterRepositoryError::InvalidInput(e.to_string()))?;
-
-        self.repo.create_cluster(req).await
+    ) -> Result<Cluster, ClusterServiceError> {
+        Ok(self.repo.create_cluster(req).await?)
     }
 
-    async fn get_cluster_by_id(
-        &self,
-        id: &ClusterId,
-    ) -> Result<Cluster, ClusterRepositoryError> {
-        self.repo.get_cluster_by_id(id).await
+    async fn get_cluster_by_id(&self, id: &ClusterId) -> Result<Cluster, ClusterServiceError> {
+        Ok(self.repo.get_cluster_by_id(id).await?)
     }
 
-    async fn list_clusters(
-        &self,
-    ) -> Result<Vec<Cluster>, ClusterRepositoryError> {
-        self.repo.list_clusters().await
+    async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterServiceError> {
+        Ok(self.repo.list_clusters().await?)
     }
 
-    async fn delete_cluster(
-        &self,
-        id: &ClusterId,
-    ) -> Result<(), ClusterRepositoryError> {
-        self.repo.delete_cluster(id).await
+    async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterServiceError> {
+        Ok(self.repo.delete_cluster(id).await?)
     }
 }

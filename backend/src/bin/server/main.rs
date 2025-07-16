@@ -1,21 +1,22 @@
 use secrecy::ExposeSecret;
 use std::sync::Arc;
+use tower_sessions::{cookie::Key, Expiry, SessionManagerLayer};
 
 use server::{
     config::{LilacConfig, LogFormat},
     domain::{
         auth::service::AuthServiceImpl, dataset::service::DatasetServiceImpl,
-        integration::service::IntegrationServiceImpl, project::service::ProjectServiceImpl,
-        service::service::ServiceServiceImpl, user::service::UserServiceImpl,
+        project::service::ProjectServiceImpl, user::service::UserServiceImpl,
     },
     inbound::http::{AppState, HttpServer},
     outbound::{
         data_source::adapter::DataSourceImpl,
         jwt::JwtManager,
         persistence::postgres::{
-            dataset_repository::PostgresDatasetRepository, integration_repository::PostgresIntegrationRepository, project_repository::PostgresProjectRepository, service_repository::PostgresServiceRepository, session_repository::PostgresSessionStore, user_repository::PostgresUserRepository
+            dataset_repository::PostgresDatasetRepository,
+            project_repository::PostgresProjectRepository,
+            session_repository::PostgresSessionStore, user_repository::PostgresUserRepository,
         },
-        sts::adapter::StsAdapter,
     },
 };
 use sqlx::postgres::PgPoolOptions;
@@ -56,10 +57,7 @@ async fn main() -> anyhow::Result<()> {
     let user_repo = Arc::new(PostgresUserRepository::new(db_pool.clone()));
     let project_repo = Arc::new(PostgresProjectRepository::new(db_pool.clone()));
     let dataset_repo = Arc::new(PostgresDatasetRepository::new(db_pool.clone()));
-    let integration_repo = Arc::new(PostgresIntegrationRepository::new(db_pool.clone()));
-    let service_repo = Arc::new(PostgresServiceRepository::new(db_pool.clone()));
     let jwt_manager = Arc::new(JwtManager::new(config.secret_key.expose_secret()));
-    let sts_adapter = Arc::new(StsAdapter::new().await);
 
     // 3. Construct domain services
     let user_service = Arc::new(UserServiceImpl::new(user_repo.clone()));
@@ -68,20 +66,12 @@ async fn main() -> anyhow::Result<()> {
         dataset_repo.clone(),
         Arc::new(DataSourceImpl),
     ));
-    let integration_service = Arc::new(IntegrationServiceImpl::new(
-        integration_repo.clone(),
-        sts_adapter.clone(),
-    ));
-    let service_service = Arc::new(ServiceServiceImpl::new(
-        service_repo.clone(),
-        project_repo.clone(),
-    ));
     let session_store = PostgresSessionStore::new(db_pool.clone());
     session_store.migrate().await?;
-    // let session_layer = SessionManagerLayer::new(session_store)
-    //     .with_secure(true)
-    //     .with_private(Key::from(config.secret_key.expose_secret().as_bytes()))
-    //     .with_expiry(Expiry::OnInactivity(time::Duration::days(1)));
+    let session_layer = SessionManagerLayer::new(session_store)
+        .with_secure(true)
+        .with_private(Key::from(config.secret_key.expose_secret().as_bytes()))
+        .with_expiry(Expiry::OnInactivity(time::Duration::minutes(30)));
 
     let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), jwt_manager));
 
@@ -91,12 +81,8 @@ async fn main() -> anyhow::Result<()> {
         user_service,
         project_service,
         dataset_service,
-        integration_service,
-        service_service,
         auth_service,
-        project_repo: project_repo.clone(),
-        sts_port: sts_adapter.clone(),
     };
-    let http_server = HttpServer::new(app_state, config.http_port).await?;
+    let http_server = HttpServer::new(app_state, session_layer, config.http_port).await?;
     http_server.run().await
 }

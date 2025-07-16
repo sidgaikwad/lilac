@@ -1,47 +1,65 @@
+use std::fmt::Display;
+
+use crate::domain::serialize_secret_string;
 use chrono::{DateTime, Utc};
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use validator::Validate;
 
-use crate::domain::project::models::ProjectId;
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct DatasetId(Uuid);
 
-#[derive(
-    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, sqlx::Type,
-)]
-#[sqlx(transparent)]
-pub struct DatasetId(pub Uuid);
+impl DatasetId {
+    pub fn new(id: Uuid) -> Self {
+        Self(id)
+    }
 
-fn serialize_secret_string<S>(secret: &SecretString, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    serializer.serialize_str(secret.expose_secret())
+    pub fn generate() -> Self {
+        Self(Uuid::new_v4())
+    }
+
+    pub fn inner(&self) -> &Uuid {
+        &self.0
+    }
+
+    pub fn into_inner(self) -> Uuid {
+        self.0
+    }
+}
+
+impl Display for DatasetId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl From<Uuid> for DatasetId {
+    fn from(id: Uuid) -> Self {
+        Self(id)
+    }
+}
+
+impl From<DatasetId> for Uuid {
+    fn from(id: DatasetId) -> Self {
+        id.0
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(tag = "source_type")]
 pub enum DatasetSource {
     S3(S3Bucket),
     Snowflake(Snowflake),
 }
 
-impl Default for DatasetSource {
-    fn default() -> Self {
-        DatasetSource::S3(S3Bucket {
-            bucket: "".to_string(),
-        })
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct S3Bucket {
     pub bucket: String,
+    pub access_key: String,
+    #[serde(serialize_with = "serialize_secret_string")]
+    pub secret_key: SecretString,
 }
 
-use secrecy::ExposeSecret;
-
-#[derive(Clone, Debug, Serialize, Deserialize, Validate)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Snowflake {
     pub username: String,
     #[serde(serialize_with = "serialize_secret_string")]
@@ -53,10 +71,9 @@ pub struct Snowflake {
     pub role: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct Dataset {
     pub id: DatasetId,
-    pub project_id: ProjectId,
     pub name: String,
     pub description: Option<String>,
     pub source: DatasetSource,
@@ -64,41 +81,9 @@ pub struct Dataset {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct CreateDatasetRequest {
-    pub project_id: ProjectId,
     pub name: String,
     pub description: Option<String>,
-    // TODO: A dataset's source should be determined from the integration type
-    pub source: Option<DatasetSource>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DatasetSummary {
-    pub id: DatasetId,
-    pub project_id: ProjectId,
-    pub name: String,
-    pub description: Option<String>,
-    pub source_type: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-impl From<Dataset> for DatasetSummary {
-    fn from(dataset: Dataset) -> Self {
-        let source_type = match dataset.source {
-            DatasetSource::S3(_) => "S3".to_string(),
-            DatasetSource::Snowflake(_) => "Snowflake".to_string(),
-        };
-
-        Self {
-            id: dataset.id,
-            project_id: dataset.project_id,
-            name: dataset.name,
-            description: dataset.description,
-            source_type,
-            created_at: dataset.created_at,
-            updated_at: dataset.updated_at,
-        }
-    }
+    pub source: DatasetSource,
 }

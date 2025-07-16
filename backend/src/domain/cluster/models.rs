@@ -1,25 +1,54 @@
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use validator::Validate;
 
-#[derive(
-    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, sqlx::Type,
-)]
-#[sqlx(transparent)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct ClusterId(pub Uuid);
+
+impl ClusterId {
+    pub fn new(id: Uuid) -> Self {
+        Self(id)
+    }
+
+    pub fn generate() -> Self {
+        Self(Uuid::new_v4())
+    }
+
+    pub fn inner(&self) -> &Uuid {
+        &self.0
+    }
+
+    pub fn into_inner(self) -> Uuid {
+        self.0
+    }
+}
+
+impl Display for ClusterId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl From<Uuid> for ClusterId {
     fn from(id: Uuid) -> Self {
         Self(id)
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum ClusterConfig {
-    K8s()
+impl From<ClusterId> for Uuid {
+    fn from(id: ClusterId) -> Self {
+        id.0
+    }
 }
 
-#[derive(Clone, Debug, sqlx::FromRow)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum ClusterConfig {
+    K8s(),
+}
+
+#[derive(Clone, Debug)]
 pub struct Cluster {
     pub id: ClusterId,
     pub name: String,
@@ -29,8 +58,9 @@ pub struct Cluster {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Clone, Debug, Validate)]
+#[derive(Clone, Debug)]
 pub struct CreateClusterRequest {
-    #[validate(length(min = 1))]
     pub name: String,
+    pub description: Option<String>,
+    pub cluster_config: ClusterConfig,
 }

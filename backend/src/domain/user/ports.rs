@@ -5,14 +5,10 @@ use super::models::{CreateUserRequest, User, UserId};
 
 #[derive(Debug, Error)]
 pub enum UserRepositoryError {
-    #[error("{0} with value {1} already exists")]
-    Duplicate(String, String),
+    #[error("user with {field} {value} already exists")]
+    Duplicate { field: String, value: String },
     #[error("user with id {0} not found")]
     NotFound(String),
-    #[error("invalid input: {0}")]
-    InvalidInput(String),
-    #[error("unauthorized")]
-    Unauthorized,
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),
 }

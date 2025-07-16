@@ -1,35 +1,44 @@
 use async_trait::async_trait;
 use std::sync::Arc;
-use validator::Validate;
-
-use crate::domain::user::models::UserId;
 
 use super::{
     models::{CreateProjectRequest, Project, ProjectId},
     ports::{ProjectRepository, ProjectRepositoryError},
 };
 
+#[derive(Debug, thiserror::Error)]
+pub enum ProjectServiceError {
+    #[error("invalid permissions")]
+    InvalidPermissions,
+    #[error("project with {field} {value} already exists")]
+    ProjectExists { field: String, value: String },
+    #[error("project {0} not found")]
+    ProjectNotFound(String),
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
+}
+
+impl From<ProjectRepositoryError> for ProjectServiceError {
+    fn from(error: ProjectRepositoryError) -> Self {
+        match error {
+            ProjectRepositoryError::Duplicate { field, value } => {
+                Self::ProjectExists { field, value }
+            }
+            ProjectRepositoryError::NotFound(id) => Self::ProjectNotFound(id),
+            ProjectRepositoryError::Unknown(error) => Self::Unknown(error),
+        }
+    }
+}
+
 #[async_trait]
 pub trait ProjectService: Send + Sync {
     async fn create_project(
         &self,
-        user_id: &UserId,
         req: &CreateProjectRequest,
-    ) -> Result<Project, ProjectRepositoryError>;
-    async fn get_project_by_id(
-        &self,
-        user_id: &UserId,
-        id: &ProjectId,
-    ) -> Result<Project, ProjectRepositoryError>;
-    async fn list_projects_by_user_id(
-        &self,
-        user_id: &UserId,
-    ) -> Result<Vec<Project>, ProjectRepositoryError>;
-    async fn delete_project(
-        &self,
-        user_id: &UserId,
-        id: &ProjectId,
-    ) -> Result<(), ProjectRepositoryError>;
+    ) -> Result<Project, ProjectServiceError>;
+    async fn get_project_by_id(&self, id: &ProjectId) -> Result<Project, ProjectServiceError>;
+    async fn list_projects(&self) -> Result<Vec<Project>, ProjectServiceError>;
+    async fn delete_project(&self, id: &ProjectId) -> Result<(), ProjectServiceError>;
 }
 
 #[derive(Clone)]
@@ -47,46 +56,20 @@ impl<R: ProjectRepository> ProjectServiceImpl<R> {
 impl<R: ProjectRepository> ProjectService for ProjectServiceImpl<R> {
     async fn create_project(
         &self,
-        user_id: &UserId,
         req: &CreateProjectRequest,
-    ) -> Result<Project, ProjectRepositoryError> {
-        req.validate()
-            .map_err(|e| ProjectRepositoryError::InvalidInput(e.to_string()))?;
-
-        let mut req = req.clone();
-        if req.owner_id.is_none() {
-            req.owner_id = Some(*user_id);
-        }
-
-        self.repo.create_project(&req).await
+    ) -> Result<Project, ProjectServiceError> {
+        Ok(self.repo.create_project(&req).await?)
     }
 
-    async fn get_project_by_id(
-        &self,
-        user_id: &UserId,
-        id: &ProjectId,
-    ) -> Result<Project, ProjectRepositoryError> {
-        if !self.repo.is_user_project_member(user_id, id).await? {
-            return Err(ProjectRepositoryError::Unauthorized);
-        }
-        self.repo.get_project_by_id(id).await
+    async fn get_project_by_id(&self, id: &ProjectId) -> Result<Project, ProjectServiceError> {
+        Ok(self.repo.get_project_by_id(id).await?)
     }
 
-    async fn list_projects_by_user_id(
-        &self,
-        user_id: &UserId,
-    ) -> Result<Vec<Project>, ProjectRepositoryError> {
-        self.repo.list_projects_by_user_id(user_id).await
+    async fn list_projects(&self) -> Result<Vec<Project>, ProjectServiceError> {
+        Ok(self.repo.list_projects().await?)
     }
 
-    async fn delete_project(
-        &self,
-        user_id: &UserId,
-        id: &ProjectId,
-    ) -> Result<(), ProjectRepositoryError> {
-        if !self.repo.is_user_project_member(user_id, id).await? {
-            return Err(ProjectRepositoryError::Unauthorized);
-        }
-        self.repo.delete_project(id).await
+    async fn delete_project(&self, id: &ProjectId) -> Result<(), ProjectServiceError> {
+        Ok(self.repo.delete_project(id).await?)
     }
 }

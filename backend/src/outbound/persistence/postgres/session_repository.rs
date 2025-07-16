@@ -1,11 +1,10 @@
 use async_trait::async_trait;
-use sqlx::{PgConnection, PgPool};
 use chrono::{DateTime, Utc};
+use sqlx::{PgConnection, PgPool};
 use tower_sessions::{
     session::{Id, Record},
     session_store, ExpiredDeletion, SessionStore,
 };
-
 
 /// An error type for SQLx stores.
 #[derive(thiserror::Error, Debug)]

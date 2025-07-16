@@ -5,12 +5,11 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use headers::{authorization::Bearer, Authorization, HeaderMapExt};
-use uuid::Uuid;
 
 use crate::domain::user::models::UserId;
 use crate::inbound::http::AppState;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenClaims {
     pub sub: UserId,
     pub exp: usize,
@@ -18,7 +17,7 @@ pub struct TokenClaims {
     pub jti: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct AuthUser {
     pub id: UserId,
     pub username: String,
@@ -42,7 +41,7 @@ impl Token {
 
 #[derive(Debug)]
 pub struct Claims {
-    pub sub: Uuid,
+    pub sub: UserId,
     pub exp: usize,
     pub iat: usize,
 }

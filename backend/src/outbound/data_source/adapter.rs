@@ -4,13 +4,13 @@ use snowflake_api::SnowflakeApi;
 
 use crate::domain::dataset::{
     models::{DatasetSource, S3Bucket, Snowflake},
-    ports::{DataSource, DataSourceError},
+    ports::{DataSourceError, DataSourceTester},
 };
 
 pub struct DataSourceImpl;
 
 #[async_trait]
-impl DataSource for DataSourceImpl {
+impl DataSourceTester for DataSourceImpl {
     async fn test_connection(&self, source: &DatasetSource) -> Result<(), DataSourceError> {
         match source {
             DatasetSource::S3(s3_bucket) => self.test_s3_connection(s3_bucket).await,
