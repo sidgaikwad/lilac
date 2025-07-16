@@ -4,9 +4,7 @@ FROM rust:latest AS builder
 WORKDIR /opt/lilac/api
 
 # Install the application dependencies
-COPY ./backend/Cargo.toml ./backend/Cargo.lock ./
-COPY ./backend/controlplane-api/ ./controlplane-api/
-COPY ./backend/common/ ./common/
+COPY ./backend/ ./
 COPY ./backend/.sqlx .sqlx
 
 RUN mkdir build/
