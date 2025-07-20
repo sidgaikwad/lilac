@@ -2,6 +2,7 @@ use secrecy::{ExposeSecret, SecretString};
 
 pub mod auth;
 pub mod cluster;
+pub mod credentials;
 pub mod dataset;
 pub mod project;
 pub mod user;

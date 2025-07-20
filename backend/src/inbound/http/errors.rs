@@ -1,5 +1,6 @@
 use crate::domain::{
-    auth::service::AuthServiceError, dataset::service::DatasetServiceError,
+    auth::service::AuthServiceError, cluster::service::ClusterServiceError,
+    credentials::service::CredentialServiceError, dataset::service::DatasetServiceError,
     project::service::ProjectServiceError, user::service::UserServiceError,
 };
 use axum::{
@@ -18,6 +19,43 @@ pub enum ApiError {
     NotFound(String),
     Unauthorized(String),
     Forbidden,
+}
+
+impl From<CredentialServiceError> for ApiError {
+    fn from(err: CredentialServiceError) -> Self {
+        match err {
+            CredentialServiceError::InvalidPermissions => Self::Forbidden,
+            CredentialServiceError::CredentialExists { .. } => {
+                Self::Conflict("Cluster already exists".into())
+            }
+            CredentialServiceError::CredentialNotFound(_) => {
+                Self::NotFound(format!("Cluster not found"))
+            }
+            CredentialServiceError::Unknown(cause) => {
+                tracing::error!("{:?}\n{}", cause, cause.backtrace());
+                Self::InternalServerError("Something went wrong".to_string())
+            }
+        }
+    }
+}
+
+impl From<ClusterServiceError> for ApiError {
+    fn from(err: ClusterServiceError) -> Self {
+        match err {
+            ClusterServiceError::IncorrectCredentialsType => {
+                Self::BadRequest("Incorrect credentials type".into())
+            }
+            ClusterServiceError::InvalidPermissions => Self::Forbidden,
+            ClusterServiceError::ClusterExists { .. } => {
+                Self::Conflict("Cluster already exists".into())
+            }
+            ClusterServiceError::ClusterNotFound(_) => Self::NotFound(format!("Cluster not found")),
+            ClusterServiceError::Unknown(cause) => {
+                tracing::error!("{:?}\n{}", cause, cause.backtrace());
+                Self::InternalServerError("Something went wrong".to_string())
+            }
+        }
+    }
 }
 
 impl From<UserServiceError> for ApiError {

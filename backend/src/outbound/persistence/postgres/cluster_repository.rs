@@ -23,6 +23,7 @@ struct ClusterRecord {
     cluster_id: uuid::Uuid,
     cluster_name: String,
     cluster_description: Option<String>,
+    credential_id: uuid::Uuid,
     cluster_config: serde_json::Value,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
@@ -35,9 +36,10 @@ impl TryFrom<ClusterRecord> for Cluster {
         let cluster_config: ClusterConfig = serde_json::from_value(record.cluster_config)?;
 
         Ok(Self {
-            id: ClusterId(record.cluster_id),
+            id: record.cluster_id.into(),
             name: record.cluster_name,
             description: record.cluster_description,
+            credential_id: record.credential_id.into(),
             cluster_config,
             created_at: record.created_at,
             updated_at: record.updated_at,
@@ -55,10 +57,11 @@ impl ClusterRepository for PostgresClusterRepository {
 
         let record = sqlx::query_as!(
             ClusterRecord,
-            "INSERT INTO clusters (cluster_id, cluster_name, cluster_description, cluster_config) VALUES ($1, $2, $3, $4) RETURNING cluster_id, cluster_name, cluster_description, cluster_config, created_at, updated_at",
+            "INSERT INTO clusters (cluster_id, cluster_name, cluster_description, credential_id, cluster_config) VALUES ($1, $2, $3, $4, $5) RETURNING cluster_id, cluster_name, cluster_description, credential_id, cluster_config, created_at, updated_at",
             cluster_id.0,
             req.name,
             req.description,
+            req.credential_id.inner(),
             serde_json::to_value(&req.cluster_config)
                 .map_err(|e| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?,
         )
@@ -73,7 +76,7 @@ impl ClusterRepository for PostgresClusterRepository {
         let record = sqlx::query_as!(
             ClusterRecord,
             r#"
-            SELECT cluster_id, cluster_name, cluster_description, cluster_config, created_at, updated_at
+            SELECT cluster_id, cluster_name, cluster_description, credential_id, cluster_config, created_at, updated_at
             FROM clusters
             WHERE cluster_id = $1
             "#,
@@ -95,7 +98,7 @@ impl ClusterRepository for PostgresClusterRepository {
         let records = sqlx::query_as!(
             ClusterRecord,
             r#"
-            SELECT cluster_id, cluster_name, cluster_description, cluster_config, created_at, updated_at
+            SELECT cluster_id, cluster_name, cluster_description, credential_id, cluster_config, created_at, updated_at
             FROM clusters
             "#,
         )

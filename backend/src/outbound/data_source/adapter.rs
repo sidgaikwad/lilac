@@ -1,4 +1,6 @@
 use async_trait::async_trait;
+use aws_config::{AppName, BehaviorVersion, SdkConfig};
+use aws_sdk_s3::config::{Credentials, SharedCredentialsProvider};
 use secrecy::ExposeSecret;
 use snowflake_api::SnowflakeApi;
 
@@ -23,7 +25,16 @@ impl DataSourceTesterImpl {
     async fn test_s3_connection(&self, s3_bucket: &S3Bucket) -> Result<(), DataSourceError> {
         // In a real application, we would use the AWS SDK to check if the bucket exists
         // and if we have the necessary permissions to access it.
-        let config = aws_config::load_from_env().await;
+        let config = SdkConfig::builder()
+            .app_name(AppName::new("lilac").expect("AppName to be valid"))
+            .behavior_version(BehaviorVersion::latest())
+            .credentials_provider(SharedCredentialsProvider::new(
+                Credentials::builder()
+                    .access_key_id(&s3_bucket.access_key)
+                    .secret_access_key(s3_bucket.secret_key.expose_secret())
+                    .build(),
+            ))
+            .build();
         let client = aws_sdk_s3::Client::new(&config);
         client
             .head_bucket()

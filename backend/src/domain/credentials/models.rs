@@ -1,14 +1,15 @@
 use std::fmt::Display;
 
-use crate::domain::credentials::models::CredentialId;
+use crate::domain::serialize_secret_string;
 use chrono::{DateTime, Utc};
+use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct ClusterId(pub Uuid);
+pub struct CredentialId(pub Uuid);
 
-impl ClusterId {
+impl CredentialId {
     pub fn new(id: Uuid) -> Self {
         Self(id)
     }
@@ -26,47 +27,47 @@ impl ClusterId {
     }
 }
 
-impl Display for ClusterId {
+impl Display for CredentialId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl From<Uuid> for ClusterId {
+impl From<Uuid> for CredentialId {
     fn from(id: Uuid) -> Self {
         Self(id)
     }
 }
 
-impl From<ClusterId> for Uuid {
-    fn from(id: ClusterId) -> Self {
+impl From<CredentialId> for Uuid {
+    fn from(id: CredentialId) -> Self {
         id.0
     }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum ClusterConfig {
-    AwsEks {
-        cluster_name: String,
-        region: String,
+#[serde(tag = "credentials_type")]
+pub enum Credentials {
+    Aws {
+        access_key: String,
+        #[serde(serialize_with = "serialize_secret_string")]
+        secret_key: SecretString,
     },
 }
 
 #[derive(Clone, Debug)]
-pub struct Cluster {
-    pub id: ClusterId,
+pub struct Credential {
+    pub id: CredentialId,
     pub name: String,
     pub description: Option<String>,
-    pub cluster_config: ClusterConfig,
-    pub credential_id: CredentialId,
+    pub credentials: Credentials,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Clone, Debug)]
-pub struct CreateClusterRequest {
+pub struct CreateCredentialRequest {
     pub name: String,
     pub description: Option<String>,
-    pub cluster_config: ClusterConfig,
-    pub credential_id: CredentialId,
+    pub credentials: Credentials,
 }

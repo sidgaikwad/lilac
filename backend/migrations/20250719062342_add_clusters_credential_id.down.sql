@@ -1,0 +1,1 @@
+ALTER TABLE clusters DROP COLUMN credential_id;
