@@ -5,6 +5,7 @@ import ProjectsListPage from './features/projects/pages/projects-list-page';
 import ExperimentsPage from './features/experiments/pages/experiments-page';
 import ProjectWorkspacesPage from './features/workspaces/pages/project-workspaces-page';
 import ProjectDashboardPage from './features/projects/pages/project-dashboard-page';
+import WorkspaceViewPage from './features/workspaces/pages/workspace-view-page';
 import ProtectedRoute from './components/router/protected-route';
 import LoginPage from './features/account/pages/login-page';
 import SignUpPage from './features/account/pages/sign-up-page';
@@ -66,10 +67,6 @@ export const router = createBrowserRouter([
                 element: <ProjectDashboardPage />,
               },
               {
-                path: Routes.PROJECT_WORKSPACES,
-                element: <div>TODO</div>,
-              },
-              {
                 path: Routes.PROJECT_SETTINGS,
                 element: <ProjectSettingsPage />,
               },
@@ -80,6 +77,10 @@ export const router = createBrowserRouter([
               {
                 path: Routes.PROJECT_WORKSPACES,
                 element: <ProjectWorkspacesPage />,
+              },
+              {
+                path: Routes.PROJECT_WORKSPACES + '/:workspaceId',
+                element: <WorkspaceViewPage />,
               },
             ],
           },

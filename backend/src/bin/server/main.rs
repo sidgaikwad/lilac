@@ -8,6 +8,7 @@ use server::{
         auth::service::AuthServiceImpl, cluster::service::ClusterServiceImpl,
         credentials::service::CredentialServiceImpl, dataset::service::DatasetServiceImpl,
         project::service::ProjectServiceImpl, user::service::UserServiceImpl,
+        workspace::service::WorkspaceServiceImpl,
     },
     inbound::http::{AppState, HttpServer},
     outbound::{
@@ -20,11 +21,15 @@ use server::{
             dataset_repository::PostgresDatasetRepository,
             project_repository::PostgresProjectRepository,
             session_repository::PostgresSessionStore, user_repository::PostgresUserRepository,
+            workspace_repository::PostgresWorkspaceRepository,
         },
+        provisioner::kubernetes::KubernetesProvisioner,
     },
 };
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+
+use kube::config::Kubeconfig;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -38,9 +43,7 @@ async fn main() -> anyhow::Result<()> {
 
     // 2. Initialize tracing
     let trace_subscriber = tracing_subscriber::registry().with(
-        EnvFilter::builder()
-            .with_default_directive((&config.log_level).into())
-            .from_env_lossy(),
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
     );
     match config.log_format {
         LogFormat::Pretty => trace_subscriber
@@ -64,6 +67,16 @@ async fn main() -> anyhow::Result<()> {
     let dataset_repo = Arc::new(PostgresDatasetRepository::new(db_pool.clone()));
     let jwt_manager = Arc::new(JwtManager::new(config.secret_key.expose_secret()));
     let conn_tester = Arc::new(ClusterConnectorImpl::new());
+    let workspace_repo = Arc::new(PostgresWorkspaceRepository::new(db_pool.clone()));
+
+    let kube_config = if std::env::var("APP_ENV").unwrap_or_else(|_| "local".to_string()) == "local" {
+        let kubeconfig = Kubeconfig::read_from("kubeconfig.yaml")?;
+        kube::Config::from_custom_kubeconfig(kubeconfig, &Default::default()).await?
+    } else {
+        kube::Config::infer().await?
+    };
+    let kube_client = kube::Client::try_from(kube_config)?;
+    let provisioner = Arc::new(KubernetesProvisioner::new(kube_client.clone()));
 
     // 3. Construct domain services
     let cluster_service = Arc::new(ClusterServiceImpl::new(
@@ -78,6 +91,7 @@ async fn main() -> anyhow::Result<()> {
         dataset_repo.clone(),
         Arc::new(DataSourceTesterImpl),
     ));
+    let workspace_service = Arc::new(WorkspaceServiceImpl::new(workspace_repo, provisioner, kube_client));
     let session_store = PostgresSessionStore::new(db_pool.clone());
     session_store.migrate().await?;
     let session_layer = SessionManagerLayer::new(session_store)
@@ -96,6 +110,7 @@ async fn main() -> anyhow::Result<()> {
         project_service,
         dataset_service,
         auth_service,
+        workspace_service,
     };
     let http_server = HttpServer::new(app_state, session_layer, config.http_port).await?;
     http_server.run().await

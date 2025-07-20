@@ -12,6 +12,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { defineStepper } from '@stepperize/react';
 import createFormStore from '@/store/use-form-data';
@@ -22,18 +29,30 @@ import { EnvironmentCard } from '@/features/workspaces/components/environment-ca
 import {
   mockEnvironments,
   mockComputeClusters,
+  mockWorkspaceHosts,
 } from '@/features/workspaces/mock-data';
+import { JupyterIcon } from '@/icons/jupyter';
+import { VSCodeIcon } from '@/icons/vscode';
+import { RStudioIcon } from '@/icons/rstudio';
+import { SlurmIcon } from '@/icons/slurm';
+import { RayIcon } from '@/icons/ray';
 import { ComputeClusterCard } from '@/features/workspaces/components/compute-cluster-card';
-import { JupyterIcon, VSCodeIcon, SlurmIcon, RayIcon } from '@/icons';
+import { AwsLogo } from '@/icons/aws';
+import { GoogleIcon } from '@/icons/google';
 
 const environmentSchema = z.object({
-  name: z.string().optional(),
+  name: z.string().min(1, 'Workspace name is required'),
   environment: z.string(),
+});
+
+const workspaceHostSchema = z.object({
+  workspaceHost: z.string(),
 });
 
 const hardwareSchema = z.object({
   cpu: z.number().min(0.5).max(16),
-  memory: z.number().min(1).max(128),
+  memory: z.number().min(1024).max(131072),
+  preset: z.string().optional(),
 });
 
 const computeClusterSchema = z.object({
@@ -41,7 +60,10 @@ const computeClusterSchema = z.object({
 });
 
 export type CreateWorkspaceFormValues = z.infer<
-  typeof environmentSchema & typeof hardwareSchema & typeof computeClusterSchema
+  typeof environmentSchema &
+    typeof workspaceHostSchema &
+    typeof hardwareSchema &
+    typeof computeClusterSchema
 >;
 
 const useFormStore = createFormStore<CreateWorkspaceFormValues>();
@@ -53,13 +75,18 @@ const { useStepper, utils } = defineStepper(
     schema: environmentSchema,
   },
   {
+    id: 'workspaceHost',
+    label: 'Workspace Host',
+    schema: workspaceHostSchema,
+  },
+  {
     id: 'hardware',
     label: 'Hardware',
     schema: hardwareSchema,
   },
   {
     id: 'compute',
-    label: 'Compute Cluster',
+    label: 'Distributed Compute',
     schema: computeClusterSchema,
   }
 );
@@ -143,6 +170,7 @@ export function CreateWorkspaceForm({ onSubmit }: CreateWorkspaceFormProps) {
                     {stepper.current.id === step.id &&
                       stepper.switch({
                         environment: () => <EnvironmentStep />,
+                        workspaceHost: () => <WorkspaceHostStep />,
                         hardware: () => <HardwareStep />,
                         compute: () => <ComputeStep />,
                       })}
@@ -179,6 +207,8 @@ function EnvironmentStep() {
         return <JupyterIcon className='size-24' />;
       case 'vscode-icon':
         return <VSCodeIcon className='size-24' />;
+      case 'rstudio-icon':
+        return <RStudioIcon className='size-24' />;
       default:
         return null;
     }
@@ -191,7 +221,7 @@ function EnvironmentStep() {
         name='name'
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Workspace Name (optional)</FormLabel>
+            <FormLabel>Workspace Name</FormLabel>
             <FormControl>
               <Input placeholder='andrea_lowe_s_sas_viya_session' {...field} />
             </FormControl>
@@ -230,55 +260,171 @@ function EnvironmentStep() {
   );
 }
 
-function HardwareStep() {
-  const { control } = useFormContext<CreateWorkspaceFormValues>();
+function WorkspaceHostStep() {
+  const { control, register } = useFormContext<CreateWorkspaceFormValues>();
+
+  const getIcon = (icon: string) => {
+    switch (icon) {
+      case 'aws-icon':
+        return <AwsLogo className="size-12" />;
+      case 'gcp-icon':
+        return <GoogleIcon />;
+      case 'slurm-icon':
+        return <SlurmIcon className="size-12" />;
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className='space-y-8'>
+    <FormField
+      name={register('workspaceHost').name}
+      control={control}
+      render={({ field }) => (
+        <FormItem className="space-y-3">
+          <FormMessage />
+          <FormControl>
+            <RadioGroup
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              className="grid grid-cols-2 gap-4"
+            >
+              {mockWorkspaceHosts.map((host) => (
+                <EnvironmentCard
+                  key={host.name}
+                  icon={getIcon(host.icon)}
+                  title={host.name}
+                  description={host.description}
+                  value={host.name}
+                  className="h-full w-full"
+                />
+              ))}
+            </RadioGroup>
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  );
+}
+
+function HardwareStep() {
+  const { control, watch, setValue } =
+    useFormContext<CreateWorkspaceFormValues>();
+  const selectedPreset = watch('preset');
+
+  const presets = [
+    { name: 'Extra Small', cpu: 1, memory: 2048 },
+    { name: 'Small', cpu: 2, memory: 4096 },
+    { name: 'Medium', cpu: 4, memory: 8192 },
+    { name: 'Large', cpu: 8, memory: 16384 },
+    { name: 'Extra Large', cpu: 16, memory: 32768 },
+    { name: 'Custom', cpu: 0, memory: 0 },
+  ];
+
+  const handlePresetChange = (presetName: string) => {
+    setValue('preset', presetName);
+    const preset = presets.find((p) => p.name === presetName);
+    if (preset && preset.name !== 'Custom') {
+      setValue('cpu', preset.cpu);
+      setValue('memory', preset.memory);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
       <FormField
         control={control}
-        name='cpu'
+        name="preset"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>CPU (vCPUs)</FormLabel>
-            <div className='flex items-center gap-4'>
+            <FormLabel>Preset</FormLabel>
+            <Select
+              onValueChange={handlePresetChange}
+              defaultValue={field.value}
+            >
               <FormControl>
-                <Slider
-                  min={0.5}
-                  max={16}
-                  step={0.5}
-                  value={[field.value]}
-                  onValueChange={(value) => field.onChange(value[0])}
-                />
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a preset" />
+                </SelectTrigger>
               </FormControl>
-              <span className='w-16 text-right'>{field.value}</span>
-            </div>
+              <SelectContent>
+                {presets.map((preset) => (
+                  <SelectItem key={preset.name} value={preset.name}>
+                    {preset.name !== 'Custom'
+                      ? `${preset.name} (${preset.cpu} vCPUs, ${
+                          preset.memory / 1024
+                        } GB RAM)`
+                      : 'Custom'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}
       />
-      <FormField
-        control={control}
-        name='memory'
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Memory (GiB)</FormLabel>
-            <div className='flex items-center gap-4'>
-              <FormControl>
-                <Slider
-                  min={1}
-                  max={128}
-                  step={1}
-                  value={[field.value]}
-                  onValueChange={(value) => field.onChange(value[0])}
-                />
-              </FormControl>
-              <span className='w-16 text-right'>{field.value}</span>
-            </div>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {selectedPreset === 'Custom' && (
+        <>
+          <FormField
+            control={control}
+            name="cpu"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CPU (vCPUs)</FormLabel>
+                <div className="flex items-center gap-4">
+                  <FormControl>
+                    <Slider
+                      min={0.5}
+                      max={16}
+                      step={0.5}
+                      value={[field.value]}
+                      onValueChange={(value) => field.onChange(value[0])}
+                    />
+                  </FormControl>
+                  <Input
+                    type="number"
+                    className="w-24"
+                    value={field.value}
+                    onChange={(e) =>
+                      field.onChange(parseFloat(e.target.value))
+                    }
+                  />
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="memory"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Memory (MiB)</FormLabel>
+                <div className="flex items-center gap-4">
+                  <FormControl>
+                    <Slider
+                      min={1024}
+                      max={131072}
+                      step={1024}
+                      value={[field.value]}
+                      onValueChange={(value) => field.onChange(value[0])}
+                    />
+                  </FormControl>
+                  <Input
+                    type="number"
+                    className="w-24"
+                    value={field.value}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value))
+                    }
+                  />
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -300,8 +446,6 @@ function ComputeStep() {
 
   const getIcon = (icon: string) => {
     switch (icon) {
-      case 'slurm-icon':
-        return <SlurmIcon className='size-12' />;
       case 'ray-icon':
         return <RayIcon className='size-12' />;
       case 'none-icon':

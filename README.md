@@ -32,6 +32,27 @@ $ kubectl port-forward -n lilac svc/lilac-api 8081:8081 &
 
 After this, you should be able to visit `localhost:8080` in your browser and begin interacting with your local version of Lilac.
 
+#### Accessing Workspaces Locally
+When you create a workspace (e.g., a JupyterLab environment), the backend will provision it within the Kubernetes cluster and return a URL to access it, like `http://localhost:31234`.
+
+Accessing this URL depends on the port assigned by Kubernetes:
+
+1.  **Direct Access (Ports 30000-30010):** The `local-dev-cluster/kind-setup.sh` script pre-configures the cluster to automatically expose ports in the `30000-30010` range on your `localhost`. If the URL's port is in this range, it should work out-of-the-box.
+
+2.  **Manual Port-Forwarding (Other Ports):** If Kubernetes assigns a port outside the `30000-30010` range, you will need to manually forward it. For example, if the application gives you a URL with port `31626`, you must run the following command in a separate terminal:
+
+    ```sh
+    # First, find the service name for your workspace
+    $ kubectl get services -n lilac-dev
+    NAME                                                 TYPE           ...
+    workspace-e92bc3b0-35d1-43df-a73f-007eda9906a6-svc   LoadBalancer   ...
+
+    # Then, forward the port. Use the port from the URL and the service name you found.
+    # The format is: kubectl port-forward -n <namespace> svc/<service-name> <local-port>:<service-port>
+    $ kubectl port-forward -n lilac-dev svc/workspace-e92bc3b0-35d1-43df-a73f-007eda9906a6-svc 31626:80
+    ```
+    The URL `http://localhost:31626` will now work correctly as long as the port-forward command is running.
+
 ### Usage
 Once the controlplane API and Database are up and running, you can make queries against the API. I recommend installing [HTTPie](https://httpie.io/cli).
 

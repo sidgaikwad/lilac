@@ -13,6 +13,7 @@ export type CardProps = {
   className?: string;
   icon?: React.ReactNode;
   title?: React.ReactNode;
+  layout?: 'horizontal' | 'vertical';
   description?: React.ReactNode;
   content?: React.ReactNode;
   footer?: React.ReactNode;
@@ -30,12 +31,20 @@ export function Card(props: CardProps) {
     footer,
     action,
     footerAction,
+    layout = 'horizontal',
     ...divProps
   } = props;
   return (
     <CardComponent {...divProps} className={cn('h-fit w-fit', className)}>
       <CardHeader>
-        <div className='flex flex-row items-center gap-4'>
+        <div
+          className={cn(
+            'flex gap-4',
+            layout === 'horizontal'
+              ? 'flex-row items-center'
+              : 'flex-col items-center text-center'
+          )}
+        >
           {icon}
           <div className='flex min-w-0 flex-col'>
             <CardTitle className='break-words'>{title}</CardTitle>

@@ -1,4 +1,4 @@
-import { Workspace } from '@/features/workspaces/mock-data';
+import { Workspace } from '@/types/api/workspace';
 import WorkspaceListItem from './workspace-list-item';
 
 export interface WorkspaceListProps {

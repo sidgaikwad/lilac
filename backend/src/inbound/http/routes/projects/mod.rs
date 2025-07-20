@@ -13,4 +13,5 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/projects", post(create_project).get(list_projects))
         .route("/projects/{id}", get(get_project).delete(delete_project))
+        .nest("/projects/{id}/workspaces", super::workspaces::router())
 }

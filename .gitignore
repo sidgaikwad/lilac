@@ -9,3 +9,5 @@ backend/data-pipeline/job_data
 *.pem
 *.tgz
 lilac.toml
+# Local Kubeconfig
+backend/kubeconfig.yaml

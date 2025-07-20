@@ -36,4 +36,6 @@ export enum QueryKeys {
   TEST_DATASET_CONNECTION = 'TestDatasetConnection',
   LIST_DATASETS = 'ListDatasets',
   LIST_DATASET_S3_OBJECTS = 'ListDatsetS3Objects',
+  LIST_WORKSPACES = 'ListWorkspaces',
+  CREATE_WORKSPACE = 'CreateWorkspace',
 }

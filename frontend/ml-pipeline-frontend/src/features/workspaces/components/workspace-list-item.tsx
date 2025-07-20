@@ -1,7 +1,7 @@
 import { Card } from '@/components/common/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Workspace } from '@/features/workspaces/mock-data';
+import { Workspace } from '@/types/api/workspace';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EditWorkspaceModal } from './edit-workspace-modal';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import DestructiveActionConfirmationModal from '@/components/common/destructive-action-confirmation-dialog';
 
 export interface WorkspaceListItemProps {
@@ -24,10 +25,12 @@ const statusVariant: Record<
   Workspace['status'],
   'default' | 'destructive' | 'secondary' | 'outline'
 > = {
-  Running: 'default',
-  Stopped: 'secondary',
-  Starting: 'outline',
-  Error: 'destructive',
+  running: 'default',
+  stopped: 'secondary',
+  pending: 'outline',
+  failed: 'destructive',
+  stopping: 'secondary',
+  terminated: 'destructive',
 };
 
 function WorkspaceListItem({
@@ -35,7 +38,7 @@ function WorkspaceListItem({
   onStart,
   onStop,
 }: WorkspaceListItemProps) {
-  const { id, name, status, environment, hardware, lastStarted } = workspace;
+  const { id, name, status, ide, cpu_millicores, memory_mb } = workspace;
 
   const [isEditModalOpen, setEditModalOpen] = useState(false);
 
@@ -45,6 +48,8 @@ function WorkspaceListItem({
         className={cn(
           'flex h-full w-full max-w-sm flex-col gap-4 p-4',
           status === 'Running'
+          'max-w-sm w-full h-full flex flex-col gap-4 p-4',
+          status.toLowerCase() === 'running'
             ? 'border-accent-border hover:border-accent-border-hover'
             : ''
         )}
@@ -68,7 +73,7 @@ function WorkspaceListItem({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                {status === 'Running' ? (
+                {status.toLowerCase() === 'running' ? (
                   <DropdownMenuItem onClick={() => onStop(id)}>
                     Stop
                   </DropdownMenuItem>

@@ -2,7 +2,9 @@ use crate::domain::{
     auth::service::AuthServiceError, cluster::service::ClusterServiceError,
     credentials::service::CredentialServiceError, dataset::service::DatasetServiceError,
     project::service::ProjectServiceError, user::service::UserServiceError,
+    workspace::service::WorkspaceServiceError,
 };
+
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -119,9 +121,34 @@ impl From<AuthServiceError> for ApiError {
     }
 }
 
+impl From<WorkspaceServiceError> for ApiError {
+    fn from(err: WorkspaceServiceError) -> Self {
+        match err {
+            WorkspaceServiceError::Repository(err) => {
+                tracing::error!("Repository error: {:?}", err);
+                Self::InternalServerError("Something went wrong".to_string())
+            }
+            WorkspaceServiceError::Provisioner(err) => {
+                tracing::error!("Provisioner error: {:?}", err);
+                Self::InternalServerError("Something went wrong".to_string())
+            }
+            WorkspaceServiceError::Unexpected => {
+                Self::InternalServerError("Something went wrong".to_string())
+            }
+        }
+    }
+}
+
 impl From<anyhow::Error> for ApiError {
     fn from(err: anyhow::Error) -> Self {
         tracing::error!("{:?}\n{}", err, err.backtrace());
+        Self::InternalServerError("Something went wrong".to_string())
+    }
+}
+
+impl From<reqwest::Error> for ApiError {
+    fn from(err: reqwest::Error) -> Self {
+        tracing::error!("{:?}", err);
         Self::InternalServerError("Something went wrong".to_string())
     }
 }

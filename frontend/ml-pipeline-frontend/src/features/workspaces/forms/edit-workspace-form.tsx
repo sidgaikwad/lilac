@@ -27,9 +27,9 @@ import { JupyterIcon, RayIcon, SlurmIcon, VSCodeIcon } from '@/icons';
 
 const editWorkspaceSchema = z.object({
   name: z.string().optional(),
-  environment: z.string(),
   cpu: z.number().min(0.5).max(16),
-  memory: z.number().min(1).max(128),
+  memory: z.number().min(1024).max(131072),
+  preset: z.string().optional(),
   computeCluster: z.string(),
 });
 
@@ -46,23 +46,27 @@ export function EditWorkspaceForm({
   onSubmit,
   onCancel,
 }: EditWorkspaceFormProps) {
+  const presets = [
+    { name: 'Extra Small', cpu: 1, memory: 2048 },
+    { name: 'Small', cpu: 2, memory: 4096 },
+    { name: 'Medium', cpu: 4, memory: 8192 },
+    { name: 'Large', cpu: 8, memory: 16384 },
+    { name: 'Extra Large', cpu: 16, memory: 32768 },
+    { name: 'Custom', cpu: 0, memory: 0 },
+  ];
   const form = useForm<EditWorkspaceFormValues>({
     resolver: zodResolver(editWorkspaceSchema),
     defaultValues: {
       name: workspace.name,
-      environment: workspace.environment.name,
-      cpu: workspace.hardware.cpu,
-      memory: workspace.hardware.memory,
-      computeCluster: workspace.hardware.tier,
+      cpu: workspace.cpu_millicores / 1000,
+      memory: workspace.memory_mb,
+      // TODO: get computeCluster from workspace
+      computeCluster: 'None',
     },
   });
 
   const getIcon = (icon: string) => {
     switch (icon) {
-      case 'jupyter-icon':
-        return <JupyterIcon className='size-24' />;
-      case 'vscode-icon':
-        return <VSCodeIcon className='size-24' />;
       case 'slurm-icon':
         return <SlurmIcon className='size-12' />;
       case 'ray-icon':
@@ -106,91 +110,118 @@ export function EditWorkspaceForm({
         />
 
         <FormField
-          name='environment'
           control={form.control}
+          name="preset"
           render={({ field }) => (
-            <FormItem className='space-y-3'>
-              <FormLabel>Environment</FormLabel>
-              <FormMessage />
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className='grid grid-cols-2 gap-4'
-                >
-                  {mockEnvironments.map((env) => (
-                    <EnvironmentCard
-                      key={env.name}
-                      icon={getIcon(env.icon)}
-                      title={env.name}
-                      description={env.description}
-                      value={env.name}
-                    />
+            <FormItem>
+              <FormLabel>Preset</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  const preset = presets.find((p) => p.name === value);
+                  if (preset && preset.name !== 'Custom') {
+                    form.setValue('cpu', preset.cpu);
+                    form.setValue('memory', preset.memory);
+                  }
+                }}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a preset" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {presets.map((preset) => (
+                    <SelectItem key={preset.name} value={preset.name}>
+                      {preset.name !== 'Custom'
+                        ? `${preset.name} (${preset.cpu} vCPUs, ${
+                            preset.memory / 1024
+                          } GB RAM)`
+                        : 'Custom'}
+                    </SelectItem>
                   ))}
-                </RadioGroup>
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='cpu'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CPU (vCPUs)</FormLabel>
-              <div className='flex items-center gap-4'>
-                <FormControl>
-                  <Slider
-                    min={0.5}
-                    max={16}
-                    step={0.5}
-                    value={[field.value]}
-                    onValueChange={(value) => field.onChange(value[0])}
-                  />
-                </FormControl>
-                <span className='w-16 text-right'>{field.value}</span>
-              </div>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
         />
+        {form.watch('preset') === 'Custom' && (
+          <>
+            <FormField
+              control={form.control}
+              name="cpu"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CPU (vCPUs)</FormLabel>
+                  <div className="flex items-center gap-4">
+                    <FormControl>
+                      <Slider
+                        min={0.5}
+                        max={16}
+                        step={0.5}
+                        value={[field.value]}
+                        onValueChange={(value) => field.onChange(value[0])}
+                      />
+                    </FormControl>
+                    <Input
+                      type="number"
+                      className="w-24"
+                      value={field.value}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value))
+                      }
+                    />
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="memory"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Memory (MiB)</FormLabel>
+                  <div className="flex items-center gap-4">
+                    <FormControl>
+                      <Slider
+                        min={1024}
+                        max={131072}
+                        step={1024}
+                        value={[field.value]}
+                        onValueChange={(value) => field.onChange(value[0])}
+                      />
+                    </FormControl>
+                    <Input
+                      type="number"
+                      className="w-24"
+                      value={field.value}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value))
+                      }
+                    />
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
 
         <FormField
-          control={form.control}
-          name='memory'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Memory (GiB)</FormLabel>
-              <div className='flex items-center gap-4'>
-                <FormControl>
-                  <Slider
-                    min={1}
-                    max={128}
-                    step={1}
-                    value={[field.value]}
-                    onValueChange={(value) => field.onChange(value[0])}
-                  />
-                </FormControl>
-                <span className='w-16 text-right'>{field.value}</span>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          name='computeCluster'
+          name="computeCluster"
           control={form.control}
           render={({ field }) => (
-            <FormItem className='space-y-3'>
-              <FormLabel>Compute Cluster</FormLabel>
+            <FormItem className="space-y-3">
+              <FormLabel>Distributed Compute</FormLabel>
               <FormMessage />
               <FormControl>
                 <RadioGroup
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className='grid grid-cols-3 gap-4'
+                  className="grid grid-cols-3 gap-4"
                 >
                   {mockComputeClusters.map((cluster, i) => (
                     <div
@@ -214,7 +245,7 @@ export function EditWorkspaceForm({
           )}
         />
 
-        {workspace.status === 'Running' && (
+        {workspace.status === 'running' && (
           <Alert
             variant='warn'
             title='Restart Required'

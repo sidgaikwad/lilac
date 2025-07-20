@@ -12,12 +12,13 @@ use crate::{
         auth::service::AuthService, cluster::service::ClusterService,
         credentials::service::CredentialService, dataset::service::DatasetService,
         project::service::ProjectService, user::service::UserService,
+        workspace::ports::WorkspaceService,
     },
     inbound::http::routes::{clusters, credentials},
     outbound::persistence::postgres::session_repository::PostgresSessionStore,
 };
 
-use self::routes::{auth, datasets, projects, users};
+use self::routes::{auth, datasets, projects, users, workspaces};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -28,6 +29,7 @@ pub struct AppState {
     pub project_service: Arc<dyn ProjectService>,
     pub dataset_service: Arc<dyn DatasetService>,
     pub auth_service: Arc<dyn AuthService>,
+    pub workspace_service: Arc<dyn WorkspaceService>,
 }
 
 impl FromRef<AppState> for Arc<dyn CredentialService> {
@@ -63,6 +65,12 @@ impl FromRef<AppState> for Arc<dyn DatasetService> {
 impl FromRef<AppState> for Arc<dyn AuthService> {
     fn from_ref(state: &AppState) -> Self {
         state.auth_service.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<dyn WorkspaceService> {
+    fn from_ref(state: &AppState) -> Self {
+        state.workspace_service.clone()
     }
 }
 

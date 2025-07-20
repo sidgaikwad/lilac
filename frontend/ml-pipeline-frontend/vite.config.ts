@@ -18,6 +18,15 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/workspace': {
+        target: 'http://localhost',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const port = path.split('/')[2];
+          return `:${port}`;
+        },
+      },
     },
   },
 });
+

@@ -6,6 +6,7 @@ pub mod credentials;
 pub mod dataset;
 pub mod project;
 pub mod user;
+pub mod workspace;
 
 pub fn serialize_secret_string<S>(secret: &SecretString, serializer: S) -> Result<S::Ok, S::Error>
 where

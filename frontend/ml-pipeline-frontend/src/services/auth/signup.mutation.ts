@@ -6,6 +6,7 @@ import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 import { camelCaseObject } from '@/lib/utils';
 
 export interface SignUpRequest {
+  name: string;
   email: string;
   password: string;
 }

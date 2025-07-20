@@ -12,6 +12,7 @@ import {
   CreateWorkspaceForm,
   CreateWorkspaceFormValues,
 } from '../forms/create-workspace-form';
+import { useCreateWorkspace } from '@/services/workspaces';
 
 export interface CreateWorkspaceModalProps {
   isOpen: boolean;
@@ -22,10 +23,35 @@ export interface CreateWorkspaceModalProps {
 const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = (
   props: CreateWorkspaceModalProps
 ) => {
+  const createWorkspace = useCreateWorkspace({
+    onSuccess: (data) => {
+      console.log('Workspace created successfully:', data);
+      toast.success('Successfully created workspace!');
+      props.setOpen(false);
+    },
+    onError: (error) => {
+      console.error('Failed to create workspace:', error);
+      toast.error('Failed to create workspace');
+    },
+  });
+
   const onSubmit = async (data: CreateWorkspaceFormValues) => {
-    console.log('TODO: Call create workspace mutation', data);
-    toast.success('Successfully created workspace!');
-    props.setOpen(false);
+    const imageName =
+      data.environment.toLowerCase() === 'jupyterlab'
+        ? 'jupyter-lilac:latest'
+        : '';
+
+    createWorkspace.mutate({
+      projectId: props.projectId,
+      payload: {
+        name: data.name || 'hardcoded-workspace',
+        cluster_id: 'd8f8b8a0-8b8a-4b8a-8b8a-8b8a8b8a8b8a', // TODO: Replace with actual cluster ID
+        ide: data.environment.toLowerCase() as 'jupyterlab' | 'vscode' | 'rstudio',
+        image: imageName,
+        cpu_millicores: data.cpu * 1000,
+        memory_mb: data.memory,
+      },
+    });
   };
 
   return (

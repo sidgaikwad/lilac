@@ -8,15 +8,14 @@ import {
   ContainerHeader,
   ContainerTitle,
 } from '@/components/ui/container';
-import { mockWorkspaces } from '@/features/workspaces/mock-data';
+import { useListWorkspaces } from '@/services/workspaces';
 import WorkspaceList from '@/features/workspaces/components/workspace-list';
 import CreateWorkspaceModal from '../components/create-workspace-modal';
 
 function ProjectWorkspacesPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [isModalOpen, setModalOpen] = useState(false);
-  const [workspaces] = useState(mockWorkspaces);
-  const [isLoading] = useState(false); // Mock loading state
+  const { data: workspaces, isLoading } = useListWorkspaces(projectId!);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -41,7 +40,7 @@ function ProjectWorkspacesPage() {
       </ContainerHeader>
       <ContainerContent>
         <WorkspaceList
-          workspaces={workspaces}
+          workspaces={workspaces || []}
           onStartWorkspace={(id) => console.log('Start:', id)}
           onStopWorkspace={(id) => console.log('Stop:', id)}
         />

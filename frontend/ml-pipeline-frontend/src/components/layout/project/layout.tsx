@@ -9,14 +9,14 @@ import { SkeletonCards } from '@/components/common/skeleton-cards';
 
 export default function Layout() {
   return (
-    <div className='[--header-height:calc(theme(spacing.14))]'>
+    <div className='h-screen flex flex-col [--header-height:calc(theme(spacing.14))]'>
       <SidebarProvider className='flex flex-col' defaultOpen={false}>
         <Header />
 
-        <div className='flex'>
+        <div className='flex flex-1'>
           <Sidebar />
           <SidebarInset>
-            <div className='@container flex flex-1 flex-row md:flex-col'>
+            <div className='@container flex flex-1 flex-row md:flex-col h-full'>
               <Toaster position='top-center' richColors closeButton />
               <React.Suspense fallback={<SkeletonCards />}>
                 <Outlet />

@@ -9,7 +9,7 @@ import {
   EditWorkspaceForm,
   EditWorkspaceFormValues,
 } from '../forms/edit-workspace-form';
-import { Workspace } from '../mock-data';
+import { Workspace } from '@/types/api/workspace';
 import { Badge } from '@/components/ui/badge';
 
 export interface EditWorkspaceModalProps {
@@ -22,10 +22,12 @@ const statusVariant: Record<
   Workspace['status'],
   'default' | 'destructive' | 'secondary' | 'outline'
 > = {
-  Running: 'default',
-  Stopped: 'secondary',
-  Starting: 'outline',
-  Error: 'destructive',
+  running: 'default',
+  stopped: 'secondary',
+  pending: 'outline',
+  failed: 'destructive',
+  stopping: 'secondary',
+  terminated: 'destructive',
 };
 
 export function EditWorkspaceModal({

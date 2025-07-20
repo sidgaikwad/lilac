@@ -8,6 +8,8 @@ interface EnvironmentCardProps {
   title: string;
   description: string;
   value: string;
+  className?: string;
+  layout?: 'horizontal' | 'vertical';
 }
 
 export function EnvironmentCard({
@@ -15,6 +17,8 @@ export function EnvironmentCard({
   title,
   description,
   value,
+  className,
+  layout,
 }: EnvironmentCardProps) {
   return (
     <RadioGroupPrimitive.Item
@@ -22,10 +26,16 @@ export function EnvironmentCard({
       value={value}
       className={cn(
         'group relative rounded-xl text-start',
-        'data-[state=checked]:ring-accent-border-hover data-[state=checked]:ring-2'
+        'h-full w-full data-[state=checked]:ring-accent-border-hover data-[state=checked]:ring-2'
       )}
     >
-      <Card icon={icon} title={title} description={description} />
+      <Card
+        icon={icon}
+        title={title}
+        description={description}
+        className={cn('h-full w-full', className)}
+        layout={layout}
+      />
     </RadioGroupPrimitive.Item>
   );
 }

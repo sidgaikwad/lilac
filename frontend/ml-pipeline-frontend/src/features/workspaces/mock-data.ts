@@ -47,17 +47,35 @@ export const mockEnvironments = [
     description:
       'A lightweight but powerful source code editor that runs on your desktop.',
   },
+  {
+    name: 'RStudio',
+    icon: 'rstudio-icon',
+    description: 'An integrated development environment for R and Python.',
+  },
+];
+
+export const mockWorkspaceHosts = [
+  {
+    name: 'AWS Kubernetes',
+    icon: 'aws-icon',
+    description: 'Run on a managed Kubernetes cluster in AWS.',
+  },
+  {
+    name: 'GCP Kubernetes',
+    icon: 'gcp-icon',
+    description: 'Run on a managed Kubernetes cluster in GCP.',
+  },
+  {
+    name: 'Slurm',
+    icon: 'slurm-icon',
+    description: 'Run on a Slurm cluster.',
+  },
 ];
 
 export const mockComputeClusters = [
   {
     name: 'None',
     icon: 'none-icon',
-    description: '',
-  },
-  {
-    name: 'Slurm',
-    icon: 'slurm-icon',
     description: '',
   },
   {

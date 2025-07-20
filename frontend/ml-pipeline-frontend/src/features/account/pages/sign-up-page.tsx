@@ -13,6 +13,7 @@ import { Card } from '@/components/common/card';
 
 const registerSchema = z
   .object({
+    name: z.string().min(1, { message: 'Name is required' }),
     email: z.string().email({ message: 'Invalid email address' }),
     password: z
       .string()
@@ -49,7 +50,7 @@ function SignUpPage() {
 
   // Form submission handler now directly sets auth state
   const onSubmit = (data: RegisterFormInputs) => {
-    signUp({ email: data.email, password: data.password });
+    signUp({ name: data.name, email: data.email, password: data.password });
   };
 
   return (
@@ -62,6 +63,22 @@ function SignUpPage() {
           <div>
             <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
               {/* Removed general auth error display as we bypass API */}
+              <div className='space-y-1'>
+                <Label htmlFor='name'>Name</Label>
+                <Input
+                  id='name'
+                  type='text'
+                  placeholder='Enter your name'
+                  {...register('name')}
+                  aria-invalid={errors.name ? 'true' : 'false'}
+                  disabled={isPending}
+                />
+                {errors.name && (
+                  <p className='text-destructive text-sm'>
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
               <div className='space-y-1'>
                 <Label htmlFor='email'>Email</Label>
                 <Input
