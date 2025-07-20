@@ -1,10 +1,10 @@
-import { AwsCredentials } from '@/services/credentials';
+import { AwsCredentials, GcpCredentials } from '@/services/credentials';
 
 export interface Credential {
   credentialId: string;
   credentialName: string;
   credentialDescription?: string;
-  credentials: AwsCredentials;
+  credentials: AwsCredentials | GcpCredentials;
 }
 
 export interface CredentialSummary {

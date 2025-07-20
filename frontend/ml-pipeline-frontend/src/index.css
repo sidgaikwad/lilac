@@ -21,6 +21,81 @@
 @import '@radix-ui/colors/iris-dark.css';
 @import '@radix-ui/colors/orange-dark.css';
 
+@theme {
+  --color-*: initial;
+  /* --color-lilac-50: oklch(0.9851 0.2029 283.36);
+  --color-lilac-100: oklch(0.9351 0.2029 283.36);
+  --color-lilac-200: oklch(0.8351 0.2029 283.36);
+  --color-lilac-300: oklch(0.7351 0.2029 283.36);
+  --color-lilac-400: oklch(0.6351 0.2029 283.36);
+  --color-lilac-500: oklch(0.5351 0.2029 283.36);
+  --color-lilac-600: oklch(0.4351 0.2029 283.36);
+  --color-lilac-700: oklch(0.3351 0.2029 283.36);
+  --color-lilac-800: oklch(0.2151 0.2029 283.36);
+  --color-lilac-900: oklch(0.1051 0.2029 283.36);
+  --color-lilac-950: oklch(0.0551 0.2029 283.36); */
+
+  --color-lilac-50: oklch(0.9351 0.024 283.36);
+  --color-lilac-100: oklch(0.8551 0.056 283.36);
+  --color-lilac-200: oklch(0.7751 0.089 283.36);
+  --color-lilac-300: oklch(0.6951 0.125 283.36);
+  --color-lilac-400: oklch(0.6151 0.163 283.36);
+  --color-lilac-500: oklch(0.5351 0.2029 283.36);
+  --color-lilac-600: oklch(0.4551 0.2029 283.36);
+  --color-lilac-700: oklch(0.3751 0.167 283.36);
+  --color-lilac-800: oklch(0.2951 0.132 283.36);
+  --color-lilac-900: oklch(0.2151 0.096 283.36);
+  --color-lilac-950: oklch(0.1351 0.06 283.36);
+
+  --color-gray-50: oklch(0.9793 0.0157 320.06);
+  --color-gray-100: oklch(0.9593 0.0174 320.06);
+  --color-gray-200: oklch(0.8593 0.0174 320.06);
+  --color-gray-300: oklch(0.7593 0.0174 320.06);
+  --color-gray-400: oklch(0.6593 0.0174 320.06);
+  --color-gray-500: oklch(0.5593 0.0174 320.06);
+  --color-gray-600: oklch(0.4593 0.0174 320.06);
+  --color-gray-700: oklch(0.3593 0.0174 320.06);
+  --color-gray-800: oklch(0.2593 0.0174 320.06);
+  --color-gray-900: oklch(0.2093 0.0174 320.06);
+  --color-gray-950: oklch(0.1593 0.0174 320.06);
+
+  --color-red-50: oklch(0.93 0.033 22);
+  --color-red-100: oklch(0.85 0.076 22);
+  --color-red-200: oklch(0.77 0.127 22);
+  --color-red-300: oklch(0.69 0.187 22);
+  --color-red-400: oklch(0.61 0.23 22);
+  --color-red-500: oklch(0.53 0.2 22);
+  --color-red-600: oklch(0.45 0.17 22);
+  --color-red-700: oklch(0.37 0.14 22);
+  --color-red-800: oklch(0.29 0.109 22);
+  --color-red-900: oklch(0.21 0.079 22);
+  --color-red-950: oklch(0.13 0.049 22);
+
+  --color-green-50: oklch(0.93 0.117 148);
+  --color-green-100: oklch(0.85 0.234 148);
+  --color-green-200: oklch(0.77 0.212 148);
+  --color-green-300: oklch(0.69 0.19 148);
+  --color-green-400: oklch(0.61 0.168 148);
+  --color-green-500: oklch(0.53 0.146 148);
+  --color-green-600: oklch(0.45 0.124 148);
+  --color-green-700: oklch(0.37 0.102 148);
+  --color-green-800: oklch(0.29 0.08 148);
+  --color-green-900: oklch(0.21 0.058 148);
+  --color-green-950: oklch(0.13 0.036 148);
+
+  --color-blue-50: oklch(0.92 0.038 242);
+  --color-blue-100: oklch(0.84 0.078 242);
+  --color-blue-200: oklch(0.76 0.121 242);
+  --color-blue-300: oklch(0.68 0.144 242);
+  --color-blue-400: oklch(0.6 0.127 242);
+  --color-blue-500: oklch(0.52 0.11 242);
+  --color-blue-600: oklch(0.44 0.093 242);
+  --color-blue-700: oklch(0.36 0.076 242);
+  --color-blue-800: oklch(0.28 0.059 242);
+  --color-blue-900: oklch(0.2 0.042 242);
+  --color-blue-950: oklch(0.12 0.025 242);
+}
+
 :root {
   --gray-background-1: var(--slate-1);
   --gray-background-2: var(--slate-2);
@@ -31,13 +106,13 @@
   --gray-border-subtle: var(--slate-6);
   --gray-border: var(--slate-7);
   --gray-border-hover: var(--slate-8);
-  --gray-ring: var(--iris-6);
+  --gray-ring: var(--slate-6);
   --gray: var(--slate-9);
   --gray-hover: var(--slate-10);
   --gray-text-muted: var(--slate-11);
   --gray-text: var(--slate-12);
   --gray-foreground: black;
-  --gray-surface: #ffffffcc;
+  --gray-surface: #eeeeefaa;
   --gray-indicator: var(--slate-9);
   --gray-track: var(--slate-9);
 
@@ -57,9 +132,10 @@
   --accent-text: var(--iris-12);
   --accent-foreground: white;
   --accent-secondary-foreground: var(--gray-text);
-  --accent-surface: #f6f6ffcc;
-  --accent-indicator: var(--iris-9);
-  --accent-track: var(--iris-9);
+  --accent-contrast: var(--iris-contrast);
+  --accent-surface: var(--iris-surface);
+  --accent-indicator: var(--iris-indicator);
+  --accent-track: var(--iris-track);
 
   --background: var(--accent-background-2);
   --foreground: black;
@@ -76,13 +152,11 @@
   --chart-5: oklch(76.9% 0.188 70.08);
 }
 
-
 .dark {
   --accent-secondary-foreground: white;
-  --background: var(--accent-background-2);
+  /* --background: var(--accent-background-2); */
   --foreground: white;
   --gray-surface: #1f212380;
-  --iris-surface: #1d1b3980;
 
   --radius: 0.75rem;
   --chart-1: oklch(64.6% 0.222 41.116);

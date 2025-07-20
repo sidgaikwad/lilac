@@ -26,7 +26,7 @@ function getIcon(credentialType: string) {
 
 function getTableRow(credential: CredentialSummary) {
   return (
-    <TableRow>
+    <TableRow key={credential.credentialId}>
       <TableCell>
         {getIcon(credential.credentialType) ?? credential.credentialType}
       </TableCell>

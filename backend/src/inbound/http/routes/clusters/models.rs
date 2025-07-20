@@ -15,6 +15,12 @@ pub enum HttpClusterConfig {
         cluster_name: String,
         region: String,
     },
+    #[serde(rename = "gcp_gke")]
+    GcpGke {
+        cluster_name: String,
+        location: String,
+        project_id: String,
+    },
 }
 
 impl From<HttpClusterConfig> for ClusterConfig {
@@ -27,6 +33,15 @@ impl From<HttpClusterConfig> for ClusterConfig {
             } => Self::AwsEks {
                 cluster_name,
                 region,
+            },
+            HttpClusterConfig::GcpGke {
+                cluster_name,
+                location,
+                project_id,
+            } => Self::GcpGke {
+                cluster_name,
+                location,
+                project_id,
             },
         }
     }
@@ -42,6 +57,15 @@ impl From<ClusterConfig> for HttpClusterConfig {
             } => Self::AwsEks {
                 cluster_name,
                 region,
+            },
+            ClusterConfig::GcpGke {
+                cluster_name,
+                location,
+                project_id,
+            } => Self::GcpGke {
+                cluster_name,
+                location,
+                project_id,
             },
         }
     }
@@ -108,6 +132,7 @@ impl From<Cluster> for HttpClusterSummary {
         let cluster_type = match cluster.cluster_config {
             ClusterConfig::Local => "local".to_string(),
             ClusterConfig::AwsEks { .. } => "aws_eks".to_string(),
+            ClusterConfig::GcpGke { .. } => "gcp_gke".to_string(),
         };
 
         Self {

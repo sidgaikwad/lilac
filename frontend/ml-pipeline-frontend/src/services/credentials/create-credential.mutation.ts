@@ -4,12 +4,12 @@ import { postHttp } from '@/lib/fetch';
 import { QueryKeys } from '../constants';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 import { camelCaseObject, snakeCaseObject } from '@/lib/utils';
-import { AwsCredentials } from './types';
+import { AwsCredentials, GcpCredentials } from './types';
 
 export interface CreateCredentialRequest {
   credentialName: string;
   credentialDescription?: string;
-  credentials: AwsCredentials;
+  credentials: AwsCredentials | GcpCredentials;
 }
 
 export interface CreateCredentialResponse {
@@ -19,10 +19,11 @@ export interface CreateCredentialResponse {
 async function createCredential(
   payload: CreateCredentialRequest
 ): Promise<CreateCredentialResponse> {
+  const request = snakeCaseObject<CreateCredentialRequest>(payload, false);
   const resp = await postHttp<
-    Sn<CreateCredentialRequest>,
+    Sn<CreateCredentialRequest, { splitOnNumbers: false }>,
     Sn<CreateCredentialResponse>
-  >(`/credentials`, snakeCaseObject(payload));
+  >(`/credentials`, request);
   return camelCaseObject(resp);
 }
 

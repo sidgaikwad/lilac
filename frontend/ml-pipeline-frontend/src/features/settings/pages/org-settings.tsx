@@ -18,15 +18,15 @@ export function OrgSettings() {
         </ContainerDescription>
       </ContainerHeader>
       <ContainerContent>
-        <Tabs defaultValue='general' className='w-full'>
+        <Tabs defaultValue='credentials' className='w-full'>
           <TabsList className='max-w-[400px]'>
-            <TabsTrigger value='general'>General</TabsTrigger>
-            <TabsTrigger value='Credentials'>Credentials</TabsTrigger>
+            {/* <TabsTrigger value='general'>General</TabsTrigger> */}
+            <TabsTrigger value='credentials'>Credentials</TabsTrigger>
           </TabsList>
-          <TabsContent value='general'>
+          {/* <TabsContent value='general'>
             Make changes to your account here.
-          </TabsContent>
-          <TabsContent value='Credentials'>
+          </TabsContent> */}
+          <TabsContent value='credentials'>
             <CredentialsSettingsCard />
           </TabsContent>
         </Tabs>

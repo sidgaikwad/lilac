@@ -1,20 +1,47 @@
 import { describe, expect, test } from 'vitest';
-import { camelCaseObject, snakeCaseObject } from './utils';
+import { camelCaseObject, snakeCase, snakeCaseObject } from './utils';
 
 describe('snakeCaseObjects', () => {
+  test('snake case can split numbers', () => {
+    const s = 'clientX509CertUrl';
+    expect(snakeCase(s, true)).toEqual('client_x_509_cert_url')
+  });
+
+  test('snake case can join numbers', () => {
+    const s = 'clientX509CertUrl';
+    expect(snakeCase(s, false)).toEqual('client_x509_cert_url')
+  });
+
   test('handles objects successfully', () => {
     const obj = {
       key1: 'value1',
       anotherKey: 'anotherValue',
       someNumberValue: 12345,
     };
-    const snakeCaseObj = snakeCaseObject(obj);
+    const snakeCaseObj = snakeCaseObject(obj, true);
     expect(Object.keys(snakeCaseObj)).toEqual([
       'key_1',
       'another_key',
       'some_number_value',
     ]);
     expect(snakeCaseObj.key_1).toEqual(obj.key1);
+    expect(snakeCaseObj.another_key).toEqual(obj.anotherKey);
+    expect(snakeCaseObj.some_number_value).toEqual(obj.someNumberValue);
+  });
+
+  test('handles objects successfully with numbers', () => {
+    const obj = {
+      key1: 'value1',
+      anotherKey: 'anotherValue',
+      someNumberValue: 12345,
+    };
+    const snakeCaseObj = snakeCaseObject(obj, false);
+    expect(Object.keys(snakeCaseObj)).toEqual([
+      'key1',
+      'another_key',
+      'some_number_value',
+    ]);
+    expect(snakeCaseObj.key1).toEqual(obj.key1);
     expect(snakeCaseObj.another_key).toEqual(obj.anotherKey);
     expect(snakeCaseObj.some_number_value).toEqual(obj.someNumberValue);
   });

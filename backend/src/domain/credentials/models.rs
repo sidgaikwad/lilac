@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use crate::domain::serialize_secret_string;
 use chrono::{DateTime, Utc};
+use google_cloud_auth::credentials::{service_account::Builder, Credentials as GcpCredentials};
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -53,6 +54,32 @@ pub enum Credentials {
         #[serde(serialize_with = "serialize_secret_string")]
         secret_key: SecretString,
     },
+    Gcp(GoogleCredentials),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct GoogleCredentials {
+    #[serde(rename = "type")]
+    pub r#type: String,
+    pub project_id: String,
+    pub private_key_id: String,
+    #[serde(serialize_with = "serialize_secret_string")]
+    pub private_key: SecretString,
+    pub client_email: String,
+    pub client_id: String,
+    pub auth_uri: String,
+    pub token_uri: String,
+    pub auth_provider_x509_cert_url: String,
+    pub client_x509_cert_url: String,
+}
+
+impl TryFrom<GoogleCredentials> for GcpCredentials {
+    type Error = anyhow::Error;
+
+    fn try_from(value: GoogleCredentials) -> Result<Self, Self::Error> {
+        let json = serde_json::to_value(value)?;
+        Ok(Builder::new(json).build()?)
+    }
 }
 
 #[derive(Clone, Debug)]

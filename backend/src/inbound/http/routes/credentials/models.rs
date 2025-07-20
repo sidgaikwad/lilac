@@ -2,7 +2,7 @@ use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 
 use crate::domain::credentials::models::{
-    CreateCredentialRequest, Credential, CredentialId, Credentials,
+    CreateCredentialRequest, Credential, CredentialId, Credentials, GoogleCredentials,
 };
 use crate::domain::serialize_secret_string;
 
@@ -14,6 +14,21 @@ pub enum HttpCredentials {
         access_key: String,
         #[serde(serialize_with = "serialize_secret_string")]
         secret_key: SecretString,
+    },
+    #[serde(rename = "gcp")]
+    Gcp {
+        #[serde(rename = "type")]
+        r#type: String,
+        project_id: String,
+        private_key_id: String,
+        #[serde(serialize_with = "serialize_secret_string")]
+        private_key: SecretString,
+        client_email: String,
+        client_id: String,
+        auth_uri: String,
+        token_uri: String,
+        auth_provider_x509_cert_url: String,
+        client_x509_cert_url: String,
     },
 }
 
@@ -27,6 +42,29 @@ impl From<HttpCredentials> for Credentials {
                 access_key,
                 secret_key,
             },
+            HttpCredentials::Gcp {
+                r#type,
+                project_id,
+                private_key_id,
+                private_key,
+                client_email,
+                client_id,
+                auth_uri,
+                token_uri,
+                auth_provider_x509_cert_url,
+                client_x509_cert_url,
+            } => Self::Gcp(GoogleCredentials {
+                r#type,
+                project_id,
+                private_key_id,
+                private_key,
+                client_email,
+                client_id,
+                auth_uri,
+                token_uri,
+                auth_provider_x509_cert_url,
+                client_x509_cert_url,
+            }),
         }
     }
 }
@@ -40,6 +78,29 @@ impl From<Credentials> for HttpCredentials {
             } => Self::Aws {
                 access_key,
                 secret_key,
+            },
+            Credentials::Gcp(GoogleCredentials {
+                r#type,
+                project_id,
+                private_key_id,
+                private_key,
+                client_email,
+                client_id,
+                auth_uri,
+                token_uri,
+                auth_provider_x509_cert_url,
+                client_x509_cert_url,
+            }) => Self::Gcp {
+                r#type,
+                project_id,
+                private_key_id,
+                private_key,
+                client_email,
+                client_id,
+                auth_uri,
+                token_uri,
+                auth_provider_x509_cert_url,
+                client_x509_cert_url,
             },
         }
     }
@@ -101,6 +162,7 @@ impl From<Credential> for HttpCredentialsSummary {
     fn from(credential: Credential) -> Self {
         let credential_type = match credential.credentials {
             Credentials::Aws { .. } => "aws".to_string(),
+            Credentials::Gcp { .. } => "gcp".to_string(),
         };
 
         Self {

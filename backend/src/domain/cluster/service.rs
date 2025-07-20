@@ -107,11 +107,14 @@ impl<R: ClusterRepository, C: CredentialRepository, T: ClusterConnectionTester> 
             .await?;
         match req.clone().cluster_config {
             ClusterConfig::Local => Ok(self.cluster_repo.create_cluster(req).await?),
-            ClusterConfig::AwsEks { .. } => {
-                match credentials.credentials {
-                    Credentials::Aws { .. } => Ok(self.cluster_repo.create_cluster(req).await?), // _ => Err(ClusterServiceError::IncorrectCredentialsType)
-                }
-            }
+            ClusterConfig::AwsEks { .. } => match credentials.credentials {
+                Credentials::Aws { .. } => Ok(self.cluster_repo.create_cluster(req).await?),
+                _ => Err(ClusterServiceError::IncorrectCredentialsType),
+            },
+            ClusterConfig::GcpGke { .. } => match credentials.credentials {
+                Credentials::Gcp { .. } => Ok(self.cluster_repo.create_cluster(req).await?),
+                _ => Err(ClusterServiceError::IncorrectCredentialsType),
+            },
         }
     }
 

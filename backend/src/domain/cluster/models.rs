@@ -51,6 +51,11 @@ pub enum ClusterConfig {
         cluster_name: String,
         region: String,
     },
+    GcpGke {
+        project_id: String,
+        location: String,
+        cluster_name: String,
+    },
 }
 
 #[derive(Clone, Debug)]

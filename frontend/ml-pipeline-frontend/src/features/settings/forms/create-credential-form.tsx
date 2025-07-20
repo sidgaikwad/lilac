@@ -15,18 +15,19 @@ import {
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { defineStepper } from '@stepperize/react';
-import { cn } from '@/lib/utils';
+import { camelCaseObject, cn } from '@/lib/utils';
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group';
 import { Card } from '@/components/common/card';
 import createFormStore from '@/store/use-form-data';
 import { Input } from '@/components/ui/input';
 import { AwsLogo } from '@/icons/aws';
+import { GcpLogo } from '@/icons';
 
 const credentialSchema = z.object({
   credentialName: z.string(),
   credentialDescription: z.string().optional(),
   credentials: z.object({
-    credentialType: z.enum(['aws']),
+    credentialType: z.enum(['aws', 'gcp']),
   }),
 });
 const credentialTypeSchema = z.object({
@@ -37,6 +38,19 @@ const credentialTypeSchema = z.object({
       credentialType: z.literal('aws'),
       accessKey: z.string(),
       secretKey: z.string(),
+    }),
+    z.object({
+      credentialType: z.literal('gcp'),
+      type: z.string(),
+      projectId: z.string(),
+      privateKeyId: z.string(),
+      privateKey: z.string(),
+      clientEmail: z.string(),
+      clientId: z.string(),
+      authUri: z.string(),
+      tokenUri: z.string(),
+      authProviderX509CertUrl: z.string(),
+      clientX509CertUrl: z.string(),
     }),
   ]),
 });
@@ -141,6 +155,8 @@ export function CreateCredentialForm(props: ConnectCredentialFormProps) {
                           switch (formValues.credentials?.credentialType) {
                             case 'aws':
                               return <ProvideAwsCredentials />;
+                            case 'gcp':
+                              return <ProvideGcpCredentials />;
                           }
                         },
                       })}
@@ -225,7 +241,7 @@ function ConfigureCredential() {
                 <RadioGroupPrimitive.Root
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className='grid grid-cols-2 gap-4'
+                  className='grid grid-cols-3 gap-4'
                 >
                   <FormItem className='flex items-center gap-3'>
                     <div>
@@ -241,6 +257,24 @@ function ConfigureCredential() {
                           icon={<AwsLogo className='size-12' />}
                           title='AWS'
                           description='Configure AWS credentials.'
+                        />
+                      </RadioGroupPrimitive.Item>
+                    </div>
+                  </FormItem>
+                  <FormItem className='flex items-center gap-3'>
+                    <div>
+                      <RadioGroupPrimitive.Item
+                        key='gcp'
+                        value='gcp'
+                        className={cn(
+                          'group relative rounded-xl text-start',
+                          'data-[state=checked]:ring-accent-border-hover data-[state=checked]:ring-2'
+                        )}
+                      >
+                        <Card
+                          icon={<GcpLogo className='size-12' />}
+                          title='GCP'
+                          description='Configure GCP credentials.'
                         />
                       </RadioGroupPrimitive.Item>
                     </div>
@@ -287,6 +321,36 @@ function ProvideAwsCredentials() {
                   type='password'
                   placeholder='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
                 ></Input>
+              </FormControl>
+            </FormItem>
+          );
+        }}
+      />
+    </div>
+  );
+}
+
+
+function ProvideGcpCredentials() {
+  const { register } = useFormContext<CredentialTypeFormValues>();
+
+  return (
+    <div className='space-y-4 text-start'>
+      <FormField
+        name={register('credentials').name}
+        render={({ field }) => {
+          return (
+            <FormItem>
+              <FormLabel>Upload Credentials</FormLabel>
+              <FormMessage />
+              <FormControl>
+                <Input onChange={async (event) => {
+                  if (event.target.files !== null) {
+                    const contents = await event.target.files[0].text();
+                    const values = { credentialType: 'gcp', ...camelCaseObject(JSON.parse(contents)) } as Extract<CredentialTypeFormValues['credentials'], { credentialType: 'gcp' }>;
+                    field.onChange(values);
+                  }
+                }} type='file' ></Input>
               </FormControl>
             </FormItem>
           );
