@@ -61,7 +61,7 @@ function DialogContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="ring-offset-accent-background-1 hover:cursor-pointer focus:ring-accent-ring data-[state=open]:bg-accent-secondary-focus data-[state=open]:text-gray-text-muted absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+        <DialogPrimitive.Close className="ring-offset-accent-background-1 focus:ring-accent-ring data-[state=open]:bg-accent-secondary-focus data-[state=open]:text-gray-text-muted absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:cursor-pointer hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
           <XIcon />
           <span className='sr-only'>Close</span>
         </DialogPrimitive.Close>

@@ -34,7 +34,7 @@ export function IDESelector() {
               {ides.map((ide) => (
                 <FormItem
                   key={ide.id}
-                  className='flex items-center space-x-3 space-y-0'
+                  className='flex items-center space-y-0 space-x-3'
                 >
                   <FormControl>
                     <RadioGroupItem value={ide.id} />

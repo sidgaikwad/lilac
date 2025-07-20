@@ -20,13 +20,10 @@ import {
   mockComputeClusters,
   Workspace,
 } from '@/features/workspaces/mock-data';
-import { JupyterIcon } from '@/components/icons/jupyter';
-import { VSCodeIcon } from '@/components/icons/vscode';
-import { SlurmIcon } from '@/components/icons/slurm';
-import { RayIcon } from '@/components/icons/ray';
 import { ComputeClusterCard } from '@/features/workspaces/components/compute-cluster-card';
 import { Alert } from '@/components/common/alert';
 import * as React from 'react';
+import { JupyterIcon, RayIcon, SlurmIcon, VSCodeIcon } from '@/icons';
 
 const editWorkspaceSchema = z.object({
   name: z.string().optional(),

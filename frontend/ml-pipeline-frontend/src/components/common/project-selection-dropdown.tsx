@@ -54,7 +54,9 @@ export default function ProjectSelectionDropdown() {
               {projects && projects.length > 0 ? (
                 projects.map((project) => (
                   <DropdownMenuItem asChild key={project.projectId}>
-                    <Link to={`/projects/${project.projectId}`}>{project.projectName}</Link>
+                    <Link to={`/projects/${project.projectId}`}>
+                      {project.projectName}
+                    </Link>
                   </DropdownMenuItem>
                 ))
               ) : (

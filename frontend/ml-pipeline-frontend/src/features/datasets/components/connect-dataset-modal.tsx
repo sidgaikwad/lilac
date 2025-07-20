@@ -31,8 +31,8 @@ const ConnectDatasetModal: React.FC<ConnectDatasetModalProps> = (
     createDataset({
       datasetName: data.datasetName,
       projectId: props.projectId,
-      description: data.datasetDescription,
-      source: data.source,
+      datasetDescription: data.datasetDescription,
+      datasetSource: data.datasetSource,
     });
     props.setOpen(false);
   };

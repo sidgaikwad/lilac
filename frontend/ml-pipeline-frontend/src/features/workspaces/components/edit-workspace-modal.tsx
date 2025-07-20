@@ -45,8 +45,8 @@ export function EditWorkspaceModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={setOpen}>
-      <DialogContent className="overflow-y-auto">
-        <DialogHeader className="flex-row items-center justify-between">
+      <DialogContent className='overflow-y-auto'>
+        <DialogHeader className='flex-row items-center justify-between'>
           <DialogTitle>{workspace.name}</DialogTitle>
           <Badge variant={statusVariant[workspace.status]}>
             {workspace.status}

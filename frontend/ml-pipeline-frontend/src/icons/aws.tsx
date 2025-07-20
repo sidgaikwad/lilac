@@ -1,4 +1,4 @@
-export function AwsLogo(props: { className: string }) {
+export function AwsLogo(props: { className?: string }) {
   return (
     <div className={props.className}>
       <svg

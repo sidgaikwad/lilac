@@ -38,12 +38,14 @@ export const mockEnvironments = [
   {
     name: 'JupyterLab',
     icon: 'jupyter-icon',
-    description: 'A web-based interactive development environment for notebooks, code, and data.',
+    description:
+      'A web-based interactive development environment for notebooks, code, and data.',
   },
   {
     name: 'VSCode',
     icon: 'vscode-icon',
-    description: 'A lightweight but powerful source code editor that runs on your desktop.',
+    description:
+      'A lightweight but powerful source code editor that runs on your desktop.',
   },
 ];
 

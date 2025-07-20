@@ -8,9 +8,9 @@ import { S3Source, SnowflakeSource } from './types';
 
 export interface CreateDatasetRequest {
   datasetName: string;
-  description?: string;
+  datasetDescription?: string;
   projectId: string;
-  source: S3Source | SnowflakeSource;
+  datasetSource: S3Source | SnowflakeSource;
 }
 
 export interface CreateDatasetResponse {
@@ -27,8 +27,8 @@ async function createDataset(
     Sn<CreateDatasetResponse>
   >(`/projects/${projectId}/datasets`, {
     dataset_name: request.datasetName,
-    description: request.description,
-    source: snakeCaseObject(request.source),
+    dataset_description: request.datasetDescription,
+    dataset_source: snakeCaseObject(request.datasetSource),
   });
   return {
     projectId: resp.project_id,

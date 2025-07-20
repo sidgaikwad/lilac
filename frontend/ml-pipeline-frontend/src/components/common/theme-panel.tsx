@@ -206,6 +206,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger,
 } from '../ui/sidebar';
 import { Skeleton } from '../ui/skeleton';
 import { Slider } from '../ui/slider';
@@ -1038,8 +1039,10 @@ export default function ThemePanel() {
         <p className='text-center'>Sidebar</p>
         <div className='flex flex-row space-x-4'>
           <SidebarProvider>
-            <Sidebar>
-              <SidebarHeader />
+            <Sidebar collapsible='icon'>
+              <SidebarHeader>
+                <SidebarTrigger />
+              </SidebarHeader>
               <SidebarContent>
                 <SidebarGroup>
                   <SidebarGroupLabel>Application</SidebarGroupLabel>

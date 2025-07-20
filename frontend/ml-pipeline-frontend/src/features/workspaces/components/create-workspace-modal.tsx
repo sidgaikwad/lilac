@@ -33,7 +33,7 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = (
       <DialogTrigger asChild>
         <Button>Create Workspace</Button>
       </DialogTrigger>
-      <DialogContent className="overflow-y-auto">
+      <DialogContent className='overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>Create Workspace</DialogTitle>
           <DialogDescription></DialogDescription>

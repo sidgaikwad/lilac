@@ -126,7 +126,9 @@ export default function Sidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={location.pathname === paths[Routes.PROJECT_SETTINGS]}
+                  isActive={
+                    location.pathname === paths[Routes.PROJECT_SETTINGS]
+                  }
                 >
                   <Link to={paths[Routes.PROJECT_SETTINGS]}>
                     <Settings />

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import { Routes } from './constants/routes';
 import { MainLayout, ProjectLayout } from './components/layout';
 import ProjectsListPage from './features/projects/pages/projects-list-page';
@@ -11,6 +11,8 @@ import SignUpPage from './features/account/pages/sign-up-page';
 import ErrorBoundary from './error-boundary';
 import AccountSettingsPage from './features/account/pages/account-settings-page';
 import ProjectSettingsPage from './features/projects/pages/project-settings-page';
+import ClustersPage from './features/clusters/pages/clusters-page';
+import { OrgSettings } from './features/settings/pages/org-settings';
 
 export const router = createBrowserRouter([
   {
@@ -32,7 +34,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: <ProjectsListPage />,
+                element: <Navigate to={Routes.PROJECTS} replace />,
               },
               {
                 path: Routes.PROJECTS,
@@ -44,11 +46,11 @@ export const router = createBrowserRouter([
               },
               {
                 path: Routes.CLUSTERS,
-                element: <div>TODO</div>,
+                element: <ClustersPage />,
               },
               {
                 path: Routes.ORG_SETTINGS,
-                element: <div>TODO</div>,
+                element: <OrgSettings />,
               },
               {
                 path: Routes.ACCOUNT_SETTINGS,

@@ -13,7 +13,9 @@ export interface GetAccountDetailsResponse {
 }
 
 export async function getAccountDetails(): Promise<GetAccountDetailsResponse> {
-  return camelCaseObject(await getHttp<Sn<GetAccountDetailsResponse>>('/account/details'));
+  return camelCaseObject(
+    await getHttp<Sn<GetAccountDetailsResponse>>('/account/details')
+  );
 }
 
 export function getAccountDetailsQuery(enabled: boolean = true) {

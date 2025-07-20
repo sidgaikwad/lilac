@@ -19,12 +19,12 @@ import { Separator } from '@/components/ui/separator';
 import * as React from 'react';
 import { RadioGroup } from '@/components/ui/radio-group';
 import { EnvironmentCard } from '@/features/workspaces/components/environment-card';
-import { mockEnvironments, mockComputeClusters } from '@/features/workspaces/mock-data';
-import { JupyterIcon } from '@/components/icons/jupyter';
-import { VSCodeIcon } from '@/components/icons/vscode';
-import { SlurmIcon } from '@/components/icons/slurm';
-import { RayIcon } from '@/components/icons/ray';
+import {
+  mockEnvironments,
+  mockComputeClusters,
+} from '@/features/workspaces/mock-data';
 import { ComputeClusterCard } from '@/features/workspaces/components/compute-cluster-card';
+import { JupyterIcon, VSCodeIcon, SlurmIcon, RayIcon } from '@/icons';
 
 const environmentSchema = z.object({
   name: z.string().optional(),
@@ -162,9 +162,7 @@ export function CreateWorkspaceForm({ onSubmit }: CreateWorkspaceFormProps) {
             >
               Back
             </Button>
-            <Button type='submit'>
-              {stepper.isLast ? 'Submit' : 'Next'}
-            </Button>
+            <Button type='submit'>{stepper.isLast ? 'Submit' : 'Next'}</Button>
           </div>
         </div>
       </form>
@@ -195,10 +193,7 @@ function EnvironmentStep() {
           <FormItem>
             <FormLabel>Workspace Name (optional)</FormLabel>
             <FormControl>
-              <Input
-                placeholder='andrea_lowe_s_sas_viya_session'
-                {...field}
-              />
+              <Input placeholder='andrea_lowe_s_sas_viya_session' {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>

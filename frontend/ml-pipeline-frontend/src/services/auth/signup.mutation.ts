@@ -15,7 +15,12 @@ export interface SignUpResponse {
 }
 
 export async function signUp(payload: SignUpRequest): Promise<SignUpResponse> {
-  return camelCaseObject(await postHttp<Sn<SignUpRequest>, Sn<SignUpResponse>>('/auth/signup', payload));
+  return camelCaseObject(
+    await postHttp<Sn<SignUpRequest>, Sn<SignUpResponse>>(
+      '/auth/signup',
+      payload
+    )
+  );
 }
 
 export interface UseSignUpProps {

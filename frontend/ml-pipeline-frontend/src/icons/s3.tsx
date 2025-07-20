@@ -4,8 +4,6 @@ export function S3Icon(props: { className?: string }) {
   return (
     <svg
       className={cn('rounded-sm', props.className)}
-      width='80px'
-      height='80px'
       viewBox='0 0 80 80'
       version='1.1'
       xmlns='http://www.w3.org/2000/svg'

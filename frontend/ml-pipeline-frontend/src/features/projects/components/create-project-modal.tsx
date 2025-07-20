@@ -52,9 +52,12 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     onSuccess: (data) => {
       toast.success('Successfully created project!');
       setOpen(false);
-      navigate(generatePath(Routes.PROJECT_DETAILS, { projectId: data.projectId }), {
-        replace: true,
-      });
+      navigate(
+        generatePath(Routes.PROJECT_DETAILS, { projectId: data.projectId }),
+        {
+          replace: true,
+        }
+      );
     },
     onError: (error) => toast.error(error.error),
   });

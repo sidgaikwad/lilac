@@ -15,14 +15,14 @@ export interface CreateProjectResponse {
 async function createProject(
   payload: CreateProjectRequest
 ): Promise<CreateProjectResponse> {
-  const resp = await postHttp<Sn<CreateProjectRequest>, Sn<CreateProjectResponse>>(
-    '/projects',
-    {
-      project_name: payload.projectName,
-    }
-  );
+  const resp = await postHttp<
+    Sn<CreateProjectRequest>,
+    Sn<CreateProjectResponse>
+  >('/projects', {
+    project_name: payload.projectName,
+  });
   return {
-    projectId: resp.project_id
+    projectId: resp.project_id,
   };
 }
 

@@ -1,10 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import {
-  Settings,
-  HardDrive,
-  Shapes,
-  Server,
-} from 'lucide-react'; // Added LayoutDashboard
+import { Settings, HardDrive, Shapes, Server } from 'lucide-react'; // Added LayoutDashboard
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -49,7 +44,10 @@ export default function Sidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === paths[Routes.PROJECTS]}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === paths[Routes.PROJECTS]}
+                >
                   <Link to={paths[Routes.PROJECTS]}>
                     <Shapes />
                     <span>Projects</span>
@@ -90,9 +88,7 @@ export default function Sidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={
-                    location.pathname === paths[Routes.ORG_SETTINGS]
-                  }
+                  isActive={location.pathname === paths[Routes.ORG_SETTINGS]}
                 >
                   <Link to={paths[Routes.ORG_SETTINGS]}>
                     <Settings />

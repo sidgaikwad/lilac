@@ -18,6 +18,17 @@ export enum QueryKeys {
   LIST_SERVICES = 'ListServices',
   CREATE_SERVICE = 'CreateService',
 
+  GET_CREDENTIAL = 'GetCredential',
+  CREATE_CREDENTIAL = 'CreateCredential',
+  LIST_CREDENTIALS = 'ListCredentials',
+  DELETE_CREDENTIAL = 'DeleteCredential',
+
+  GET_CLUSTER = 'GetCluster',
+  CREATE_CLUSTER = 'CreateCluster',
+  LIST_CLUSTERS = 'ListClusters',
+  DELETE_CLUSTER = 'DeleteCluster',
+  TEST_CLUSTER_CONNECTION = 'TestClusterConnection',
+
   CONNECT_AWS_INTEGRATION = 'ConnectAwsIntegration',
 
   GET_DATASET = 'GetDataset',

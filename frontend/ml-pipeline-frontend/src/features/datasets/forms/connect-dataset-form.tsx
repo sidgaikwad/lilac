@@ -18,10 +18,10 @@ import { defineStepper } from '@stepperize/react';
 import { cn } from '@/lib/utils';
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group';
 import { Card } from '@/components/common/card';
-import { S3Icon } from '@/components/icons/s3';
+import { S3Icon } from '@/icons/s3';
 import createFormStore from '@/store/use-form-data';
 import { Input } from '@/components/ui/input';
-import { SnowflakeIcon } from '@/components/icons/snowflake';
+import { SnowflakeIcon } from '@/icons/snowflake';
 import {
   TestDatasetResponse,
   useTestDataset,
@@ -31,12 +31,12 @@ import { Alert } from '@/components/common/alert';
 import { RotateCcw } from 'lucide-react';
 
 const dataSourceTypeSchema = z.object({
-  source: z.object({
+  datasetSource: z.object({
     sourceType: z.enum(['S3', 'Snowflake']),
   }),
 });
 const dataSourceSchema = z.object({
-  source: z.discriminatedUnion('sourceType', [
+  datasetSource: z.discriminatedUnion('sourceType', [
     z.object({
       sourceType: z.literal('S3'),
       bucketName: z.string(),
@@ -117,7 +117,7 @@ function ConnectDatasetForm(props: ConnectDatasetFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <nav aria-label='Checkout Steps' className='group my-4'>
+        <nav aria-label='Connect Dataset Steps' className='group my-4'>
           <ol className='flex flex-col gap-2' aria-orientation='vertical'>
             {stepper.all.map((step, index, array) => (
               <React.Fragment key={step.id}>
@@ -166,7 +166,7 @@ function ConnectDatasetForm(props: ConnectDatasetFormProps) {
                       stepper.switch({
                         selectSource: () => <SelectDataSource />,
                         configureDatasource: () => {
-                          switch (formValues.source?.sourceType) {
+                          switch (formValues.datasetSource?.sourceType) {
                             case 'S3':
                               return <ConfigureS3 />;
                             case 'Snowflake':
@@ -207,7 +207,7 @@ function SelectDataSource() {
 
   return (
     <FormField
-      name={register('source.sourceType').name}
+      name={register('datasetSource.sourceType').name}
       control={control}
       render={({ field }) => {
         return (
@@ -271,7 +271,7 @@ function ConfigureS3() {
   return (
     <div className='space-y-4 text-start'>
       <FormField
-        name={register('source.bucketName').name}
+        name={register('datasetSource.bucketName').name}
         render={({ field }) => {
           return (
             <FormItem className='space-y-3'>
@@ -285,7 +285,7 @@ function ConfigureS3() {
         }}
       />
       <FormField
-        name={register('source.accessKey').name}
+        name={register('datasetSource.accessKey').name}
         render={({ field }) => {
           return (
             <FormItem className='space-y-3'>
@@ -299,7 +299,7 @@ function ConfigureS3() {
         }}
       />
       <FormField
-        name={register('source.secretKey').name}
+        name={register('datasetSource.secretKey').name}
         render={({ field }) => {
           return (
             <FormItem className='space-y-3'>
@@ -326,7 +326,7 @@ function ConfigureSnowflake() {
   return (
     <div className='space-y-4 text-start'>
       <FormField
-        name={register('source.username').name}
+        name={register('datasetSource.username').name}
         control={control}
         render={({ field }) => {
           return (
@@ -341,7 +341,7 @@ function ConfigureSnowflake() {
         }}
       />
       <FormField
-        name={register('source.password').name}
+        name={register('datasetSource.password').name}
         control={control}
         render={({ field }) => {
           return (
@@ -360,7 +360,7 @@ function ConfigureSnowflake() {
         }}
       />
       <FormField
-        name={register('source.account').name}
+        name={register('datasetSource.account').name}
         control={control}
         render={({ field }) => {
           return (
@@ -375,7 +375,7 @@ function ConfigureSnowflake() {
         }}
       />
       <FormField
-        name={register('source.warehouse').name}
+        name={register('datasetSource.warehouse').name}
         control={control}
         render={({ field }) => {
           return (
@@ -395,7 +395,7 @@ function ConfigureSnowflake() {
         }}
       />
       <FormField
-        name={register('source.database').name}
+        name={register('datasetSource.database').name}
         control={control}
         render={({ field }) => {
           return (
@@ -415,7 +415,7 @@ function ConfigureSnowflake() {
         }}
       />
       <FormField
-        name={register('source.schema').name}
+        name={register('datasetSource.schema').name}
         control={control}
         render={({ field }) => {
           return (
@@ -435,7 +435,7 @@ function ConfigureSnowflake() {
         }}
       />
       <FormField
-        name={register('source.role').name}
+        name={register('datasetSource.role').name}
         control={control}
         render={({ field }) => {
           return (
@@ -532,7 +532,7 @@ function TestDataset(props: { projectId: string }) {
           className='w-fit'
           variant='success'
           title='Connection successful'
-          description='We were successfully able to connect to your data source! Please submit the form to create your data source.'
+          description='We were successfully able to connect to your data source! Please submit the form to create your data datasetSource.'
         />
       );
     } else if (error) {

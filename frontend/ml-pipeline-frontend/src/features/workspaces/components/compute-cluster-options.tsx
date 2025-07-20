@@ -36,10 +36,7 @@ export function ComputeClusterOptions() {
                 className='grid grid-cols-4 gap-4'
               >
                 {clusterOptions.map((option) => (
-                  <FormItem
-                    key={option.id}
-                    className='flex items-center gap-3'
-                  >
+                  <FormItem key={option.id} className='flex items-center gap-3'>
                     <RadioGroupPrimitive.Item
                       value={option.id}
                       className={cn(
@@ -59,7 +56,7 @@ export function ComputeClusterOptions() {
       <div className='mt-8 flex flex-col items-center justify-center text-center'>
         <div className='text-6xl'>⚛️</div>
         <h3 className='mt-4 text-2xl font-semibold'>Compute Clusters</h3>
-        <p className='mt-2 text-muted-foreground'>
+        <p className='text-muted-foreground mt-2'>
           Lilac managed compute clusters provide additional distributed
           computational power for workspaces and jobs.
         </p>
@@ -67,7 +64,7 @@ export function ComputeClusterOptions() {
           Note: First choose an execution environment that has the corresponding
           client libraries for the cluster you desire.
         </p>
-        <a href='#' className='mt-2 text-sm text-primary hover:underline'>
+        <a href='#' className='text-primary mt-2 text-sm hover:underline'>
           Learn about Compute Clusters in our docs
         </a>
       </div>
