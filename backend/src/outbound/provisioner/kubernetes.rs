@@ -45,6 +45,7 @@ impl Provisioner for KubernetesProvisioner {
         memory_mb: i32,
         _ide: &Ide,
         public_key: &str,
+        gpu: bool,
     ) -> Result<String, ProvisionerError> {
         let namespace = &self.config.kubernetes_namespace;
         let workspace_name = format!("workspace-{}", workspace_id.0);
@@ -52,6 +53,13 @@ impl Provisioner for KubernetesProvisioner {
 
         // 1. Create Deployment
         let deployments: Api<Deployment> = Api::namespaced(client.clone(), namespace);
+
+        let mut limits = serde_json::Map::new();
+        limits.insert("cpu".to_string(), json!(format!("{}m", cpu_millicores)));
+        limits.insert("memory".to_string(), json!(format!("{}Mi", memory_mb)));
+        if gpu {
+            limits.insert("nvidia.com/gpu".to_string(), json!("1"));
+        }
 
         let deployment = serde_json::from_value(json!({
             "apiVersion": "apps/v1",
@@ -94,10 +102,7 @@ impl Provisioner for KubernetesProvisioner {
                                     "cpu": format!("{}m", cpu_millicores),
                                     "memory": format!("{}Mi", memory_mb)
                                 },
-                                "limits": {
-                                    "cpu": format!("{}m", cpu_millicores),
-                                    "memory": format!("{}Mi", memory_mb)
-                                }
+                                "limits": limits
                             }
                         }]
                     }

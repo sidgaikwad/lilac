@@ -5,6 +5,7 @@ export interface CreateWorkspaceRequest {
   image: string;
   cpu_millicores: number;
   memory_mb: number;
+  gpu?: boolean;
 }
 
 export interface Workspace {
@@ -19,4 +20,5 @@ export interface Workspace {
   memory_mb: number;
   status: 'pending' | 'running' | 'stopping' | 'stopped' | 'failed' | 'terminated';
   url: string | null;
+  gpu?: boolean;
 }

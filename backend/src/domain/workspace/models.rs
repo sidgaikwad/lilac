@@ -58,6 +58,7 @@ pub struct Workspace {
     pub image: String,
     pub cpu_millicores: i32,
     pub memory_mb: i32,
+    pub gpu: bool,
     pub status: WorkspaceStatus,
     pub url: Option<String>,
     pub token: Option<String>,
@@ -76,4 +77,5 @@ pub struct CreateWorkspaceRequest {
     pub image: String,
     pub cpu_millicores: i32,
     pub memory_mb: i32,
+    pub gpu: bool,
 }

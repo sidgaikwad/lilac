@@ -57,6 +57,7 @@ pub trait Provisioner: Send + Sync {
         memory_mb: i32,
         ide: &Ide,
         public_key: &str,
+        gpu: bool,
     ) -> Result<String, ProvisionerError>;
 }
 

@@ -97,6 +97,7 @@ impl WorkspaceService for WorkspaceServiceImpl {
                     workspace_clone.memory_mb,
                     &workspace_clone.ide,
                     "", // public_key is no longer used
+                   workspace_clone.gpu,
                 )
                 .await;
 

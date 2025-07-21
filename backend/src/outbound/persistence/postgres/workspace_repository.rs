@@ -37,6 +37,7 @@ struct WorkspaceRecord {
     image: String,
     cpu_millicores: i32,
     memory_mb: i32,
+    gpu: bool,
     status: WorkspaceStatus,
     url: Option<String>,
     token: Option<String>,
@@ -58,6 +59,7 @@ impl From<WorkspaceRecord> for Workspace {
             image: record.image,
             cpu_millicores: record.cpu_millicores,
             memory_mb: record.memory_mb,
+            gpu: record.gpu,
             status: record.status,
             url: record.url,
             token: record.token,
@@ -79,8 +81,8 @@ impl WorkspaceRepository for PostgresWorkspaceRepository {
         let record = sqlx::query_as!(
             WorkspaceRecord,
             r#"
-            INSERT INTO workspaces (workspace_name, project_id, owner_id, cluster_id, ide, image, cpu_millicores, memory_mb)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO workspaces (workspace_name, project_id, owner_id, cluster_id, ide, image, cpu_millicores, memory_mb, gpu)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING
                 workspace_id,
                 workspace_name,
@@ -91,6 +93,7 @@ impl WorkspaceRepository for PostgresWorkspaceRepository {
                 image,
                 cpu_millicores,
                 memory_mb,
+                gpu,
                 status as "status: WorkspaceStatus",
                 url,
                 token,
@@ -106,7 +109,8 @@ impl WorkspaceRepository for PostgresWorkspaceRepository {
             req.ide as _,
             req.image,
             req.cpu_millicores,
-            req.memory_mb
+            req.memory_mb,
+            req.gpu
         )
         .fetch_one(&self.pool)
         .await
@@ -129,6 +133,7 @@ impl WorkspaceRepository for PostgresWorkspaceRepository {
                 image,
                 cpu_millicores,
                 memory_mb,
+                gpu,
                 status as "status: WorkspaceStatus",
                 url,
                 token,
@@ -193,6 +198,7 @@ impl WorkspaceRepository for PostgresWorkspaceRepository {
                 image,
                 cpu_millicores,
                 memory_mb,
+                gpu,
                 status as "status: WorkspaceStatus",
                 url,
                 token,

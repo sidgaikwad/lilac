@@ -4,7 +4,6 @@ import { MainLayout, ProjectLayout } from './components/layout';
 import ProjectsListPage from './features/projects/pages/projects-list-page';
 import ExperimentsPage from './features/experiments/pages/experiments-page';
 import ProjectWorkspacesPage from './features/workspaces/pages/project-workspaces-page';
-import ProjectDashboardPage from './features/projects/pages/project-dashboard-page';
 import WorkspaceViewPage from './features/workspaces/pages/workspace-view-page';
 import ProtectedRoute from './components/router/protected-route';
 import LoginPage from './features/account/pages/login-page';
@@ -64,7 +63,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: Routes.PROJECT_DETAILS,
-                element: <ProjectDashboardPage />,
+                element: <Navigate to="workspaces" replace />,
               },
               {
                 path: Routes.PROJECT_SETTINGS,

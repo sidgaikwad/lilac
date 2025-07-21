@@ -12,6 +12,8 @@ pub struct CreateWorkspacePayload {
     pub image: String,
     pub cpu_millicores: i32,
     pub memory_mb: i32,
+    #[serde(default)]
+    pub gpu: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]

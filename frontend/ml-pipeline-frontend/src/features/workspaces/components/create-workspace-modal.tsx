@@ -50,6 +50,7 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = (
         image: imageName,
         cpu_millicores: data.cpu * 1000,
         memory_mb: data.memory,
+        gpu: data.gpu,
       },
     });
   };

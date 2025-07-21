@@ -38,6 +38,7 @@ pub async fn create_workspace_handler(
         image: payload.image,
         cpu_millicores: payload.cpu_millicores,
         memory_mb: payload.memory_mb,
+        gpu: payload.gpu,
     };
 
     let workspace = workspace_service

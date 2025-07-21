@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -28,13 +29,10 @@ import { RadioGroup } from '@/components/ui/radio-group';
 import { EnvironmentCard } from '@/features/workspaces/components/environment-card';
 import {
   mockEnvironments,
-  mockComputeClusters,
 } from '@/features/workspaces/mock-data';
 import { JupyterIcon } from '@/icons/jupyter';
 import { VSCodeIcon } from '@/icons/vscode';
 import { RStudioIcon } from '@/icons/rstudio';
-import { RayIcon } from '@/icons/ray';
-import { ComputeClusterCard } from '@/features/workspaces/components/compute-cluster-card';
 import { useListClusters } from '@/services/clusters';
 import { EksLogo } from '@/icons/eks';
 import { ClusterSummary } from '@/types';
@@ -53,17 +51,11 @@ const hardwareSchema = z.object({
   cpu: z.number().min(0.5).max(16),
   memory: z.number().min(1024).max(131072),
   preset: z.string().optional(),
-});
-
-const computeClusterSchema = z.object({
-  computeCluster: z.string(),
+  gpu: z.boolean().optional(),
 });
 
 export type CreateWorkspaceFormValues = z.infer<
-  typeof environmentSchema &
-    typeof clusterIdSchema &
-    typeof hardwareSchema &
-    typeof computeClusterSchema
+  typeof environmentSchema & typeof clusterIdSchema & typeof hardwareSchema
 >;
 
 const useFormStore = createFormStore<CreateWorkspaceFormValues>();
@@ -84,11 +76,6 @@ const { useStepper, utils } = defineStepper(
     label: 'Hardware',
     schema: hardwareSchema,
   },
-  {
-    id: 'compute',
-    label: 'Distributed Compute',
-    schema: computeClusterSchema,
-  }
 );
 
 export interface CreateWorkspaceFormProps {
@@ -172,7 +159,6 @@ export function CreateWorkspaceForm({ onSubmit }: CreateWorkspaceFormProps) {
                         environment: () => <EnvironmentStep />,
                         cluster: () => <ClusterStep />,
                         hardware: () => <HardwareStep />,
-                        compute: () => <ComputeStep />,
                       })}
                   </div>
                 </div>
@@ -432,69 +418,29 @@ function HardwareStep() {
           />
         </>
       )}
+      <FormField
+        control={control}
+        name="gpu"
+        render={({ field }) => (
+          <FormItem>
+            <FormControl>
+              <div className='flex flex-row space-x-2'>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(e) => {
+                  console.log(e);
+                  field.onChange(e);
+                }}
+              />
+              <FormLabel>
+                Request GPU
+              </FormLabel>
+              </div>
+            </FormControl>
+          </FormItem>
+        )}
+      />
     </div>
   );
 }
 
-function ComputeStep() {
-  const { control, register } = useFormContext<CreateWorkspaceFormValues>();
-  const [maxWidth, setMaxWidth] = React.useState(0);
-  const refs = React.useRef<(HTMLDivElement | null)[]>([]);
-
-  React.useEffect(() => {
-    let max = 0;
-    refs.current.forEach((ref) => {
-      if (ref) {
-        max = Math.max(max, ref.offsetWidth);
-      }
-    });
-    setMaxWidth(max);
-  }, [mockComputeClusters]);
-
-  const getIcon = (icon: string) => {
-    switch (icon) {
-      case 'ray-icon':
-        return <RayIcon className='size-12' />;
-      case 'none-icon':
-        return null;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <FormField
-      name={register('computeCluster').name}
-      control={control}
-      render={({ field }) => (
-        <FormItem className='space-y-3'>
-          <FormMessage />
-          <FormControl>
-            <RadioGroup
-              onValueChange={field.onChange}
-              defaultValue={field.value || 'None'}
-              className='grid grid-cols-3 gap-4'
-            >
-              {mockComputeClusters.map((cluster, i) => (
-                <div
-                  key={cluster.name}
-                  ref={(el) => {
-                    refs.current[i] = el;
-                  }}
-                  style={{ minWidth: maxWidth }}
-                >
-                  <ComputeClusterCard
-                    icon={getIcon(cluster.icon)}
-                    title={cluster.name}
-                    description={cluster.description}
-                    value={cluster.name}
-                  />
-                </div>
-              ))}
-            </RadioGroup>
-          </FormControl>
-        </FormItem>
-      )}
-    />
-  );
-}
