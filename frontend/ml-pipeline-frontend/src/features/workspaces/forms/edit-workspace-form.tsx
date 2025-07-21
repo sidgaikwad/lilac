@@ -14,16 +14,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup } from '@/components/ui/radio-group';
-import { EnvironmentCard } from '@/features/workspaces/components/environment-card';
 import {
-  mockEnvironments,
-  mockComputeClusters,
-  Workspace,
-} from '@/features/workspaces/mock-data';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { mockComputeClusters } from '@/features/workspaces/mock-data';
+import { Workspace } from '@/types/api/workspace';
 import { ComputeClusterCard } from '@/features/workspaces/components/compute-cluster-card';
 import { Alert } from '@/components/common/alert';
 import * as React from 'react';
-import { JupyterIcon, RayIcon, SlurmIcon, VSCodeIcon } from '@/icons';
+import { RayIcon, SlurmIcon } from '@/icons';
 
 const editWorkspaceSchema = z.object({
   name: z.string().optional(),
@@ -116,7 +119,7 @@ export function EditWorkspaceForm({
             <FormItem>
               <FormLabel>Preset</FormLabel>
               <Select
-                onValueChange={(value) => {
+                onValueChange={(value: string) => {
                   field.onChange(value);
                   const preset = presets.find((p) => p.name === value);
                   if (preset && preset.name !== 'Custom') {

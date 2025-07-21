@@ -1,6 +1,7 @@
 import { Card } from '@/components/common/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
 import { Workspace } from '@/types/api/workspace';
 import {
   DropdownMenu,
@@ -12,13 +13,13 @@ import { MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EditWorkspaceModal } from './edit-workspace-modal';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import DestructiveActionConfirmationModal from '@/components/common/destructive-action-confirmation-dialog';
 
 export interface WorkspaceListItemProps {
   workspace: Workspace;
   onStart: (id: string) => void;
   onStop: (id: string) => void;
+  projectId: string;
 }
 
 const statusVariant: Record<
@@ -37,6 +38,7 @@ function WorkspaceListItem({
   workspace,
   onStart,
   onStop,
+  projectId,
 }: WorkspaceListItemProps) {
   const { id, name, status, ide, cpu_millicores, memory_mb } = workspace;
 
@@ -46,8 +48,6 @@ function WorkspaceListItem({
     <>
       <Card
         className={cn(
-          'flex h-full w-full max-w-sm flex-col gap-4 p-4',
-          status === 'Running'
           'max-w-sm w-full h-full flex flex-col gap-4 p-4',
           status.toLowerCase() === 'running'
             ? 'border-accent-border hover:border-accent-border-hover'
@@ -55,12 +55,10 @@ function WorkspaceListItem({
         )}
         title={name}
         description={
-          <div className='flex flex-col gap-2'>
+          <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+            <span>{ide}</span>
             <span>
-              {environment.name} on {hardware.tier}
-            </span>
-            <span className='text-xs'>
-              Last started: {new Date(lastStarted).toLocaleString()}
+              {cpu_millicores / 1000} vCPUs, {memory_mb / 1024} GB RAM
             </span>
           </div>
         }
@@ -103,7 +101,15 @@ function WorkspaceListItem({
             </DropdownMenu>
           </div>
         }
-        footer={<></>}
+        footer={
+          status.toLowerCase() === 'running' ? (
+            <Button asChild>
+              <Link to={`/projects/${projectId}/workspaces/${id}`}>Connect</Link>
+            </Button>
+          ) : (
+            <div />
+          )
+        }
         footerAction={<Badge variant={statusVariant[status]}>{status}</Badge>}
       />
       <EditWorkspaceModal

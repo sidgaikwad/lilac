@@ -43,6 +43,7 @@ function ProjectWorkspacesPage() {
           workspaces={workspaces || []}
           onStartWorkspace={(id) => console.log('Start:', id)}
           onStopWorkspace={(id) => console.log('Stop:', id)}
+          projectId={projectId!}
         />
       </ContainerContent>
     </Container>
