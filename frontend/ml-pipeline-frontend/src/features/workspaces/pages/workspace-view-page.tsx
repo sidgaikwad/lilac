@@ -5,7 +5,7 @@ function WorkspaceViewPage() {
   const { projectId, workspaceId } = useParams<{ projectId: string; workspaceId: string }>();
   const { data, isLoading } = useWorkspaceConnection(projectId, workspaceId);
 
-  const iframeUrl = data?.url && data.token ? `${data.url}/lab?token=${data.token}` : null;
+  const iframeUrl = data?.url && data.token ? `http://${data.url}/lab?token=${data.token}` : null;
 
   return (
     <div className="h-full w-full">

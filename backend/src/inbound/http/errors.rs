@@ -132,6 +132,14 @@ impl From<WorkspaceServiceError> for ApiError {
                 tracing::error!("Provisioner error: {:?}", err);
                 Self::InternalServerError("Something went wrong".to_string())
             }
+            WorkspaceServiceError::ClusterRepository(err) => {
+                tracing::error!("Cluster repository error: {:?}", err);
+                Self::InternalServerError("Something went wrong".to_string())
+            }
+            WorkspaceServiceError::KubeClientFactory(err) => {
+                tracing::error!("Kube client factory error: {:?}", err);
+                Self::InternalServerError("Something went wrong".to_string())
+            }
             WorkspaceServiceError::Unexpected => {
                 Self::InternalServerError("Something went wrong".to_string())
             }

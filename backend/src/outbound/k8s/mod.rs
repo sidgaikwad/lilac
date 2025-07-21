@@ -1,3 +1,4 @@
+pub mod factory;
 use std::time::Duration;
 
 use hyper_util::rt::TokioExecutor;

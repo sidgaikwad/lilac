@@ -25,6 +25,7 @@ use server::{
         },
         provisioner::kubernetes::KubernetesProvisioner,
     },
+    outbound::k8s::factory::KubeClientFactoryImpl,
 };
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -76,7 +77,7 @@ async fn main() -> anyhow::Result<()> {
         kube::Config::infer().await?
     };
     let kube_client = kube::Client::try_from(kube_config)?;
-    let provisioner = Arc::new(KubernetesProvisioner::new(kube_client.clone()));
+    let provisioner = Arc::new(KubernetesProvisioner::new(config.clone()));
 
     // 3. Construct domain services
     let cluster_service = Arc::new(ClusterServiceImpl::new(
@@ -91,7 +92,14 @@ async fn main() -> anyhow::Result<()> {
         dataset_repo.clone(),
         Arc::new(DataSourceTesterImpl),
     ));
-    let workspace_service = Arc::new(WorkspaceServiceImpl::new(workspace_repo, provisioner, kube_client));
+    let kube_client_factory = Arc::new(KubeClientFactoryImpl::new(credential_repo.clone()));
+    let workspace_service = Arc::new(WorkspaceServiceImpl::new(
+        workspace_repo,
+        provisioner,
+        cluster_repo.clone(),
+        kube_client_factory,
+        config.clone(),
+    ));
     let session_store = PostgresSessionStore::new(db_pool.clone());
     session_store.migrate().await?;
     let session_layer = SessionManagerLayer::new(session_store)

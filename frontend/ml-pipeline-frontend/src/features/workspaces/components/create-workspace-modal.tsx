@@ -45,7 +45,7 @@ const CreateWorkspaceModal: React.FC<CreateWorkspaceModalProps> = (
       projectId: props.projectId,
       payload: {
         name: data.name || 'hardcoded-workspace',
-        cluster_id: 'd8f8b8a0-8b8a-4b8a-8b8a-8b8a8b8a8b8a', // TODO: Replace with actual cluster ID
+        cluster_id: data.clusterId,
         ide: data.environment.toLowerCase() as 'jupyterlab' | 'vscode' | 'rstudio',
         image: imageName,
         cpu_millicores: data.cpu * 1000,

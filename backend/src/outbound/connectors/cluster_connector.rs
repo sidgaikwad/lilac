@@ -48,6 +48,9 @@ impl ClusterConnectionTester for ClusterConnectorImpl {
         cluster_config: ClusterConfig,
     ) -> Result<(), ClusterConnectionError> {
         match cluster_config {
+            ClusterConfig::Local => {
+                // No external connection to test for a local cluster
+            }
             ClusterConfig::AwsEks {
                 cluster_name,
                 region,

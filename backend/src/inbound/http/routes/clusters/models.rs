@@ -8,6 +8,8 @@ use crate::domain::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "cluster_type")]
 pub enum HttpClusterConfig {
+    #[serde(rename = "local")]
+    Local,
     #[serde(rename = "aws_eks")]
     AwsEks {
         cluster_name: String,
@@ -18,6 +20,7 @@ pub enum HttpClusterConfig {
 impl From<HttpClusterConfig> for ClusterConfig {
     fn from(value: HttpClusterConfig) -> Self {
         match value {
+            HttpClusterConfig::Local => Self::Local,
             HttpClusterConfig::AwsEks {
                 cluster_name,
                 region,
@@ -32,6 +35,7 @@ impl From<HttpClusterConfig> for ClusterConfig {
 impl From<ClusterConfig> for HttpClusterConfig {
     fn from(value: ClusterConfig) -> Self {
         match value {
+            ClusterConfig::Local => Self::Local,
             ClusterConfig::AwsEks {
                 cluster_name,
                 region,
@@ -102,6 +106,7 @@ pub struct HttpClusterSummary {
 impl From<Cluster> for HttpClusterSummary {
     fn from(cluster: Cluster) -> Self {
         let cluster_type = match cluster.cluster_config {
+            ClusterConfig::Local => "local".to_string(),
             ClusterConfig::AwsEks { .. } => "aws_eks".to_string(),
         };
 

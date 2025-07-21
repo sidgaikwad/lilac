@@ -20,13 +20,16 @@ use crate::domain::{
     },
 };
 
+use crate::config::LilacConfig;
+use std::sync::Arc;
+
 pub struct KubernetesProvisioner {
-    client: Client,
+    config: Arc<LilacConfig>,
 }
 
 impl KubernetesProvisioner {
-    pub fn new(client: Client) -> Self {
-        Self { client }
+    pub fn new(config: Arc<LilacConfig>) -> Self {
+        Self { config }
     }
 }
 
@@ -34,6 +37,7 @@ impl KubernetesProvisioner {
 impl Provisioner for KubernetesProvisioner {
     async fn provision(
         &self,
+        client: &Client,
         workspace_id: WorkspaceId,
         _project_id: ProjectId,
         image: &str,
@@ -42,12 +46,12 @@ impl Provisioner for KubernetesProvisioner {
         _ide: &Ide,
         public_key: &str,
     ) -> Result<String, ProvisionerError> {
-        let namespace = "lilac-dev";
+        let namespace = &self.config.kubernetes_namespace;
         let workspace_name = format!("workspace-{}", workspace_id.0);
         let token = Uuid::new_v4().to_string();
 
         // 1. Create Deployment
-        let deployments: Api<Deployment> = Api::namespaced(self.client.clone(), namespace);
+        let deployments: Api<Deployment> = Api::namespaced(client.clone(), namespace);
 
         let deployment = serde_json::from_value(json!({
             "apiVersion": "apps/v1",
@@ -76,7 +80,7 @@ impl Provisioner for KubernetesProvisioner {
                         "containers": [{
                             "name": "workspace",
                             "image": image,
-                            "imagePullPolicy": "Never",
+                            "imagePullPolicy": "IfNotPresent",
                             "command": [
                                 "start-notebook.sh",
                                 &format!("--ServerApp.token={}", token),
@@ -104,14 +108,18 @@ impl Provisioner for KubernetesProvisioner {
         deployments.create(&PostParams::default(), &deployment).await.map_err(|e| ProvisionerError::Other(e.into()))?;
 
         // 2. Create Service
-        let services: Api<Service> = Api::namespaced(self.client.clone(), namespace);
+        let services: Api<Service> = Api::namespaced(client.clone(), namespace);
 
         let service = serde_json::from_value(json!({
             "apiVersion": "v1",
             "kind": "Service",
             "metadata": {
                 "name": format!("{}-svc", workspace_name),
-                "namespace": namespace
+                "namespace": namespace,
+                "annotations": {
+                    "service.beta.kubernetes.io/aws-load-balancer-scheme": "internet-facing",
+                    "networking.gke.io/load-balancer-type": "External"
+                },
             },
             "spec": {
                 "selector": {

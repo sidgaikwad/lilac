@@ -29,24 +29,24 @@ import { EnvironmentCard } from '@/features/workspaces/components/environment-ca
 import {
   mockEnvironments,
   mockComputeClusters,
-  mockWorkspaceHosts,
 } from '@/features/workspaces/mock-data';
 import { JupyterIcon } from '@/icons/jupyter';
 import { VSCodeIcon } from '@/icons/vscode';
 import { RStudioIcon } from '@/icons/rstudio';
-import { SlurmIcon } from '@/icons/slurm';
 import { RayIcon } from '@/icons/ray';
 import { ComputeClusterCard } from '@/features/workspaces/components/compute-cluster-card';
-import { AwsLogo } from '@/icons/aws';
-import { GoogleIcon } from '@/icons/google';
+import { useListClusters } from '@/services/clusters';
+import { EksLogo } from '@/icons/eks';
+import { ClusterSummary } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const environmentSchema = z.object({
   name: z.string().min(1, 'Workspace name is required'),
   environment: z.string(),
 });
 
-const workspaceHostSchema = z.object({
-  workspaceHost: z.string(),
+const clusterIdSchema = z.object({
+  clusterId: z.string(),
 });
 
 const hardwareSchema = z.object({
@@ -61,7 +61,7 @@ const computeClusterSchema = z.object({
 
 export type CreateWorkspaceFormValues = z.infer<
   typeof environmentSchema &
-    typeof workspaceHostSchema &
+    typeof clusterIdSchema &
     typeof hardwareSchema &
     typeof computeClusterSchema
 >;
@@ -75,9 +75,9 @@ const { useStepper, utils } = defineStepper(
     schema: environmentSchema,
   },
   {
-    id: 'workspaceHost',
-    label: 'Workspace Host',
-    schema: workspaceHostSchema,
+    id: 'cluster',
+    label: 'Cluster',
+    schema: clusterIdSchema,
   },
   {
     id: 'hardware',
@@ -170,7 +170,7 @@ export function CreateWorkspaceForm({ onSubmit }: CreateWorkspaceFormProps) {
                     {stepper.current.id === step.id &&
                       stepper.switch({
                         environment: () => <EnvironmentStep />,
-                        workspaceHost: () => <WorkspaceHostStep />,
+                        cluster: () => <ClusterStep />,
                         hardware: () => <HardwareStep />,
                         compute: () => <ComputeStep />,
                       })}
@@ -260,25 +260,32 @@ function EnvironmentStep() {
   );
 }
 
-function WorkspaceHostStep() {
+function ClusterStep() {
   const { control, register } = useFormContext<CreateWorkspaceFormValues>();
+  const { data: clusters, isLoading } = useListClusters();
 
-  const getIcon = (icon: string) => {
-    switch (icon) {
-      case 'aws-icon':
-        return <AwsLogo className="size-12" />;
-      case 'gcp-icon':
-        return <GoogleIcon />;
-      case 'slurm-icon':
-        return <SlurmIcon className="size-12" />;
+  const getIcon = (cluster: ClusterSummary) => {
+    switch (cluster.clusterType) {
+      case 'aws_eks':
+        return <EksLogo className="size-12" />;
       default:
         return null;
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <FormField
-      name={register('workspaceHost').name}
+      name={register('clusterId').name}
       control={control}
       render={({ field }) => (
         <FormItem className="space-y-3">
@@ -289,13 +296,13 @@ function WorkspaceHostStep() {
               defaultValue={field.value}
               className="grid grid-cols-2 gap-4"
             >
-              {mockWorkspaceHosts.map((host) => (
+              {clusters?.map((cluster) => (
                 <EnvironmentCard
-                  key={host.name}
-                  icon={getIcon(host.icon)}
-                  title={host.name}
-                  description={host.description}
-                  value={host.name}
+                  key={cluster.clusterId}
+                  icon={getIcon(cluster)}
+                  title={cluster.clusterName}
+                  description={cluster.clusterDescription || ''}
+                  value={cluster.clusterId}
                   className="h-full w-full"
                 />
               ))}

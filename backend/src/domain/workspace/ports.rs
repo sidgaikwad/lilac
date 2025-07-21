@@ -43,10 +43,13 @@ pub enum ProvisionerError {
     Other(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
 
+use kube::Client;
+
 #[async_trait]
 pub trait Provisioner: Send + Sync {
     async fn provision(
         &self,
+        client: &Client,
         workspace_id: WorkspaceId,
         project_id: ProjectId,
         image: &str,

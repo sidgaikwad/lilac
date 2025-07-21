@@ -46,6 +46,7 @@ impl From<ClusterId> for Uuid {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ClusterConfig {
+    Local,
     AwsEks {
         cluster_name: String,
         region: String,

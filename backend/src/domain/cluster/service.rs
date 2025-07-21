@@ -106,6 +106,7 @@ impl<R: ClusterRepository, C: CredentialRepository, T: ClusterConnectionTester> 
             .get_credential_by_id(&req.credential_id)
             .await?;
         match req.clone().cluster_config {
+            ClusterConfig::Local => Ok(self.cluster_repo.create_cluster(req).await?),
             ClusterConfig::AwsEks { .. } => {
                 match credentials.credentials {
                     Credentials::Aws { .. } => Ok(self.cluster_repo.create_cluster(req).await?), // _ => Err(ClusterServiceError::IncorrectCredentialsType)

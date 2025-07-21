@@ -76,6 +76,12 @@ pub struct LilacConfig {
     pub log_format: LogFormat,
     #[serde(default)]
     pub log_level: LogLevel,
+    #[serde(default = "default_kubernetes_namespace")]
+    pub kubernetes_namespace: String,
+}
+
+fn default_kubernetes_namespace() -> String {
+    "lilac".to_string()
 }
 
 impl LilacConfig {
