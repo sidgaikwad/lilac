@@ -4,7 +4,6 @@ output/
 output_images/
 .env
 backend/data-pipeline/job_data
-*.png
 
 *.pem
 *.tgz

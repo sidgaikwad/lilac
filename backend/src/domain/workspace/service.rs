@@ -168,6 +168,38 @@ impl WorkspaceService for WorkspaceServiceImpl {
                                             }
                                         }
                                     }
+                                },
+                                crate::domain::cluster::models::ClusterConfig::GcpGke { .. } => {
+                                    if let Some(status) = service.status {
+                                        if let Some(ingress) = status.load_balancer {
+                                            if let Some(ingress_point) =
+                                                ingress.ingress.as_ref().and_then(|i| i.get(0))
+                                            {
+                                                let url = ingress_point
+                                                    .hostname
+                                                    .clone()
+                                                    .or(ingress_point.ip.clone())
+                                                    .unwrap_or_default();
+                                                if !url.is_empty() {
+                                                    if let Err(e) = repository
+                                                        .update_connection_details(
+                                                            workspace_clone.id,
+                                                            super::models::WorkspaceStatus::Running,
+                                                            &url,
+                                                            &token,
+                                                        )
+                                                        .await
+                                                    {
+                                                        eprintln!(
+                                                            "Failed to update workspace status: {:?}",
+                                                            e
+                                                        );
+                                                    }
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

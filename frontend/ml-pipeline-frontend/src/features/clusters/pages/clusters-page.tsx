@@ -48,38 +48,40 @@ function ClustersPage() {
       </ContainerHeader>
 
       <ContainerContent>
-        {isLoading && (
-          <div className='space-y-4'>
-            {[...Array(3)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className='h-6 w-1/2' />
-                </CardHeader>
-                <CardContent>
-                  <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
-                    {[...Array(5)].map((_, j) => (
-                      <Skeleton
-                        key={j}
-                        className='bg-muted aspect-square h-auto w-full'
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-        {clusters !== undefined && clusters.length > 0 ? (
-          clusters.map((cluster) => (
-            <ClusterCard key={cluster.clusterId} cluster={cluster} />
-          ))
-        ) : (
-          <EmptyCardSection
-            title={'No clusters'}
-            buttonText={'Create Cluster'}
-            onClick={() => setOpen(true)}
-          />
-        )}
+        <div className='flex flex-row space-x-4'>
+          {isLoading && (
+            <div className='space-y-4'>
+              {[...Array(3)].map((_, i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className='h-6 w-1/2' />
+                  </CardHeader>
+                  <CardContent>
+                    <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
+                      {[...Array(5)].map((_, j) => (
+                        <Skeleton
+                          key={j}
+                          className='bg-muted aspect-square h-auto w-full'
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+          {clusters !== undefined && clusters.length > 0 ? (
+            clusters.map((cluster) => (
+              <ClusterCard key={cluster.clusterId} cluster={cluster} />
+            ))
+          ) : (
+            <EmptyCardSection
+              title={'No clusters'}
+              buttonText={'Create Cluster'}
+              onClick={() => setOpen(true)}
+            />
+          )}
+        </div>
       </ContainerContent>
     </Container>
   );

@@ -18,7 +18,7 @@ pub enum HttpClusterConfig {
     #[serde(rename = "gcp_gke")]
     GcpGke {
         cluster_name: String,
-        location: String,
+        region: String,
         project_id: String,
     },
 }
@@ -36,11 +36,11 @@ impl From<HttpClusterConfig> for ClusterConfig {
             },
             HttpClusterConfig::GcpGke {
                 cluster_name,
-                location,
+                region,
                 project_id,
             } => Self::GcpGke {
                 cluster_name,
-                location,
+                region,
                 project_id,
             },
         }
@@ -60,11 +60,11 @@ impl From<ClusterConfig> for HttpClusterConfig {
             },
             ClusterConfig::GcpGke {
                 cluster_name,
-                location,
+                region,
                 project_id,
             } => Self::GcpGke {
                 cluster_name,
-                location,
+                region,
                 project_id,
             },
         }

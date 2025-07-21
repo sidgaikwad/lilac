@@ -32,12 +32,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { GcpLogo } from '@/icons';
 
 const clusterSchema = z.object({
   clusterName: z.string(),
   clusterDescription: z.string().optional(),
   clusterConfig: z.object({
-    clusterType: z.enum(['aws_eks']),
+    clusterType: z.enum(['aws_eks', 'gcp_gke']),
   }),
 });
 const clusterTypeSchema = z.object({
@@ -48,6 +49,12 @@ const clusterTypeSchema = z.object({
       clusterType: z.literal('aws_eks'),
       clusterName: z.string(),
       region: z.string(),
+    }),
+    z.object({
+      clusterType: z.literal('gcp_gke'),
+      clusterName: z.string(),
+      region: z.string(),
+      projectId: z.string(),
     }),
   ]),
   credentialId: z.string(),
@@ -153,6 +160,8 @@ export function CreateClusterForm(props: ConnectClusterFormProps) {
                           switch (formValues.clusterConfig?.clusterType) {
                             case 'aws_eks':
                               return <ConfigureAwsCluster />;
+                            case 'gcp_gke':
+                              return <ConfigureGcpCluster />;
                           }
                         },
                       })}
@@ -234,7 +243,7 @@ function ConfigureClusterDetails() {
                 <RadioGroupPrimitive.Root
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className='grid grid-cols-2 gap-4'
+                  className='grid grid-cols-3 gap-4'
                 >
                   <FormItem className='flex items-center gap-3'>
                     <div>
@@ -250,6 +259,24 @@ function ConfigureClusterDetails() {
                           icon={<EksLogo className='size-12 rounded-sm' />}
                           title='AWS EKS'
                           description='Connect an EKS cluster.'
+                        />
+                      </RadioGroupPrimitive.Item>
+                    </div>
+                  </FormItem>
+                  <FormItem className='flex items-center gap-3'>
+                    <div>
+                      <RadioGroupPrimitive.Item
+                        key='gcp_gke'
+                        value='gcp_gke'
+                        className={cn(
+                          'group relative rounded-xl text-start',
+                          'data-[state=checked]:ring-accent-border-hover data-[state=checked]:ring-2'
+                        )}
+                      >
+                        <Card
+                          icon={<GcpLogo className='size-12 rounded-sm' />}
+                          title='GCP GKE'
+                          description='Connect an GKE cluster.'
                         />
                       </RadioGroupPrimitive.Item>
                     </div>
@@ -325,6 +352,103 @@ function ConfigureAwsCluster() {
                       ) : (
                         credentials
                           ?.filter((cred) => cred.credentialType === 'aws')
+                          .map((cred) => (
+                            <SelectItem value={cred.credentialId}>
+                              <div className='flex flex-col'>
+                                {cred.credentialName}
+                              </div>
+                            </SelectItem>
+                          ))
+                      )}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+            </FormItem>
+          );
+        }}
+      />
+    </div>
+  );
+}
+
+
+function ConfigureGcpCluster() {
+  const { register } = useFormContext<ClusterTypeFormValues>();
+  const { data: credentials, isLoading } = useListCredentials();
+
+  return (
+    <div className='space-y-4 text-start'>
+      <FormField
+        name={register('clusterConfig.clusterName').name}
+        render={({ field }) => {
+          return (
+            <FormItem>
+              <FormLabel>GKE Cluster Name</FormLabel>
+              <FormDescription>
+                The name of your GKE cluster in GCP.
+              </FormDescription>
+              <FormMessage />
+              <FormControl>
+                <Input {...field} placeholder='eks-cluster'></Input>
+              </FormControl>
+            </FormItem>
+          );
+        }}
+      />
+      <FormField
+        name={register('clusterConfig.region').name}
+        render={({ field }) => {
+          return (
+            <FormItem>
+              <FormLabel>GCP Region</FormLabel>
+              <FormDescription>The region your cluster is in.</FormDescription>
+              <FormMessage />
+              <FormControl>
+                <Input {...field} placeholder='us-central1'></Input>
+              </FormControl>
+            </FormItem>
+          );
+        }}
+      />
+      <FormField
+        name={register('clusterConfig.projectId').name}
+        render={({ field }) => {
+          return (
+            <FormItem>
+              <FormLabel>Project ID</FormLabel>
+              <FormDescription>The project ID the cluster belongs to.</FormDescription>
+              <FormMessage />
+              <FormControl>
+                <Input {...field} placeholder='example-project'></Input>
+              </FormControl>
+            </FormItem>
+          );
+        }}
+      />
+      <FormField
+        name={register('credentialId').name}
+        render={({ field }) => {
+          return (
+            <FormItem>
+              <FormLabel>Credentials</FormLabel>
+              <FormDescription>
+                The GCP credentials to use to connect to your cluster.
+              </FormDescription>
+              <FormMessage />
+              <FormControl>
+                <Select {...field} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select Credentials' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>GCP Credentials</SelectLabel>
+                      {isLoading ? (
+                        <Spinner />
+                      ) : (
+                        credentials
+                          ?.filter((cred) => cred.credentialType === 'gcp')
                           .map((cred) => (
                             <SelectItem value={cred.credentialId}>
                               <div className='flex flex-col'>

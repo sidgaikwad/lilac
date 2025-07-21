@@ -2,6 +2,7 @@ export * from './aws';
 export * from './cpu';
 export * from './gcp';
 export * from './github';
+export * from './gke';
 export * from './google';
 export * from './gpu';
 export * from './jupyter';

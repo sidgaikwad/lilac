@@ -10,7 +10,7 @@ use crate::{
             ports::{CredentialRepository, CredentialRepositoryError},
         },
     },
-    outbound::aws::AwsEksAdapter,
+    outbound::{aws::AwsEksAdapter, gcp::GkeAdapter},
 };
 use hyper_util::rt::TokioExecutor;
 use kube::{client::ConfigExt, Config};
@@ -79,6 +79,26 @@ impl KubeClientFactory for KubeClientFactoryImpl {
                             AwsEksAdapter::new(access_key, secret_key, Some(region.clone()));
                         aws_adapter.get_eks_kube_config(cluster_name).await?
                     }
+                    _ => return Err(KubeClientFactoryError::CredentialError("incorrect credential type".into())),
+                }
+            },
+            ClusterConfig::GcpGke {
+                cluster_name,
+                region,
+                project_id,
+            } => {
+                let credential = self
+                    .credential_repository
+                    .get_credential_by_id(&cluster.credential_id)
+                    .await?;
+
+                match credential.credentials {
+                    Credentials::Gcp(google_creds) => {
+                        let gcp_adapter =
+                            GkeAdapter::new(google_creds).await?;
+                        gcp_adapter.get_gke_kube_config(&project_id, &region, &cluster_name).await?
+                    }
+                    _ => return Err(KubeClientFactoryError::CredentialError("incorrect credential type".into())),
                 }
             }
         };

@@ -89,9 +89,9 @@ impl ClusterConnectionTester for ClusterConnectorImpl {
             ClusterConfig::GcpGke {
                 project_id,
                 cluster_name,
-                location,
+                region,
             } => {
-                self.test_gke_connection(project_id, cluster_name, location, credentials)
+                self.test_gke_connection(project_id, cluster_name, region, credentials)
                     .await?
             }
         }

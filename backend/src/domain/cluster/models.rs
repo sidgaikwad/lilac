@@ -53,7 +53,7 @@ pub enum ClusterConfig {
     },
     GcpGke {
         project_id: String,
-        location: String,
+        region: String,
         cluster_name: String,
     },
 }
