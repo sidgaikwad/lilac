@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use thiserror::Error;
-use kube::{Api, Client};
+use kube::Api;
 use k8s_openapi::api::core::v1::Service;
 use tokio::time::{sleep, Duration};
 

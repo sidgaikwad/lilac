@@ -16,7 +16,7 @@ use crate::{
         },
     },
     inbound::http::{
-        routes::workspaces::models::{CreateWorkspacePayload, WorkspaceResponse, ConnectionDetailsResponse},
+        routes::workspaces::models::{CreateWorkspacePayload, WorkspaceResponse},
         errors::ApiError,
     },
 };
@@ -48,7 +48,6 @@ pub async fn create_workspace_handler(
     Ok((StatusCode::CREATED, Json(WorkspaceResponse::from(workspace))))
 }
 
-use crate::domain::user::models::UserId;
 
 pub async fn list_workspaces_handler(
     State(workspace_service): State<Arc<dyn WorkspaceService>>,

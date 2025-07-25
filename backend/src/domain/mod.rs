@@ -5,6 +5,7 @@ pub mod cluster;
 pub mod credentials;
 pub mod dataset;
 pub mod project;
+pub mod training_job;
 pub mod user;
 pub mod workspace;
 

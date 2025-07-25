@@ -8,7 +8,7 @@ use server::{
         auth::service::AuthServiceImpl, cluster::service::ClusterServiceImpl,
         credentials::service::CredentialServiceImpl, dataset::service::DatasetServiceImpl,
         project::service::ProjectServiceImpl, user::service::UserServiceImpl,
-        workspace::service::WorkspaceServiceImpl,
+        workspace::service::WorkspaceServiceImpl, training_job::service::TrainingJobServiceImpl,
     },
     inbound::http::{AppState, HttpServer},
     outbound::{
@@ -22,6 +22,7 @@ use server::{
             project_repository::PostgresProjectRepository,
             session_repository::PostgresSessionStore, user_repository::PostgresUserRepository,
             workspace_repository::PostgresWorkspaceRepository,
+            training_job_repository::PostgresTrainingJobRepository,
         },
         provisioner::kubernetes::KubernetesProvisioner,
     },
@@ -69,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
     let jwt_manager = Arc::new(JwtManager::new(config.secret_key.expose_secret()));
     let conn_tester = Arc::new(ClusterConnectorImpl::new());
     let workspace_repo = Arc::new(PostgresWorkspaceRepository::new(db_pool.clone()));
+    let training_job_repo = Arc::new(PostgresTrainingJobRepository::new(db_pool.clone()));
 
     let kube_config = if std::env::var("APP_ENV").unwrap_or_else(|_| "local".to_string()) == "local" {
         let kubeconfig = Kubeconfig::read_from("kubeconfig.yaml")?;
@@ -108,6 +110,7 @@ async fn main() -> anyhow::Result<()> {
         .with_expiry(Expiry::OnInactivity(time::Duration::minutes(30)));
 
     let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), jwt_manager));
+    let training_job_service = Arc::new(TrainingJobServiceImpl::new(training_job_repo.clone()));
 
     // 4. Construct and run inbound adapter (HTTP server)
     let app_state = AppState {
@@ -119,6 +122,7 @@ async fn main() -> anyhow::Result<()> {
         dataset_service,
         auth_service,
         workspace_service,
+        training_job_service,
     };
     let http_server = HttpServer::new(app_state, session_layer, config.http_port).await?;
     http_server.run().await

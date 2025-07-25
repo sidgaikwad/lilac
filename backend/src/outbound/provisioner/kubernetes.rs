@@ -5,10 +5,9 @@ use kube::{
 };
 use k8s_openapi::api::{
     apps::v1::Deployment,
-    core::v1::{Service, Secret},
+    core::v1::Service,
 };
 use serde_json::json;
-use std::collections::BTreeMap;
 use uuid::Uuid;
 
 
