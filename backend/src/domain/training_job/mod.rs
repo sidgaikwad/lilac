@@ -5,41 +5,55 @@ pub mod service;
 #[cfg(test)]
 mod tests {
     use super::{
-        models::{GetTrainingJobsFilters, TrainingJob, TrainingJobStatus},
+        models::{GetTrainingJobsFilters, TrainingJobStatus},
         ports::MockTrainingJobRepository,
         service::TrainingJobServiceImpl,
     };
-    use crate::domain::training_job::ports::TrainingJobService;
+    use crate::{
+        domain::training_job::ports::TrainingJobService,
+        inbound::http::routes::training_jobs::models::{
+            ClusterTargetRequest, CreateTrainingJobRequest,
+        },
+    };
+    use mockall::predicate::*;
     use std::sync::Arc;
     use uuid::Uuid;
-    use mockall::predicate::*;
 
     #[tokio::test]
     async fn test_create_training_job() {
         let mut mock_repo = MockTrainingJobRepository::new();
         let cluster_id = Uuid::new_v4();
+        let request = CreateTrainingJobRequest {
+            name: "test".to_string(),
+            definition: "definition".to_string(),
+            priority: 100,
+            resource_requirements: serde_json::json!({}),
+            targets: vec![ClusterTargetRequest {
+                cluster_id,
+                priority: 1,
+            }],
+        };
 
         mock_repo
             .expect_create()
-            .withf(|_| true)
+            .withf(move |job, targets| {
+                job.name == "test"
+                    && targets.len() == 1
+                    && targets[0].cluster_id == cluster_id
+            })
             .times(1)
-            .returning(|_| Ok(()));
+            .returning(|_, _| Ok(()));
 
         let service = TrainingJobServiceImpl::new(Arc::new(mock_repo));
-        let result = service
-            .create(
-                "test".to_string(),
-                "definition".to_string(),
-                cluster_id,
-            )
-            .await;
+        let result = service.create(request).await;
 
         assert!(result.is_ok());
-        let training_job = result.unwrap();
-        assert_eq!(training_job.name, "test");
-        assert_eq!(training_job.definition, "definition");
-        assert_eq!(training_job.cluster_id, cluster_id);
-        assert_eq!(training_job.status, TrainingJobStatus::Queued);
+        let training_job_with_targets = result.unwrap();
+        assert_eq!(training_job_with_targets.job.name, "test");
+        assert_eq!(training_job_with_targets.job.definition, "definition");
+        assert_eq!(training_job_with_targets.job.status, TrainingJobStatus::Queued);
+        assert_eq!(training_job_with_targets.targets.len(), 1);
+        assert_eq!(training_job_with_targets.targets[0].cluster_id, cluster_id);
     }
 
 

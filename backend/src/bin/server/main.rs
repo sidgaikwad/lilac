@@ -6,15 +6,20 @@ use server::{
     config::{LilacConfig, LogFormat},
     domain::{
         auth::service::AuthServiceImpl, cluster::service::ClusterServiceImpl,
-        credentials::service::CredentialServiceImpl, dataset::service::DatasetServiceImpl,
-        project::service::ProjectServiceImpl, user::service::UserServiceImpl,
-        workspace::service::WorkspaceServiceImpl, training_job::service::TrainingJobServiceImpl,
+        credentials::service::CredentialServiceImpl,
+        dataset::service::DatasetServiceImpl,
+        project::service::ProjectServiceImpl,
+        scheduler::{manager::ComputePlatformManager, service::SchedulerService},
+        user::service::UserServiceImpl,
+        workspace::service::WorkspaceServiceImpl,
+        training_job::service::TrainingJobServiceImpl,
     },
     inbound::http::{AppState, HttpServer},
     outbound::{
         connectors::ClusterConnectorImpl,
         data_source::adapter::DataSourceTesterImpl,
         jwt::JwtManager,
+        k8s::{factory::KubeClientFactoryImpl, plugin::KubernetesPlugin},
         persistence::postgres::{
             cluster_repository::PostgresClusterRepository,
             credential_repository::PostgresCredentialRepository,
@@ -26,7 +31,6 @@ use server::{
         },
         provisioner::kubernetes::KubernetesProvisioner,
     },
-    outbound::k8s::factory::KubeClientFactoryImpl,
 };
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -99,7 +103,7 @@ async fn main() -> anyhow::Result<()> {
         workspace_repo,
         provisioner,
         cluster_repo.clone(),
-        kube_client_factory,
+        kube_client_factory.clone(),
         config.clone(),
     ));
     let session_store = PostgresSessionStore::new(db_pool.clone());
@@ -112,7 +116,29 @@ async fn main() -> anyhow::Result<()> {
     let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), jwt_manager));
     let training_job_service = Arc::new(TrainingJobServiceImpl::new(training_job_repo.clone()));
 
-    // 4. Construct and run inbound adapter (HTTP server)
+    // 4. Construct Scheduler
+    let k8s_plugin = Arc::new(KubernetesPlugin::new(
+        kube_client_factory.clone(),
+        cluster_repo.clone(),
+    ));
+    let mut platform_manager = ComputePlatformManager::new(cluster_repo.clone());
+    platform_manager.register(k8s_plugin);
+
+    let scheduler_service = Arc::new(SchedulerService::new(
+        Arc::new(platform_manager),
+        training_job_repo.clone(),
+    ));
+
+    // 5. Spawn background tasks
+    let scheduler_handle = tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
+        loop {
+            interval.tick().await;
+            scheduler_service.run_cycle().await;
+        }
+    });
+
+    // 6. Construct and run inbound adapter (HTTP server)
     let app_state = AppState {
         config: config.clone(),
         credential_service,
@@ -125,5 +151,12 @@ async fn main() -> anyhow::Result<()> {
         training_job_service,
     };
     let http_server = HttpServer::new(app_state, session_layer, config.http_port).await?;
-    http_server.run().await
+    
+    // Run the server and wait for it and the scheduler to complete
+    tokio::select! {
+        _ = http_server.run() => {},
+        _ = scheduler_handle => {},
+    }
+
+    Ok(())
 }

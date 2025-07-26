@@ -64,6 +64,7 @@ pub struct Cluster {
     pub name: String,
     pub description: Option<String>,
     pub cluster_config: ClusterConfig,
+    pub platform_type: String,
     pub credential_id: CredentialId,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

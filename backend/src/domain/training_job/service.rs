@@ -3,9 +3,13 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use super::{
-    models::{GetTrainingJobsFilters, TrainingJob, TrainingJobStatus},
+    models::{
+        GetTrainingJobsFilters, TrainingJob, TrainingJobClusterTarget, TrainingJobStatus,
+        TrainingJobWithTargets,
+    },
     ports::{TrainingJobRepository, TrainingJobService},
 };
+use crate::inbound::http::routes::training_jobs::models::CreateTrainingJobRequest;
 use async_trait::async_trait;
 
 pub struct TrainingJobServiceImpl {
@@ -20,23 +24,42 @@ impl TrainingJobServiceImpl {
 
 #[async_trait]
 impl TrainingJobService for TrainingJobServiceImpl {
-    async fn create(&self, name: String, definition: String, cluster_id: Uuid) -> Result<TrainingJob, anyhow::Error> {
+    async fn create(
+        &self,
+        request: CreateTrainingJobRequest,
+    ) -> Result<TrainingJobWithTargets, anyhow::Error> {
+        let job_id = Uuid::new_v4();
+        let now = chrono::Utc::now();
+
         let training_job = TrainingJob {
-            id: Uuid::new_v4(),
-            name,
-            definition,
+            id: job_id,
+            name: request.name,
+            definition: request.definition,
             status: TrainingJobStatus::Queued,
-            cluster_id,
             instance_id: None,
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
+            priority: request.priority,
+            resource_requirements: serde_json::from_value(request.resource_requirements)?,
+            created_at: now,
+            updated_at: now,
         };
 
-        self.repository.create(&training_job).await?;
+        let targets: Vec<TrainingJobClusterTarget> = request
+            .targets
+            .into_iter()
+            .map(|t| TrainingJobClusterTarget {
+                job_id,
+                cluster_id: t.cluster_id,
+                priority: t.priority,
+            })
+            .collect();
 
-        Ok(training_job)
+        self.repository.create(&training_job, &targets).await?;
+
+        Ok(TrainingJobWithTargets {
+            job: training_job,
+            targets,
+        })
     }
-
 
     async fn get_training_jobs(
         &self,

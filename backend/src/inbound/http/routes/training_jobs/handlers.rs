@@ -12,13 +12,13 @@ pub async fn create_training_job(
     State(state): State<AppState>,
     Json(request): Json<CreateTrainingJobRequest>,
 ) -> impl IntoResponse {
-    let training_job = state
+    let training_job_with_targets = state
         .training_job_service
-        .create(request.name, request.definition, request.cluster_id)
+        .create(request)
         .await
         .unwrap();
 
-    (StatusCode::CREATED, Json(CreateTrainingJobResponse::from(training_job)))
+    (StatusCode::CREATED, Json(CreateTrainingJobResponse::from(training_job_with_targets)))
 }
 
 use crate::domain::training_job::models::GetTrainingJobsFilters;

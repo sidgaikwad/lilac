@@ -25,6 +25,7 @@ struct ClusterRecord {
     cluster_description: Option<String>,
     credential_id: uuid::Uuid,
     cluster_config: serde_json::Value,
+    platform_type: String,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -41,6 +42,7 @@ impl TryFrom<ClusterRecord> for Cluster {
             description: record.cluster_description,
             credential_id: record.credential_id.into(),
             cluster_config,
+            platform_type: record.platform_type,
             created_at: record.created_at,
             updated_at: record.updated_at,
         })
@@ -57,7 +59,7 @@ impl ClusterRepository for PostgresClusterRepository {
 
         let record = sqlx::query_as!(
             ClusterRecord,
-            "INSERT INTO clusters (cluster_id, cluster_name, cluster_description, credential_id, cluster_config) VALUES ($1, $2, $3, $4, $5) RETURNING cluster_id, cluster_name, cluster_description, credential_id, cluster_config, created_at, updated_at",
+            "INSERT INTO clusters (cluster_id, cluster_name, cluster_description, credential_id, cluster_config, platform_type) VALUES ($1, $2, $3, $4, $5, 'kubernetes') RETURNING cluster_id, cluster_name, cluster_description, credential_id, cluster_config, platform_type, created_at, updated_at",
             cluster_id.0,
             req.name,
             req.description,
@@ -76,7 +78,7 @@ impl ClusterRepository for PostgresClusterRepository {
         let record = sqlx::query_as!(
             ClusterRecord,
             r#"
-            SELECT cluster_id, cluster_name, cluster_description, credential_id, cluster_config, created_at, updated_at
+            SELECT cluster_id, cluster_name, cluster_description, credential_id, cluster_config, platform_type, created_at, updated_at
             FROM clusters
             WHERE cluster_id = $1
             "#,
@@ -98,7 +100,7 @@ impl ClusterRepository for PostgresClusterRepository {
         let records = sqlx::query_as!(
             ClusterRecord,
             r#"
-            SELECT cluster_id, cluster_name, cluster_description, credential_id, cluster_config, created_at, updated_at
+            SELECT cluster_id, cluster_name, cluster_description, credential_id, cluster_config, platform_type, created_at, updated_at
             FROM clusters
             "#,
         )
