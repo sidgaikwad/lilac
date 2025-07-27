@@ -39,6 +39,7 @@ impl TrainingJobService for TrainingJobServiceImpl {
             instance_id: None,
             priority: request.priority,
             resource_requirements: serde_json::from_value(request.resource_requirements)?,
+            scheduled_cluster_id: None,
             created_at: now,
             updated_at: now,
         };
@@ -71,6 +72,11 @@ impl TrainingJobService for TrainingJobServiceImpl {
     async fn update_status(&self, id: Uuid, status: TrainingJobStatus) -> Result<(), anyhow::Error> {
         self.repository.update_status(id, status).await
     }
+
+    async fn mark_as_starting(&self, id: Uuid, cluster_id: Uuid) -> Result<(), anyhow::Error> {
+        self.repository.mark_as_starting(id, cluster_id).await
+    }
+
     async fn schedule(&self, id: Uuid) -> Result<(), anyhow::Error> {
         // TODO: Implement scheduling logic
         self.repository.schedule(id).await

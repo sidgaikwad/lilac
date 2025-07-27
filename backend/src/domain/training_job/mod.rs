@@ -27,7 +27,11 @@ mod tests {
             name: "test".to_string(),
             definition: "definition".to_string(),
             priority: 100,
-            resource_requirements: serde_json::json!({}),
+            resource_requirements: serde_json::json!({
+                "cpu_millicores": 1000,
+                "memory_mb": 1024,
+                "gpus": null
+            }),
             targets: vec![ClusterTargetRequest {
                 cluster_id,
                 priority: 1,

@@ -120,6 +120,7 @@ async fn main() -> anyhow::Result<()> {
     let k8s_plugin = Arc::new(KubernetesPlugin::new(
         kube_client_factory.clone(),
         cluster_repo.clone(),
+        training_job_repo.clone(),
     ));
     let mut platform_manager = ComputePlatformManager::new(cluster_repo.clone());
     platform_manager.register(k8s_plugin);

@@ -31,8 +31,8 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
         let mut tx = self.pool.begin().await?;
 
         sqlx::query!(
-            "INSERT INTO training_jobs (id, name, definition, status, instance_id, priority, resource_requirements, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+            "INSERT INTO training_jobs (id, name, definition, status, instance_id, priority, resource_requirements, scheduled_cluster_id, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
             training_job.id,
             training_job.name,
             training_job.definition,
@@ -40,6 +40,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
             training_job.instance_id,
             training_job.priority,
             &serde_json::to_value(&training_job.resource_requirements)?,
+            training_job.scheduled_cluster_id,
             training_job.created_at,
             training_job.updated_at,
         )
@@ -76,12 +77,13 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
             instance_id: Option<Uuid>,
             priority: i32,
             resource_requirements: serde_json::Value,
+            scheduled_cluster_id: Option<Uuid>,
             created_at: chrono::DateTime<chrono::Utc>,
             updated_at: chrono::DateTime<chrono::Utc>,
         }
 
         let mut query = sqlx::QueryBuilder::new(
-            "SELECT id, name, definition, status, instance_id, priority, resource_requirements, created_at, updated_at FROM training_jobs WHERE 1 = 1"
+            "SELECT id, name, definition, status, instance_id, priority, resource_requirements, scheduled_cluster_id, created_at, updated_at FROM training_jobs WHERE 1 = 1"
         );
 
         if let Some(id) = filters.id {
@@ -118,6 +120,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
                     instance_id: row.instance_id,
                     priority: row.priority,
                     resource_requirements,
+                    scheduled_cluster_id: row.scheduled_cluster_id,
                     created_at: row.created_at,
                     updated_at: row.updated_at,
                 })
@@ -140,6 +143,19 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
         Ok(())
     }
 
+    async fn mark_as_starting(&self, id: Uuid, cluster_id: Uuid) -> Result<(), anyhow::Error> {
+        sqlx::query!(
+            "UPDATE training_jobs SET status = 'starting', scheduled_cluster_id = $1, updated_at = $2 WHERE id = $3",
+            cluster_id,
+            chrono::Utc::now(),
+            id
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
     async fn get_queued_jobs_with_targets(
         &self,
     ) -> Result<Vec<TrainingJobWithTargets>, anyhow::Error> {
@@ -152,6 +168,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
             instance_id: Option<Uuid>,
             priority: i32,
             resource_requirements: serde_json::Value,
+            scheduled_cluster_id: Option<Uuid>,
             created_at: chrono::DateTime<chrono::Utc>,
             updated_at: chrono::DateTime<chrono::Utc>,
             target_cluster_id: Option<Uuid>,
@@ -169,6 +186,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
                 tj.instance_id,
                 tj.priority,
                 tj.resource_requirements,
+                tj.scheduled_cluster_id,
                 tj.created_at,
                 tj.updated_at,
                 tct.cluster_id as "target_cluster_id",
@@ -201,7 +219,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
                         crate::domain::training_job::models::ResourceRequirements {
                             cpu_millicores: 0,
                             memory_mb: 0,
-                            gpus: 0,
+                            gpus: None,
                         }
                     });
 
@@ -214,6 +232,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
                         instance_id: row.instance_id,
                         priority: row.priority,
                         resource_requirements,
+                        scheduled_cluster_id: row.scheduled_cluster_id,
                         created_at: row.created_at,
                         updated_at: row.updated_at,
                     },
@@ -233,13 +252,4 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
         Ok(jobs_map.into_values().collect())
     }
 
-    async fn schedule(&self, id: Uuid) -> Result<(), anyhow::Error> {
-        // TODO: Implement schedule logic in db
-        Ok(())
-    }
-
-    async fn post_logs(&self, id: Uuid, logs: String) -> Result<(), anyhow::Error> {
-        // TODO: Implement log ingestion in db
-        Ok(())
-    }
 }

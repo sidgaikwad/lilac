@@ -12,11 +12,26 @@ pub enum TrainingJobStatus {
     Failed,
 }
 
+/// Describes a specific requirement for a GPU.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GpuRequirement {
+    /// The number of GPUs required.
+    pub count: i32,
+    /// The specific model of the GPU (e.g., "A100", "V100", "RTX4090").
+    /// If None, any GPU model is acceptable.
+    pub model: Option<String>,
+    /// The minimum required memory for each GPU in gigabytes (e.g., 40, 80).
+    /// If None, any GPU memory size is acceptable.
+    pub memory_gb: Option<i32>,
+}
+
+/// Represents the computational resources required for a training job.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceRequirements {
     pub cpu_millicores: i32,
     pub memory_mb: i32,
-    pub gpus: i32,
+    /// GPU requirements for the job. If None, the job does not require GPUs.
+    pub gpus: Option<GpuRequirement>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -28,6 +43,7 @@ pub struct TrainingJob {
     pub instance_id: Option<Uuid>,
     pub priority: i32,
     pub resource_requirements: ResourceRequirements,
+    pub scheduled_cluster_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
