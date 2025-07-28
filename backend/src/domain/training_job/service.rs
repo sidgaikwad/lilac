@@ -3,10 +3,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use super::{
-    models::{
-        GetTrainingJobsFilters, TrainingJob, TrainingJobClusterTarget, TrainingJobStatus,
-        TrainingJobWithTargets,
-    },
+    models::{GetTrainingJobsFilters, TrainingJob, TrainingJobStatus},
     ports::{TrainingJobRepository, TrainingJobService},
 };
 use crate::inbound::http::routes::training_jobs::models::CreateTrainingJobRequest;
@@ -27,7 +24,7 @@ impl TrainingJobService for TrainingJobServiceImpl {
     async fn create(
         &self,
         request: CreateTrainingJobRequest,
-    ) -> Result<TrainingJobWithTargets, anyhow::Error> {
+    ) -> Result<TrainingJob, anyhow::Error> {
         let job_id = Uuid::new_v4();
         let now = chrono::Utc::now();
 
@@ -37,29 +34,16 @@ impl TrainingJobService for TrainingJobServiceImpl {
             definition: request.definition,
             status: TrainingJobStatus::Queued,
             instance_id: None,
-            priority: request.priority,
+            queue_id: request.queue_id,
             resource_requirements: serde_json::from_value(request.resource_requirements)?,
             scheduled_cluster_id: None,
             created_at: now,
             updated_at: now,
         };
 
-        let targets: Vec<TrainingJobClusterTarget> = request
-            .targets
-            .into_iter()
-            .map(|t| TrainingJobClusterTarget {
-                job_id,
-                cluster_id: t.cluster_id,
-                priority: t.priority,
-            })
-            .collect();
+        self.repository.create(&training_job).await?;
 
-        self.repository.create(&training_job, &targets).await?;
-
-        Ok(TrainingJobWithTargets {
-            job: training_job,
-            targets,
-        })
+        Ok(training_job)
     }
 
     async fn get_training_jobs(
@@ -77,10 +61,6 @@ impl TrainingJobService for TrainingJobServiceImpl {
         self.repository.mark_as_starting(id, cluster_id).await
     }
 
-    async fn schedule(&self, id: Uuid) -> Result<(), anyhow::Error> {
-        // TODO: Implement scheduling logic
-        self.repository.schedule(id).await
-    }
 
     async fn post_logs(&self, id: Uuid, logs: String) -> Result<(), anyhow::Error> {
         self.repository.post_logs(id, logs).await

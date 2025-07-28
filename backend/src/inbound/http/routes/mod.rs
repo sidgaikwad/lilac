@@ -3,6 +3,7 @@ pub mod clusters;
 pub mod credentials;
 pub mod datasets;
 pub mod projects;
+pub mod queues;
 pub mod users;
 pub mod workspaces;
 pub mod training_jobs;

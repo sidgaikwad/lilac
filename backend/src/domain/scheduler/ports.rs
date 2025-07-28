@@ -1,9 +1,13 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::domain::training_job::models::TrainingJob;
+use crate::domain::training_job::models::{ResourceRequirements, TrainingJob};
 
-use super::models::ClusterSnapshot;
+#[derive(Debug, Clone)]
+pub struct SchedulingDecision {
+    pub cluster_id: Uuid,
+    pub node_name: String,
+}
 
 #[derive(Debug, Default)]
 pub struct PlatformCapabilities {
@@ -14,15 +18,15 @@ pub struct PlatformCapabilities {
 pub trait ComputePlatform: Send + Sync {
     fn platform_type(&self) -> &'static str;
     fn capabilities(&self) -> PlatformCapabilities;
-    async fn get_cluster_snapshot(
+    async fn find_suitable_node(
         &self,
         cluster_id: &Uuid,
-    ) -> Result<ClusterSnapshot, anyhow::Error>;
+        requirements: &ResourceRequirements,
+    ) -> Result<Option<SchedulingDecision>, anyhow::Error>;
     async fn allocate_job(
         &self,
         job: &TrainingJob,
-        cluster_id: &Uuid,
-        node_name: &str,
+        decision: &SchedulingDecision,
     ) -> Result<(), anyhow::Error>;
     async fn deallocate_job(&self, job_id: &Uuid) -> Result<(), anyhow::Error>;
 }

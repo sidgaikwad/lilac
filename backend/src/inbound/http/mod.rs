@@ -12,9 +12,9 @@ use crate::{
         auth::service::AuthService, cluster::service::ClusterService,
         credentials::service::CredentialService, dataset::service::DatasetService,
         project::service::ProjectService, user::service::UserService,
-        workspace::ports::WorkspaceService, training_job::ports::TrainingJobService,
+        workspace::ports::WorkspaceService, training_job::ports::TrainingJobService, queue::service::QueueService,
     },
-    inbound::http::routes::{clusters, credentials, training_jobs},
+    inbound::http::routes::{clusters, credentials, training_jobs, queues},
     outbound::persistence::postgres::session_repository::PostgresSessionStore,
 };
 
@@ -31,6 +31,7 @@ pub struct AppState {
     pub auth_service: Arc<dyn AuthService>,
     pub workspace_service: Arc<dyn WorkspaceService>,
     pub training_job_service: Arc<dyn TrainingJobService>,
+    pub queue_service: Arc<QueueService>,
 }
 
 impl FromRef<AppState> for Arc<dyn CredentialService> {
@@ -81,6 +82,12 @@ impl FromRef<AppState> for Arc<dyn TrainingJobService> {
     }
 }
 
+impl FromRef<AppState> for Arc<QueueService> {
+    fn from_ref(state: &AppState) -> Self {
+        state.queue_service.clone()
+    }
+}
+
 pub struct HttpServer {
     app: Router,
     listener: TcpListener,
@@ -102,6 +109,7 @@ impl HttpServer {
             .merge(clusters::router())
             .merge(credentials::router())
             .nest("/training_jobs", training_jobs::training_jobs_router())
+            .nest("/queues", queues::routes())
             .layer(session_layer)
             .with_state(app_state);
 

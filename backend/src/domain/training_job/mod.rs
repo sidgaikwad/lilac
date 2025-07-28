@@ -11,9 +11,7 @@ mod tests {
     };
     use crate::{
         domain::training_job::ports::TrainingJobService,
-        inbound::http::routes::training_jobs::models::{
-            ClusterTargetRequest, CreateTrainingJobRequest,
-        },
+        inbound::http::routes::training_jobs::models::CreateTrainingJobRequest,
     };
     use mockall::predicate::*;
     use std::sync::Arc;
@@ -22,42 +20,33 @@ mod tests {
     #[tokio::test]
     async fn test_create_training_job() {
         let mut mock_repo = MockTrainingJobRepository::new();
-        let cluster_id = Uuid::new_v4();
+        let queue_id = Uuid::new_v4();
         let request = CreateTrainingJobRequest {
             name: "test".to_string(),
             definition: "definition".to_string(),
-            priority: 100,
+            queue_id,
             resource_requirements: serde_json::json!({
                 "cpu_millicores": 1000,
                 "memory_mb": 1024,
                 "gpus": null
             }),
-            targets: vec![ClusterTargetRequest {
-                cluster_id,
-                priority: 1,
-            }],
         };
 
         mock_repo
             .expect_create()
-            .withf(move |job, targets| {
-                job.name == "test"
-                    && targets.len() == 1
-                    && targets[0].cluster_id == cluster_id
-            })
+            .withf(move |job| job.name == "test" && job.queue_id == queue_id)
             .times(1)
-            .returning(|_, _| Ok(()));
+            .returning(|_| Ok(()));
 
         let service = TrainingJobServiceImpl::new(Arc::new(mock_repo));
         let result = service.create(request).await;
 
         assert!(result.is_ok());
-        let training_job_with_targets = result.unwrap();
-        assert_eq!(training_job_with_targets.job.name, "test");
-        assert_eq!(training_job_with_targets.job.definition, "definition");
-        assert_eq!(training_job_with_targets.job.status, TrainingJobStatus::Queued);
-        assert_eq!(training_job_with_targets.targets.len(), 1);
-        assert_eq!(training_job_with_targets.targets[0].cluster_id, cluster_id);
+        let training_job = result.unwrap();
+        assert_eq!(training_job.name, "test");
+        assert_eq!(training_job.definition, "definition");
+        assert_eq!(training_job.status, TrainingJobStatus::Queued);
+        assert_eq!(training_job.queue_id, queue_id);
     }
 
 
@@ -95,22 +84,6 @@ mod tests {
 
         let service = TrainingJobServiceImpl::new(Arc::new(mock_repo));
         let result = service.update_status(id, status).await;
-
-        assert!(result.is_ok());
-    }
-    #[tokio::test]
-    async fn test_schedule() {
-        let mut mock_repo = MockTrainingJobRepository::new();
-        let id = Uuid::new_v4();
-
-        mock_repo
-            .expect_schedule()
-            .with(eq(id))
-            .times(1)
-            .returning(|_| Ok(()));
-
-        let service = TrainingJobServiceImpl::new(Arc::new(mock_repo));
-        let result = service.schedule(id).await;
 
         assert!(result.is_ok());
     }

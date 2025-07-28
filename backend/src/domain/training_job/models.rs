@@ -41,26 +41,14 @@ pub struct TrainingJob {
     pub definition: String,
     pub status: TrainingJobStatus,
     pub instance_id: Option<Uuid>,
-    pub priority: i32,
+    pub queue_id: Uuid,
+    #[sqlx(json)]
     pub resource_requirements: ResourceRequirements,
     pub scheduled_cluster_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct TrainingJobClusterTarget {
-    pub job_id: Uuid,
-    pub cluster_id: Uuid,
-    pub priority: i32,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TrainingJobWithTargets {
-    #[serde(flatten)]
-    pub job: TrainingJob,
-    pub targets: Vec<TrainingJobClusterTarget>,
-}
 
 #[derive(Debug, Default, Deserialize, PartialEq, Clone)]
 pub struct GetTrainingJobsFilters {

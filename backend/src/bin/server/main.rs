@@ -13,6 +13,7 @@ use server::{
         user::service::UserServiceImpl,
         workspace::service::WorkspaceServiceImpl,
         training_job::service::TrainingJobServiceImpl,
+        queue::service::QueueService,
     },
     inbound::http::{AppState, HttpServer},
     outbound::{
@@ -25,6 +26,7 @@ use server::{
             credential_repository::PostgresCredentialRepository,
             dataset_repository::PostgresDatasetRepository,
             project_repository::PostgresProjectRepository,
+            queue_repository::PostgresQueueRepository,
             session_repository::PostgresSessionStore, user_repository::PostgresUserRepository,
             workspace_repository::PostgresWorkspaceRepository,
             training_job_repository::PostgresTrainingJobRepository,
@@ -75,6 +77,7 @@ async fn main() -> anyhow::Result<()> {
     let conn_tester = Arc::new(ClusterConnectorImpl::new());
     let workspace_repo = Arc::new(PostgresWorkspaceRepository::new(db_pool.clone()));
     let training_job_repo = Arc::new(PostgresTrainingJobRepository::new(db_pool.clone()));
+    let queue_repo = Arc::new(PostgresQueueRepository::new(db_pool.clone()));
 
     let kube_config = if std::env::var("APP_ENV").unwrap_or_else(|_| "local".to_string()) == "local" {
         let kubeconfig = Kubeconfig::read_from("kubeconfig.yaml")?;
@@ -115,6 +118,7 @@ async fn main() -> anyhow::Result<()> {
 
     let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), jwt_manager));
     let training_job_service = Arc::new(TrainingJobServiceImpl::new(training_job_repo.clone()));
+    let queue_service = Arc::new(QueueService::new(queue_repo.clone()));
 
     // 4. Construct Scheduler
     let k8s_plugin = Arc::new(KubernetesPlugin::new(
@@ -128,6 +132,7 @@ async fn main() -> anyhow::Result<()> {
     let scheduler_service = Arc::new(SchedulerService::new(
         Arc::new(platform_manager),
         training_job_repo.clone(),
+        queue_repo.clone(),
     ));
 
     // 5. Spawn background tasks
@@ -150,6 +155,7 @@ async fn main() -> anyhow::Result<()> {
         auth_service,
         workspace_service,
         training_job_service,
+        queue_service,
     };
     let http_server = HttpServer::new(app_state, session_layer, config.http_port).await?;
     

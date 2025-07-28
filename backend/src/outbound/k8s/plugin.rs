@@ -13,9 +13,12 @@ use crate::domain::{
     cluster::ports::ClusterRepository,
     scheduler::{
         models::{ClusterSnapshot, GpuInfo, NodeSnapshot},
-        ports::{ComputePlatform, PlatformCapabilities},
+        ports::{ComputePlatform, PlatformCapabilities, SchedulingDecision},
     },
-    training_job::{models::TrainingJob, ports::TrainingJobRepository},
+    training_job::{
+        models::{ResourceRequirements, TrainingJob},
+        ports::TrainingJobRepository,
+    },
 };
 
 use super::factory::KubeClientFactory;
@@ -36,19 +39,6 @@ impl KubernetesPlugin {
             kube_client_factory,
             cluster_repo,
             job_repo,
-        }
-    }
-}
-
-#[async_trait]
-impl ComputePlatform for KubernetesPlugin {
-    fn platform_type(&self) -> &'static str {
-        "kubernetes"
-    }
-
-    fn capabilities(&self) -> PlatformCapabilities {
-        PlatformCapabilities {
-            supports_gpus: true,
         }
     }
 
@@ -78,16 +68,120 @@ impl ComputePlatform for KubernetesPlugin {
             nodes: node_snapshots,
         })
     }
+}
+
+#[async_trait]
+impl ComputePlatform for KubernetesPlugin {
+    fn platform_type(&self) -> &'static str {
+        "kubernetes"
+    }
+
+    fn capabilities(&self) -> PlatformCapabilities {
+        PlatformCapabilities {
+            supports_gpus: true,
+        }
+    }
+
+    async fn find_suitable_node(
+        &self,
+        cluster_id: &Uuid,
+        requirements: &ResourceRequirements,
+    ) -> Result<Option<SchedulingDecision>, anyhow::Error> {
+        let snapshot = self.get_cluster_snapshot(cluster_id).await?;
+
+        for node in snapshot.nodes {
+            tracing::debug!(
+                target: "scheduler",
+                node = %node.name,
+                "Checking node for suitability."
+            );
+
+            if node.available_cpu_millicores < requirements.cpu_millicores {
+                tracing::debug!(
+                    target: "scheduler",
+                    node = %node.name,
+                    reason = "insufficient_cpu",
+                    required = requirements.cpu_millicores,
+                    available = node.available_cpu_millicores,
+                    "Node rejected."
+                );
+                continue;
+            }
+
+            if node.available_memory_mb < requirements.memory_mb {
+                tracing::debug!(
+                    target: "scheduler",
+                    node = %node.name,
+                    reason = "insufficient_memory",
+                    required = requirements.memory_mb,
+                    available = node.available_memory_mb,
+                    "Node rejected."
+                );
+                continue;
+            }
+
+            let gpu_match = match &requirements.gpus {
+                None => true,
+                Some(gpu_req) => {
+                    let suitable_gpus: Vec<_> = node
+                        .gpus
+                        .iter()
+                        .filter(|node_gpu| {
+                            let model_match = gpu_req
+                                .model
+                                .as_ref()
+                                .map_or(true, |req_model| &node_gpu.model == req_model);
+                            let memory_match = gpu_req
+                                .memory_gb
+                                .map_or(true, |req_mem| node_gpu.memory_gb >= req_mem);
+                            model_match && memory_match
+                        })
+                        .collect();
+                    
+                    let has_enough_gpus = suitable_gpus.len() >= gpu_req.count as usize;
+                    if !has_enough_gpus {
+                        tracing::debug!(
+                            target: "scheduler",
+                            node = %node.name,
+                            reason = "insufficient_gpus",
+                            required_count = gpu_req.count,
+                            available_count = suitable_gpus.len(),
+                            required_model = ?gpu_req.model,
+                            "Node rejected."
+                        );
+                    }
+                    has_enough_gpus
+                }
+            };
+
+            if !gpu_match {
+                continue;
+            }
+
+            tracing::info!(
+                target: "scheduler",
+                node = %node.name,
+                cluster_id = %cluster_id,
+                "Found suitable node for job."
+            );
+
+            return Ok(Some(SchedulingDecision {
+                cluster_id: *cluster_id,
+                node_name: node.name.clone(),
+            }));
+        }
+
+        Ok(None)
+    }
 
     async fn allocate_job(
         &self,
         job: &TrainingJob,
-        cluster_id: &Uuid,
-        node_name: &str,
+        decision: &SchedulingDecision,
     ) -> Result<(), anyhow::Error> {
         let cluster = self
             .cluster_repo
-            .get_cluster_by_id(&(*cluster_id).into())
+            .get_cluster_by_id(&decision.cluster_id.into())
             .await?;
         let client = self.kube_client_factory.create_client(&cluster).await?;
 
@@ -123,15 +217,17 @@ impl ComputePlatform for KubernetesPlugin {
             "spec": {
                 "template": {
                     "spec": {
-                        "nodeName": node_name,
+                        "nodeName": decision.node_name,
                         "nodeSelector": node_selector,
                         "containers": [{
                             "name": "training-container",
                             "image": job.definition,
                             "env": [
-                                { "name": "JOB_ID", "value": job.id.to_string() },
+                                { "name": "LILAC_JOB_ID", "value": job.id.to_string() },
                                 // TODO: Make API server address configurable
-                                { "name": "API_SERVER_URL", "value": "http://lilac-api-service:8080" }
+                                { "name": "LILAC_API_ENDPOINT", "value": "http://lilac-api-service:8080" },
+                                // TODO: Inject a short-lived auth token
+                                { "name": "LILAC_AUTH_TOKEN", "value": "" }
                             ],
                             "resources": {
                                 "requests": {

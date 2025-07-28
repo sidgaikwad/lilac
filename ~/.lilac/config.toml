@@ -1,0 +1,12 @@
+# The base URL for the Lilac API server
+api_endpoint = "http://localhost:8080"
+
+# An optional authentication token (we can implement this next)
+auth_token = ""
+
+# The URL of the container registry to push images to
+# (e.g., "docker.io/your-username", "gcr.io/your-project")
+container_registry_url = "docker.io/lilac-user"
+
+# The name of the base image that contains the `lilac-agent run` command
+base_image = "lilac-base:latest"
