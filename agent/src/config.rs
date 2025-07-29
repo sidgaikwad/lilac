@@ -6,7 +6,7 @@ use std::path::PathBuf;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub api_endpoint: String,
-    pub auth_token: Option<String>,
+    pub api_key: Option<String>,
     pub container_registry_url: String,
     pub base_image: String,
 }
@@ -15,7 +15,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             api_endpoint: "http://localhost:8080".to_string(),
-            auth_token: None,
+            api_key: None,
             container_registry_url: "docker.io/lilac-user".to_string(),
             base_image: "python:3.10-slim-bullseye".to_string(),
         }
@@ -32,7 +32,7 @@ pub fn load() -> anyhow::Result<Config> {
     ) {
         return Ok(Config {
             api_endpoint,
-            auth_token: env::var("LILAC_AUTH_TOKEN").ok(),
+            api_key: env::var("LILAC_API_KEY").ok(),
             container_registry_url: registry_url,
             base_image,
         });

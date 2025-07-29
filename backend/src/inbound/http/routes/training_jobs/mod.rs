@@ -1,4 +1,7 @@
-use axum::{routing::{post, get, patch}, Router};
+use axum::{
+    routing::{get, patch, post},
+    Router,
+};
 
 use crate::inbound::http::AppState;
 
@@ -11,7 +14,7 @@ pub fn training_jobs_router() -> Router<AppState> {
     Router::new()
         .route("/", post(create_training_job))
         .route("/", get(get_training_jobs))
-        .route("/{:job_id}/schedule", post(schedule_training_job))
-        .route("/{:job_id}/status", patch(update_training_job_status))
-        .route("/{:job_id}/logs", post(post_logs))
+        .route("/{job_id}/schedule", post(schedule_training_job))
+        .route("/{job_id}/status", patch(update_training_job_status))
+        .route("/{job_id}/logs", post(post_logs))
 }

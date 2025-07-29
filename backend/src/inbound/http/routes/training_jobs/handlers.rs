@@ -2,23 +2,39 @@ use uuid::Uuid;
 use axum::{extract::{Query, State}, http::StatusCode, response::IntoResponse, Json};
 
 use crate::{
-    domain::training_job::models::TrainingJobStatus,
-    inbound::http::AppState,
+    domain::{auth::models::Claims},
+    inbound::http::{errors::ApiError, AppState},
 };
+use axum_extra::{
+    headers::{authorization::Bearer, Authorization},
+    TypedHeader,
+};
+use secrecy::SecretString;
 
-use super::models::{CreateTrainingJobRequest, CreateTrainingJobResponse, UpdateTrainingJobStatusRequest, PostLogsRequest};
+use super::models::{
+    CreateTrainingJobRequest, CreateTrainingJobResponse, PostLogsRequest,
+    UpdateTrainingJobStatusRequest,
+};
 
 pub async fn create_training_job(
     State(state): State<AppState>,
+    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(request): Json<CreateTrainingJobRequest>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, ApiError> {
+    state
+        .user_service
+        .authenticate_by_api_key(&SecretString::from(auth.token().to_string()))
+        .await?;
+
     let training_job_with_targets = state
         .training_job_service
         .create(request)
-        .await
-        .unwrap();
+        .await?;
 
-    (StatusCode::CREATED, Json(CreateTrainingJobResponse::from(training_job_with_targets)))
+    Ok((
+        StatusCode::CREATED,
+        Json(CreateTrainingJobResponse::from(training_job_with_targets)),
+    ))
 }
 
 use crate::domain::training_job::models::GetTrainingJobsFilters;
@@ -26,7 +42,8 @@ use crate::domain::training_job::models::GetTrainingJobsFilters;
 #[axum::debug_handler]
 pub async fn get_training_jobs(
     State(state): State<AppState>,
-    Query(params): Query<GetTrainingJobsFilters>,
+    claims: Claims,
+    Query(mut params): Query<GetTrainingJobsFilters>,
 ) -> impl IntoResponse {
     let training_jobs = state
         .training_job_service
@@ -38,13 +55,6 @@ pub async fn get_training_jobs(
 }
 use axum::extract::Path;
 
-pub async fn schedule_training_job(
-    State(state): State<AppState>,
-    Path(job_id): Path<Uuid>,
-) -> impl IntoResponse {
-    // TODO: Implement the logic to schedule the job
-    (StatusCode::OK, Json(()))
-}
 
 pub async fn update_training_job_status(
     State(state): State<AppState>,

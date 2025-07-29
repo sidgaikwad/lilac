@@ -4,8 +4,8 @@ use secrecy::ExposeSecret;
 use sqlx::PgPool;
 
 use crate::domain::user::{
-    models::{CreateUserRequest, User, UserId},
-    ports::{UserRepository, UserRepositoryError},
+    models::{ApiKey, ApiKeyId, CreateUserRequest, User, UserId},
+    ports::{ApiKeyRepository, ApiKeyRepositoryError, UserRepository, UserRepositoryError},
 };
 
 #[derive(Clone)]
@@ -38,6 +38,31 @@ impl From<UserRecord> for User {
             password_hash: record.password_hash,
             created_at: record.created_at,
             updated_at: record.updated_at,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct ApiKeyRecord {
+    id: uuid::Uuid,
+    user_id: uuid::Uuid,
+    prefix: String,
+    key_hash: String,
+    created_at: DateTime<Utc>,
+    last_used_at: Option<DateTime<Utc>>,
+    expires_at: Option<DateTime<Utc>>,
+}
+
+impl From<ApiKeyRecord> for ApiKey {
+    fn from(record: ApiKeyRecord) -> Self {
+        Self {
+            id: record.id.into(),
+            user_id: record.user_id.into(),
+            prefix: record.prefix,
+            key_hash: record.key_hash,
+            created_at: record.created_at,
+            last_used_at: record.last_used_at,
+            expires_at: record.expires_at,
         }
     }
 }
@@ -101,5 +126,84 @@ impl UserRepository for PostgresUserRepository {
             .await
             .map(|_| ())
             .map_err(|e: sqlx::Error| UserRepositoryError::Unknown(anyhow::anyhow!(e)))
+    }
+}
+
+#[async_trait]
+impl ApiKeyRepository for PostgresUserRepository {
+    async fn create_api_key(&self, key: &ApiKey) -> Result<(), ApiKeyRepositoryError> {
+        sqlx::query!(
+            r#"
+            INSERT INTO api_keys (id, user_id, prefix, key_hash, created_at, expires_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            "#,
+            key.id.inner(),
+            key.user_id.inner(),
+            key.prefix,
+            key.key_hash,
+            key.created_at,
+            key.expires_at,
+        )
+        .execute(&self.pool)
+        .await
+        .map(|_| ())
+        .map_err(|err| ApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)))
+    }
+
+    async fn find_user_by_api_key_hash(
+        &self,
+        key_hash: &str,
+    ) -> Result<User, ApiKeyRepositoryError> {
+        let user_record = sqlx::query_as!(
+            UserRecord,
+            r#"
+            SELECT u.user_id, u.email, u.name, u.password_hash, u.created_at, u.updated_at
+            FROM users u
+            JOIN api_keys ak ON u.user_id = ak.user_id
+            WHERE ak.key_hash = $1 AND (ak.expires_at IS NULL OR ak.expires_at > now())
+            "#,
+            key_hash
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|err| match err {
+            sqlx::Error::RowNotFound => ApiKeyRepositoryError::NotFound,
+            _ => ApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)),
+        })?;
+
+        Ok(user_record.into())
+    }
+
+    async fn list_api_keys_for_user(
+        &self,
+        user_id: &UserId,
+    ) -> Result<Vec<ApiKey>, ApiKeyRepositoryError> {
+        let records = sqlx::query_as!(
+            ApiKeyRecord,
+            r#"
+            SELECT id, user_id, prefix, key_hash, created_at, last_used_at, expires_at
+            FROM api_keys
+            WHERE user_id = $1
+            "#,
+            user_id.inner()
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|err| ApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)))?;
+
+        Ok(records.into_iter().map(ApiKey::from).collect())
+    }
+
+    async fn delete_api_key(&self, id: &ApiKeyId) -> Result<(), ApiKeyRepositoryError> {
+        let result = sqlx::query!("DELETE FROM api_keys WHERE id = $1", id.inner())
+            .execute(&self.pool)
+            .await
+            .map_err(|err| ApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)))?;
+
+        if result.rows_affected() == 0 {
+            return Err(ApiKeyRepositoryError::NotFound);
+        }
+
+        Ok(())
     }
 }

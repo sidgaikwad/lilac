@@ -66,6 +66,7 @@ impl From<UserServiceError> for ApiError {
             UserServiceError::InvalidPermissions => Self::Forbidden,
             UserServiceError::UserExists { .. } => Self::Conflict("User already exists".into()),
             UserServiceError::UserNotFound(_) => Self::NotFound(format!("User not found")),
+            UserServiceError::ApiKeyNotFound => Self::NotFound("API key not found".to_string()),
             UserServiceError::Unknown(cause) => {
                 tracing::error!("{:?}\n{}", cause, cause.backtrace());
                 Self::InternalServerError("Something went wrong".to_string())

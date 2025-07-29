@@ -55,7 +55,7 @@ impl ApiClient {
     }
 
     fn add_auth(&self, req_builder: RequestBuilder) -> RequestBuilder {
-        if let Some(token) = &self.config.auth_token {
+        if let Some(token) = &self.config.api_key {
             req_builder.bearer_auth(token)
         } else {
             req_builder

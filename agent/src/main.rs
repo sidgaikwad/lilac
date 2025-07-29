@@ -288,8 +288,17 @@ ENTRYPOINT {cmd_array}
                 },
             };
 
-            let response = client.submit_job(request).await?;
-            println!("      ✅ Job submitted successfully! Job ID: {}", response.id);
+            match client.submit_job(request).await {
+                Ok(response) => {
+                    println!("      ✅ Job submitted successfully! Job ID: {}", response.id);
+                }
+                Err(_) => {
+                    eprintln!("\n❌ Error submitting job.");
+                    eprintln!("Please check the following:");
+                    eprintln!("  - Is the Lilac server running and reachable at the configured API endpoint?");
+                    eprintln!("  - Have you configured the correct API key with `lilac-agent configure`?");
+                }
+            }
         }
         Commands::Configure {} => {
             let theme = ColorfulTheme::default();
@@ -297,6 +306,12 @@ ENTRYPOINT {cmd_array}
             let api_endpoint: String = Input::with_theme(&theme)
                 .with_prompt("Enter the Lilac API endpoint")
                 .with_initial_text(config.api_endpoint)
+                .interact_text()?;
+
+            let api_key: String = Input::with_theme(&theme)
+                .with_prompt("Enter your API key (optional)")
+                .with_initial_text(config.api_key.unwrap_or_default())
+                .allow_empty(true)
                 .interact_text()?;
 
             let container_registry_url: String = Input::with_theme(&theme)
@@ -313,7 +328,7 @@ ENTRYPOINT {cmd_array}
                 api_endpoint,
                 container_registry_url,
                 base_image,
-                auth_token: config.auth_token,
+                api_key: if api_key.is_empty() { None } else { Some(api_key) },
             };
 
             let toml_string = toml::to_string(&new_config)?;

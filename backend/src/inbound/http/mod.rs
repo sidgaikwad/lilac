@@ -108,7 +108,10 @@ impl HttpServer {
             .merge(auth::router())
             .merge(clusters::router())
             .merge(credentials::router())
-            .nest("/training_jobs", training_jobs::training_jobs_router())
+            .nest(
+                "/training_jobs",
+                training_jobs::training_jobs_router(),
+            )
             .nest("/queues", queues::routes())
             .layer(session_layer)
             .with_state(app_state);
@@ -121,7 +124,7 @@ impl HttpServer {
             port,
         })
     }
-
+    
     pub async fn run(self) -> anyhow::Result<()> {
         tracing::info!("starting server on {}:{}", self.address, self.port);
         axum::serve(self.listener, self.app).await?;

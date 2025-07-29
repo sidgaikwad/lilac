@@ -6,8 +6,15 @@ use axum::{
 };
 
 use crate::{
-    domain::user::{models::UserId, service::UserService},
-    inbound::http::{errors::ApiError, routes::users::models::GetUserHttpResponse, AppState},
+    domain::user::{
+        models::{ApiKeyId, UserId},
+        service::UserService,
+    },
+    inbound::http::{
+        errors::ApiError,
+        routes::users::models::{ApiKeyResponse, CreateApiKeyResponse, GetUserHttpResponse},
+        AppState,
+    },
 };
 
 use crate::domain::auth::models::Claims;
@@ -44,5 +51,34 @@ pub async fn delete_user(
     Path(user_id): Path<UserId>,
 ) -> Result<(), ApiError> {
     user_service.delete_user(&claims.sub, &user_id).await?;
+    Ok(())
+}
+
+#[axum::debug_handler(state = AppState)]
+pub async fn create_api_key(
+    claims: Claims,
+    State(user_service): State<Arc<dyn UserService>>,
+) -> Result<Json<CreateApiKeyResponse>, ApiError> {
+    let new_api_key = user_service.create_api_key(&claims.sub).await?;
+    Ok(Json(new_api_key.into()))
+}
+
+#[axum::debug_handler(state = AppState)]
+pub async fn list_api_keys(
+    claims: Claims,
+    State(user_service): State<Arc<dyn UserService>>,
+) -> Result<Json<Vec<ApiKeyResponse>>, ApiError> {
+    let api_keys = user_service.list_api_keys(&claims.sub).await?;
+    let response = api_keys.into_iter().map(ApiKeyResponse::from).collect();
+    Ok(Json(response))
+}
+
+#[axum::debug_handler(state = AppState)]
+pub async fn delete_api_key(
+    claims: Claims,
+    State(user_service): State<Arc<dyn UserService>>,
+    Path(key_id): Path<ApiKeyId>,
+) -> Result<(), ApiError> {
+    user_service.delete_api_key(&claims.sub, &key_id).await?;
     Ok(())
 }
