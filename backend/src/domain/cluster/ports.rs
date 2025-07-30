@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use thiserror::Error;
 
 use crate::domain::cluster::models::{ClusterNode, NodeId, UpdateNodeStatusRequest};
+use crate::domain::user::models::ApiKey;
 
 use super::models::{Cluster, ClusterId, CreateClusterRequest};
 
@@ -14,8 +15,6 @@ pub enum ClusterRepositoryError {
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),
 }
-
-// Add assign job id fn?
 
 #[async_trait]
 pub trait ClusterRepository: Send + Sync {
@@ -39,4 +38,12 @@ pub trait ClusterRepository: Send + Sync {
         req: &UpdateNodeStatusRequest,
     ) -> Result<ClusterNode, ClusterRepositoryError>;
     async fn delete_cluster_node(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError>;
+    async fn find_cluster_by_api_key_hash(
+        &self,
+        key_hash: &str,
+    ) -> Result<Cluster, ClusterRepositoryError>;
+    async fn list_api_keys_for_cluster(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<Vec<ApiKey>, ClusterRepositoryError>;
 }

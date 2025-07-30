@@ -2,13 +2,19 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use crate::{domain::cluster::{
-    models::{
-        Architecture, Cluster, ClusterId, ClusterNode, Cpu, CpuManufacturer, CreateClusterRequest,
-        Gpu, GpuManufacturer, GpuModel, NodeId, NodeStatus, UpdateNodeStatusRequest,
+use crate::{
+    domain::{
+        cluster::{
+            models::{
+                Architecture, Cluster, ClusterId, ClusterNode, Cpu, CpuManufacturer,
+                CreateClusterRequest, Gpu, GpuManufacturer, GpuModel, NodeId, NodeStatus,
+                UpdateNodeStatusRequest,
+            },
+            ports::{ClusterRepository, ClusterRepositoryError},
+        },
+        user::models::ApiKey,
     },
-    ports::{ClusterRepository, ClusterRepositoryError},
-}};
+};
 
 #[derive(Clone)]
 pub struct PostgresClusterRepository {
@@ -144,6 +150,33 @@ impl TryFrom<ClusterNodeRecord> for ClusterNode {
             assigned_job_id: record.assigned_job_id.map(Into::into),
             reported_job_id: record.reported_job_id.map(Into::into),
         })
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct ApiKeyRecord {
+    id: uuid::Uuid,
+    user_id: Option<uuid::Uuid>,
+    cluster_id: Option<uuid::Uuid>,
+    prefix: String,
+    key_hash: String,
+    created_at: DateTime<Utc>,
+    last_used_at: Option<DateTime<Utc>>,
+    expires_at: Option<DateTime<Utc>>,
+}
+
+impl From<ApiKeyRecord> for ApiKey {
+    fn from(record: ApiKeyRecord) -> Self {
+        Self {
+            id: record.id.into(),
+            user_id: record.user_id.map(|v| v.into()),
+            cluster_id: record.cluster_id.map(|v| v.into()),
+            prefix: record.prefix,
+            key_hash: record.key_hash,
+            created_at: record.created_at,
+            last_used_at: record.last_used_at,
+            expires_at: record.expires_at,
+        }
     }
 }
 
@@ -293,5 +326,49 @@ impl ClusterRepository for PostgresClusterRepository {
             .await
             .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
         Ok(())
+    }
+
+    async fn find_cluster_by_api_key_hash(
+        &self,
+        key_hash: &str,
+    ) -> Result<Cluster, ClusterRepositoryError> {
+        let record = sqlx::query_as!(
+            ClusterRecord,
+            r#"
+            SELECT c.cluster_id, c.cluster_name, c.cluster_description, c.created_at, c.updated_at
+            FROM clusters c
+            JOIN api_keys ak ON c.cluster_id = ak.cluster_id
+            WHERE ak.key_hash = $1 AND (ak.expires_at IS NULL OR ak.expires_at > now())
+            "#,
+            key_hash
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|err| match err {
+            sqlx::Error::RowNotFound => ClusterRepositoryError::NotFound("".to_string()),
+            _ => ClusterRepositoryError::Unknown(anyhow::anyhow!(err)),
+        })?;
+
+        Ok(record.into())
+    }
+
+    async fn list_api_keys_for_cluster(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<Vec<ApiKey>, ClusterRepositoryError> {
+        let records = sqlx::query_as!(
+            ApiKeyRecord,
+            r#"
+            SELECT id, user_id, cluster_id, prefix, key_hash, created_at, last_used_at, expires_at
+            FROM api_keys
+            WHERE cluster_id = $1
+            "#,
+            cluster_id.0
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|err| ClusterRepositoryError::Unknown(anyhow::anyhow!(err)))?;
+
+        Ok(records.into_iter().map(ApiKey::from).collect())
     }
 }

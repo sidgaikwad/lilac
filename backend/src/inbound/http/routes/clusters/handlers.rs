@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use chrono::Utc;
+use secrecy::ExposeSecret;
 use uuid::Uuid;
 
 use crate::{
@@ -33,9 +34,10 @@ pub async fn create_cluster(
     State(cluster_service): State<Arc<dyn ClusterService>>,
     Json(req): Json<CreateClusterHttpRequest>,
 ) -> Result<Json<CreateClusterHttpResponse>, ApiError> {
-    let cluster = cluster_service.create_cluster(&req.into()).await?;
+    let (cluster, new_api_key) = cluster_service.create_cluster(&req.into()).await?;
     Ok(Json(CreateClusterHttpResponse {
         cluster_id: cluster.id,
+        api_key: Some(new_api_key.key.expose_secret().clone()),
     }))
 }
 
@@ -70,16 +72,27 @@ pub async fn delete_cluster(
     Ok(())
 }
 
+use axum_extra::{
+    headers::{authorization::Bearer, Authorization},
+    TypedHeader,
+};
+use secrecy::SecretString;
+
 #[axum::debug_handler(state = AppState)]
 pub async fn cluster_node_heartbeat(
     Path(node_id): Path<NodeId>,
     State(cluster_service): State<Arc<dyn ClusterService>>,
+    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(req): Json<HttpClusterNodeHeartbeat>,
 ) -> Result<Json<HttpClusterNodeDetails>, ApiError> {
+    let cluster = cluster_service
+        .authenticate_by_api_key(&SecretString::from(auth.token().to_string()))
+        .await?;
+
     let _resp = cluster_service
         .update_node_status(UpdateNodeStatusRequest {
             node_id,
-            cluster_id: ClusterId::try_from("8f47d027-19ac-4527-85c9-11a4e699d31f").unwrap(), // TODO: get cluster ID from API key
+            cluster_id: cluster.id,
             status: req.status,
             heartbeat_timestamp: Utc::now(),
             memory_info: req.memory_info,

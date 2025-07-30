@@ -4,6 +4,24 @@ use async_trait::async_trait;
 
 use crate::domain::cluster::models::{ClusterNode, UpdateNodeStatusRequest};
 
+use crate::domain::user::models::NewApiKey;
+use secrecy::SecretString;
+
+use crate::domain::user::models::{ApiKey, ApiKeyId};
+use chrono::Utc;
+use secrecy::ExposeSecret;
+use sha2::{Digest, Sha256};
+
+const API_KEY_PREFIX: &str = "lilac_sk_";
+const NANOID_ALPHABET: [char; 62] = [
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+    't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+    'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4',
+    '5', '6', '7', '8', '9',
+];
+
+use crate::domain::user::ports::ApiKeyRepository;
+
 use super::{
     models::{Cluster, ClusterId, CreateClusterRequest},
     ports::{ClusterRepository, ClusterRepositoryError},
@@ -38,7 +56,7 @@ pub trait ClusterService: Send + Sync {
     async fn create_cluster(
         &self,
         req: &CreateClusterRequest,
-    ) -> Result<Cluster, ClusterServiceError>;
+    ) -> Result<(Cluster, NewApiKey), ClusterServiceError>;
     async fn get_cluster_by_id(
         &self,
         cluster_id: &ClusterId,
@@ -53,6 +71,10 @@ pub trait ClusterService: Send + Sync {
         &self,
         req: UpdateNodeStatusRequest,
     ) -> Result<ClusterNode, ClusterServiceError>;
+    async fn authenticate_by_api_key(
+        &self,
+        key: &SecretString,
+    ) -> Result<Cluster, ClusterServiceError>;
 }
 
 #[derive(Clone)]
@@ -67,13 +89,46 @@ impl<R: ClusterRepository> ClusterServiceImpl<R> {
 }
 
 #[async_trait]
-impl<R: ClusterRepository> ClusterService for ClusterServiceImpl<R> {
+impl<R: ClusterRepository + ApiKeyRepository> ClusterService for ClusterServiceImpl<R> {
     async fn create_cluster(
         &self,
         req: &CreateClusterRequest,
-    ) -> Result<Cluster, ClusterServiceError> {
-        // TODO: After creating the cluster, also create a new ApiKey owned by this cluster.
-        Ok(self.cluster_repo.create_cluster(req).await?)
+    ) -> Result<(Cluster, NewApiKey), ClusterServiceError> {
+        let cluster = self.cluster_repo.create_cluster(req).await?;
+
+        let key_id = ApiKeyId::generate();
+        let raw_key = nanoid::nanoid!(32, &NANOID_ALPHABET);
+        let secret_key = SecretString::from(raw_key);
+        let full_key = format!("{}{}", API_KEY_PREFIX, secret_key.expose_secret());
+
+        let mut hasher = Sha256::new();
+        hasher.update(full_key.as_bytes());
+        let key_hash = format!("{:x}", hasher.finalize());
+
+        let api_key = ApiKey {
+            id: key_id,
+            user_id: None,
+            cluster_id: Some(cluster.id),
+            prefix: API_KEY_PREFIX.to_string(),
+            key_hash,
+            created_at: Utc::now(),
+            last_used_at: None,
+            expires_at: None,
+        };
+
+        self.cluster_repo
+            .create_api_key(&api_key)
+            .await
+            .map_err(|e| ClusterServiceError::Unknown(e.into()))?;
+
+        let new_api_key = NewApiKey {
+            id: key_id,
+            prefix: API_KEY_PREFIX.to_string(),
+            key: SecretString::from(full_key),
+            created_at: api_key.created_at,
+        };
+
+        Ok((cluster, new_api_key))
     }
 
     async fn get_cluster_by_id(
@@ -118,5 +173,18 @@ impl<R: ClusterRepository> ClusterService for ClusterServiceImpl<R> {
         cluster_id: &ClusterId,
     ) -> Result<Vec<ClusterNode>, ClusterServiceError> {
         Ok(self.cluster_repo.list_cluster_nodes(cluster_id).await?)
+    }
+
+    async fn authenticate_by_api_key(
+        &self,
+        key: &SecretString,
+    ) -> Result<Cluster, ClusterServiceError> {
+        let mut hasher = Sha256::new();
+        hasher.update(key.expose_secret().as_bytes());
+        let key_hash = format!("{:x}", hasher.finalize());
+
+        let cluster = self.cluster_repo.find_cluster_by_api_key_hash(&key_hash).await?;
+
+        Ok(cluster)
     }
 }
