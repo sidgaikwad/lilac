@@ -33,8 +33,8 @@ impl From<CredentialServiceError> for ApiError {
             CredentialServiceError::CredentialNotFound(_) => {
                 Self::NotFound(format!("Cluster not found"))
             }
-            CredentialServiceError::Unknown(cause) => {
-                tracing::error!("{:?}\n{}", cause, cause.backtrace());
+            CredentialServiceError::Unknown(e) => {
+                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
                 Self::InternalServerError("Something went wrong".to_string())
             }
         }
@@ -44,16 +44,13 @@ impl From<CredentialServiceError> for ApiError {
 impl From<ClusterServiceError> for ApiError {
     fn from(err: ClusterServiceError) -> Self {
         match err {
-            ClusterServiceError::IncorrectCredentialsType => {
-                Self::BadRequest("Incorrect credentials type".into())
-            }
             ClusterServiceError::InvalidPermissions => Self::Forbidden,
             ClusterServiceError::ClusterExists { .. } => {
                 Self::Conflict("Cluster already exists".into())
             }
             ClusterServiceError::ClusterNotFound(_) => Self::NotFound(format!("Cluster not found")),
-            ClusterServiceError::Unknown(cause) => {
-                tracing::error!("{:?}\n{}", cause, cause.backtrace());
+            ClusterServiceError::Unknown(e) => {
+                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
                 Self::InternalServerError("Something went wrong".to_string())
             }
         }
@@ -83,8 +80,8 @@ impl From<ProjectServiceError> for ApiError {
                 Self::Conflict("Project already exists".into())
             }
             ProjectServiceError::ProjectNotFound(_) => Self::NotFound("Project not found".into()),
-            ProjectServiceError::Unknown(cause) => {
-                tracing::error!("{:?}\n{}", cause, cause.backtrace());
+            ProjectServiceError::Unknown(e) => {
+                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
                 Self::InternalServerError("Something went wrong".to_string())
             }
         }
@@ -102,8 +99,8 @@ impl From<DatasetServiceError> for ApiError {
                 Self::BadRequest("Failed to connect to data source".into())
             }
             DatasetServiceError::InvalidPermissions => Self::Forbidden,
-            DatasetServiceError::Unknown(cause) => {
-                tracing::error!("{:?}\n{}", cause, cause.backtrace());
+            DatasetServiceError::Unknown(e) => {
+                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
                 Self::InternalServerError("Something went wrong".to_string())
             }
         }
@@ -137,11 +134,12 @@ impl From<WorkspaceServiceError> for ApiError {
                 tracing::error!("Cluster repository error: {:?}", err);
                 Self::InternalServerError("Something went wrong".to_string())
             }
-            WorkspaceServiceError::KubeClientFactory(err) => {
-                tracing::error!("Kube client factory error: {:?}", err);
+            WorkspaceServiceError::CredentialRepository(err) => {
+                tracing::error!("Credential repository error: {:?}", err);
                 Self::InternalServerError("Something went wrong".to_string())
             }
-            WorkspaceServiceError::Unexpected => {
+            WorkspaceServiceError::Unknown(e) => {
+                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
                 Self::InternalServerError("Something went wrong".to_string())
             }
         }
@@ -150,14 +148,14 @@ impl From<WorkspaceServiceError> for ApiError {
 
 impl From<anyhow::Error> for ApiError {
     fn from(err: anyhow::Error) -> Self {
-        tracing::error!("{:?}\n{}", err, err.backtrace());
+        tracing::error!(error = ?err, backtrace = %err.backtrace(), "unknown error occurred");
         Self::InternalServerError("Something went wrong".to_string())
     }
 }
 
 impl From<reqwest::Error> for ApiError {
     fn from(err: reqwest::Error) -> Self {
-        tracing::error!("{:?}", err);
+        tracing::error!(error = ?err, "unknown error occurred");
         Self::InternalServerError("Something went wrong".to_string())
     }
 }

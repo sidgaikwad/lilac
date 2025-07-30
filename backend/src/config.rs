@@ -63,7 +63,7 @@ impl From<&LogLevel> for Directive {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub struct LilacConfig {
     pub database_url: SecretString,

@@ -6,7 +6,10 @@ use super::{
     models::{GetTrainingJobsFilters, TrainingJob, TrainingJobStatus},
     ports::{TrainingJobRepository, TrainingJobService},
 };
-use crate::inbound::http::routes::training_jobs::models::CreateTrainingJobRequest;
+use crate::{
+    domain::{cluster::models::ClusterId, training_job::models::JobId},
+    inbound::http::routes::training_jobs::models::CreateTrainingJobRequest,
+};
 use async_trait::async_trait;
 
 pub struct TrainingJobServiceImpl {
@@ -25,7 +28,7 @@ impl TrainingJobService for TrainingJobServiceImpl {
         &self,
         request: CreateTrainingJobRequest,
     ) -> Result<TrainingJob, anyhow::Error> {
-        let job_id = Uuid::new_v4();
+        let job_id = JobId::generate();
         let now = chrono::Utc::now();
 
         let training_job = TrainingJob {
@@ -33,7 +36,6 @@ impl TrainingJobService for TrainingJobServiceImpl {
             name: request.name,
             definition: request.definition,
             status: TrainingJobStatus::Queued,
-            instance_id: None,
             queue_id: request.queue_id,
             resource_requirements: serde_json::from_value(request.resource_requirements)?,
             scheduled_cluster_id: None,
@@ -53,16 +55,23 @@ impl TrainingJobService for TrainingJobServiceImpl {
         self.repository.get_training_jobs(filters).await
     }
 
-    async fn update_status(&self, id: Uuid, status: TrainingJobStatus) -> Result<(), anyhow::Error> {
+    async fn update_status(
+        &self,
+        id: &JobId,
+        status: TrainingJobStatus,
+    ) -> Result<(), anyhow::Error> {
         self.repository.update_status(id, status).await
     }
 
-    async fn mark_as_starting(&self, id: Uuid, cluster_id: Uuid) -> Result<(), anyhow::Error> {
+    async fn mark_as_starting(
+        &self,
+        id: &JobId,
+        cluster_id: &ClusterId,
+    ) -> Result<(), anyhow::Error> {
         self.repository.mark_as_starting(id, cluster_id).await
     }
 
-
-    async fn post_logs(&self, id: Uuid, logs: String) -> Result<(), anyhow::Error> {
+    async fn post_logs(&self, id: &JobId, logs: String) -> Result<(), anyhow::Error> {
         self.repository.post_logs(id, logs).await
     }
 }

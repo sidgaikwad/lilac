@@ -45,7 +45,8 @@ impl From<UserRecord> for User {
 #[derive(sqlx::FromRow)]
 struct ApiKeyRecord {
     id: uuid::Uuid,
-    user_id: uuid::Uuid,
+    user_id: Option<uuid::Uuid>,
+    cluster_id: Option<uuid::Uuid>,
     prefix: String,
     key_hash: String,
     created_at: DateTime<Utc>,
@@ -57,7 +58,8 @@ impl From<ApiKeyRecord> for ApiKey {
     fn from(record: ApiKeyRecord) -> Self {
         Self {
             id: record.id.into(),
-            user_id: record.user_id.into(),
+            user_id: record.user_id.map(|v| v.into()),
+            cluster_id: record.cluster_id.map(|v| v.into()),
             prefix: record.prefix,
             key_hash: record.key_hash,
             created_at: record.created_at,
@@ -134,11 +136,12 @@ impl ApiKeyRepository for PostgresUserRepository {
     async fn create_api_key(&self, key: &ApiKey) -> Result<(), ApiKeyRepositoryError> {
         sqlx::query!(
             r#"
-            INSERT INTO api_keys (id, user_id, prefix, key_hash, created_at, expires_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO api_keys (id, user_id, cluster_id, prefix, key_hash, created_at, expires_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
             key.id.inner(),
-            key.user_id.inner(),
+            key.user_id.map(|v| v.into_inner()),
+            key.cluster_id.map(|v| v.into_inner()),
             key.prefix,
             key.key_hash,
             key.created_at,
@@ -181,7 +184,7 @@ impl ApiKeyRepository for PostgresUserRepository {
         let records = sqlx::query_as!(
             ApiKeyRecord,
             r#"
-            SELECT id, user_id, prefix, key_hash, created_at, last_used_at, expires_at
+            SELECT id, user_id, cluster_id, prefix, key_hash, created_at, last_used_at, expires_at
             FROM api_keys
             WHERE user_id = $1
             "#,

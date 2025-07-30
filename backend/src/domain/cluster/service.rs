@@ -1,15 +1,8 @@
 use std::sync::Arc;
 
-use anyhow::anyhow;
 use async_trait::async_trait;
 
-use crate::domain::{
-    cluster::{models::ClusterConfig, ports::ClusterConnectionTester},
-    credentials::{
-        models::{CredentialId, Credentials},
-        ports::{CredentialRepository, CredentialRepositoryError},
-    },
-};
+use crate::domain::cluster::models::{ClusterNode, UpdateNodeStatusRequest};
 
 use super::{
     models::{Cluster, ClusterId, CreateClusterRequest},
@@ -20,8 +13,6 @@ use super::{
 pub enum ClusterServiceError {
     #[error("invalid permissions")]
     InvalidPermissions,
-    #[error("incorrect credentials type")]
-    IncorrectCredentialsType,
     #[error("cluster with {field} {value} already exists")]
     ClusterExists { field: String, value: String },
     #[error("cluster {0} not found")]
@@ -42,107 +33,76 @@ impl From<ClusterRepositoryError> for ClusterServiceError {
     }
 }
 
-impl From<CredentialRepositoryError> for ClusterServiceError {
-    fn from(error: CredentialRepositoryError) -> Self {
-        match error {
-            CredentialRepositoryError::Duplicate { .. } => {
-                Self::Unknown(anyhow!("duplicate credential"))
-            }
-            CredentialRepositoryError::NotFound(id) => Self::ClusterNotFound(id),
-            CredentialRepositoryError::Unknown(error) => Self::Unknown(error),
-        }
-    }
-}
-
 #[async_trait]
 pub trait ClusterService: Send + Sync {
     async fn create_cluster(
         &self,
         req: &CreateClusterRequest,
     ) -> Result<Cluster, ClusterServiceError>;
-    async fn get_cluster_by_id(&self, id: &ClusterId) -> Result<Cluster, ClusterServiceError>;
-    async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterServiceError>;
-    async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterServiceError>;
-    async fn test_cluster_connection(
+    async fn get_cluster_by_id(
         &self,
-        credential_id: CredentialId,
-        cluster_config: ClusterConfig,
-    ) -> Result<(), ClusterServiceError>;
+        cluster_id: &ClusterId,
+    ) -> Result<Cluster, ClusterServiceError>;
+    async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterServiceError>;
+    async fn delete_cluster(&self, cluster_id: &ClusterId) -> Result<(), ClusterServiceError>;
+    async fn list_cluster_nodes(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<Vec<ClusterNode>, ClusterServiceError>;
+    async fn update_node_status(
+        &self,
+        req: UpdateNodeStatusRequest,
+    ) -> Result<ClusterNode, ClusterServiceError>;
 }
 
 #[derive(Clone)]
-pub struct ClusterServiceImpl<
-    R: ClusterRepository,
-    C: CredentialRepository,
-    T: ClusterConnectionTester,
-> {
+pub struct ClusterServiceImpl<R: ClusterRepository> {
     cluster_repo: Arc<R>,
-    credential_repo: Arc<C>,
-    conn_tester: Arc<T>,
 }
 
-impl<R: ClusterRepository, C: CredentialRepository, T: ClusterConnectionTester>
-    ClusterServiceImpl<R, C, T>
-{
-    pub fn new(cluster_repo: Arc<R>, credential_repo: Arc<C>, conn_tester: Arc<T>) -> Self {
-        Self {
-            cluster_repo,
-            credential_repo,
-            conn_tester,
-        }
+impl<R: ClusterRepository> ClusterServiceImpl<R> {
+    pub fn new(cluster_repo: Arc<R>) -> Self {
+        Self { cluster_repo }
     }
 }
 
 #[async_trait]
-impl<R: ClusterRepository, C: CredentialRepository, T: ClusterConnectionTester> ClusterService
-    for ClusterServiceImpl<R, C, T>
-{
+impl<R: ClusterRepository> ClusterService for ClusterServiceImpl<R> {
     async fn create_cluster(
         &self,
         req: &CreateClusterRequest,
     ) -> Result<Cluster, ClusterServiceError> {
-        let credentials = self
-            .credential_repo
-            .get_credential_by_id(&req.credential_id)
-            .await?;
-        match req.clone().cluster_config {
-            ClusterConfig::Local => Ok(self.cluster_repo.create_cluster(req).await?),
-            ClusterConfig::AwsEks { .. } => match credentials.credentials {
-                Credentials::Aws { .. } => Ok(self.cluster_repo.create_cluster(req).await?),
-                _ => Err(ClusterServiceError::IncorrectCredentialsType),
-            },
-            ClusterConfig::GcpGke { .. } => match credentials.credentials {
-                Credentials::Gcp { .. } => Ok(self.cluster_repo.create_cluster(req).await?),
-                _ => Err(ClusterServiceError::IncorrectCredentialsType),
-            },
-        }
+        Ok(self.cluster_repo.create_cluster(req).await?)
     }
 
-    async fn get_cluster_by_id(&self, id: &ClusterId) -> Result<Cluster, ClusterServiceError> {
-        Ok(self.cluster_repo.get_cluster_by_id(id).await?)
+    async fn get_cluster_by_id(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<Cluster, ClusterServiceError> {
+        Ok(self.cluster_repo.get_cluster_by_id(cluster_id).await?)
     }
 
     async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterServiceError> {
         Ok(self.cluster_repo.list_clusters().await?)
     }
 
-    async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterServiceError> {
-        Ok(self.cluster_repo.delete_cluster(id).await?)
+    async fn delete_cluster(&self, cluster_id: &ClusterId) -> Result<(), ClusterServiceError> {
+        Ok(self.cluster_repo.delete_cluster(cluster_id).await?)
     }
 
-    async fn test_cluster_connection(
+    async fn update_node_status(
         &self,
-        credential_id: CredentialId,
-        cluster_config: ClusterConfig,
-    ) -> Result<(), ClusterServiceError> {
-        let credential = self
-            .credential_repo
-            .get_credential_by_id(&credential_id)
-            .await?;
-        let _ = self
-            .conn_tester
-            .test_cluster_connection(credential.credentials, cluster_config)
-            .await;
-        Ok(())
+        req: UpdateNodeStatusRequest,
+    ) -> Result<ClusterNode, ClusterServiceError> {
+        let res = self.cluster_repo.update_cluster_node_status(&req).await?;
+
+        Ok(res)
+    }
+
+    async fn list_cluster_nodes(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<Vec<ClusterNode>, ClusterServiceError> {
+        Ok(self.cluster_repo.list_cluster_nodes(cluster_id).await?)
     }
 }

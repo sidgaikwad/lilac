@@ -2,19 +2,27 @@ pub mod errors;
 pub mod routes;
 
 use axum::{extract::FromRef, Router};
+use http::{HeaderName, Request};
 use std::sync::Arc;
 use tokio::net::TcpListener;
+use tower::ServiceBuilder;
+use tower_http::{
+    request_id::{MakeRequestId, PropagateRequestIdLayer, RequestId, SetRequestIdLayer},
+    trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+};
 use tower_sessions::{service::PrivateCookie, SessionManagerLayer};
+use tracing::Level;
+use uuid::Uuid;
 
 use crate::{
     config::LilacConfig,
     domain::{
         auth::service::AuthService, cluster::service::ClusterService,
         credentials::service::CredentialService, dataset::service::DatasetService,
-        project::service::ProjectService, user::service::UserService,
-        workspace::ports::WorkspaceService, training_job::ports::TrainingJobService, queue::service::QueueService,
+        project::service::ProjectService, queue::service::QueueService,
+        training_job::ports::TrainingJobService, user::service::UserService,
     },
-    inbound::http::routes::{clusters, credentials, training_jobs, queues},
+    inbound::http::routes::{clusters, credentials, queues, training_jobs},
     outbound::persistence::postgres::session_repository::PostgresSessionStore,
 };
 
@@ -29,9 +37,8 @@ pub struct AppState {
     pub project_service: Arc<dyn ProjectService>,
     pub dataset_service: Arc<dyn DatasetService>,
     pub auth_service: Arc<dyn AuthService>,
-    pub workspace_service: Arc<dyn WorkspaceService>,
     pub training_job_service: Arc<dyn TrainingJobService>,
-    pub queue_service: Arc<QueueService>,
+    pub queue_service: Arc<dyn QueueService>,
 }
 
 impl FromRef<AppState> for Arc<dyn CredentialService> {
@@ -70,19 +77,13 @@ impl FromRef<AppState> for Arc<dyn AuthService> {
     }
 }
 
-impl FromRef<AppState> for Arc<dyn WorkspaceService> {
-    fn from_ref(state: &AppState) -> Self {
-        state.workspace_service.clone()
-    }
-}
-
 impl FromRef<AppState> for Arc<dyn TrainingJobService> {
     fn from_ref(state: &AppState) -> Self {
         state.training_job_service.clone()
     }
 }
 
-impl FromRef<AppState> for Arc<QueueService> {
+impl FromRef<AppState> for Arc<dyn QueueService> {
     fn from_ref(state: &AppState) -> Self {
         state.queue_service.clone()
     }
@@ -93,6 +94,19 @@ pub struct HttpServer {
     listener: TcpListener,
     address: String,
     port: u16,
+}
+
+static X_REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
+
+#[derive(Clone, Default)]
+struct UuidRequestId;
+
+impl MakeRequestId for UuidRequestId {
+    fn make_request_id<B>(&mut self, _request: &Request<B>) -> Option<RequestId> {
+        let request_id = Uuid::new_v4().to_string().parse().unwrap();
+
+        Some(RequestId::new(request_id))
+    }
 }
 
 impl HttpServer {
@@ -108,12 +122,24 @@ impl HttpServer {
             .merge(auth::router())
             .merge(clusters::router())
             .merge(credentials::router())
-            .nest(
-                "/training_jobs",
-                training_jobs::training_jobs_router(),
+            .merge(training_jobs::training_jobs_router())
+            .merge(queues::routes())
+            .layer(
+                ServiceBuilder::new()
+                    .layer(
+                        TraceLayer::new_for_http()
+                            .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                            .on_request(DefaultOnRequest::new().level(Level::INFO))
+                            .on_response(DefaultOnResponse::new().level(Level::INFO))
+                            .on_failure(DefaultOnFailure::new().level(Level::ERROR)),
+                    )
+                    .layer(SetRequestIdLayer::new(
+                        X_REQUEST_ID.clone(),
+                        UuidRequestId::default(),
+                    ))
+                    .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
+                    .layer(session_layer),
             )
-            .nest("/queues", queues::routes())
-            .layer(session_layer)
             .with_state(app_state);
 
         let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
@@ -124,7 +150,7 @@ impl HttpServer {
             port,
         })
     }
-    
+
     pub async fn run(self) -> anyhow::Result<()> {
         tracing::info!("starting server on {}:{}", self.address, self.port);
         axum::serve(self.listener, self.app).await?;

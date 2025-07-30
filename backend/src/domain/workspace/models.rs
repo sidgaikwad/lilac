@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -27,8 +29,13 @@ impl From<Uuid> for WorkspaceId {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "ide_type", rename_all = "lowercase")]
+impl Display for WorkspaceId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Ide {
     Vscode,
@@ -36,8 +43,7 @@ pub enum Ide {
     RStudio,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "workspace_status", rename_all = "lowercase")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WorkspaceStatus {
     Pending,
     Running,

@@ -17,3 +17,57 @@ where
 {
     serializer.serialize_str(secret.expose_secret())
 }
+
+#[macro_export]
+macro_rules! identifier {
+    ($struct_name:ident) => {
+        #[derive(
+            Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+        )]
+        pub struct $struct_name(pub Uuid);
+
+        impl $struct_name {
+            pub fn new(id: Uuid) -> Self {
+                Self(id)
+            }
+
+            pub fn generate() -> Self {
+                Self(Uuid::new_v4())
+            }
+
+            pub fn inner(&self) -> &Uuid {
+                &self.0
+            }
+
+            pub fn into_inner(self) -> Uuid {
+                self.0
+            }
+        }
+
+        impl std::fmt::Display for $struct_name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+
+        impl From<Uuid> for $struct_name {
+            fn from(id: Uuid) -> Self {
+                Self(id)
+            }
+        }
+
+        impl From<$struct_name> for Uuid {
+            fn from(id: $struct_name) -> Self {
+                id.0
+            }
+        }
+
+        impl TryFrom<&str> for $struct_name {
+            type Error = uuid::Error;
+
+            fn try_from(id: &str) -> Result<Self, Self::Error> {
+                Ok(Self(Uuid::try_parse(id)?))
+            }
+        }
+    };
+}

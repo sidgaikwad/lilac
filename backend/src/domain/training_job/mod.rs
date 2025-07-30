@@ -10,7 +10,10 @@ mod tests {
         service::TrainingJobServiceImpl,
     };
     use crate::{
-        domain::training_job::ports::TrainingJobService,
+        domain::{
+            queue::models::QueueId,
+            training_job::{models::JobId, ports::TrainingJobService},
+        },
         inbound::http::routes::training_jobs::models::CreateTrainingJobRequest,
     };
     use mockall::predicate::*;
@@ -20,7 +23,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_training_job() {
         let mut mock_repo = MockTrainingJobRepository::new();
-        let queue_id = Uuid::new_v4();
+        let queue_id = QueueId::generate();
         let request = CreateTrainingJobRequest {
             name: "test".to_string(),
             definition: "definition".to_string(),
@@ -49,7 +52,6 @@ mod tests {
         assert_eq!(training_job.queue_id, queue_id);
     }
 
-
     #[tokio::test]
     async fn test_get_training_jobs() {
         let mut mock_repo = MockTrainingJobRepository::new();
@@ -73,7 +75,7 @@ mod tests {
     #[tokio::test]
     async fn test_update_status() {
         let mut mock_repo = MockTrainingJobRepository::new();
-        let id = Uuid::new_v4();
+        let id = JobId::generate();
         let status = TrainingJobStatus::Running;
 
         mock_repo
@@ -83,7 +85,7 @@ mod tests {
             .returning(|_, _| Ok(()));
 
         let service = TrainingJobServiceImpl::new(Arc::new(mock_repo));
-        let result = service.update_status(id, status).await;
+        let result = service.update_status(&id, status).await;
 
         assert!(result.is_ok());
     }
@@ -91,7 +93,7 @@ mod tests {
     #[tokio::test]
     async fn test_post_logs() {
         let mut mock_repo = MockTrainingJobRepository::new();
-        let id = Uuid::new_v4();
+        let id = JobId::generate();
 
         mock_repo
             .expect_post_logs()
@@ -100,7 +102,7 @@ mod tests {
             .returning(|_, _| Ok(()));
 
         let service = TrainingJobServiceImpl::new(Arc::new(mock_repo));
-        let result = service.post_logs(id, "logs".to_string()).await;
+        let result = service.post_logs(&id, "logs".to_string()).await;
 
         assert!(result.is_ok());
     }

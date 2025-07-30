@@ -2,9 +2,13 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::domain::training_job::{
-    models::{GetTrainingJobsFilters, TrainingJob, TrainingJobStatus},
-    ports::TrainingJobRepository,
+use crate::domain::{
+    cluster::models::ClusterId,
+    queue::models::QueueId,
+    training_job::{
+        models::{GetTrainingJobsFilters, JobId, TrainingJob, TrainingJobStatus},
+        ports::TrainingJobRepository,
+    },
 };
 
 pub struct PostgresTrainingJobRepository {
@@ -21,14 +25,13 @@ impl PostgresTrainingJobRepository {
 impl TrainingJobRepository for PostgresTrainingJobRepository {
     async fn create(&self, training_job: &TrainingJob) -> Result<(), anyhow::Error> {
         sqlx::query!(
-            "INSERT INTO training_jobs (id, name, definition, status, instance_id, queue_id, resource_requirements, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-            training_job.id,
+            "INSERT INTO training_jobs (id, name, definition, status, queue_id, resource_requirements, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+            training_job.id.0,
             training_job.name,
             training_job.definition,
             training_job.status as _,
-            training_job.instance_id,
-            training_job.queue_id,
+            training_job.queue_id.0,
             &serde_json::to_value(&training_job.resource_requirements)?,
             training_job.created_at,
             training_job.updated_at,
@@ -76,10 +79,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
             query.push_bind(status as TrainingJobStatus);
         }
 
-        let rows: Vec<TrainingJobRow> = query
-            .build_query_as()
-            .fetch_all(&self.pool)
-            .await?;
+        let rows: Vec<TrainingJobRow> = query.build_query_as().fetch_all(&self.pool).await?;
 
         let training_jobs = rows
             .into_iter()
@@ -88,14 +88,13 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
                     .map_err(|e| anyhow::anyhow!("Failed to parse resource_requirements: {}", e))?;
 
                 Ok(TrainingJob {
-                    id: row.id,
+                    id: row.id.into(),
                     name: row.name,
                     definition: row.definition,
                     status: row.status,
-                    instance_id: row.instance_id,
-                    queue_id: row.queue_id,
+                    queue_id: row.queue_id.into(),
                     resource_requirements,
-                    scheduled_cluster_id: row.scheduled_cluster_id,
+                    scheduled_cluster_id: row.scheduled_cluster_id.map(|v| v.into()),
                     created_at: row.created_at,
                     updated_at: row.updated_at,
                 })
@@ -105,12 +104,15 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
         Ok(training_jobs)
     }
 
-    async fn update_status(&self, id: Uuid, status: TrainingJobStatus) -> Result<(), anyhow::Error> {
+    async fn update_status(
+        &self,
+        id: &JobId,
+        status: TrainingJobStatus,
+    ) -> Result<(), anyhow::Error> {
         sqlx::query!(
-            "UPDATE training_jobs SET status = $1, updated_at = $2 WHERE id = $3",
+            "UPDATE training_jobs SET status = $1 WHERE id = $2",
             status as _,
-            chrono::Utc::now(),
-            id
+            id.0
         )
         .execute(&self.pool)
         .await?;
@@ -118,12 +120,15 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
         Ok(())
     }
 
-    async fn mark_as_starting(&self, id: Uuid, cluster_id: Uuid) -> Result<(), anyhow::Error> {
+    async fn mark_as_starting(
+        &self,
+        id: &JobId,
+        cluster_id: &ClusterId,
+    ) -> Result<(), anyhow::Error> {
         sqlx::query!(
-            "UPDATE training_jobs SET status = 'starting', scheduled_cluster_id = $1, updated_at = $2 WHERE id = $3",
-            cluster_id,
-            chrono::Utc::now(),
-            id
+            "UPDATE training_jobs SET status = 'starting', scheduled_cluster_id = $1 WHERE id = $2",
+            cluster_id.0,
+            id.0
         )
         .execute(&self.pool)
         .await?;
@@ -133,7 +138,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
 
     async fn get_queued_jobs_for_queue(
         &self,
-        queue_id: Uuid,
+        queue_id: &QueueId,
     ) -> Result<Vec<TrainingJob>, anyhow::Error> {
         #[derive(sqlx::FromRow)]
         struct QueuedJobRow {
@@ -159,7 +164,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
             WHERE status = 'queued' AND queue_id = $1
             ORDER BY created_at ASC
             "#,
-            queue_id
+            queue_id.0,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -171,14 +176,13 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
                     .map_err(|e| anyhow::anyhow!("Failed to parse resource_requirements: {}", e))?;
 
                 Ok(TrainingJob {
-                    id: row.id,
+                    id: row.id.into(),
                     name: row.name,
                     definition: row.definition,
                     status: row.status,
-                    instance_id: row.instance_id,
-                    queue_id: row.queue_id,
+                    queue_id: row.queue_id.into(),
                     resource_requirements,
-                    scheduled_cluster_id: row.scheduled_cluster_id,
+                    scheduled_cluster_id: row.scheduled_cluster_id.map(|v| v.into()),
                     created_at: row.created_at,
                     updated_at: row.updated_at,
                 })
@@ -187,7 +191,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
 
         Ok(jobs)
     }
-async fn post_logs(&self, _id: Uuid, _logs: String) -> Result<(), anyhow::Error> {
+    async fn post_logs(&self, _id: &JobId, _logs: String) -> Result<(), anyhow::Error> {
         // TODO: Implement log ingestion. This could involve writing to a file,
         // a separate logging service, or another table.
         println!("TODO: Implement log posting");

@@ -4,6 +4,6 @@ pub mod dataset_repository;
 pub mod project_repository;
 pub mod queue_repository;
 pub mod session_repository;
+pub mod training_job_repository;
 pub mod user_repository;
 pub mod workspace_repository;
-pub mod training_job_repository;

@@ -1,3 +1,3 @@
 pub mod models;
-pub mod service;
 pub mod ports;
+pub mod service;

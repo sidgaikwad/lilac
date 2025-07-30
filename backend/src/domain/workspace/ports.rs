@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 use thiserror::Error;
 
-use super::models::{CreateWorkspaceRequest, Ide, Workspace, WorkspaceId};
+use super::models::{CreateWorkspaceRequest, Workspace, WorkspaceId};
 use crate::domain::{
-    project::models::ProjectId, user::models::UserId,
+    cluster::models::Cluster, credentials::models::Credential, project::models::ProjectId,
+    user::models::UserId,
 };
 
 #[derive(Error, Debug)]
@@ -27,7 +28,6 @@ pub trait WorkspaceRepository: Send + Sync {
         id: WorkspaceId,
         status: super::models::WorkspaceStatus,
         url: &str,
-        token: &str,
     ) -> Result<(), WorkspaceRepositoryError>;
     async fn list_by_project_id(
         &self,
@@ -37,45 +37,18 @@ pub trait WorkspaceRepository: Send + Sync {
 
 #[derive(Error, Debug)]
 pub enum ProvisionerError {
-    #[error("failed to provision")]
-    Failed,
+    #[error("failed to provision workspace: {0}")]
+    ProvisioningFailed(String),
     #[error(transparent)]
-    Other(#[from] Box<dyn std::error::Error + Send + Sync>),
-}
-
-use kube::Client;
-
-#[async_trait]
-pub trait Provisioner: Send + Sync {
-    async fn provision(
-        &self,
-        client: &Client,
-        workspace_id: WorkspaceId,
-        project_id: ProjectId,
-        image: &str,
-        cpu_millicores: i32,
-        memory_mb: i32,
-        ide: &Ide,
-        public_key: &str,
-        gpu: bool,
-    ) -> Result<String, ProvisionerError>;
+    Other(#[from] anyhow::Error),
 }
 
 #[async_trait]
-pub trait WorkspaceService: Send + Sync {
-    async fn create_workspace(
+pub trait WorkspaceProvisioner: Send + Sync {
+    async fn provision_workspace(
         &self,
-        req: CreateWorkspaceRequest,
-        owner_id: UserId,
-    ) -> Result<Workspace, super::service::WorkspaceServiceError>;
-    async fn list_workspaces(
-        &self,
-        project_id: ProjectId,
-        owner_id: UserId,
-    ) -> Result<Vec<Workspace>, super::service::WorkspaceServiceError>;
-    async fn find_by_id(
-        &self,
-        workspace_id: WorkspaceId,
-        owner_id: UserId,
-    ) -> Result<Workspace, super::service::WorkspaceServiceError>;
+        cluster: &Cluster,
+        credential: &Credential,
+        workspace: &mut Workspace,
+    ) -> Result<(), ProvisionerError>;
 }

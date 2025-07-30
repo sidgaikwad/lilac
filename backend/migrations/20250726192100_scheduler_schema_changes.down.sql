@@ -1,6 +1,3 @@
--- Remove the training_job_cluster_targets join table
-DROP TABLE IF EXISTS training_job_cluster_targets;
-
 -- Add back cluster_id to training_jobs table
 -- Note: This will not restore the original data, but it reverts the schema.
 ALTER TABLE training_jobs
@@ -17,7 +14,3 @@ REFERENCES clusters(id);
 ALTER TABLE training_jobs
 DROP COLUMN priority,
 DROP COLUMN resource_requirements;
-
--- Remove platform_type from clusters table
-ALTER TABLE clusters
-DROP COLUMN platform_type;

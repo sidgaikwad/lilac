@@ -29,7 +29,6 @@ pub async fn create_project(
     State(project_service): State<Arc<dyn ProjectService>>,
     Json(req): Json<CreateProjectHttpRequest>,
 ) -> Result<Json<CreateProjectHttpResponse>, ApiError> {
-    println!("->> HANDLER - create_project");
     let project = project_service
         .create_project(&CreateProjectRequest {
             owner_id: claims.sub,
@@ -57,7 +56,6 @@ pub async fn list_projects(
     _claims: Claims,
     State(project_service): State<Arc<dyn ProjectService>>,
 ) -> Result<Json<ListProjectsHttpResponse>, ApiError> {
-    println!("->> HANDLER - list_projects");
     let projects = project_service.list_projects().await?;
     Ok(Json(projects.into()))
 }
@@ -68,7 +66,6 @@ pub async fn delete_project(
     State(project_service): State<Arc<dyn ProjectService>>,
     Path(project_id): Path<ProjectId>,
 ) -> Result<(), ApiError> {
-    println!("->> HANDLER - delete_project");
     project_service.delete_project(&project_id.into()).await?;
     Ok(())
 }

@@ -1,83 +1,15 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{
-    cluster::models::{Cluster, ClusterConfig, ClusterId, CreateClusterRequest},
-    credentials::models::CredentialId,
+use crate::domain::cluster::models::{
+    Cluster, ClusterId, ClusterNode, Cpu, CreateClusterRequest, Gpu, JobInfo, NodeId, NodeStatus,
 };
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "cluster_type")]
-pub enum HttpClusterConfig {
-    #[serde(rename = "local")]
-    Local,
-    #[serde(rename = "aws_eks")]
-    AwsEks {
-        cluster_name: String,
-        region: String,
-    },
-    #[serde(rename = "gcp_gke")]
-    GcpGke {
-        cluster_name: String,
-        region: String,
-        project_id: String,
-    },
-}
-
-impl From<HttpClusterConfig> for ClusterConfig {
-    fn from(value: HttpClusterConfig) -> Self {
-        match value {
-            HttpClusterConfig::Local => Self::Local,
-            HttpClusterConfig::AwsEks {
-                cluster_name,
-                region,
-            } => Self::AwsEks {
-                cluster_name,
-                region,
-            },
-            HttpClusterConfig::GcpGke {
-                cluster_name,
-                region,
-                project_id,
-            } => Self::GcpGke {
-                cluster_name,
-                region,
-                project_id,
-            },
-        }
-    }
-}
-
-impl From<ClusterConfig> for HttpClusterConfig {
-    fn from(value: ClusterConfig) -> Self {
-        match value {
-            ClusterConfig::Local => Self::Local,
-            ClusterConfig::AwsEks {
-                cluster_name,
-                region,
-            } => Self::AwsEks {
-                cluster_name,
-                region,
-            },
-            ClusterConfig::GcpGke {
-                cluster_name,
-                region,
-                project_id,
-            } => Self::GcpGke {
-                cluster_name,
-                region,
-                project_id,
-            },
-        }
-    }
-}
 
 /// The body of a [Cluster] creation request.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateClusterHttpRequest {
     cluster_name: String,
     cluster_description: Option<String>,
-    cluster_config: HttpClusterConfig,
-    credential_id: CredentialId,
 }
 
 impl From<CreateClusterHttpRequest> for CreateClusterRequest {
@@ -85,8 +17,6 @@ impl From<CreateClusterHttpRequest> for CreateClusterRequest {
         CreateClusterRequest {
             name: value.cluster_name,
             description: value.cluster_description,
-            cluster_config: value.cluster_config.into(),
-            credential_id: value.credential_id,
         }
     }
 }
@@ -103,8 +33,6 @@ pub struct GetClusterHttpResponse {
     pub cluster_id: ClusterId,
     pub cluster_name: String,
     pub cluster_description: Option<String>,
-    pub cluster_config: HttpClusterConfig,
-    pub credential_id: CredentialId,
 }
 
 impl From<Cluster> for GetClusterHttpResponse {
@@ -113,8 +41,6 @@ impl From<Cluster> for GetClusterHttpResponse {
             cluster_id: value.id,
             cluster_name: value.name,
             cluster_description: value.description,
-            cluster_config: value.cluster_config.into(),
-            credential_id: value.credential_id,
         }
     }
 }
@@ -124,22 +50,14 @@ pub struct HttpClusterSummary {
     pub cluster_id: ClusterId,
     pub cluster_name: String,
     pub cluster_description: Option<String>,
-    pub cluster_type: String,
 }
 
 impl From<Cluster> for HttpClusterSummary {
     fn from(cluster: Cluster) -> Self {
-        let cluster_type = match cluster.cluster_config {
-            ClusterConfig::Local => "local".to_string(),
-            ClusterConfig::AwsEks { .. } => "aws_eks".to_string(),
-            ClusterConfig::GcpGke { .. } => "gcp_gke".to_string(),
-        };
-
         Self {
             cluster_id: cluster.id,
             cluster_name: cluster.name,
             cluster_description: cluster.description,
-            cluster_type,
         }
     }
 }
@@ -158,14 +76,56 @@ impl From<Vec<Cluster>> for ListClustersHttpResponse {
     }
 }
 
-/// The body of a [Cluster] connection test request.
+/// The body of a [ClusterNode] heartbeat request.
 #[derive(Debug, Clone, Deserialize)]
-pub struct TestClusterHttpRequest {
-    pub cluster_config: HttpClusterConfig,
-    pub credential_id: CredentialId,
+pub struct HttpClusterNodeHeartbeat {
+    pub status: NodeStatus,
+    pub memory_info: i32,
+    pub cpu_info: Cpu,
+    pub gpu_info: Option<Gpu>,
+    pub job_info: Option<JobInfo>,
 }
 
+/// The body of a [Cluster] list response.
 #[derive(Clone, Debug, Serialize)]
-pub struct TestClusterHttpResponse {
-    pub success: bool,
+pub struct HttpClusterNodeDetails {}
+
+/// The body of a [ClusterNode] get request.
+#[derive(Debug, Clone, Serialize)]
+pub struct HttpClusterNode {
+    pub id: NodeId,
+    pub cluster_id: ClusterId,
+    pub node_status: NodeStatus,
+    pub last_heartbeat: DateTime<Utc>,
+    pub memory_mb: i32,
+    pub cpu: Cpu,
+    pub gpu: Option<Gpu>,
+}
+
+impl From<ClusterNode> for HttpClusterNode {
+    fn from(value: ClusterNode) -> Self {
+        Self {
+            id: value.id,
+            cluster_id: value.cluster_id,
+            node_status: value.node_status,
+            last_heartbeat: value.heartbeat_timestamp,
+            memory_mb: value.memory_mb,
+            cpu: value.cpu,
+            gpu: value.gpu,
+        }
+    }
+}
+
+/// The body of a [Cluster] list response.
+#[derive(Clone, Debug, Serialize)]
+pub struct ListClusterNodesHttpResponse {
+    pub cluster_nodes: Vec<HttpClusterNode>,
+}
+
+impl From<Vec<ClusterNode>> for ListClusterNodesHttpResponse {
+    fn from(value: Vec<ClusterNode>) -> Self {
+        Self {
+            cluster_nodes: value.into_iter().map(HttpClusterNode::from).collect(),
+        }
+    }
 }

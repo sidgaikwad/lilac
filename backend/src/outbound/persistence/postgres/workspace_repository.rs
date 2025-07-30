@@ -8,10 +8,7 @@ use crate::domain::{
     project::models::ProjectId,
     user::models::UserId,
     workspace::{
-        models::{
-            CreateWorkspaceRequest, Ide, Workspace, WorkspaceId,
-            WorkspaceStatus,
-        },
+        models::{CreateWorkspaceRequest, Ide, Workspace, WorkspaceId, WorkspaceStatus},
         ports::{WorkspaceRepository, WorkspaceRepositoryError},
     },
 };
@@ -26,6 +23,71 @@ impl PostgresWorkspaceRepository {
     }
 }
 
+#[derive(sqlx::Type)]
+#[sqlx(type_name = "ide_type", rename_all = "lowercase")]
+enum IdeRecord {
+    Vscode,
+    JupyterLab,
+    RStudio,
+}
+
+impl From<Ide> for IdeRecord {
+    fn from(value: Ide) -> Self {
+        match value {
+            Ide::Vscode => Self::Vscode,
+            Ide::JupyterLab => Self::JupyterLab,
+            Ide::RStudio => Self::RStudio,
+        }
+    }
+}
+
+impl From<IdeRecord> for Ide {
+    fn from(value: IdeRecord) -> Self {
+        match value {
+            IdeRecord::Vscode => Self::Vscode,
+            IdeRecord::JupyterLab => Self::JupyterLab,
+            IdeRecord::RStudio => Self::RStudio,
+        }
+    }
+}
+
+#[derive(sqlx::Type)]
+#[sqlx(type_name = "workspace_status", rename_all = "lowercase")]
+enum WorkspaceStatusRecord {
+    Pending,
+    Running,
+    Stopping,
+    Stopped,
+    Failed,
+    Terminated,
+}
+
+impl From<WorkspaceStatus> for WorkspaceStatusRecord {
+    fn from(value: WorkspaceStatus) -> Self {
+        match value {
+            WorkspaceStatus::Pending => Self::Pending,
+            WorkspaceStatus::Running => Self::Running,
+            WorkspaceStatus::Stopping => Self::Stopping,
+            WorkspaceStatus::Stopped => Self::Stopped,
+            WorkspaceStatus::Failed => Self::Failed,
+            WorkspaceStatus::Terminated => Self::Terminated,
+        }
+    }
+}
+
+impl From<WorkspaceStatusRecord> for WorkspaceStatus {
+    fn from(value: WorkspaceStatusRecord) -> Self {
+        match value {
+            WorkspaceStatusRecord::Pending => Self::Pending,
+            WorkspaceStatusRecord::Running => Self::Running,
+            WorkspaceStatusRecord::Stopping => Self::Stopping,
+            WorkspaceStatusRecord::Stopped => Self::Stopped,
+            WorkspaceStatusRecord::Failed => Self::Failed,
+            WorkspaceStatusRecord::Terminated => Self::Terminated,
+        }
+    }
+}
+
 #[derive(sqlx::FromRow)]
 struct WorkspaceRecord {
     workspace_id: Uuid,
@@ -33,7 +95,7 @@ struct WorkspaceRecord {
     project_id: Uuid,
     owner_id: Uuid,
     cluster_id: Uuid,
-    ide: Ide,
+    ide: IdeRecord,
     image: String,
     cpu_millicores: i32,
     memory_mb: i32,
@@ -55,7 +117,7 @@ impl From<WorkspaceRecord> for Workspace {
             project_id: record.project_id.into(),
             owner_id: record.owner_id.into(),
             cluster_id: record.cluster_id.into(),
-            ide: record.ide,
+            ide: record.ide.into(),
             image: record.image,
             cpu_millicores: record.cpu_millicores,
             memory_mb: record.memory_mb,
@@ -89,12 +151,12 @@ impl WorkspaceRepository for PostgresWorkspaceRepository {
                 project_id,
                 owner_id,
                 cluster_id,
-                ide as "ide: Ide",
+                ide as "ide: IdeRecord",
                 image,
                 cpu_millicores,
                 memory_mb,
                 gpu,
-                status as "status: WorkspaceStatus",
+                status as "status: WorkspaceStatusRecord",
                 url,
                 token,
                 public_key,
@@ -106,7 +168,7 @@ impl WorkspaceRepository for PostgresWorkspaceRepository {
             req.project_id.inner(),
             owner_id.inner(),
             req.cluster_id.inner(),
-            req.ide as _,
+            IdeRecord::from(req.ide.clone()) as _,
             req.image,
             req.cpu_millicores,
             req.memory_mb,
@@ -129,12 +191,12 @@ impl WorkspaceRepository for PostgresWorkspaceRepository {
                 project_id,
                 owner_id,
                 cluster_id,
-                ide as "ide: Ide",
+                ide as "ide: IdeRecord",
                 image,
                 cpu_millicores,
                 memory_mb,
                 gpu,
-                status as "status: WorkspaceStatus",
+                status as "status: WorkspaceStatusRecord",
                 url,
                 token,
                 public_key,
@@ -159,19 +221,17 @@ impl WorkspaceRepository for PostgresWorkspaceRepository {
     async fn update_connection_details(
         &self,
         id: WorkspaceId,
-        status: crate::domain::workspace::models::WorkspaceStatus,
+        status: WorkspaceStatus,
         url: &str,
-        token: &str,
     ) -> Result<(), WorkspaceRepositoryError> {
         sqlx::query!(
             r#"
             UPDATE workspaces
-            SET status = $1, url = $2, token = $3, updated_at = NOW()
-            WHERE workspace_id = $4
+            SET status = $1, url = $2, updated_at = NOW()
+            WHERE workspace_id = $3
             "#,
-            status as _,
+            WorkspaceStatusRecord::from(status) as _,
             url,
-            token,
             id.inner()
         )
         .execute(&self.pool)
@@ -194,12 +254,12 @@ impl WorkspaceRepository for PostgresWorkspaceRepository {
                 project_id,
                 owner_id,
                 cluster_id,
-                ide as "ide: Ide",
+                ide as "ide: IdeRecord",
                 image,
                 cpu_millicores,
                 memory_mb,
                 gpu,
-                status as "status: WorkspaceStatus",
+                status as "status: WorkspaceStatusRecord",
                 url,
                 token,
                 public_key,

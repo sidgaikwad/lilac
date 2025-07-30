@@ -5,6 +5,8 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::domain::cluster::models::ClusterId;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct UserId(Uuid);
 
@@ -108,7 +110,8 @@ pub struct NewApiKey {
 #[derive(Clone, Debug)]
 pub struct ApiKey {
     pub id: ApiKeyId,
-    pub user_id: UserId,
+    pub user_id: Option<UserId>,
+    pub cluster_id: Option<ClusterId>,
     pub prefix: String,
     pub key_hash: String,
     pub created_at: DateTime<Utc>,

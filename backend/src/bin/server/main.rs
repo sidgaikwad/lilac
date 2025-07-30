@@ -6,38 +6,28 @@ use server::{
     config::{LilacConfig, LogFormat},
     domain::{
         auth::service::AuthServiceImpl, cluster::service::ClusterServiceImpl,
-        credentials::service::CredentialServiceImpl,
-        dataset::service::DatasetServiceImpl,
-        project::service::ProjectServiceImpl,
-        scheduler::{manager::ComputePlatformManager, service::SchedulerService},
+        credentials::service::CredentialServiceImpl, dataset::service::DatasetServiceImpl,
+        project::service::ProjectServiceImpl, queue::service::QueueServiceImpl,
+        scheduler::service::SchedulerService, training_job::service::TrainingJobServiceImpl,
         user::service::UserServiceImpl,
-        workspace::service::WorkspaceServiceImpl,
-        training_job::service::TrainingJobServiceImpl,
-        queue::service::QueueService,
     },
     inbound::http::{AppState, HttpServer},
     outbound::{
-        connectors::ClusterConnectorImpl,
         data_source::adapter::DataSourceTesterImpl,
         jwt::JwtManager,
-        k8s::{factory::KubeClientFactoryImpl, plugin::KubernetesPlugin},
         persistence::postgres::{
             cluster_repository::PostgresClusterRepository,
             credential_repository::PostgresCredentialRepository,
             dataset_repository::PostgresDatasetRepository,
             project_repository::PostgresProjectRepository,
-            queue_repository::PostgresQueueRepository,
-            session_repository::PostgresSessionStore, user_repository::PostgresUserRepository,
-            workspace_repository::PostgresWorkspaceRepository,
+            queue_repository::PostgresQueueRepository, session_repository::PostgresSessionStore,
             training_job_repository::PostgresTrainingJobRepository,
+            user_repository::PostgresUserRepository,
         },
-        provisioner::kubernetes::KubernetesProvisioner,
     },
 };
 use sqlx::postgres::PgPoolOptions;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-
-use kube::config::Kubeconfig;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -50,9 +40,8 @@ async fn main() -> anyhow::Result<()> {
     let config = Arc::new(LilacConfig::new().expect("could not parse provided config"));
 
     // 2. Initialize tracing
-    let trace_subscriber = tracing_subscriber::registry().with(
-        EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
-    );
+    let trace_subscriber = tracing_subscriber::registry()
+        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()));
     match config.log_format {
         LogFormat::Pretty => trace_subscriber
             .with(tracing_subscriber::fmt::layer().pretty())
@@ -74,40 +63,17 @@ async fn main() -> anyhow::Result<()> {
     let project_repo = Arc::new(PostgresProjectRepository::new(db_pool.clone()));
     let dataset_repo = Arc::new(PostgresDatasetRepository::new(db_pool.clone()));
     let jwt_manager = Arc::new(JwtManager::new(config.secret_key.expose_secret()));
-    let conn_tester = Arc::new(ClusterConnectorImpl::new());
-    let workspace_repo = Arc::new(PostgresWorkspaceRepository::new(db_pool.clone()));
     let training_job_repo = Arc::new(PostgresTrainingJobRepository::new(db_pool.clone()));
     let queue_repo = Arc::new(PostgresQueueRepository::new(db_pool.clone()));
 
-    let kube_config = if std::env::var("APP_ENV").unwrap_or_else(|_| "local".to_string()) == "local" {
-        let kubeconfig = Kubeconfig::read_from("kubeconfig.yaml")?;
-        kube::Config::from_custom_kubeconfig(kubeconfig, &Default::default()).await?
-    } else {
-        kube::Config::infer().await?
-    };
-    let kube_client = kube::Client::try_from(kube_config)?;
-    let provisioner = Arc::new(KubernetesProvisioner::new(config.clone()));
-
     // 3. Construct domain services
-    let cluster_service = Arc::new(ClusterServiceImpl::new(
-        cluster_repo.clone(),
-        credential_repo.clone(),
-        conn_tester.clone(),
-    ));
+    let cluster_service = Arc::new(ClusterServiceImpl::new(cluster_repo.clone()));
     let credential_service = Arc::new(CredentialServiceImpl::new(credential_repo.clone()));
     let user_service = Arc::new(UserServiceImpl::new(user_repo.clone()));
     let project_service = Arc::new(ProjectServiceImpl::new(project_repo.clone()));
     let dataset_service = Arc::new(DatasetServiceImpl::new(
         dataset_repo.clone(),
         Arc::new(DataSourceTesterImpl),
-    ));
-    let kube_client_factory = Arc::new(KubeClientFactoryImpl::new(credential_repo.clone()));
-    let workspace_service = Arc::new(WorkspaceServiceImpl::new(
-        workspace_repo,
-        provisioner,
-        cluster_repo.clone(),
-        kube_client_factory.clone(),
-        config.clone(),
     ));
     let session_store = PostgresSessionStore::new(db_pool.clone());
     session_store.migrate().await?;
@@ -118,19 +84,10 @@ async fn main() -> anyhow::Result<()> {
 
     let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), jwt_manager));
     let training_job_service = Arc::new(TrainingJobServiceImpl::new(training_job_repo.clone()));
-    let queue_service = Arc::new(QueueService::new(queue_repo.clone()));
+    let queue_service = Arc::new(QueueServiceImpl::new(queue_repo.clone()));
 
     // 4. Construct Scheduler
-    let k8s_plugin = Arc::new(KubernetesPlugin::new(
-        kube_client_factory.clone(),
-        cluster_repo.clone(),
-        training_job_repo.clone(),
-    ));
-    let mut platform_manager = ComputePlatformManager::new(cluster_repo.clone());
-    platform_manager.register(k8s_plugin);
-
     let scheduler_service = Arc::new(SchedulerService::new(
-        Arc::new(platform_manager),
         training_job_repo.clone(),
         queue_repo.clone(),
     ));
@@ -153,12 +110,11 @@ async fn main() -> anyhow::Result<()> {
         project_service,
         dataset_service,
         auth_service,
-        workspace_service,
         training_job_service,
         queue_service,
     };
     let http_server = HttpServer::new(app_state, session_layer, config.http_port).await?;
-    
+
     // Run the server and wait for it and the scheduler to complete
     tokio::select! {
         _ = http_server.run() => {},

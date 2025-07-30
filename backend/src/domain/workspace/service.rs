@@ -1,22 +1,23 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use thiserror::Error;
-use kube::Api;
 use k8s_openapi::api::core::v1::Service;
+use kube::Api;
+use thiserror::Error;
 use tokio::time::{sleep, Duration};
 
 use super::{
     models::{CreateWorkspaceRequest, Workspace},
-    ports::{Provisioner, ProvisionerError, WorkspaceRepository, WorkspaceRepositoryError},
-};
-use crate::{
-    domain::{
-        cluster::ports::{ClusterRepository, ClusterRepositoryError},
-        project::models::ProjectId,
-        user::models::UserId,
+    ports::{
+        ProvisionerError, WorkspaceProvisioner, WorkspaceRepository, WorkspaceRepositoryError,
     },
-    outbound::k8s::factory::{KubeClientFactory, KubeClientFactoryError},
+};
+use crate::domain::{
+    cluster::ports::{ClusterRepository, ClusterRepositoryError},
+    credentials::ports::{CredentialRepository, CredentialRepositoryError},
+    project::models::ProjectId,
+    user::models::UserId,
+    workspace::models::{WorkspaceId, WorkspaceStatus},
 };
 
 #[derive(Error, Debug)]
@@ -28,36 +29,53 @@ pub enum WorkspaceServiceError {
     #[error(transparent)]
     ClusterRepository(#[from] ClusterRepositoryError),
     #[error(transparent)]
-    KubeClientFactory(#[from] KubeClientFactoryError),
-    #[error("an unexpected error occurred")]
-    Unexpected,
+    CredentialRepository(#[from] CredentialRepositoryError),
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
 }
 
 use crate::config::LilacConfig;
 
-use super::ports::WorkspaceService;
+#[async_trait]
+pub trait WorkspaceService: Send + Sync {
+    async fn create_workspace(
+        &self,
+        req: CreateWorkspaceRequest,
+        owner_id: UserId,
+    ) -> Result<Workspace, super::service::WorkspaceServiceError>;
+    async fn list_workspaces(
+        &self,
+        project_id: ProjectId,
+        owner_id: UserId,
+    ) -> Result<Vec<Workspace>, super::service::WorkspaceServiceError>;
+    async fn find_by_id(
+        &self,
+        workspace_id: WorkspaceId,
+        owner_id: UserId,
+    ) -> Result<Workspace, super::service::WorkspaceServiceError>;
+}
 
 pub struct WorkspaceServiceImpl {
     repository: Arc<dyn WorkspaceRepository>,
-    provisioner: Arc<dyn Provisioner>,
+    provisioner: Arc<dyn WorkspaceProvisioner>,
     cluster_repository: Arc<dyn ClusterRepository>,
-    kube_client_factory: Arc<dyn KubeClientFactory>,
+    credential_repository: Arc<dyn CredentialRepository>,
     config: Arc<LilacConfig>,
 }
 
 impl WorkspaceServiceImpl {
     pub fn new(
         repository: Arc<dyn WorkspaceRepository>,
-        provisioner: Arc<dyn Provisioner>,
+        provisioner: Arc<dyn WorkspaceProvisioner>,
         cluster_repository: Arc<dyn ClusterRepository>,
-        kube_client_factory: Arc<dyn KubeClientFactory>,
+        credential_repository: Arc<dyn CredentialRepository>,
         config: Arc<LilacConfig>,
     ) -> Self {
         Self {
             repository,
             provisioner,
             cluster_repository,
-            kube_client_factory,
+            credential_repository,
             config,
         }
     }
@@ -70,179 +88,51 @@ impl WorkspaceService for WorkspaceServiceImpl {
         req: CreateWorkspaceRequest,
         owner_id: UserId,
     ) -> Result<Workspace, WorkspaceServiceError> {
-        // 1. Create the initial workspace record in the database
-        let workspace = self.repository.create(&req, owner_id).await?;
+        todo!();
+        // // 1. Create the initial workspace record in the database
+        // let workspace = self.repository.create(&req, owner_id).await?;
 
-        // 2. Get the cluster and create a kube client for it
-        let cluster = self
-            .cluster_repository
-            .get_cluster_by_id(&req.cluster_id)
-            .await?;
-        let kube_client = self.kube_client_factory.create_client(&cluster).await?;
+        // // 2. Get the cluster and create a kube client for it
+        // let cluster = self
+        //     .cluster_repository
+        //     .get_cluster_by_id(&req.cluster_id)
+        //     .await?;
+        // let credential = self
+        //     .credential_repository
+        //     .get_credential_by_id(&cluster.credential_id)
+        //     .await?;
 
-        // 3. Trigger the provisioner in a background task
-        let provisioner = self.provisioner.clone();
-        let repository = self.repository.clone();
-        let workspace_clone = workspace.clone();
-        let config = self.config.clone();
+        // // 3. Trigger the provisioner in a background task
+        // let provisioner = self.provisioner.clone();
+        // let mut workspace_clone = workspace.clone();
+        // let workspace_repository = self.repository.clone();
+        // tokio::spawn(async move {
+        //     let result = provisioner
+        //         .provision_workspace(&cluster, &credential, &mut workspace_clone)
+        //         .await;
+        //     match result {
+        //         Ok(()) => {
+        //             let url = workspace_clone.url.as_ref().expect("url to be set");
+        //             let res = workspace_repository
+        //                 .update_connection_details(
+        //                     workspace_clone.id,
+        //                     WorkspaceStatus::Running,
+        //                     url,
+        //                 )
+        //                 .await;
+        //             if let Err(err) = res {
+        //                 tracing::error!(error = ?err, workspace_id = %workspace_clone.id, url = %url, "failed to update workspace connection details");
+        //             }
+        //         }
+        //         Err(err) => {
+        //             tracing::error!(error = ?err, workspace_id = %workspace_clone.id, "failed to allocate workspace");
+        //         }
+        //     }
+        // });
 
-        tokio::spawn(async move {
-            let result = provisioner
-                .provision(
-                    &kube_client,
-                    workspace_clone.id,
-                    workspace_clone.project_id,
-                    "themrtoadog/jupyter-lilac:latest",
-                    workspace_clone.cpu_millicores,
-                    workspace_clone.memory_mb,
-                    &workspace_clone.ide,
-                    "", // public_key is no longer used
-                   workspace_clone.gpu,
-                )
-                .await;
-
-            match result {
-                Ok(token) => {
-                    let services: Api<Service> =
-                        Api::namespaced(kube_client, &config.kubernetes_namespace);
-                    let service_name = format!("workspace-{}-svc", workspace_clone.id.0);
-
-                    for _ in 0..300 {
-                        // Poll for 5 minutes
-                        if let Ok(service) = services.get(&service_name).await {
-                            match cluster.cluster_config {
-                                crate::domain::cluster::models::ClusterConfig::Local => {
-                                    if let Some(spec) = service.spec {
-                                        if let Some(ports) = spec.ports {
-                                            if let Some(port) = ports.get(0) {
-                                                if let Some(node_port) = port.node_port {
-                                                    let url =
-                                                        format!("http://localhost:{}", node_port);
-                                                    if let Err(e) = repository
-                                                        .update_connection_details(
-                                                            workspace_clone.id,
-                                                            super::models::WorkspaceStatus::Running,
-                                                            &url,
-                                                            &token,
-                                                        )
-                                                        .await
-                                                    {
-                                                        eprintln!(
-                                                            "Failed to update workspace status: {:?}",
-                                                            e
-                                                        );
-                                                    }
-                                                    return;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                crate::domain::cluster::models::ClusterConfig::AwsEks { .. } => {
-                                    if let Some(status) = service.status {
-                                        if let Some(ingress) = status.load_balancer {
-                                            if let Some(ingress_point) =
-                                                ingress.ingress.as_ref().and_then(|i| i.get(0))
-                                            {
-                                                let url = ingress_point
-                                                    .hostname
-                                                    .clone()
-                                                    .or(ingress_point.ip.clone())
-                                                    .unwrap_or_default();
-                                                if !url.is_empty() {
-                                                    if let Err(e) = repository
-                                                        .update_connection_details(
-                                                            workspace_clone.id,
-                                                            super::models::WorkspaceStatus::Running,
-                                                            &url,
-                                                            &token,
-                                                        )
-                                                        .await
-                                                    {
-                                                        eprintln!(
-                                                            "Failed to update workspace status: {:?}",
-                                                            e
-                                                        );
-                                                    }
-                                                    return;
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                crate::domain::cluster::models::ClusterConfig::GcpGke { .. } => {
-                                    if let Some(status) = service.status {
-                                        if let Some(ingress) = status.load_balancer {
-                                            if let Some(ingress_point) =
-                                                ingress.ingress.as_ref().and_then(|i| i.get(0))
-                                            {
-                                                let url = ingress_point
-                                                    .hostname
-                                                    .clone()
-                                                    .or(ingress_point.ip.clone())
-                                                    .unwrap_or_default();
-                                                if !url.is_empty() {
-                                                    if let Err(e) = repository
-                                                        .update_connection_details(
-                                                            workspace_clone.id,
-                                                            super::models::WorkspaceStatus::Running,
-                                                            &url,
-                                                            &token,
-                                                        )
-                                                        .await
-                                                    {
-                                                        eprintln!(
-                                                            "Failed to update workspace status: {:?}",
-                                                            e
-                                                        );
-                                                    }
-                                                    return;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        sleep(Duration::from_secs(1)).await;
-                    }
-                    eprintln!(
-                        "Failed to get external IP for workspace {}",
-                        workspace_clone.id.0
-                    );
-                    if let Err(e) = repository
-                        .update_connection_details(
-                            workspace_clone.id,
-                            super::models::WorkspaceStatus::Failed,
-                            "",
-                            &token,
-                        )
-                        .await
-                    {
-                        eprintln!("Failed to update workspace status to Failed: {:?}", e);
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Failed to provision workspace: {:?}", e);
-                    if let Err(e) = repository
-                        .update_connection_details(
-                            workspace_clone.id,
-                            super::models::WorkspaceStatus::Failed,
-                            "",
-                            "",
-                        )
-                        .await
-                    {
-                        eprintln!("Failed to update workspace status: {:?}", e);
-                    }
-                }
-            }
-        });
-
-        // 3. Return the initial workspace object with "Pending" status
-        Ok(workspace)
+        // // 3. Return the initial workspace object with "Pending" status
+        // Ok(workspace)
     }
-
 
     async fn list_workspaces(
         &self,

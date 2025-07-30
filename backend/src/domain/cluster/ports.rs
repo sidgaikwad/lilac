@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use thiserror::Error;
 
-use crate::domain::credentials::models::Credentials;
+use crate::domain::cluster::models::{ClusterNode, NodeId, UpdateNodeStatusRequest};
 
-use super::models::{Cluster, ClusterConfig, ClusterId, CreateClusterRequest};
+use super::models::{Cluster, ClusterId, CreateClusterRequest};
 
 #[derive(Debug, Error)]
 pub enum ClusterRepositoryError {
@@ -24,23 +24,17 @@ pub trait ClusterRepository: Send + Sync {
     async fn get_cluster_by_id(&self, id: &ClusterId) -> Result<Cluster, ClusterRepositoryError>;
     async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterRepositoryError>;
     async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterRepositoryError>;
-}
-
-#[derive(Debug, Error)]
-pub enum ClusterConnectionError {
-    #[error("invalid credentials: {0}")]
-    InvalidCredentials(String),
-    #[error("could not reach cluster: {0}")]
-    ClusterUnreachable(String),
-    #[error(transparent)]
-    Unknown(#[from] anyhow::Error),
-}
-
-#[async_trait]
-pub trait ClusterConnectionTester: Send + Sync {
-    async fn test_cluster_connection(
+    async fn list_cluster_nodes(
         &self,
-        credentials: Credentials,
-        cluster_config: ClusterConfig,
-    ) -> Result<(), ClusterConnectionError>;
+        id: &ClusterId,
+    ) -> Result<Vec<ClusterNode>, ClusterRepositoryError>;
+    async fn get_cluster_node_by_id(
+        &self,
+        id: &NodeId,
+    ) -> Result<ClusterNode, ClusterRepositoryError>;
+    async fn update_cluster_node_status(
+        &self,
+        req: &UpdateNodeStatusRequest,
+    ) -> Result<ClusterNode, ClusterRepositoryError>;
+    async fn delete_cluster_node(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError>;
 }

@@ -3,7 +3,10 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
 use crate::domain::cluster::{
-    models::{Cluster, ClusterConfig, ClusterId, CreateClusterRequest},
+    models::{
+        Architecture, Cluster, ClusterId, ClusterNode, Cpu, CpuManufacturer, CreateClusterRequest,
+        Gpu, GpuManufacturer, GpuModel, NodeId, NodeStatus, UpdateNodeStatusRequest,
+    },
     ports::{ClusterRepository, ClusterRepositoryError},
 };
 
@@ -23,26 +26,116 @@ struct ClusterRecord {
     cluster_id: uuid::Uuid,
     cluster_name: String,
     cluster_description: Option<String>,
-    credential_id: uuid::Uuid,
-    cluster_config: serde_json::Value,
-    platform_type: String,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
 
-impl TryFrom<ClusterRecord> for Cluster {
-    type Error = anyhow::Error;
-
-    fn try_from(record: ClusterRecord) -> Result<Self, Self::Error> {
-        let cluster_config: ClusterConfig = serde_json::from_value(record.cluster_config)?;
-
-        Ok(Self {
+impl From<ClusterRecord> for Cluster {
+    fn from(record: ClusterRecord) -> Self {
+        Self {
             id: record.cluster_id.into(),
             name: record.cluster_name,
             description: record.cluster_description,
-            credential_id: record.credential_id.into(),
-            cluster_config,
-            platform_type: record.platform_type,
+            created_at: record.created_at,
+            updated_at: record.updated_at,
+        }
+    }
+}
+
+#[derive(sqlx::Type)]
+#[sqlx(type_name = "node_status", rename_all = "snake_case")]
+pub enum NodeStatusRecord {
+    Available,
+    Busy,
+}
+
+impl From<NodeStatus> for NodeStatusRecord {
+    fn from(value: NodeStatus) -> Self {
+        match value {
+            NodeStatus::Available => NodeStatusRecord::Available,
+            NodeStatus::Busy => NodeStatusRecord::Busy,
+        }
+    }
+}
+
+#[derive(sqlx::Type)]
+#[sqlx(type_name = "cpu_configuration")]
+pub struct CpuConfiguration {
+    manufacturer: String,
+    architecture: String,
+    millicores: i32,
+}
+
+impl From<Cpu> for CpuConfiguration {
+    fn from(value: Cpu) -> Self {
+        Self {
+            manufacturer: value.manufacturer.to_string(),
+            architecture: value.architecture.to_string(),
+            millicores: value.millicores,
+        }
+    }
+}
+
+#[derive(sqlx::Type)]
+#[sqlx(type_name = "gpu_configuration")]
+pub struct GpuConfiguration {
+    manufacturer: String,
+    model_name: String,
+    memory_mb: i32,
+    count: i32,
+}
+
+impl From<Gpu> for GpuConfiguration {
+    fn from(value: Gpu) -> Self {
+        Self {
+            manufacturer: value.manufacturer.to_string(),
+            model_name: value.model.to_string(),
+            memory_mb: value.memory_mb,
+            count: value.count,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct ClusterNodeRecord {
+    node_id: uuid::Uuid,
+    cluster_id: uuid::Uuid,
+    node_status: NodeStatusRecord,
+    heartbeat_timestamp: DateTime<Utc>,
+    memory_mb: i32,
+    cpu: CpuConfiguration,
+    gpu: Option<GpuConfiguration>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+}
+
+impl TryFrom<ClusterNodeRecord> for ClusterNode {
+    type Error = anyhow::Error;
+
+    fn try_from(record: ClusterNodeRecord) -> Result<Self, Self::Error> {
+        Ok(Self {
+            id: record.node_id.into(),
+            cluster_id: record.cluster_id.into(),
+            node_status: match record.node_status {
+                NodeStatusRecord::Available => NodeStatus::Available,
+                NodeStatusRecord::Busy => NodeStatus::Busy,
+            },
+            heartbeat_timestamp: record.heartbeat_timestamp,
+            memory_mb: record.memory_mb,
+            cpu: Cpu {
+                manufacturer: CpuManufacturer::try_from(record.cpu.manufacturer.as_str())?,
+                architecture: Architecture::try_from(record.cpu.architecture.as_str())?,
+                millicores: record.cpu.millicores,
+            },
+            gpu: match record.gpu {
+                Some(gpu) => Some(Gpu {
+                    manufacturer: GpuManufacturer::try_from(gpu.manufacturer.as_str())?,
+                    model: GpuModel::try_from(gpu.model_name.as_str())?,
+                    count: gpu.count,
+                    memory_mb: gpu.memory_mb,
+                }),
+                None => None,
+            },
             created_at: record.created_at,
             updated_at: record.updated_at,
         })
@@ -55,30 +148,24 @@ impl ClusterRepository for PostgresClusterRepository {
         &self,
         req: &CreateClusterRequest,
     ) -> Result<Cluster, ClusterRepositoryError> {
-        let cluster_id = ClusterId(uuid::Uuid::new_v4());
-
         let record = sqlx::query_as!(
             ClusterRecord,
-            "INSERT INTO clusters (cluster_id, cluster_name, cluster_description, credential_id, cluster_config, platform_type) VALUES ($1, $2, $3, $4, $5, 'kubernetes') RETURNING cluster_id, cluster_name, cluster_description, credential_id, cluster_config, platform_type, created_at, updated_at",
-            cluster_id.0,
+            "INSERT INTO clusters (cluster_name, cluster_description) VALUES ($1, $2) RETURNING cluster_id, cluster_name, cluster_description, created_at, updated_at",
             req.name,
             req.description,
-            req.credential_id.inner(),
-            serde_json::to_value(&req.cluster_config)
-                .map_err(|e| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?,
         )
         .fetch_one(&self.pool)
         .await
         .map_err(|e| ClusterRepositoryError::Unknown(e.into()))?;
 
-        Ok(record.try_into()?)
+        Ok(record.into())
     }
 
     async fn get_cluster_by_id(&self, id: &ClusterId) -> Result<Cluster, ClusterRepositoryError> {
         let record = sqlx::query_as!(
             ClusterRecord,
             r#"
-            SELECT cluster_id, cluster_name, cluster_description, credential_id, cluster_config, platform_type, created_at, updated_at
+            SELECT cluster_id, cluster_name, cluster_description, created_at, updated_at
             FROM clusters
             WHERE cluster_id = $1
             "#,
@@ -91,7 +178,7 @@ impl ClusterRepository for PostgresClusterRepository {
             _ => ClusterRepositoryError::Unknown(anyhow::anyhow!(e)),
         })?;
 
-        let cluster: Cluster = record.try_into().map_err(ClusterRepositoryError::Unknown)?;
+        let cluster: Cluster = record.into();
 
         Ok(cluster)
     }
@@ -100,7 +187,7 @@ impl ClusterRepository for PostgresClusterRepository {
         let records = sqlx::query_as!(
             ClusterRecord,
             r#"
-            SELECT cluster_id, cluster_name, cluster_description, credential_id, cluster_config, platform_type, created_at, updated_at
+            SELECT cluster_id, cluster_name, cluster_description, created_at, updated_at
             FROM clusters
             "#,
         )
@@ -108,16 +195,89 @@ impl ClusterRepository for PostgresClusterRepository {
         .await
         .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
 
-        let clusters: Vec<Cluster> = records
+        let clusters: Vec<Cluster> = records.into_iter().map(|r| r.into()).collect();
+        Ok(clusters)
+    }
+
+    async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterRepositoryError> {
+        sqlx::query!("DELETE FROM clusters WHERE cluster_id = $1", id.0)
+            .execute(&self.pool)
+            .await
+            .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+        Ok(())
+    }
+
+    async fn list_cluster_nodes(
+        &self,
+        id: &ClusterId,
+    ) -> Result<Vec<ClusterNode>, ClusterRepositoryError> {
+        let records = sqlx::query_as!(
+            ClusterNodeRecord,
+            r#"
+            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at
+            FROM cluster_nodes
+            WHERE cluster_id = $1
+            "#,
+            id.0,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+
+        let clusters: Vec<ClusterNode> = records
             .into_iter()
             .map(|r| r.try_into())
             .collect::<Result<Vec<_>, _>>()
             .map_err(ClusterRepositoryError::Unknown)?;
         Ok(clusters)
     }
-
-    async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterRepositoryError> {
-        sqlx::query!("DELETE FROM clusters WHERE cluster_id = $1", id.0)
+    async fn get_cluster_node_by_id(
+        &self,
+        id: &NodeId,
+    ) -> Result<ClusterNode, ClusterRepositoryError> {
+        let record = sqlx::query_as!(
+            ClusterNodeRecord,
+            r#"
+            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at
+            FROM cluster_nodes
+            WHERE node_id = $1
+            "#,
+            id.0,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+        Ok(record.try_into()?)
+    }
+    async fn update_cluster_node_status(
+        &self,
+        req: &UpdateNodeStatusRequest,
+    ) -> Result<ClusterNode, ClusterRepositoryError> {
+        let record = sqlx::query_as!(
+            ClusterNodeRecord,
+            r#"
+            INSERT INTO cluster_nodes (node_id, cluster_id, node_status, heartbeat_timestamp, memory_mb, cpu, gpu)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                ON CONFLICT (node_id) DO UPDATE SET
+                    node_status = EXCLUDED.node_status,
+                    heartbeat_timestamp = EXCLUDED.heartbeat_timestamp
+                RETURNING node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at;
+            "#,
+            req.node_id.0,
+            req.cluster_id.0,
+            NodeStatusRecord::from(req.status.clone()) as _,
+            req.heartbeat_timestamp,
+            req.memory_info,
+            CpuConfiguration::from(req.cpu_info.clone()) as _,
+            req.gpu_info.clone().map(|v| GpuConfiguration::from(v)) as _,
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+        Ok(record.try_into()?)
+    }
+    async fn delete_cluster_node(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError> {
+        sqlx::query!("DELETE FROM cluster_nodes WHERE node_id = $1", node_id.0)
             .execute(&self.pool)
             .await
             .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;

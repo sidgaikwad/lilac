@@ -10,9 +10,12 @@ use crate::inbound::http::AppState;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/", post(handlers::create_queue).get(handlers::list_queues))
         .route(
-            "/{id}",
+            "/queues",
+            post(handlers::create_queue).get(handlers::list_queues),
+        )
+        .route(
+            "/queues/{queue_id}",
             get(handlers::get_queue)
                 .put(handlers::update_queue)
                 .delete(handlers::delete_queue),

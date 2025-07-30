@@ -1,16 +1,43 @@
-pub mod factory;
-pub mod plugin;
 use std::time::Duration;
 
 use hyper_util::rt::TokioExecutor;
-use k8s_openapi::api::core::v1::Pod;
-use kube::{api::ListParams, client::ConfigExt, Api, Client, Config};
+use k8s_openapi::api::{
+    apps::v1::Deployment,
+    core::v1::{Pod, Service},
+};
+use kube::{
+    api::{ListParams, PostParams},
+    client::ConfigExt,
+    Api, Client, Config,
+};
 use tower::ServiceBuilder;
 use tower_http::BoxError;
+
+use crate::{
+    domain::{
+        cluster::models::Cluster,
+        credentials::models::{Credential, Credentials},
+    },
+    outbound::{aws::AwsEksAdapter, gcp::GkeAdapter},
+};
 
 pub const DEFAULT_CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
 pub const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(295);
 pub const DEFAULT_WRITE_TIMEOUT: Duration = Duration::from_secs(295);
+
+#[derive(thiserror::Error, Debug)]
+pub enum K8sInitError {
+    #[error("failed to create kube client: {0}")]
+    ClientCreation(#[from] kube::Error),
+    #[error("could not get kube config: {0}")]
+    KubeConfigError(anyhow::Error),
+    #[error("credentials type does not match cluster type")]
+    IncorrectCredentialType,
+    #[error("unsupported cluster type")]
+    UnsupportedClusterType,
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
+}
 
 #[derive(Clone)]
 pub struct K8sManager {
@@ -18,7 +45,7 @@ pub struct K8sManager {
 }
 
 impl K8sManager {
-    pub fn new(kube_config: Config) -> anyhow::Result<Self> {
+    pub fn new(kube_config: Config) -> Result<Self, K8sInitError> {
         let https = kube_config.rustls_https_connector()?;
         let service = ServiceBuilder::new()
             .layer(kube_config.base_uri_layer())
@@ -32,10 +59,34 @@ impl K8sManager {
         })
     }
 
-    pub async fn list_pods(&self) -> anyhow::Result<Vec<Pod>> {
+    pub async fn list_pods(&self) -> Result<Vec<Pod>, kube::Error> {
         let api: Api<Pod> = Api::default_namespaced(self.client.clone());
         let resp = api.list(&ListParams::default()).await?;
         Ok(resp.items)
+    }
+
+    pub async fn create_pod(&self, pod: Pod) -> Result<(), kube::Error> {
+        let api: Api<Pod> = Api::default_namespaced(self.client.clone());
+        api.create(&PostParams::default(), &pod).await?;
+        Ok(())
+    }
+
+    pub async fn create_deployment(&self, deployment: Deployment) -> Result<(), kube::Error> {
+        let api: Api<Deployment> = Api::default_namespaced(self.client.clone());
+        api.create(&PostParams::default(), &deployment).await?;
+        Ok(())
+    }
+
+    pub async fn create_service(&self, service: Service) -> Result<(), kube::Error> {
+        let api: Api<Service> = Api::default_namespaced(self.client.clone());
+        api.create(&PostParams::default(), &service).await?;
+        Ok(())
+    }
+
+    pub async fn get_service(&self, service_name: &str) -> Result<Service, kube::Error> {
+        let api: Api<Service> = Api::default_namespaced(self.client.clone());
+        let service = api.get(service_name).await?;
+        Ok(service)
     }
 }
 

@@ -77,8 +77,8 @@ pub struct AwsEksAdapter {
 }
 
 impl AwsEksAdapter {
-    pub fn new(access_key: String, secret_key: SecretString, region: Option<String>) -> Self {
-        let region = region.unwrap_or("us-east-1".into());
+    pub fn new(access_key: &String, secret_key: &SecretString, region: Option<&str>) -> Self {
+        let region = region.unwrap_or("us-east-1").to_string();
         let credentials = Credentials::from_keys(access_key, secret_key.expose_secret(), None);
         let sdk_config = get_sdk_config(credentials.clone(), region.clone());
         let client = aws_sdk_eks::Client::new(&sdk_config);
@@ -86,7 +86,11 @@ impl AwsEksAdapter {
         Self { client, signer }
     }
 
-    pub async fn get_eks_kube_config(&self, cluster_name: &str) -> anyhow::Result<Config> {
+    pub async fn get_eks_kube_config(
+        &self,
+        cluster_name: &str,
+        namespace: Option<String>,
+    ) -> anyhow::Result<Config> {
         let resp = self
             .client
             .describe_cluster()
@@ -106,7 +110,7 @@ impl AwsEksAdapter {
                 .endpoint
                 .ok_or(anyhow::anyhow!("endpoint cluster"))?
                 .parse()?,
-            default_namespace: "default".to_string(),
+            default_namespace: namespace.unwrap_or("default".to_string()),
             auth_info: AuthInfo {
                 token: Some(self.signer.get_k8s_token(cluster_name)?),
                 ..Default::default()

@@ -1,31 +1,34 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::domain::queue::models::Queue;
+use crate::domain::{
+    cluster::models::ClusterId,
+    queue::models::{Queue, QueueId},
+};
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CreateQueueRequest {
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct HttpCreateQueueRequest {
     pub name: String,
     pub priority: i32,
-    pub cluster_targets: Vec<Uuid>,
+    pub cluster_targets: Vec<ClusterId>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UpdateQueueRequest {
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct HttpUpdateQueueRequest {
     pub name: String,
     pub priority: i32,
-    pub cluster_targets: Vec<Uuid>,
+    pub cluster_targets: Vec<ClusterId>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct QueueResponse {
-    pub id: Uuid,
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct HttpQueueResponse {
+    pub id: QueueId,
     pub name: String,
     pub priority: i32,
-    pub cluster_targets: Vec<Uuid>,
+    pub cluster_targets: Vec<ClusterId>,
 }
 
-impl From<Queue> for QueueResponse {
+impl From<Queue> for HttpQueueResponse {
     fn from(queue: Queue) -> Self {
         Self {
             id: queue.id,

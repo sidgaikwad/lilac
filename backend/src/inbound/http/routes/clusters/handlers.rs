@@ -4,18 +4,23 @@ use axum::{
     extract::{Path, State},
     Json,
 };
+use chrono::Utc;
 use uuid::Uuid;
 
 use crate::{
     domain::{
         auth::models::Claims,
-        cluster::{models::ClusterId, service::ClusterService},
+        cluster::{
+            models::{ClusterId, NodeId, UpdateNodeStatusRequest},
+            service::ClusterService,
+        },
     },
     inbound::http::{
         errors::ApiError,
         routes::clusters::models::{
             CreateClusterHttpRequest, CreateClusterHttpResponse, GetClusterHttpResponse,
-            ListClustersHttpResponse, TestClusterHttpRequest, TestClusterHttpResponse,
+            HttpClusterNodeDetails, HttpClusterNodeHeartbeat, ListClusterNodesHttpResponse,
+            ListClustersHttpResponse,
         },
     },
 };
@@ -66,12 +71,34 @@ pub async fn delete_cluster(
 }
 
 #[axum::debug_handler(state = AppState)]
-pub async fn test_cluster_connection(
+pub async fn cluster_node_heartbeat(
+    Path(node_id): Path<NodeId>,
     State(cluster_service): State<Arc<dyn ClusterService>>,
-    Json(req): Json<TestClusterHttpRequest>,
-) -> Result<Json<TestClusterHttpResponse>, ApiError> {
-    cluster_service
-        .test_cluster_connection(req.credential_id, req.cluster_config.into())
+    Json(req): Json<HttpClusterNodeHeartbeat>,
+) -> Result<Json<HttpClusterNodeDetails>, ApiError> {
+    let _resp = cluster_service
+        .update_node_status(UpdateNodeStatusRequest {
+            node_id,
+            cluster_id: ClusterId::try_from("8f47d027-19ac-4527-85c9-11a4e699d31f").unwrap(), // TODO: get cluster ID from API key
+            status: req.status,
+            heartbeat_timestamp: Utc::now(),
+            memory_info: req.memory_info,
+            cpu_info: req.cpu_info,
+            gpu_info: req.gpu_info,
+            job_info: req.job_info,
+        })
         .await?;
-    Ok(Json(TestClusterHttpResponse { success: true }))
+    Ok(Json(HttpClusterNodeDetails {})) // TODO: reply with job assignment info
+}
+
+#[axum::debug_handler(state = AppState)]
+pub async fn list_cluster_nodes(
+    _claims: Claims,
+    State(cluster_service): State<Arc<dyn ClusterService>>,
+    Path(cluster_id): Path<ClusterId>,
+) -> Result<Json<ListClusterNodesHttpResponse>, ApiError> {
+    let cluster_nodes = cluster_service
+        .list_cluster_nodes(&cluster_id.into())
+        .await?;
+    Ok(Json(cluster_nodes.into()))
 }

@@ -33,6 +33,7 @@ impl GkeAdapter {
         project_id: &str,
         location: &str,
         cluster_name: &str,
+        namespace: Option<String>,
     ) -> anyhow::Result<Config> {
         let cluster = self
             .client
@@ -65,7 +66,7 @@ impl GkeAdapter {
                     .public_endpoint
             )
             .parse()?,
-            default_namespace: "default".to_string(),
+            default_namespace: namespace.unwrap_or("default".to_string()),
             auth_info: AuthInfo {
                 token: Some(token.access_token.into()),
                 ..Default::default()

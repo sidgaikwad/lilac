@@ -1,9 +1,9 @@
+use crate::domain::cluster::models::ClusterId;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClusterSnapshot {
-    pub cluster_id: Uuid,
+    pub cluster_id: ClusterId,
     pub nodes: Vec<NodeSnapshot>,
 }
 
@@ -19,6 +19,6 @@ pub struct NodeSnapshot {
 /// Describes a single physical GPU on a node.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GpuInfo {
-    pub model: String, // e.g., "NVIDIA A100-SXM4-40GB"
+    pub model: String,  // e.g., "NVIDIA A100-SXM4-40GB"
     pub memory_gb: i32, // e.g., 40
 }

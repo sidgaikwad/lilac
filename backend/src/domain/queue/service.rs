@@ -1,39 +1,42 @@
 use std::sync::Arc;
 
+use async_trait::async_trait;
 use uuid::Uuid;
+
+use crate::domain::{
+    cluster::models::ClusterId,
+    queue::models::{CreateQueueRequest, QueueId, UpdateQueueRequest},
+};
 
 use super::{models::Queue, ports::QueueRepository};
 
-/// DTO for creating a new queue.
-pub struct CreateQueue {
-    pub name: String,
-    pub priority: i32,
-    pub cluster_targets: Vec<Uuid>,
+#[async_trait]
+pub trait QueueService: Send + Sync {
+    async fn create_queue(&self, request: CreateQueueRequest) -> Result<Queue, anyhow::Error>;
+    async fn get_queue_by_id(&self, queue_id: &QueueId) -> Result<Option<Queue>, anyhow::Error>;
+    async fn list_all_queues(&self) -> Result<Vec<Queue>, anyhow::Error>;
+    async fn update_queue(&self, request: UpdateQueueRequest) -> Result<Queue, anyhow::Error>;
+    async fn delete_queue(&self, queue_id: &QueueId) -> Result<(), anyhow::Error>;
 }
 
-/// DTO for updating an existing queue.
-pub struct UpdateQueue {
-    pub id: Uuid,
-    pub name: String,
-    pub priority: i32,
-    pub cluster_targets: Vec<Uuid>,
+pub struct QueueServiceImpl<Q: QueueRepository> {
+    queue_repo: Arc<Q>,
 }
 
-pub struct QueueService {
-    queue_repo: Arc<dyn QueueRepository>,
-}
-
-impl QueueService {
-    pub fn new(queue_repo: Arc<dyn QueueRepository>) -> Self {
+impl<Q: QueueRepository> QueueServiceImpl<Q> {
+    pub fn new(queue_repo: Arc<Q>) -> Self {
         Self { queue_repo }
     }
+}
 
-    pub async fn create_queue(&self, new_queue: CreateQueue) -> Result<Queue, anyhow::Error> {
+#[async_trait]
+impl<Q: QueueRepository> QueueService for QueueServiceImpl<Q> {
+    async fn create_queue(&self, request: CreateQueueRequest) -> Result<Queue, anyhow::Error> {
         let queue = Queue {
-            id: Uuid::new_v4(),
-            name: new_queue.name,
-            priority: new_queue.priority,
-            cluster_targets: new_queue.cluster_targets,
+            id: QueueId::generate(),
+            name: request.name,
+            priority: request.priority,
+            cluster_targets: request.cluster_targets,
         };
 
         self.queue_repo.create(&queue).await?;
@@ -41,15 +44,18 @@ impl QueueService {
         Ok(queue)
     }
 
-    pub async fn get_queue_by_id(&self, id: Uuid) -> Result<Option<Queue>, anyhow::Error> {
-        self.queue_repo.find_by_id(id).await
+    async fn get_queue_by_id(&self, queue_id: &QueueId) -> Result<Option<Queue>, anyhow::Error> {
+        self.queue_repo.find_by_id(queue_id).await
     }
 
-    pub async fn list_all_queues(&self) -> Result<Vec<Queue>, anyhow::Error> {
+    async fn list_all_queues(&self) -> Result<Vec<Queue>, anyhow::Error> {
         self.queue_repo.get_all_queues_sorted().await
     }
 
-    pub async fn update_queue(&self, updated_queue: UpdateQueue) -> Result<Queue, anyhow::Error> {
+    async fn update_queue(
+        &self,
+        updated_queue: UpdateQueueRequest,
+    ) -> Result<Queue, anyhow::Error> {
         let queue = Queue {
             id: updated_queue.id,
             name: updated_queue.name,
@@ -62,8 +68,8 @@ impl QueueService {
         Ok(queue)
     }
 
-    pub async fn delete_queue(&self, id: Uuid) -> Result<(), anyhow::Error> {
-        self.queue_repo.delete(id).await
+    async fn delete_queue(&self, queue_id: &QueueId) -> Result<(), anyhow::Error> {
+        self.queue_repo.delete(queue_id).await
     }
 }
 
@@ -77,10 +83,10 @@ mod tests {
     #[tokio::test]
     async fn test_create_queue() {
         let mut mock_repo = MockQueueRepository::new();
-        let new_queue_dto = CreateQueue {
+        let new_queue_dto = CreateQueueRequest {
             name: "test_queue".to_string(),
             priority: 10,
-            cluster_targets: vec![Uuid::new_v4()],
+            cluster_targets: vec![ClusterId::generate()],
         };
 
         let expected_name = new_queue_dto.name.clone();
@@ -96,7 +102,7 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()));
 
-        let service = QueueService::new(Arc::new(mock_repo));
+        let service = QueueServiceImpl::new(Arc::new(mock_repo));
         let result = service.create_queue(new_queue_dto).await;
 
         assert!(result.is_ok());
@@ -105,7 +111,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_queue_by_id_found() {
         let mut mock_repo = MockQueueRepository::new();
-        let queue_id = Uuid::new_v4();
+        let queue_id = QueueId::generate();
         let queue = Queue {
             id: queue_id,
             name: "test".to_string(),
@@ -119,8 +125,8 @@ mod tests {
             .times(1)
             .returning(move |_| Ok(Some(queue.clone())));
 
-        let service = QueueService::new(Arc::new(mock_repo));
-        let result = service.get_queue_by_id(queue_id).await;
+        let service = QueueServiceImpl::new(Arc::new(mock_repo));
+        let result = service.get_queue_by_id(&queue_id).await;
 
         assert!(result.is_ok());
         assert!(result.unwrap().is_some());
@@ -129,7 +135,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_queue_by_id_not_found() {
         let mut mock_repo = MockQueueRepository::new();
-        let queue_id = Uuid::new_v4();
+        let queue_id = QueueId::generate();
 
         mock_repo
             .expect_find_by_id()
@@ -137,8 +143,8 @@ mod tests {
             .times(1)
             .returning(|_| Ok(None));
 
-        let service = QueueService::new(Arc::new(mock_repo));
-        let result = service.get_queue_by_id(queue_id).await;
+        let service = QueueServiceImpl::new(Arc::new(mock_repo));
+        let result = service.get_queue_by_id(&queue_id).await;
 
         assert!(result.is_ok());
         assert!(result.unwrap().is_none());
@@ -148,7 +154,7 @@ mod tests {
     async fn test_list_all_queues() {
         let mut mock_repo = MockQueueRepository::new();
         let queues = vec![Queue {
-            id: Uuid::new_v4(),
+            id: QueueId::generate(),
             name: "test".to_string(),
             priority: 1,
             cluster_targets: vec![],
@@ -159,7 +165,7 @@ mod tests {
             .times(1)
             .returning(move || Ok(queues.clone()));
 
-        let service = QueueService::new(Arc::new(mock_repo));
+        let service = QueueServiceImpl::new(Arc::new(mock_repo));
         let result = service.list_all_queues().await;
 
         assert!(result.is_ok());
@@ -169,8 +175,8 @@ mod tests {
     #[tokio::test]
     async fn test_update_queue() {
         let mut mock_repo = MockQueueRepository::new();
-        let updated_queue_dto = UpdateQueue {
-            id: Uuid::new_v4(),
+        let updated_queue_dto = UpdateQueueRequest {
+            id: QueueId::generate(),
             name: "updated_queue".to_string(),
             priority: 20,
             cluster_targets: vec![],
@@ -189,7 +195,7 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()));
 
-        let service = QueueService::new(Arc::new(mock_repo));
+        let service = QueueServiceImpl::new(Arc::new(mock_repo));
         let result = service.update_queue(updated_queue_dto).await;
 
         assert!(result.is_ok());
@@ -198,7 +204,7 @@ mod tests {
     #[tokio::test]
     async fn test_delete_queue() {
         let mut mock_repo = MockQueueRepository::new();
-        let queue_id = Uuid::new_v4();
+        let queue_id = QueueId::generate();
 
         mock_repo
             .expect_delete()
@@ -206,8 +212,8 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()));
 
-        let service = QueueService::new(Arc::new(mock_repo));
-        let result = service.delete_queue(queue_id).await;
+        let service = QueueServiceImpl::new(Arc::new(mock_repo));
+        let result = service.delete_queue(&queue_id).await;
 
         assert!(result.is_ok());
     }

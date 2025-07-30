@@ -1,8 +1,12 @@
-use uuid::Uuid;
-use axum::{extract::{Query, State}, http::StatusCode, response::IntoResponse, Json};
+use axum::{
+    extract::{Query, State},
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
+};
 
 use crate::{
-    domain::{auth::models::Claims},
+    domain::{auth::models::Claims, training_job::models::JobId},
     inbound::http::{errors::ApiError, AppState},
 };
 use axum_extra::{
@@ -26,10 +30,7 @@ pub async fn create_training_job(
         .authenticate_by_api_key(&SecretString::from(auth.token().to_string()))
         .await?;
 
-    let training_job_with_targets = state
-        .training_job_service
-        .create(request)
-        .await?;
+    let training_job_with_targets = state.training_job_service.create(request).await?;
 
     Ok((
         StatusCode::CREATED,
@@ -55,15 +56,14 @@ pub async fn get_training_jobs(
 }
 use axum::extract::Path;
 
-
 pub async fn update_training_job_status(
     State(state): State<AppState>,
-    Path(job_id): Path<Uuid>,
+    Path(job_id): Path<JobId>,
     Json(request): Json<UpdateTrainingJobStatusRequest>,
 ) -> impl IntoResponse {
     state
         .training_job_service
-        .update_status(job_id, request.status)
+        .update_status(&job_id, request.status)
         .await
         .unwrap();
 
@@ -72,7 +72,7 @@ pub async fn update_training_job_status(
 
 pub async fn post_logs(
     State(state): State<AppState>,
-    Path(job_id): Path<Uuid>,
+    Path(job_id): Path<JobId>,
     Json(request): Json<PostLogsRequest>,
 ) -> impl IntoResponse {
     // TODO: Implement log ingestion

@@ -7,20 +7,18 @@ use axum::{
 use std::sync::Arc;
 use uuid::Uuid;
 
+use super::models;
 use crate::{
     domain::{
         auth::models::Claims,
         project::models::ProjectId,
-        workspace::{
-            models::CreateWorkspaceRequest, ports::WorkspaceService,
-        },
+        workspace::{models::CreateWorkspaceRequest, service::WorkspaceService},
     },
     inbound::http::{
-        routes::workspaces::models::{CreateWorkspacePayload, WorkspaceResponse},
         errors::ApiError,
+        routes::workspaces::models::{CreateWorkspacePayload, WorkspaceResponse},
     },
 };
-use super::models;
 
 pub async fn create_workspace_handler(
     State(workspace_service): State<Arc<dyn WorkspaceService>>,
@@ -28,8 +26,6 @@ pub async fn create_workspace_handler(
     Path(project_id): Path<Uuid>,
     Json(payload): Json<CreateWorkspacePayload>,
 ) -> Result<impl IntoResponse, ApiError> {
-    println!("->> HANDLER - create_workspace");
-    println!("Received create_workspace request: {:?}", payload);
     let req = CreateWorkspaceRequest {
         name: payload.name,
         project_id: ProjectId::new(project_id),
@@ -41,20 +37,19 @@ pub async fn create_workspace_handler(
         gpu: payload.gpu,
     };
 
-    let workspace = workspace_service
-        .create_workspace(req, claims.sub)
-        .await?;
+    let workspace = workspace_service.create_workspace(req, claims.sub).await?;
 
-    Ok((StatusCode::CREATED, Json(WorkspaceResponse::from(workspace))))
+    Ok((
+        StatusCode::CREATED,
+        Json(WorkspaceResponse::from(workspace)),
+    ))
 }
-
 
 pub async fn list_workspaces_handler(
     State(workspace_service): State<Arc<dyn WorkspaceService>>,
     claims: Claims,
     Path(project_id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
-    println!("->> HANDLER - list_workspaces");
     let workspaces = workspace_service
         .list_workspaces(ProjectId::new(project_id), claims.sub)
         .await?;
@@ -72,7 +67,6 @@ pub async fn get_workspace_connection_handler(
     claims: Claims,
     Path((_project_id, workspace_id)): Path<(Uuid, Uuid)>,
 ) -> Result<impl IntoResponse, ApiError> {
-    println!("->> HANDLER - get_workspace_connection");
     let workspace = workspace_service
         .find_by_id(workspace_id.into(), claims.sub)
         .await?;

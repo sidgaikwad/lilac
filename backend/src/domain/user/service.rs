@@ -12,10 +12,10 @@ use super::{
 
 const API_KEY_PREFIX: &str = "lilac_sk_";
 const NANOID_ALPHABET: [char; 62] = [
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
-    's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-    'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1',
-    '2', '3', '4', '5', '6', '7', '8', '9',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+    't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+    'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4',
+    '5', '6', '7', '8', '9',
 ];
 
 #[derive(Debug, thiserror::Error)]
@@ -61,20 +61,14 @@ pub trait UserService: Send + Sync {
         target_user_id: &UserId,
     ) -> Result<(), UserServiceError>;
 
-    async fn create_api_key(
-        &self,
-        user_id: &UserId,
-    ) -> Result<NewApiKey, UserServiceError>;
+    async fn create_api_key(&self, user_id: &UserId) -> Result<NewApiKey, UserServiceError>;
     async fn list_api_keys(&self, user_id: &UserId) -> Result<Vec<ApiKey>, UserServiceError>;
     async fn delete_api_key(
         &self,
         current_user_id: &UserId,
         key_id: &ApiKeyId,
     ) -> Result<(), UserServiceError>;
-    async fn authenticate_by_api_key(
-        &self,
-        key: &SecretString,
-    ) -> Result<User, UserServiceError>;
+    async fn authenticate_by_api_key(&self, key: &SecretString) -> Result<User, UserServiceError>;
 }
 
 #[derive(Clone)]
@@ -114,10 +108,7 @@ impl<R: UserRepository + ApiKeyRepository> UserService for UserServiceImpl<R> {
         Ok(self.repo.delete_user(target_user_id).await?)
     }
 
-    async fn create_api_key(
-        &self,
-        user_id: &UserId,
-    ) -> Result<NewApiKey, UserServiceError> {
+    async fn create_api_key(&self, user_id: &UserId) -> Result<NewApiKey, UserServiceError> {
         // Ensure the user exists before creating a key
         self.repo.get_user_by_id(user_id).await?;
 
@@ -132,7 +123,8 @@ impl<R: UserRepository + ApiKeyRepository> UserService for UserServiceImpl<R> {
 
         let api_key = ApiKey {
             id: key_id,
-            user_id: *user_id,
+            user_id: Some(user_id.clone()),
+            cluster_id: None,
             prefix: API_KEY_PREFIX.to_string(),
             key_hash,
             created_at: Utc::now(),
@@ -168,10 +160,7 @@ impl<R: UserRepository + ApiKeyRepository> UserService for UserServiceImpl<R> {
         Ok(self.repo.delete_api_key(key_id).await?)
     }
 
-    async fn authenticate_by_api_key(
-        &self,
-        key: &SecretString,
-    ) -> Result<User, UserServiceError> {
+    async fn authenticate_by_api_key(&self, key: &SecretString) -> Result<User, UserServiceError> {
         let mut hasher = Sha256::new();
         hasher.update(key.expose_secret().as_bytes());
         let key_hash = format!("{:x}", hasher.finalize());

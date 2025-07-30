@@ -2,6 +2,13 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::{
+    domain::{cluster::models::ClusterId, queue::models::QueueId},
+    identifier,
+};
+
+identifier!(JobId);
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, sqlx::Type)]
 #[sqlx(type_name = "training_job_status", rename_all = "lowercase")]
 pub enum TrainingJobStatus {
@@ -36,19 +43,17 @@ pub struct ResourceRequirements {
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TrainingJob {
-    pub id: Uuid,
+    pub id: JobId,
     pub name: String,
     pub definition: String,
     pub status: TrainingJobStatus,
-    pub instance_id: Option<Uuid>,
-    pub queue_id: Uuid,
+    pub queue_id: QueueId,
     #[sqlx(json)]
     pub resource_requirements: ResourceRequirements,
-    pub scheduled_cluster_id: Option<Uuid>,
+    pub scheduled_cluster_id: Option<ClusterId>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
-
 
 #[derive(Debug, Default, Deserialize, PartialEq, Clone)]
 pub struct GetTrainingJobsFilters {
