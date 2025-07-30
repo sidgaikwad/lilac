@@ -70,7 +70,7 @@ pub trait ClusterService: Send + Sync {
     async fn create_cluster(
         &self,
         req: &CreateClusterRequest,
-    ) -> Result<(Cluster, NewApiKey), ClusterServiceError>;
+    ) -> Result<Cluster, ClusterServiceError>;
     async fn get_cluster_by_id(
         &self,
         cluster_id: &ClusterId,

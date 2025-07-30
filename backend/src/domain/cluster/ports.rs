@@ -43,14 +43,28 @@ pub trait ClusterRepository: Send + Sync {
         req: &UpdateNodeStatusRequest,
     ) -> Result<ClusterNode, ClusterRepositoryError>;
     async fn delete_cluster_node(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError>;
+}
+
+#[derive(Debug, Error)]
+pub enum ClusterApiKeyRepositoryError {
+    #[error("api key not found")]
+    NotFound,
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
+}
+
+#[async_trait]
+pub trait ClusterApiKeyRepository: Send + Sync + 'static {
+    async fn create_api_key(&self, key: &ApiKey) -> Result<(), ClusterApiKeyRepositoryError>;
     async fn find_cluster_by_api_key_hash(
         &self,
         key_hash: &str,
-    ) -> Result<Cluster, ClusterRepositoryError>;
+    ) -> Result<Cluster, ClusterApiKeyRepositoryError>;
     async fn list_api_keys_for_cluster(
         &self,
         cluster_id: &ClusterId,
-    ) -> Result<Vec<ApiKey>, ClusterRepositoryError>;
+    ) -> Result<Vec<ApiKey>, ClusterApiKeyRepositoryError>;
+    async fn delete_api_key(&self, id: &ApiKeyId) -> Result<(), ClusterApiKeyRepositoryError>;
 }
 
 #[derive(Debug, Error)]

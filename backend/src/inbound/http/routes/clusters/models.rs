@@ -49,8 +49,6 @@ impl From<CreateClusterHttpRequest> for CreateClusterRequest {
 #[derive(Debug, Clone, Serialize)]
 pub struct CreateClusterHttpResponse {
     pub cluster_id: ClusterId,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub api_key: Option<String>,
 }
 
 /// The body of a [Cluster] get response.

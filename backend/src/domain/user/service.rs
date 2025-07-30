@@ -160,7 +160,6 @@ impl<R: UserRepository + UserApiKeyRepository> UserService for UserServiceImpl<R
         Ok(self.repo.delete_api_key(key_id).await?)
     }
 
-    // TODO: This will need to be updated to handle authenticating cluster-owned keys.
     async fn authenticate_by_api_key(&self, key: &SecretString) -> Result<User, UserServiceError> {
         let mut hasher = Sha256::new();
         hasher.update(key.expose_secret().as_bytes());
