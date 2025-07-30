@@ -5,7 +5,7 @@ use axum::{
     Json,
 };
 use chrono::Utc;
-use secrecy::ExposeSecret;
+use secrecy::{ExposeSecret, SecretString};
 use uuid::Uuid;
 
 use crate::{
@@ -15,11 +15,12 @@ use crate::{
             models::{ClusterId, NodeId, UpdateNodeStatusRequest},
             service::ClusterService,
         },
+        user::models::NewApiKey,
     },
     inbound::http::{
         errors::ApiError,
         routes::clusters::models::{
-            CreateClusterHttpRequest, CreateClusterHttpResponse, GetClusterHttpResponse,
+            CreateClusterHttpRequest, CreateClusterHttpResponse, GetClusterHttpResponse, HttpApiKey,
             HttpClusterNodeDetails, HttpClusterNodeHeartbeat, ListClusterNodesHttpResponse,
             ListClustersHttpResponse,
         },
@@ -34,10 +35,9 @@ pub async fn create_cluster(
     State(cluster_service): State<Arc<dyn ClusterService>>,
     Json(req): Json<CreateClusterHttpRequest>,
 ) -> Result<Json<CreateClusterHttpResponse>, ApiError> {
-    let (cluster, new_api_key) = cluster_service.create_cluster(&req.into()).await?;
+    let cluster = cluster_service.create_cluster(&req.into()).await?;
     Ok(Json(CreateClusterHttpResponse {
         cluster_id: cluster.id,
-        api_key: Some(new_api_key.key.expose_secret().clone()),
     }))
 }
 
@@ -76,7 +76,29 @@ use axum_extra::{
     headers::{authorization::Bearer, Authorization},
     TypedHeader,
 };
-use secrecy::SecretString;
+
+#[axum::debug_handler(state = AppState)]
+pub async fn create_api_key_for_cluster(
+    _claims: Claims,
+    State(cluster_service): State<Arc<dyn ClusterService>>,
+    Path(cluster_id): Path<ClusterId>,
+) -> Result<Json<NewApiKey>, ApiError> {
+    let new_api_key = cluster_service
+        .create_api_key_for_cluster(&cluster_id)
+        .await?;
+    Ok(Json(new_api_key))
+}
+
+#[axum::debug_handler(state = AppState)]
+pub async fn list_api_keys(
+    _claims: Claims,
+    State(cluster_service): State<Arc<dyn ClusterService>>,
+    Path(cluster_id): Path<ClusterId>,
+) -> Result<Json<Vec<HttpApiKey>>, ApiError> {
+    let api_keys = cluster_service.list_api_keys(&cluster_id).await?;
+    let http_api_keys = api_keys.into_iter().map(HttpApiKey::from).collect();
+    Ok(Json(http_api_keys))
+}
 
 #[axum::debug_handler(state = AppState)]
 pub async fn cluster_node_heartbeat(

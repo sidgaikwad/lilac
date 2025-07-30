@@ -17,5 +17,9 @@ pub fn router() -> Router<AppState> {
             get(get_cluster).delete(delete_cluster),
         )
         .route("/clusters/{cluster_id}/nodes", get(list_cluster_nodes))
+        .route(
+            "/clusters/{cluster_id}/api_keys",
+            post(create_api_key_for_cluster).get(list_api_keys),
+        )
         .route("/node/{node_id}/status", post(cluster_node_heartbeat))
 }

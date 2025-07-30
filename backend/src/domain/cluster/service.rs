@@ -20,11 +20,12 @@ const NANOID_ALPHABET: [char; 62] = [
     '5', '6', '7', '8', '9',
 ];
 
-use crate::domain::user::ports::ApiKeyRepository;
-
 use super::{
     models::{Cluster, ClusterId, CreateClusterRequest},
-    ports::{ClusterRepository, ClusterRepositoryError},
+    ports::{
+        ClusterApiKeyRepository, ClusterApiKeyRepositoryError, ClusterRepository,
+        ClusterRepositoryError,
+    },
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -50,13 +51,23 @@ impl From<ClusterRepositoryError> for ClusterServiceError {
         }
     }
 }
+
+impl From<ClusterApiKeyRepositoryError> for ClusterServiceError {
+    fn from(error: ClusterApiKeyRepositoryError) -> Self {
+        match error {
+            ClusterApiKeyRepositoryError::NotFound => Self::ClusterNotFound("".to_string()), // TODO: Better error
+            ClusterApiKeyRepositoryError::Unknown(error) => Self::Unknown(error),
+        }
+    }
+}
+
 // Add error for assign job id
 #[async_trait]
 pub trait ClusterService: Send + Sync {
     async fn create_cluster(
         &self,
         req: &CreateClusterRequest,
-    ) -> Result<(Cluster, NewApiKey), ClusterServiceError>;
+    ) -> Result<Cluster, ClusterServiceError>;
     async fn get_cluster_by_id(
         &self,
         cluster_id: &ClusterId,
@@ -75,60 +86,35 @@ pub trait ClusterService: Send + Sync {
         &self,
         key: &SecretString,
     ) -> Result<Cluster, ClusterServiceError>;
+    async fn create_api_key_for_cluster(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<NewApiKey, ClusterServiceError>;
+    async fn list_api_keys(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<Vec<ApiKey>, ClusterServiceError>;
 }
 
 #[derive(Clone)]
-pub struct ClusterServiceImpl<R: ClusterRepository> {
+pub struct ClusterServiceImpl<R: ClusterRepository + ClusterApiKeyRepository> {
     cluster_repo: Arc<R>,
 }
 
-impl<R: ClusterRepository> ClusterServiceImpl<R> {
+impl<R: ClusterRepository + ClusterApiKeyRepository> ClusterServiceImpl<R> {
     pub fn new(cluster_repo: Arc<R>) -> Self {
         Self { cluster_repo }
     }
 }
 
 #[async_trait]
-impl<R: ClusterRepository + ApiKeyRepository> ClusterService for ClusterServiceImpl<R> {
+impl<R: ClusterRepository + ClusterApiKeyRepository> ClusterService for ClusterServiceImpl<R> {
     async fn create_cluster(
         &self,
         req: &CreateClusterRequest,
-    ) -> Result<(Cluster, NewApiKey), ClusterServiceError> {
+    ) -> Result<Cluster, ClusterServiceError> {
         let cluster = self.cluster_repo.create_cluster(req).await?;
-
-        let key_id = ApiKeyId::generate();
-        let raw_key = nanoid::nanoid!(32, &NANOID_ALPHABET);
-        let secret_key = SecretString::from(raw_key);
-        let full_key = format!("{}{}", API_KEY_PREFIX, secret_key.expose_secret());
-
-        let mut hasher = Sha256::new();
-        hasher.update(full_key.as_bytes());
-        let key_hash = format!("{:x}", hasher.finalize());
-
-        let api_key = ApiKey {
-            id: key_id,
-            user_id: None,
-            cluster_id: Some(cluster.id),
-            prefix: API_KEY_PREFIX.to_string(),
-            key_hash,
-            created_at: Utc::now(),
-            last_used_at: None,
-            expires_at: None,
-        };
-
-        self.cluster_repo
-            .create_api_key(&api_key)
-            .await
-            .map_err(|e| ClusterServiceError::Unknown(e.into()))?;
-
-        let new_api_key = NewApiKey {
-            id: key_id,
-            prefix: API_KEY_PREFIX.to_string(),
-            key: SecretString::from(full_key),
-            created_at: api_key.created_at,
-        };
-
-        Ok((cluster, new_api_key))
+        Ok(cluster)
     }
 
     async fn get_cluster_by_id(
@@ -186,5 +172,56 @@ impl<R: ClusterRepository + ApiKeyRepository> ClusterService for ClusterServiceI
         let cluster = self.cluster_repo.find_cluster_by_api_key_hash(&key_hash).await?;
 
         Ok(cluster)
+    }
+
+    async fn create_api_key_for_cluster(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<NewApiKey, ClusterServiceError> {
+        self.cluster_repo.get_cluster_by_id(cluster_id).await?;
+
+        let key_id = ApiKeyId::generate();
+        let raw_key = nanoid::nanoid!(32, &NANOID_ALPHABET);
+        let secret_key = SecretString::from(raw_key);
+        let full_key = format!("{}{}", API_KEY_PREFIX, secret_key.expose_secret());
+
+        let mut hasher = Sha256::new();
+        hasher.update(full_key.as_bytes());
+        let key_hash = format!("{:x}", hasher.finalize());
+
+        let api_key = ApiKey {
+            id: key_id,
+            user_id: None,
+            cluster_id: Some(cluster_id.clone()),
+            prefix: API_KEY_PREFIX.to_string(),
+            key_hash,
+            created_at: Utc::now(),
+            last_used_at: None,
+            expires_at: None,
+        };
+
+        self.cluster_repo
+            .create_api_key(&api_key)
+            .await
+            .map_err(|e| ClusterServiceError::Unknown(e.into()))?;
+
+        let new_api_key = NewApiKey {
+            id: key_id,
+            prefix: API_KEY_PREFIX.to_string(),
+            key: SecretString::from(full_key),
+            created_at: api_key.created_at,
+        };
+
+        Ok(new_api_key)
+    }
+
+    async fn list_api_keys(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<Vec<ApiKey>, ClusterServiceError> {
+        Ok(self
+            .cluster_repo
+            .list_api_keys_for_cluster(cluster_id)
+            .await?)
     }
 }

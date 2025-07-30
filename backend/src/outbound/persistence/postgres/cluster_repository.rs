@@ -10,9 +10,12 @@ use crate::{
                 CreateClusterRequest, Gpu, GpuManufacturer, GpuModel, NodeId, NodeStatus,
                 UpdateNodeStatusRequest,
             },
-            ports::{ClusterRepository, ClusterRepositoryError},
+            ports::{
+                ClusterApiKeyRepository, ClusterApiKeyRepositoryError, ClusterRepository,
+                ClusterRepositoryError,
+            },
         },
-        user::models::ApiKey,
+        user::models::{ApiKey, ApiKeyId},
     },
 };
 
@@ -328,10 +331,34 @@ impl ClusterRepository for PostgresClusterRepository {
         Ok(())
     }
 
+}
+
+#[async_trait]
+impl ClusterApiKeyRepository for PostgresClusterRepository {
+    async fn create_api_key(&self, key: &ApiKey) -> Result<(), ClusterApiKeyRepositoryError> {
+        sqlx::query!(
+            r#"
+            INSERT INTO api_keys (id, user_id, cluster_id, prefix, key_hash, created_at, expires_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            "#,
+            key.id.inner(),
+            key.user_id.map(|v| v.into_inner()),
+            key.cluster_id.map(|v| v.into_inner()),
+            key.prefix,
+            key.key_hash,
+            key.created_at,
+            key.expires_at,
+        )
+        .execute(&self.pool)
+        .await
+        .map(|_| ())
+        .map_err(|err| ClusterApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)))
+    }
+
     async fn find_cluster_by_api_key_hash(
         &self,
         key_hash: &str,
-    ) -> Result<Cluster, ClusterRepositoryError> {
+    ) -> Result<Cluster, ClusterApiKeyRepositoryError> {
         let record = sqlx::query_as!(
             ClusterRecord,
             r#"
@@ -345,8 +372,8 @@ impl ClusterRepository for PostgresClusterRepository {
         .fetch_one(&self.pool)
         .await
         .map_err(|err| match err {
-            sqlx::Error::RowNotFound => ClusterRepositoryError::NotFound("".to_string()),
-            _ => ClusterRepositoryError::Unknown(anyhow::anyhow!(err)),
+            sqlx::Error::RowNotFound => ClusterApiKeyRepositoryError::NotFound,
+            _ => ClusterApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)),
         })?;
 
         Ok(record.into())
@@ -355,7 +382,7 @@ impl ClusterRepository for PostgresClusterRepository {
     async fn list_api_keys_for_cluster(
         &self,
         cluster_id: &ClusterId,
-    ) -> Result<Vec<ApiKey>, ClusterRepositoryError> {
+    ) -> Result<Vec<ApiKey>, ClusterApiKeyRepositoryError> {
         let records = sqlx::query_as!(
             ApiKeyRecord,
             r#"
@@ -367,8 +394,21 @@ impl ClusterRepository for PostgresClusterRepository {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(|err| ClusterRepositoryError::Unknown(anyhow::anyhow!(err)))?;
+        .map_err(|err| ClusterApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)))?;
 
         Ok(records.into_iter().map(ApiKey::from).collect())
+    }
+
+    async fn delete_api_key(&self, id: &ApiKeyId) -> Result<(), ClusterApiKeyRepositoryError> {
+        let result = sqlx::query!("DELETE FROM api_keys WHERE id = $1", id.inner())
+            .execute(&self.pool)
+            .await
+            .map_err(|err| ClusterApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)))?;
+
+        if result.rows_affected() == 0 {
+            return Err(ClusterApiKeyRepositoryError::NotFound);
+        }
+
+        Ok(())
     }
 }

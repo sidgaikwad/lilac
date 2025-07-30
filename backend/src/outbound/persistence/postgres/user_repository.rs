@@ -5,7 +5,7 @@ use sqlx::PgPool;
 
 use crate::domain::user::{
     models::{ApiKey, ApiKeyId, CreateUserRequest, User, UserId},
-    ports::{ApiKeyRepository, ApiKeyRepositoryError, UserRepository, UserRepositoryError},
+    ports::{ApiKeyRepositoryError, UserApiKeyRepository, UserRepository, UserRepositoryError},
 };
 
 #[derive(Clone)]
@@ -132,7 +132,7 @@ impl UserRepository for PostgresUserRepository {
 }
 
 #[async_trait]
-impl ApiKeyRepository for PostgresUserRepository {
+impl UserApiKeyRepository for PostgresUserRepository {
     async fn create_api_key(&self, key: &ApiKey) -> Result<(), ApiKeyRepositoryError> {
         sqlx::query!(
             r#"

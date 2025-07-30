@@ -5,7 +5,29 @@ use crate::domain::{
     cluster::models::{
         Cluster, ClusterId, ClusterNode, Cpu, CreateClusterRequest, Gpu, JobInfo, NodeId, NodeStatus,
     },
+    user::models::{ApiKey, ApiKeyId},
 };
+
+#[derive(serde::Serialize)]
+pub struct HttpApiKey {
+    pub id: ApiKeyId,
+    pub prefix: String,
+    pub created_at: DateTime<Utc>,
+    pub last_used_at: Option<DateTime<Utc>>,
+    pub expires_at: Option<DateTime<Utc>>,
+}
+
+impl From<ApiKey> for HttpApiKey {
+    fn from(key: ApiKey) -> Self {
+        Self {
+            id: key.id,
+            prefix: key.prefix,
+            created_at: key.created_at,
+            last_used_at: key.last_used_at,
+            expires_at: key.expires_at,
+        }
+    }
+}
 
 /// The body of a [Cluster] creation request.
 #[derive(Debug, Clone, Deserialize)]
@@ -27,8 +49,6 @@ impl From<CreateClusterHttpRequest> for CreateClusterRequest {
 #[derive(Debug, Clone, Serialize)]
 pub struct CreateClusterHttpResponse {
     pub cluster_id: ClusterId,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub api_key: Option<String>,
 }
 
 /// The body of a [Cluster] get response.
@@ -118,6 +138,7 @@ impl From<ClusterNode> for HttpClusterNode {
             gpu: value.gpu,
         }
     }
+    
 }
 
 /// The body of a [Cluster] list response.

@@ -30,7 +30,7 @@ pub enum ApiKeyRepositoryError {
 }
 
 #[async_trait]
-pub trait ApiKeyRepository: Send + Sync + 'static {
+pub trait UserApiKeyRepository: Send + Sync + 'static {
     async fn create_api_key(&self, key: &ApiKey) -> Result<(), ApiKeyRepositoryError>;
     async fn find_user_by_api_key_hash(
         &self,

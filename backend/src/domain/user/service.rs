@@ -7,7 +7,7 @@ use sha2::{Digest, Sha256};
 
 use super::{
     models::{ApiKey, ApiKeyId, CreateUserRequest, NewApiKey, User, UserId},
-    ports::{ApiKeyRepository, ApiKeyRepositoryError, UserRepository, UserRepositoryError},
+    ports::{ApiKeyRepositoryError, UserApiKeyRepository, UserRepository, UserRepositoryError},
 };
 
 const API_KEY_PREFIX: &str = "lilac_sk_";
@@ -72,18 +72,18 @@ pub trait UserService: Send + Sync {
 }
 
 #[derive(Clone)]
-pub struct UserServiceImpl<R: UserRepository + ApiKeyRepository> {
+pub struct UserServiceImpl<R: UserRepository + UserApiKeyRepository> {
     repo: Arc<R>,
 }
 
-impl<R: UserRepository + ApiKeyRepository> UserServiceImpl<R> {
+impl<R: UserRepository + UserApiKeyRepository> UserServiceImpl<R> {
     pub fn new(repo: Arc<R>) -> Self {
         Self { repo }
     }
 }
 
 #[async_trait]
-impl<R: UserRepository + ApiKeyRepository> UserService for UserServiceImpl<R> {
+impl<R: UserRepository + UserApiKeyRepository> UserService for UserServiceImpl<R> {
     async fn create_user(&self, req: &CreateUserRequest) -> Result<User, UserServiceError> {
         let mut req = req.clone();
         if req.name.is_none() {
@@ -160,7 +160,6 @@ impl<R: UserRepository + ApiKeyRepository> UserService for UserServiceImpl<R> {
         Ok(self.repo.delete_api_key(key_id).await?)
     }
 
-    // TODO: This will need to be updated to handle authenticating cluster-owned keys.
     async fn authenticate_by_api_key(&self, key: &SecretString) -> Result<User, UserServiceError> {
         let mut hasher = Sha256::new();
         hasher.update(key.expose_secret().as_bytes());
