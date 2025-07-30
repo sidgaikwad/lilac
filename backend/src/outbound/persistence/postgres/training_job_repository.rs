@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use sqlx::PgPool;
-use uuid::Uuid;
 
 use crate::domain::{
     cluster::models::NodeId,
@@ -152,6 +151,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
         // a separate logging service, or another table.
         todo!("TODO: Implement log posting");
     }
+
     async fn get_training_job_by_id(
         &self,
         id: &JobId,

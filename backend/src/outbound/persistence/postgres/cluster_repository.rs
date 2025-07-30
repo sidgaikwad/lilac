@@ -1,22 +1,16 @@
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use crate::domain::{
+use crate::{
+    domain::{
         cluster::{
             models::{
-                Architecture, Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterId, ClusterJobStats, ClusterMemoryStats, ClusterNode, Cpu, CpuManufacturer, CreateClusterRequest, Gpu, GpuManufacturer, GpuModel, NodeId, NodeStatus, UpdateNodeStatusRequest
+                Cluster, ClusterDetails, ClusterId, ClusterNode, CreateClusterRequest, NodeId, UpdateNodeStatusRequest
             },
-            ports::{
-                ClusterApiKeyRepository, ClusterApiKeyRepositoryError, ClusterRepository,
-                ClusterRepositoryError,
-            },
-        }, training_job::models::{TrainingJob, JobId}, user::models::{ApiKey, ApiKeyId}
-    };
-
-use super::records::{
-    ApiKeyRecord, ClusterDetailsRecord, ClusterNodeRecord, ClusterRecord, CpuConfigurationRecord,
-    GpuConfigurationRecord, NodeStatusRecord, TrainingJobRecord, TrainingJobStatusRecord,
+            ports::{ClusterApiKeyRepository, ClusterApiKeyRepositoryError, ClusterRepository, ClusterRepositoryError},
+        },
+        training_job::models::{JobId, TrainingJob}, user::models::{ApiKey, ApiKeyId},
+    }, outbound::persistence::postgres::records::{ApiKeyRecord, ClusterDetailsRecord, ClusterNodeRecord, ClusterRecord, CpuConfigurationRecord, GpuConfigurationRecord, NodeStatusRecord, TrainingJobRecord, TrainingJobStatusRecord},
 };
 
 #[derive(Clone)]
@@ -29,6 +23,7 @@ impl PostgresClusterRepository {
         Self { pool }
     }
 }
+
 
 #[async_trait]
 impl ClusterRepository for PostgresClusterRepository {

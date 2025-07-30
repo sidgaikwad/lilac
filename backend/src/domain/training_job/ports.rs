@@ -1,8 +1,6 @@
 use super::models::{GetTrainingJobsFilters, TrainingJob, TrainingJobStatus};
 use crate::domain::{cluster::models::NodeId, queue::models::QueueId, training_job::models::JobId};
 use async_trait::async_trait;
-#[cfg(test)]
-use mockall::automock;
 
 #[derive(Debug, thiserror::Error)]
 pub enum TrainingJobRepositoryError {

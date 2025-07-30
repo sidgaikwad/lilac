@@ -15,7 +15,6 @@ EXECUTE PROCEDURE set_updated_at_now();
 
 CREATE TYPE node_status AS ENUM ('available', 'busy');
 
--- Create ENUM types to match the Rust enums.
 CREATE TYPE cpu_manufacturer AS ENUM ('Intel', 'AMD', 'AWS');
 CREATE TYPE architecture AS ENUM ('arm64', 'arm64-mac', 'i386', 'x86_64', 'x86_64-mac');
 CREATE TYPE gpu_manufacturer AS ENUM ('Nvidia', 'AMD', 'Habana');
@@ -24,7 +23,6 @@ CREATE TYPE gpu_model AS ENUM (
     'H200', 'L4', 'L40S', 'T4', 'T4g', 'V100'
 );
 
--- Recreate the composite types using the new ENUMs.
 CREATE TYPE cpu_configuration AS (
     manufacturer cpu_manufacturer,
     architecture architecture,
@@ -45,11 +43,11 @@ CREATE TABLE cluster_nodes (
     memory_mb integer NOT NULL,
     cpu cpu_configuration NOT NULL,
     gpu gpu_configuration,
+    assigned_job_id uuid,
+    reported_job_id uuid,
     created_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
     updated_at timestamptz NOT NULL DEFAULT (now() at time zone 'UTC'),
-    deleted_at timestamptz,
-    assigned_job_id uuid,
-    reported_job_id uuid
+    deleted_at timestamptz
 );
 CREATE TRIGGER update_cluster_nodes_updated_at
     BEFORE UPDATE

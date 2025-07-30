@@ -1,5 +1,4 @@
-use crate::identifier;
-use crate::domain::training_job::models::JobId;
+use crate::{domain::training_job::models::{JobId, TrainingJob}, identifier};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

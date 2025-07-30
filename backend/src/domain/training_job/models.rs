@@ -43,8 +43,8 @@ pub struct ResourceRequirements {
     /// GPU requirements for the job. If None, the job does not require GPUs.
     pub gpus: Option<GpuRequirement>,
 }
-// Add a new field for the assigned node ID
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrainingJob {
     pub id: JobId,
     pub name: String,

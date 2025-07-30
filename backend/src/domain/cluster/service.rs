@@ -5,12 +5,12 @@ use async_trait::async_trait;
 use crate::domain::{
     cluster::models::{ClusterDetails, ClusterNode, UpdateNodeStatusRequest},
     training_job::models::TrainingJob,
+    user::models::{ApiKey, ApiKeyId}
 };
 
 use crate::domain::user::models::NewApiKey;
 use secrecy::SecretString;
 
-use crate::domain::user::models::{ApiKey, ApiKeyId};
 use chrono::Utc;
 use secrecy::ExposeSecret;
 use sha2::{Digest, Sha256};

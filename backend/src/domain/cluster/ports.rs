@@ -1,9 +1,11 @@
 use async_trait::async_trait;
 use thiserror::Error;
 
-use crate::domain::cluster::models::{ClusterDetails, ClusterNode, NodeId, UpdateNodeStatusRequest};
-use crate::domain::training_job::models::{JobId, TrainingJob};
-use crate::domain::user::models::{ApiKey, ApiKeyId};
+use crate::domain::{
+    cluster::models::{ClusterDetails, ClusterNode, NodeId, UpdateNodeStatusRequest},
+    training_job::models::{JobId, TrainingJob},
+    user::models::{ApiKey, ApiKeyId}
+};
 
 use super::models::{Cluster, ClusterId, CreateClusterRequest};
 
