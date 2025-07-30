@@ -1,54 +1,40 @@
 use super::models::{GetTrainingJobsFilters, TrainingJob, TrainingJobStatus};
-use crate::{
-    domain::{cluster::models::ClusterId, queue::models::QueueId, training_job::models::JobId},
-    inbound::http::routes::training_jobs::models::CreateTrainingJobRequest,
-};
+use crate::domain::{cluster::models::NodeId, queue::models::QueueId, training_job::models::JobId};
 use async_trait::async_trait;
 #[cfg(test)]
 use mockall::automock;
 
-#[cfg_attr(test, automock)]
+#[derive(Debug, thiserror::Error)]
+pub enum TrainingJobRepositoryError {
+    #[error("training job with {field} {value} already exists")]
+    Duplicate { field: String, value: String },
+    #[error("training job with id {0} not found")]
+    NotFound(String),
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
+}
+
+#[cfg_attr(test, mockall::automock)]
 #[async_trait]
 pub trait TrainingJobRepository: Send + Sync {
-    async fn create(&self, training_job: &TrainingJob) -> Result<(), anyhow::Error>;
+    async fn create(&self, training_job: &TrainingJob) -> Result<(), TrainingJobRepositoryError>;
     async fn get_training_jobs(
         &self,
         filters: GetTrainingJobsFilters,
-    ) -> Result<Vec<TrainingJob>, anyhow::Error>;
+    ) -> Result<Vec<TrainingJob>, TrainingJobRepositoryError>;
     async fn get_queued_jobs_for_queue(
         &self,
         queue_id: &QueueId,
-    ) -> Result<Vec<TrainingJob>, anyhow::Error>;
+    ) -> Result<Vec<TrainingJob>, TrainingJobRepositoryError>;
     async fn update_status(
         &self,
         id: &JobId,
         status: TrainingJobStatus,
-    ) -> Result<(), anyhow::Error>;
+    ) -> Result<(), TrainingJobRepositoryError>;
     async fn mark_as_starting(
         &self,
         id: &JobId,
-        cluster_id: &ClusterId,
-    ) -> Result<(), anyhow::Error>;
-    async fn post_logs(&self, id: &JobId, logs: String) -> Result<(), anyhow::Error>;
-}
-
-#[async_trait]
-pub trait TrainingJobService: Send + Sync {
-    async fn create(&self, request: CreateTrainingJobRequest)
-        -> Result<TrainingJob, anyhow::Error>;
-    async fn get_training_jobs(
-        &self,
-        filters: GetTrainingJobsFilters,
-    ) -> Result<Vec<TrainingJob>, anyhow::Error>;
-    async fn update_status(
-        &self,
-        id: &JobId,
-        status: TrainingJobStatus,
-    ) -> Result<(), anyhow::Error>;
-    async fn mark_as_starting(
-        &self,
-        id: &JobId,
-        cluster_id: &ClusterId,
-    ) -> Result<(), anyhow::Error>;
-    async fn post_logs(&self, id: &JobId, logs: String) -> Result<(), anyhow::Error>;
+        node_id: &NodeId,
+    ) -> Result<(), TrainingJobRepositoryError>;
+    async fn post_logs(&self, id: &JobId, logs: String) -> Result<(), TrainingJobRepositoryError>;
 }

@@ -20,7 +20,7 @@ use crate::{
         auth::service::AuthService, cluster::service::ClusterService,
         credentials::service::CredentialService, dataset::service::DatasetService,
         project::service::ProjectService, queue::service::QueueService,
-        training_job::ports::TrainingJobService, user::service::UserService,
+        training_job::service::TrainingJobService, user::service::UserService,
     },
     inbound::http::routes::{clusters, credentials, queues, training_jobs},
     outbound::persistence::postgres::session_repository::PostgresSessionStore,

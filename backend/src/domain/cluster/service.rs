@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::domain::cluster::models::{ClusterNode, UpdateNodeStatusRequest};
+use crate::domain::{
+    cluster::models::{ClusterDetails, ClusterNode, UpdateNodeStatusRequest},
+    training_job::models::TrainingJob,
+};
 
 use crate::domain::user::models::NewApiKey;
 use secrecy::SecretString;
@@ -72,8 +75,16 @@ pub trait ClusterService: Send + Sync {
         &self,
         cluster_id: &ClusterId,
     ) -> Result<Cluster, ClusterServiceError>;
+    async fn get_cluster_details(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<ClusterDetails, ClusterServiceError>;
     async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterServiceError>;
     async fn delete_cluster(&self, cluster_id: &ClusterId) -> Result<(), ClusterServiceError>;
+    async fn list_cluster_jobs(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<Vec<TrainingJob>, ClusterServiceError>;
     async fn list_cluster_nodes(
         &self,
         cluster_id: &ClusterId,
@@ -124,12 +135,26 @@ impl<R: ClusterRepository + ClusterApiKeyRepository> ClusterService for ClusterS
         Ok(self.cluster_repo.get_cluster_by_id(cluster_id).await?)
     }
 
+    async fn get_cluster_details(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<ClusterDetails, ClusterServiceError> {
+        Ok(self.cluster_repo.get_cluster_details(cluster_id).await?)
+    }
+
     async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterServiceError> {
         Ok(self.cluster_repo.list_clusters().await?)
     }
 
     async fn delete_cluster(&self, cluster_id: &ClusterId) -> Result<(), ClusterServiceError> {
         Ok(self.cluster_repo.delete_cluster(cluster_id).await?)
+    }
+
+    async fn list_cluster_jobs(
+        &self,
+        cluster_id: &ClusterId,
+    ) -> Result<Vec<TrainingJob>, ClusterServiceError> {
+        Ok(self.cluster_repo.list_cluster_jobs(cluster_id).await?)
     }
 
     async fn update_node_status(

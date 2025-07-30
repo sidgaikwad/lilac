@@ -154,3 +154,39 @@ impl From<Vec<ClusterNode>> for ListClusterNodesHttpResponse {
         }
     }
 }
+
+
+
+/// The body of a [ClusterDetails] get response.
+#[derive(Debug, Clone, Serialize)]
+pub struct GetClusterDetailsHttpResponse {
+    pub cluster_id: ClusterId,
+    pub cluster_name: String,
+    pub cluster_description: Option<String>,
+    pub total_nodes: i64,
+    pub busy_nodes: i64,
+    pub memory_info: ClusterMemoryStats,
+    pub cpu_info: ClusterCpuStats,
+    pub gpu_info: ClusterGpuStats,
+    pub job_info: ClusterJobStats,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<ClusterDetails> for GetClusterDetailsHttpResponse {
+    fn from(value: ClusterDetails) -> Self {
+        Self {
+            cluster_id: value.id,
+            cluster_name: value.name,
+            cluster_description: value.description,
+            total_nodes: value.total_nodes,
+            busy_nodes: value.busy_nodes,
+            memory_info: value.memory_info,
+            cpu_info: value.cpu_info,
+            gpu_info: value.gpu_info,
+            job_info: value.job_info,
+            created_at: value.created_at,
+            updated_at: value.updated_at,
+        }
+    }
+}

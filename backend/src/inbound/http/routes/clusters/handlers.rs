@@ -54,6 +54,18 @@ pub async fn get_cluster(
 }
 
 #[axum::debug_handler(state = AppState)]
+pub async fn get_cluster_info(
+    _claims: Claims,
+    State(cluster_service): State<Arc<dyn ClusterService>>,
+    Path(cluster_id): Path<ClusterId>,
+) -> Result<Json<GetClusterDetailsHttpResponse>, ApiError> {
+    let cluster = cluster_service
+        .get_cluster_details(&cluster_id.into())
+        .await?;
+    Ok(Json(cluster.into()))
+}
+
+#[axum::debug_handler(state = AppState)]
 pub async fn list_clusters(
     _claims: Claims,
     State(cluster_service): State<Arc<dyn ClusterService>>,

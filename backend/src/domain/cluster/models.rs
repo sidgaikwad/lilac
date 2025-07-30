@@ -192,3 +192,42 @@ pub struct UpdateNodeStatusRequest {
     pub gpu_info: Option<Gpu>,
     pub job_info: Option<JobInfo>,
 }
+
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ClusterMemoryStats {
+    pub total_memory_mb: i64,
+    pub used_memory_mb: i64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ClusterCpuStats {
+    pub total_millicores: i64,
+    pub used_millicores: i64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ClusterGpuStats {
+    pub total_gpus: i64,
+    pub used_gpus: i64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ClusterJobStats {
+    pub total_running_jobs: i64,
+}
+
+#[derive(Clone, Debug)]
+pub struct ClusterDetails {
+    pub id: ClusterId,
+    pub name: String,
+    pub description: Option<String>,
+    pub total_nodes: i64,
+    pub busy_nodes: i64,
+    pub memory_info: ClusterMemoryStats,
+    pub cpu_info: ClusterCpuStats,
+    pub gpu_info: ClusterGpuStats,
+    pub job_info: ClusterJobStats,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}

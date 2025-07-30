@@ -1,1 +1,0 @@
-ALTER TABLE clusters ADD COLUMN credential_id uuid NOT NULL REFERENCES credentials(credential_id);

@@ -12,13 +12,12 @@ mod tests {
     use crate::{
         domain::{
             queue::models::QueueId,
-            training_job::{models::JobId, ports::TrainingJobService},
+            training_job::{models::JobId, service::TrainingJobService},
         },
         inbound::http::routes::training_jobs::models::CreateTrainingJobRequest,
     };
     use mockall::predicate::*;
     use std::sync::Arc;
-    use uuid::Uuid;
 
     #[tokio::test]
     async fn test_create_training_job() {

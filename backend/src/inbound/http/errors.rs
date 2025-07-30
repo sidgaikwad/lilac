@@ -1,8 +1,8 @@
 use crate::domain::{
     auth::service::AuthServiceError, cluster::service::ClusterServiceError,
     credentials::service::CredentialServiceError, dataset::service::DatasetServiceError,
-    project::service::ProjectServiceError, user::service::UserServiceError,
-    workspace::service::WorkspaceServiceError,
+    project::service::ProjectServiceError, training_job::service::TrainingJobServiceError,
+    user::service::UserServiceError, workspace::service::WorkspaceServiceError,
 };
 
 use axum::{
@@ -139,6 +139,23 @@ impl From<WorkspaceServiceError> for ApiError {
                 Self::InternalServerError("Something went wrong".to_string())
             }
             WorkspaceServiceError::Unknown(e) => {
+                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
+                Self::InternalServerError("Something went wrong".to_string())
+            }
+        }
+    }
+}
+
+impl From<TrainingJobServiceError> for ApiError {
+    fn from(err: TrainingJobServiceError) -> Self {
+        match err {
+            TrainingJobServiceError::TrainingJobExists { .. } => {
+                Self::Conflict("Cluster already exists".into())
+            }
+            TrainingJobServiceError::TrainingJobNotFound(_) => {
+                Self::NotFound(format!("Cluster not found"))
+            }
+            TrainingJobServiceError::Unknown(e) => {
                 tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
                 Self::InternalServerError("Something went wrong".to_string())
             }

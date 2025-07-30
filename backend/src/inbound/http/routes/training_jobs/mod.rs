@@ -5,7 +5,9 @@ use axum::{
 
 use crate::inbound::http::AppState;
 
-use self::handlers::{create_training_job, get_training_jobs, update_training_job_status, post_logs};
+use self::handlers::{
+    create_training_job, get_training_jobs, post_logs, update_training_job_status,
+};
 
 pub mod handlers;
 pub mod models;

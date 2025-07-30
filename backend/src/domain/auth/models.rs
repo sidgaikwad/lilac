@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use headers::{authorization::Bearer, Authorization, HeaderMapExt};
 
-use crate::domain::user::models::UserId;
+use crate::{domain::user::models::UserId, inbound::http::errors::ApiError};
 use crate::inbound::http::AppState;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -47,7 +47,7 @@ pub struct Claims {
 }
 
 impl FromRequestParts<AppState> for Claims {
-    type Rejection = (StatusCode, &'static str);
+    type Rejection = ApiError;
 
     async fn from_request_parts(
         parts: &mut Parts,
@@ -57,13 +57,13 @@ impl FromRequestParts<AppState> for Claims {
         let bearer_token = parts
             .headers
             .typed_get::<Authorization<Bearer>>()
-            .ok_or((StatusCode::UNAUTHORIZED, "Missing Authorization header"))?;
+            .ok_or(ApiError::Unauthorized("Missing Authorization header".into()))?;
 
         // 3. Validate the token using the application state
         let token_claims = state
             .auth_service
             .validate_token(bearer_token.token())
-            .map_err(|_| (StatusCode::UNAUTHORIZED, "Invalid token"))?;
+            .map_err(|_| ApiError::Unauthorized("Invalid token".into()))?;
 
         // 4. Create the Claims struct
         let claims = Claims {

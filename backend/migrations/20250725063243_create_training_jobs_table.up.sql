@@ -11,8 +11,7 @@ CREATE TABLE training_jobs (
     name TEXT NOT NULL,
     definition TEXT NOT NULL,
     status training_job_status NOT NULL,
-    cluster_id UUID NOT NULL,
-    instance_id UUID,
+    node_id UUID,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
     -- Add Assigned to node ID

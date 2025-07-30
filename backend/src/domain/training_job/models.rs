@@ -3,14 +3,17 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    domain::{cluster::models::ClusterId, queue::models::QueueId},
+    domain::{
+        cluster::models::{ClusterId, NodeId},
+        queue::models::QueueId,
+    },
     identifier,
 };
 
 identifier!(JobId);
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, sqlx::Type)]
-#[sqlx(type_name = "training_job_status", rename_all = "lowercase")]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
 pub enum TrainingJobStatus {
     Queued,
     Starting,
@@ -48,8 +51,8 @@ pub struct TrainingJob {
     // rename to docker uri
     pub definition: String,
     pub status: TrainingJobStatus,
+    pub node_id: Option<NodeId>,
     pub queue_id: QueueId,
-    #[sqlx(json)]
     pub resource_requirements: ResourceRequirements,
     pub scheduled_cluster_id: Option<ClusterId>,
     // TODO: Add `assigned_node_id: Option<NodeId>`

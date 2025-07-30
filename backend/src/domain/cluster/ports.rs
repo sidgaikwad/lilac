@@ -23,8 +23,13 @@ pub trait ClusterRepository: Send + Sync {
         req: &CreateClusterRequest,
     ) -> Result<Cluster, ClusterRepositoryError>;
     async fn get_cluster_by_id(&self, id: &ClusterId) -> Result<Cluster, ClusterRepositoryError>;
+    async fn get_cluster_details(&self, id: &ClusterId) -> Result<ClusterDetails, ClusterRepositoryError>;
     async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterRepositoryError>;
     async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterRepositoryError>;
+    async fn list_cluster_jobs(
+        &self,
+        id: &ClusterId,
+    ) -> Result<Vec<TrainingJob>, ClusterRepositoryError>;
     async fn list_cluster_nodes(
         &self,
         id: &ClusterId,

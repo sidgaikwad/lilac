@@ -42,9 +42,9 @@ use crate::domain::training_job::models::GetTrainingJobsFilters;
 
 #[axum::debug_handler]
 pub async fn get_training_jobs(
+    _claims: Claims,
     State(state): State<AppState>,
-    claims: Claims,
-    Query(mut params): Query<GetTrainingJobsFilters>,
+    Query(params): Query<GetTrainingJobsFilters>,
 ) -> impl IntoResponse {
     let training_jobs = state
         .training_job_service
