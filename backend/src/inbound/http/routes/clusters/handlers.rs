@@ -35,9 +35,10 @@ pub async fn create_cluster(
     State(cluster_service): State<Arc<dyn ClusterService>>,
     Json(req): Json<CreateClusterHttpRequest>,
 ) -> Result<Json<CreateClusterHttpResponse>, ApiError> {
-    let cluster = cluster_service.create_cluster(&req.into()).await?;
+    let (cluster, new_api_key) = cluster_service.create_cluster(&req.into()).await?;
     Ok(Json(CreateClusterHttpResponse {
         cluster_id: cluster.id,
+        api_key: Some(new_api_key.key.expose_secret().clone()),
     }))
 }
 
