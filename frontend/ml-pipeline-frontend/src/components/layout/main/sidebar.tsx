@@ -1,5 +1,12 @@
 import { useLocation } from 'react-router-dom';
-import { Settings, HardDrive, Shapes, Server } from 'lucide-react'; // Added LayoutDashboard
+import {
+  Settings,
+  HardDrive,
+  Shapes,
+  Server,
+  KeyRound,
+  Layers,
+} from 'lucide-react';
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -26,7 +33,9 @@ export default function Sidebar() {
       [Routes.PROJECTS]: Routes.PROJECTS,
       [Routes.DATA_SOURCES]: Routes.DATA_SOURCES,
       [Routes.CLUSTERS]: Routes.CLUSTERS,
+      [Routes.QUEUES]: Routes.QUEUES,
       [Routes.ORG_SETTINGS]: Routes.ORG_SETTINGS,
+      [Routes.API_KEYS]: Routes.API_KEYS,
     };
   }, []);
 
@@ -76,6 +85,28 @@ export default function Sidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === paths[Routes.QUEUES]}
+                >
+                  <Link to={paths[Routes.QUEUES]}>
+                    <Layers />
+                    <span>Queues</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={location.pathname === paths[Routes.ORG_SETTINGS]}
+                >
+                  <Link to={paths[Routes.ORG_SETTINGS]}>
+                    <Settings />
+                    <span>Organization Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -88,11 +119,11 @@ export default function Sidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={location.pathname === paths[Routes.ORG_SETTINGS]}
+                  isActive={location.pathname === paths[Routes.API_KEYS]}
                 >
-                  <Link to={paths[Routes.ORG_SETTINGS]}>
-                    <Settings />
-                    <span>Organization Settings</span>
+                  <Link to={paths[Routes.API_KEYS]}>
+                    <KeyRound />
+                    <span>API Keys</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

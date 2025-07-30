@@ -4,11 +4,13 @@ export enum Routes {
   LOGOUT = '/logout',
   SIGNUP = '/signup',
   ACCOUNT_SETTINGS = '/account/settings',
+  API_KEYS = '/account/api-keys',
 
   DATA_SOURCES = '/data-sources',
   DATA_SOURCE_DETAILS = '/data-sources/:dataSourceId',
   CLUSTERS = '/clusters',
   CLUSTER_DETAILS = '/clusters/:clusterId',
+  QUEUES = '/queues',
   ORG_SETTINGS = '/organization/settings',
 
   PROJECTS = '/projects',

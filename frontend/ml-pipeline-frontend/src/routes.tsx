@@ -13,6 +13,8 @@ import AccountSettingsPage from './features/account/pages/account-settings-page'
 import ProjectSettingsPage from './features/projects/pages/project-settings-page';
 import ClustersPage from './features/clusters/pages/clusters-page';
 import { OrgSettings } from './features/settings/pages/org-settings';
+import { ApiKeysSettings } from './features/api-keys/pages/api-keys-settings';
+import { QueuesPage } from './features/queues/pages/queues-page';
 
 export const router = createBrowserRouter([
   {
@@ -47,6 +49,14 @@ export const router = createBrowserRouter([
               {
                 path: Routes.CLUSTERS,
                 element: <ClustersPage />,
+              },
+              {
+                path: Routes.QUEUES,
+                element: <QueuesPage />,
+              },
+              {
+                path: Routes.API_KEYS,
+                element: <ApiKeysSettings />,
               },
               {
                 path: Routes.ORG_SETTINGS,

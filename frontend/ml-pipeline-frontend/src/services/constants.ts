@@ -23,6 +23,14 @@ export enum QueryKeys {
   LIST_CREDENTIALS = 'ListCredentials',
   DELETE_CREDENTIAL = 'DeleteCredential',
 
+  LIST_API_KEYS = 'ListApiKeys',
+  CREATE_API_KEY = 'CreateApiKey',
+  DELETE_API_KEY = 'DeleteApiKey',
+
+  LIST_QUEUES = 'ListQueues',
+  CREATE_QUEUE = 'CreateQueue',
+  DELETE_QUEUE = 'DeleteQueue',
+
   GET_CLUSTER = 'GetCluster',
   CREATE_CLUSTER = 'CreateCluster',
   LIST_CLUSTERS = 'ListClusters',
