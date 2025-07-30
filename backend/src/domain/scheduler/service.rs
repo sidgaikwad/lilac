@@ -10,16 +10,19 @@ use crate::domain::{
 pub struct SchedulerService {
     job_repo: Arc<dyn TrainingJobRepository>,
     queue_repo: Arc<dyn QueueRepository>,
+    // TODO: Add `scheduler_plugin: Arc<dyn SchedulerPlugin>` here.
 }
 
 impl SchedulerService {
     pub fn new(
         job_repo: Arc<dyn TrainingJobRepository>,
         queue_repo: Arc<dyn QueueRepository>,
+        // TODO: Add `scheduler_plugin: Arc<dyn SchedulerPlugin>` to the arguments.
     ) -> Self {
         Self {
             job_repo,
             queue_repo,
+            // TODO: Initialize the `scheduler_plugin` field.
         }
     }
 
@@ -60,8 +63,8 @@ impl SchedulerService {
                 let mut scheduled = false;
 
                 for cluster_id in &queue.cluster_targets {
+                    // TODO: Replace this block with a call to `self.scheduler_plugin.find_suitable_node(...)`
                     todo!();
-                    // let plugin = ();
 
                     // match plugin
                     //     .find_suitable_node(cluster_id, &job.resource_requirements)

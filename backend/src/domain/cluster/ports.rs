@@ -15,6 +15,8 @@ pub enum ClusterRepositoryError {
     Unknown(#[from] anyhow::Error),
 }
 
+// Add assign job id fn?
+
 #[async_trait]
 pub trait ClusterRepository: Send + Sync {
     async fn create_cluster(

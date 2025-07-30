@@ -1,4 +1,5 @@
 use crate::identifier;
+use crate::domain::training_job::models::JobId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -146,6 +147,8 @@ pub struct ClusterNode {
     pub gpu: Option<Gpu>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub assigned_job_id: Option<JobId>,
+    pub reported_job_id: Option<JobId>,
 }
 
 impl ClusterNode {
@@ -157,7 +160,7 @@ impl ClusterNode {
         gpu: Option<Gpu>,
     ) -> Self {
         Self {
-            id: NodeId::generate(),
+            id: node_id,
             cluster_id,
             node_status: NodeStatus::Available,
             heartbeat_timestamp: Utc::now(),
@@ -166,12 +169,17 @@ impl ClusterNode {
             gpu,
             created_at: Utc::now(),
             updated_at: Utc::now(),
+            assigned_job_id: None,
+            reported_job_id: None,
         }
     }
 }
 
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct JobInfo {}
+pub struct JobInfo {
+    pub current_job_id: Option<JobId>,
+}
 
 #[derive(Clone, Debug)]
 pub struct UpdateNodeStatusRequest {

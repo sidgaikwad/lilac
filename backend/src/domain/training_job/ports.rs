@@ -6,7 +6,6 @@ use crate::{
 use async_trait::async_trait;
 #[cfg(test)]
 use mockall::automock;
-use uuid::Uuid;
 
 #[cfg_attr(test, automock)]
 #[async_trait]

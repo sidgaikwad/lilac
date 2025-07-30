@@ -15,4 +15,5 @@ CREATE TABLE training_jobs (
     instance_id UUID,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
+    -- Add Assigned to node ID
 );

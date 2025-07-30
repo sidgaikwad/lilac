@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use uuid::Uuid;
 use crate::domain::agent::models::{NodeResources, NodeStatus, HeartbeatResponse, JobDetails, JobStatus};
 
-/// Port for interacting with the Lilac control plane API.
+/// Port for interacting with the Lilac control plane API. update to do proper error handling
 #[async_trait]
 pub trait ControlPlaneApi: Send + Sync {
     /// Registers the node with the control plane.

@@ -40,17 +40,19 @@ pub struct ResourceRequirements {
     /// GPU requirements for the job. If None, the job does not require GPUs.
     pub gpus: Option<GpuRequirement>,
 }
-
+// Add a new field for the assigned node ID
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TrainingJob {
     pub id: JobId,
     pub name: String,
+    // rename to docker uri
     pub definition: String,
     pub status: TrainingJobStatus,
     pub queue_id: QueueId,
     #[sqlx(json)]
     pub resource_requirements: ResourceRequirements,
     pub scheduled_cluster_id: Option<ClusterId>,
+    // TODO: Add `assigned_node_id: Option<NodeId>`
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

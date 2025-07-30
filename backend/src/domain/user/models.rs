@@ -109,6 +109,7 @@ pub struct NewApiKey {
 /// The actual key is hashed and stored in `key_hash`.
 #[derive(Clone, Debug)]
 pub struct ApiKey {
+    // TODO: Add an `owner` field here (e.g., an enum of `User(UserId)` or `Cluster(ClusterId)`)
     pub id: ApiKeyId,
     pub user_id: Option<UserId>,
     pub cluster_id: Option<ClusterId>,

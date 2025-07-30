@@ -1,8 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::cluster::models::{
-    Cluster, ClusterId, ClusterNode, Cpu, CreateClusterRequest, Gpu, JobInfo, NodeId, NodeStatus,
+use crate::domain::{
+    cluster::models::{
+        Cluster, ClusterId, ClusterNode, Cpu, CreateClusterRequest, Gpu, JobInfo, NodeId, NodeStatus,
+    },
 };
 
 /// The body of a [Cluster] creation request.

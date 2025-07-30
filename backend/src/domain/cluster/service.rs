@@ -32,7 +32,7 @@ impl From<ClusterRepositoryError> for ClusterServiceError {
         }
     }
 }
-
+// Add error for assign job id
 #[async_trait]
 pub trait ClusterService: Send + Sync {
     async fn create_cluster(
@@ -72,6 +72,7 @@ impl<R: ClusterRepository> ClusterService for ClusterServiceImpl<R> {
         &self,
         req: &CreateClusterRequest,
     ) -> Result<Cluster, ClusterServiceError> {
+        // TODO: After creating the cluster, also create a new ApiKey owned by this cluster.
         Ok(self.cluster_repo.create_cluster(req).await?)
     }
 
@@ -94,9 +95,22 @@ impl<R: ClusterRepository> ClusterService for ClusterServiceImpl<R> {
         &self,
         req: UpdateNodeStatusRequest,
     ) -> Result<ClusterNode, ClusterServiceError> {
-        let res = self.cluster_repo.update_cluster_node_status(&req).await?;
+        let node = self.cluster_repo.update_cluster_node_status(&req).await?;
 
-        Ok(res)
+        if node.assigned_job_id != node.reported_job_id {
+            // TODO: Implement reconciliation logic.
+            // This could involve logging a warning, emitting an event,
+            // or telling the agent to terminate the unexpected job.
+            // For now, we will just log it.
+            tracing::warn!(
+                node_id = %node.id,
+                assigned_job_id = ?node.assigned_job_id,
+                reported_job_id = ?node.reported_job_id,
+                "Mismatched job ID reported by agent."
+            );
+        }
+
+        Ok(node)
     }
 
     async fn list_cluster_nodes(

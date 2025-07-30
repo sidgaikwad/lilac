@@ -2,13 +2,13 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use crate::domain::cluster::{
+use crate::{domain::cluster::{
     models::{
         Architecture, Cluster, ClusterId, ClusterNode, Cpu, CpuManufacturer, CreateClusterRequest,
         Gpu, GpuManufacturer, GpuModel, NodeId, NodeStatus, UpdateNodeStatusRequest,
     },
     ports::{ClusterRepository, ClusterRepositoryError},
-};
+}};
 
 #[derive(Clone)]
 pub struct PostgresClusterRepository {
@@ -96,6 +96,7 @@ impl From<Gpu> for GpuConfiguration {
     }
 }
 
+
 #[derive(sqlx::FromRow)]
 struct ClusterNodeRecord {
     node_id: uuid::Uuid,
@@ -107,6 +108,8 @@ struct ClusterNodeRecord {
     gpu: Option<GpuConfiguration>,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
+    assigned_job_id: Option<uuid::Uuid>,
+    reported_job_id: Option<uuid::Uuid>,
 }
 
 impl TryFrom<ClusterNodeRecord> for ClusterNode {
@@ -138,6 +141,8 @@ impl TryFrom<ClusterNodeRecord> for ClusterNode {
             },
             created_at: record.created_at,
             updated_at: record.updated_at,
+            assigned_job_id: record.assigned_job_id.map(Into::into),
+            reported_job_id: record.reported_job_id.map(Into::into),
         })
     }
 }
@@ -214,7 +219,7 @@ impl ClusterRepository for PostgresClusterRepository {
         let records = sqlx::query_as!(
             ClusterNodeRecord,
             r#"
-            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at
+            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at, assigned_job_id, reported_job_id
             FROM cluster_nodes
             WHERE cluster_id = $1
             "#,
@@ -238,7 +243,7 @@ impl ClusterRepository for PostgresClusterRepository {
         let record = sqlx::query_as!(
             ClusterNodeRecord,
             r#"
-            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at
+            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at, assigned_job_id, reported_job_id
             FROM cluster_nodes
             WHERE node_id = $1
             "#,
@@ -256,12 +261,14 @@ impl ClusterRepository for PostgresClusterRepository {
         let record = sqlx::query_as!(
             ClusterNodeRecord,
             r#"
-            INSERT INTO cluster_nodes (node_id, cluster_id, node_status, heartbeat_timestamp, memory_mb, cpu, gpu)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO cluster_nodes (node_id, cluster_id, node_status, heartbeat_timestamp, memory_mb, cpu, gpu, reported_job_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 ON CONFLICT (node_id) DO UPDATE SET
                     node_status = EXCLUDED.node_status,
-                    heartbeat_timestamp = EXCLUDED.heartbeat_timestamp
-                RETURNING node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at;
+                    heartbeat_timestamp = EXCLUDED.heartbeat_timestamp,
+                    reported_job_id = EXCLUDED.reported_job_id,
+                    updated_at = NOW()
+                RETURNING node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at, assigned_job_id, reported_job_id;
             "#,
             req.node_id.0,
             req.cluster_id.0,
@@ -270,6 +277,10 @@ impl ClusterRepository for PostgresClusterRepository {
             req.memory_info,
             CpuConfiguration::from(req.cpu_info.clone()) as _,
             req.gpu_info.clone().map(|v| GpuConfiguration::from(v)) as _,
+            req.job_info
+                .as_ref()
+                .and_then(|info| info.current_job_id)
+                .map(|id| id.0),
         )
         .fetch_one(&self.pool)
         .await

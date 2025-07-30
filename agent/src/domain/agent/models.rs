@@ -43,7 +43,7 @@ pub struct HeartbeatResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JobDetails {
     pub id: Uuid,
-    /// The Docker image URI for the job.
+    /// The Docker image URI for the job. Rename to docker_uri
     pub definition: String,
 }
 
