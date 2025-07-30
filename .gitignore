@@ -10,3 +10,11 @@ backend/data-pipeline/job_data
 lilac.toml
 # Local Kubeconfig
 backend/kubeconfig.yaml
+
+*/skypilot/*
+*/toolchain/*
+worker/*
+docs/*
+agent-old-copy/*
+sample-hello-job/*
+sample-pytorch-job/*
