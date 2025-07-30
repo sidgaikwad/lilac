@@ -50,7 +50,7 @@ export function CreateQueueForm({ onSubmit, isPending }: CreateQueueFormProps) {
             <FormItem>
               <FormLabel>Queue Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. gpu-queue" {...field} />
+                <Input placeholder="e.g. H100-queue" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
