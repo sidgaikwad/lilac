@@ -72,35 +72,42 @@ where
             let response = self
                 .control_plane
                 .send_heartbeat(self.node_id, request)
-                .await?;
+                .await;
 
-            if let Some(assigned_job) = response.assigned_job {
-                println!("[DAEMON] Assigned job with ID: {}", assigned_job.id);
-                
-                // Set the new job ID
-                *self.current_job_id.lock().unwrap() = Some(assigned_job.id);
+            match response {
+                Ok(response) => {
+                    if let Some(assigned_job) = response.assigned_job {
+                        println!("[DAEMON] Assigned job with ID: {}", assigned_job.id);
 
-                let executor = self.job_executor.clone();
-                let current_job_id_clone = self.current_job_id.clone();
+                        // Set the new job ID
+                        *self.current_job_id.lock().unwrap() = Some(assigned_job.id);
 
-                tokio::spawn(async move {
-                    let job_id = assigned_job.id;
-                    match executor.run_job(assigned_job).await {
-                        Ok(0) => {
-                            println!("[JOB {}] Execution finished successfully.", job_id);
-                        }
-                        Ok(exit_code) => {
-                            eprintln!("[JOB {}] Execution finished with a non-zero exit code: {}", job_id, exit_code);
-                        }
-                        Err(e) => {
-                            eprintln!("[JOB {}] Execution failed: {}", job_id, e);
-                        }
-                    };
+                        let executor = self.job_executor.clone();
+                        let current_job_id_clone = self.current_job_id.clone();
 
-                    // When the job is done, clear the current job ID.
-                    *current_job_id_clone.lock().unwrap() = None;
-                    println!("[DAEMON] Node is now available.");
-                });
+                        tokio::spawn(async move {
+                            let job_id = assigned_job.id;
+                            match executor.run_job(assigned_job).await {
+                                Ok(0) => {
+                                    println!("[JOB {}] Execution finished successfully.", job_id);
+                                }
+                                Ok(exit_code) => {
+                                    eprintln!("[JOB {}] Execution finished with a non-zero exit code: {}", job_id, exit_code);
+                                }
+                                Err(e) => {
+                                    eprintln!("[JOB {}] Execution failed: {}", job_id, e);
+                                }
+                            };
+
+                            // When the job is done, clear the current job ID.
+                            *current_job_id_clone.lock().unwrap() = None;
+                            println!("[DAEMON] Node is now available.");
+                        });
+                    }
+                }
+                Err(e) => {
+                    eprintln!("[DAEMON] Error sending heartbeat: {}. Will retry.", e);
+                }
             }
         }
     }
