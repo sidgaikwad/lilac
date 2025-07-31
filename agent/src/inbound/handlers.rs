@@ -343,9 +343,9 @@ ENTRYPOINT {cmd_array}
                 response.id
             );
         }
-        Err(_) => {
-            eprintln!("\n❌ Error submitting job.");
-            eprintln!("Please check the following:");
+        Err(e) => {
+            eprintln!("\n❌ Error submitting job: {}", e);
+            eprintln!("\nPlease check the following:");
             eprintln!(
                 "  - Is the Lilac server running and reachable at the configured API endpoint?"
             );

@@ -23,7 +23,7 @@ use server::{
             queue_repository::PostgresQueueRepository, session_repository::PostgresSessionStore,
             training_job_repository::PostgresTrainingJobRepository,
             user_repository::PostgresUserRepository,
-        },
+        }, scheduler::agent_adapter::AgentSchedulerAdapter,
     },
 };
 use sqlx::postgres::PgPoolOptions;
@@ -87,9 +87,11 @@ async fn main() -> anyhow::Result<()> {
     let queue_service = Arc::new(QueueServiceImpl::new(queue_repo.clone()));
 
     // 4. Construct Scheduler
+    let agent_adapter = Arc::new(AgentSchedulerAdapter::new(cluster_repo.clone()));
     let scheduler_service = Arc::new(SchedulerService::new(
         training_job_repo.clone(),
         queue_repo.clone(),
+        agent_adapter,
     ));
 
     // 5. Spawn background tasks

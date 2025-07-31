@@ -4,3 +4,4 @@ pub(crate) mod gcp;
 pub mod jwt;
 pub mod k8s;
 pub mod persistence;
+pub mod scheduler;

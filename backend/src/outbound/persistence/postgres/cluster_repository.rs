@@ -11,7 +11,7 @@ use crate::domain::{
                 ClusterApiKeyRepository, ClusterApiKeyRepositoryError, ClusterRepository,
                 ClusterRepositoryError,
             },
-        }, training_job::models::TrainingJob, user::models::{ApiKey, ApiKeyId}
+        }, training_job::models::{TrainingJob, JobId}, user::models::{ApiKey, ApiKeyId}
     };
 
 use super::records::{
@@ -237,6 +237,27 @@ impl ClusterRepository for PostgresClusterRepository {
         .execute(&self.pool)
         .await
         .map_err(|e| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+
+        Ok(())
+    }
+
+    async fn assign_job_to_node(
+        &self,
+        node_id: &NodeId,
+        job_id: &JobId,
+    ) -> Result<(), ClusterRepositoryError> {
+        let result = sqlx::query!(
+            "UPDATE cluster_nodes SET assigned_job_id = $1 WHERE node_id = $2",
+            job_id.0,
+            node_id.0
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+
+        if result.rows_affected() == 0 {
+            return Err(ClusterRepositoryError::NotFound(node_id.0.to_string()));
+        }
 
         Ok(())
     }

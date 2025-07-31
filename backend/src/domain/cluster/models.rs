@@ -128,7 +128,7 @@ pub struct Gpu {
     pub memory_mb: i32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum NodeStatus {
     #[serde(rename = "available")]
     Available,

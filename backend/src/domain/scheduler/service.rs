@@ -1,28 +1,31 @@
 use std::sync::Arc;
 
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
-use crate::domain::{
-    queue::ports::QueueRepository,
-    training_job::{models::ResourceRequirements, ports::TrainingJobRepository},
+use crate::{
+    domain::{
+        queue::ports::QueueRepository,
+        training_job::{models::ResourceRequirements, ports::TrainingJobRepository},
+    },
+    outbound::scheduler::agent_adapter::AgentSchedulerAdapter,
 };
 
 pub struct SchedulerService {
     job_repo: Arc<dyn TrainingJobRepository>,
     queue_repo: Arc<dyn QueueRepository>,
-    // TODO: Add `scheduler_plugin: Arc<dyn SchedulerPlugin>` here.
+    agent_adapter: Arc<AgentSchedulerAdapter>,
 }
 
 impl SchedulerService {
     pub fn new(
         job_repo: Arc<dyn TrainingJobRepository>,
         queue_repo: Arc<dyn QueueRepository>,
-        // TODO: Add `scheduler_plugin: Arc<dyn SchedulerPlugin>` to the arguments.
+        agent_adapter: Arc<AgentSchedulerAdapter>,
     ) -> Self {
         Self {
             job_repo,
             queue_repo,
-            // TODO: Initialize the `scheduler_plugin` field.
+            agent_adapter,
         }
     }
 
@@ -63,58 +66,38 @@ impl SchedulerService {
                 let mut scheduled = false;
 
                 for cluster_id in &queue.cluster_targets {
-                    // TODO: Replace this block with a call to `self.scheduler_plugin.find_suitable_node(...)`
-                    todo!();
-
-                    // match plugin
-                    //     .find_suitable_node(cluster_id, &job.resource_requirements)
-                    //     .await
-                    // {
-                    //     Ok(Some(decision)) => {
-                    //         info!(
-                    //             "Plugin found suitable node {} for job {} on cluster {}",
-                    //             decision.node_name, job.id, decision.cluster_id
-                    //         );
-
-                    //         match plugin.allocate_job(&job, &decision).await {
-                    //             Ok(_) => {
-                    //                 info!(
-                    //                     "Successfully allocated job {} to node {}",
-                    //                     job.id, decision.node_name
-                    //                 );
-                    //                 if let Err(e) = self
-                    //                     .job_repo
-                    //                     .mark_as_starting(job.id, decision.cluster_id)
-                    //                     .await
-                    //                 {
-                    //                     error!("Failed to update job {} status: {}", job.id, e);
-                    //                 }
-                    //                 scheduled = true;
-                    //                 break; // Break from cluster loop, move to next job
-                    //             }
-                    //             Err(e) => {
-                    //                 error!(
-                    //                     "Plugin failed to allocate job {} to node {}: {}",
-                    //                     job.id, decision.node_name, e
-                    //                 );
-                    //             }
-                    //         }
-                    //     }
-                    //     Ok(None) => {
-                    //         // This is the expected case when no node is found, just info log.
-                    //         info!(
-                    //             "Plugin found no suitable node for job {} on cluster {}",
-                    //             job.id, cluster_id
-                    //         );
-                    //     }
-                    //     Err(e) => {
-                    //         // This is an unexpected error during the node search.
-                    //         error!(
-                    //             "Error finding suitable node for job {} on cluster {}: {}",
-                    //             job.id, cluster_id, e
-                    //         );
-                    //     }
-                    // }
+                    match self
+                        .agent_adapter
+                        .find_and_allocate_job(&job.id, cluster_id, &job.resource_requirements)
+                        .await
+                    {
+                        Ok(Some(node_id)) => {
+                            info!(
+                                "Successfully allocated job {} to node {}",
+                                job.id, node_id
+                            );
+                            if let Err(e) = self.job_repo.mark_as_starting(&job.id, &node_id).await
+                            {
+                                error!("Failed to update job {} status: {}", job.id, e);
+                            }
+                            scheduled = true;
+                            break; // Break from cluster loop, move to next job
+                        }
+                        Ok(None) => {
+                            // This is the expected case when no node is found, just info log.
+                            info!(
+                                "No suitable node found for job {} on cluster {}",
+                                job.id, cluster_id
+                            );
+                        }
+                        Err(e) => {
+                            // This is an unexpected error during the node search.
+                            error!(
+                                "Error finding suitable node for job {} on cluster {}: {}",
+                                job.id, cluster_id, e
+                            );
+                        }
+                    }
                 }
 
                 if !scheduled {

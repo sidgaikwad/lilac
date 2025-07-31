@@ -14,8 +14,11 @@ pub mod models;
 
 pub fn training_jobs_router() -> Router<AppState> {
     Router::new()
-        .route("/", post(create_training_job))
-        .route("/", get(get_training_jobs))
-        .route("/{job_id}/status", patch(update_training_job_status))
-        .route("/{job_id}/logs", post(post_logs))
+        .route("/training_jobs", post(create_training_job))
+        .route("/training_jobs", get(get_training_jobs))
+        .route(
+            "/training_jobs/{job_id}/status",
+            patch(update_training_job_status),
+        )
+        .route("/training_jobs/{job_id}/logs", post(post_logs))
 }

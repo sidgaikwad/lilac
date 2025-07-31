@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use thiserror::Error;
 
 use crate::domain::cluster::models::{ClusterDetails, ClusterNode, NodeId, UpdateNodeStatusRequest};
-use crate::domain::training_job::models::TrainingJob;
+use crate::domain::training_job::models::{JobId, TrainingJob};
 use crate::domain::user::models::{ApiKey, ApiKeyId};
 
 use super::models::{Cluster, ClusterId, CreateClusterRequest};
@@ -45,6 +45,11 @@ pub trait ClusterRepository: Send + Sync {
     ) -> Result<ClusterNode, ClusterRepositoryError>;
     async fn delete_cluster_node(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError>;
     async fn clear_assigned_job_id(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError>;
+    async fn assign_job_to_node(
+        &self,
+        node_id: &NodeId,
+        job_id: &JobId,
+    ) -> Result<(), ClusterRepositoryError>;
 }
 
 #[derive(Debug, Error)]
