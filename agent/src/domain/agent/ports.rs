@@ -7,7 +7,7 @@ use crate::domain::agent::models::{NodeResources, HeartbeatResponse, JobDetails,
 pub trait ControlPlaneApi: Send + Sync {
     /// Sends a heartbeat to the control plane, reporting the current node status.
     /// Returns a potential job if the control plane has assigned one.
-    async fn send_heartbeat(&self, req: HeartbeatRequest) -> anyhow::Result<HeartbeatResponse>;
+    async fn send_heartbeat(&self, node_id: Uuid, req: HeartbeatRequest) -> anyhow::Result<HeartbeatResponse>;
 
     /// Fetches the full details for an assigned job.
     async fn get_job_details(&self, job_id: Uuid) -> anyhow::Result<JobDetails>;

@@ -22,7 +22,7 @@ pub async fn start_agent(config: config::Config) -> Result<()> {
     println!("Initializing Lilac agent...");
 
     // 1. Initialize all the adapters.
-    let control_plane_client = outbound::control_plane::ControlPlaneClient::new(config);
+    let control_plane_client = outbound::control_plane::ControlPlaneClient::new(config.clone());
     let system_monitor = outbound::system::SysinfoMonitor::new();
     let docker_executor = outbound::docker::DockerExecutor::new()?;
 
@@ -31,6 +31,7 @@ pub async fn start_agent(config: config::Config) -> Result<()> {
         control_plane_client,
         system_monitor,
         docker_executor,
+        config.node_id.unwrap(),
     );
 
     daemon.run().await?;

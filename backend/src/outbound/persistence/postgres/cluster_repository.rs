@@ -14,8 +14,11 @@ use crate::domain::{
         }, training_job::models::TrainingJob, user::models::{ApiKey, ApiKeyId}
     };
 
-use crate::outbound::persistence::postgres::training_job_repository::TrainingJobStatusRecord;
-use crate::outbound::persistence::postgres::training_job_repository::TrainingJobRecord;
+use super::records::{
+    ApiKeyRecord, ClusterDetailsRecord, ClusterNodeRecord, ClusterRecord, CpuConfigurationRecord,
+    GpuConfigurationRecord, NodeStatusRecord, TrainingJobRecord, TrainingJobStatusRecord,
+};
+
 #[derive(Clone)]
 pub struct PostgresClusterRepository {
     pool: PgPool,
@@ -24,207 +27,6 @@ pub struct PostgresClusterRepository {
 impl PostgresClusterRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
-    }
-}
-
-#[derive(sqlx::FromRow)]
-struct ClusterRecord {
-    cluster_id: uuid::Uuid,
-    cluster_name: String,
-    cluster_description: Option<String>,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-}
-
-impl From<ClusterRecord> for Cluster {
-    fn from(record: ClusterRecord) -> Self {
-        Self {
-            id: record.cluster_id.into(),
-            name: record.cluster_name,
-            description: record.cluster_description,
-            created_at: record.created_at,
-            updated_at: record.updated_at,
-        }
-    }
-}
-
-#[derive(sqlx::Type)]
-#[sqlx(type_name = "node_status", rename_all = "snake_case")]
-pub enum NodeStatusRecord {
-    Available,
-    Busy,
-}
-
-impl From<NodeStatus> for NodeStatusRecord {
-    fn from(value: NodeStatus) -> Self {
-        match value {
-            NodeStatus::Available => NodeStatusRecord::Available,
-            NodeStatus::Busy => NodeStatusRecord::Busy,
-        }
-    }
-}
-
-#[derive(sqlx::Type)]
-#[sqlx(type_name = "cpu_configuration")]
-pub struct CpuConfiguration {
-    manufacturer: String,
-    architecture: String,
-    millicores: i32,
-}
-
-impl From<Cpu> for CpuConfiguration {
-    fn from(value: Cpu) -> Self {
-        Self {
-            manufacturer: value.manufacturer.to_string(),
-            architecture: value.architecture.to_string(),
-            millicores: value.millicores,
-        }
-    }
-}
-
-#[derive(sqlx::Type)]
-#[sqlx(type_name = "gpu_configuration")]
-pub struct GpuConfiguration {
-    manufacturer: String,
-    model_name: String,
-    memory_mb: i32,
-    count: i32,
-}
-
-impl From<Gpu> for GpuConfiguration {
-    fn from(value: Gpu) -> Self {
-        Self {
-            manufacturer: value.manufacturer.to_string(),
-            model_name: value.model.to_string(),
-            memory_mb: value.memory_mb,
-            count: value.count,
-        }
-    }
-}
-
-
-#[derive(sqlx::FromRow)]
-struct ClusterNodeRecord {
-    node_id: uuid::Uuid,
-    cluster_id: uuid::Uuid,
-    node_status: NodeStatusRecord,
-    heartbeat_timestamp: DateTime<Utc>,
-    memory_mb: i32,
-    cpu: CpuConfiguration,
-    gpu: Option<GpuConfiguration>,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-    assigned_job_id: Option<uuid::Uuid>,
-    reported_job_id: Option<uuid::Uuid>,
-}
-
-
-#[derive(sqlx::FromRow)]
-struct ClusterDetailsRecord {
-    cluster_id: uuid::Uuid,
-    cluster_name: String,
-    cluster_description: Option<String>,
-    total_memory_mb: i64,
-    used_memory_mb: i64,
-    total_nodes: i64,
-    busy_nodes: i64,
-    total_millicores: i64,
-    used_millicores: i64,
-    total_gpus: i64,
-    used_gpus: i64,
-    total_running_jobs: i64,
-    created_at: DateTime<Utc>,
-    updated_at: DateTime<Utc>,
-}
-
-impl From<ClusterDetailsRecord> for ClusterDetails {
-    fn from(record: ClusterDetailsRecord) -> Self {
-        Self {
-            id: record.cluster_id.into(),
-            name: record.cluster_name,
-            description: record.cluster_description,
-            created_at: record.created_at,
-            updated_at: record.updated_at,
-            total_nodes: record.total_nodes,
-            busy_nodes: record.busy_nodes,
-            memory_info: ClusterMemoryStats {
-                total_memory_mb: record.total_memory_mb,
-                used_memory_mb: record.used_memory_mb,
-            },
-            cpu_info: ClusterCpuStats {
-                total_millicores: record.total_millicores,
-                used_millicores: record.used_millicores,
-            },
-            gpu_info: ClusterGpuStats {
-                total_gpus: record.total_gpus,
-                used_gpus: record.used_gpus,
-            },
-            job_info: ClusterJobStats {
-                total_running_jobs: record.total_running_jobs,
-            },
-        }
-    }
-}
-
-impl TryFrom<ClusterNodeRecord> for ClusterNode {
-    type Error = anyhow::Error;
-
-    fn try_from(record: ClusterNodeRecord) -> Result<Self, Self::Error> {
-        Ok(Self {
-            id: record.node_id.into(),
-            cluster_id: record.cluster_id.into(),
-            node_status: match record.node_status {
-                NodeStatusRecord::Available => NodeStatus::Available,
-                NodeStatusRecord::Busy => NodeStatus::Busy,
-            },
-            heartbeat_timestamp: record.heartbeat_timestamp,
-            memory_mb: record.memory_mb,
-            cpu: Cpu {
-                manufacturer: CpuManufacturer::try_from(record.cpu.manufacturer.as_str())?,
-                architecture: Architecture::try_from(record.cpu.architecture.as_str())?,
-                millicores: record.cpu.millicores,
-            },
-            gpu: match record.gpu {
-                Some(gpu) => Some(Gpu {
-                    manufacturer: GpuManufacturer::try_from(gpu.manufacturer.as_str())?,
-                    model: GpuModel::try_from(gpu.model_name.as_str())?,
-                    count: gpu.count,
-                    memory_mb: gpu.memory_mb,
-                }),
-                None => None,
-            },
-            created_at: record.created_at,
-            updated_at: record.updated_at,
-            assigned_job_id: record.assigned_job_id.map(Into::into),
-            reported_job_id: record.reported_job_id.map(Into::into),
-        })
-    }
-}
-
-#[derive(sqlx::FromRow)]
-struct ApiKeyRecord {
-    id: uuid::Uuid,
-    user_id: Option<uuid::Uuid>,
-    cluster_id: Option<uuid::Uuid>,
-    prefix: String,
-    key_hash: String,
-    created_at: DateTime<Utc>,
-    last_used_at: Option<DateTime<Utc>>,
-    expires_at: Option<DateTime<Utc>>,
-}
-
-impl From<ApiKeyRecord> for ApiKey {
-    fn from(record: ApiKeyRecord) -> Self {
-        Self {
-            id: record.id.into(),
-            user_id: record.user_id.map(|v| v.into()),
-            cluster_id: record.cluster_id.map(|v| v.into()),
-            prefix: record.prefix,
-            key_hash: record.key_hash,
-            created_at: record.created_at,
-            last_used_at: record.last_used_at,
-            expires_at: record.expires_at,
-        }
     }
 }
 
@@ -353,7 +155,7 @@ impl ClusterRepository for PostgresClusterRepository {
         let records = sqlx::query_as!(
             ClusterNodeRecord,
             r#"
-            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at, assigned_job_id, reported_job_id
+            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfigurationRecord", gpu as "gpu: GpuConfigurationRecord", created_at, updated_at, assigned_job_id, reported_job_id
             FROM cluster_nodes
             WHERE cluster_id = $1
             "#,
@@ -363,11 +165,7 @@ impl ClusterRepository for PostgresClusterRepository {
         .await
         .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
 
-        let clusters: Vec<ClusterNode> = records
-            .into_iter()
-            .map(|r| r.try_into())
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(ClusterRepositoryError::Unknown)?;
+        let clusters: Vec<ClusterNode> = records.into_iter().map(|r| r.into()).collect();
         Ok(clusters)
     }
     async fn get_cluster_node_by_id(
@@ -377,7 +175,7 @@ impl ClusterRepository for PostgresClusterRepository {
         let record = sqlx::query_as!(
             ClusterNodeRecord,
             r#"
-            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at, assigned_job_id, reported_job_id
+            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfigurationRecord", gpu as "gpu: GpuConfigurationRecord", created_at, updated_at, assigned_job_id, reported_job_id
             FROM cluster_nodes
             WHERE node_id = $1
             "#,
@@ -386,7 +184,7 @@ impl ClusterRepository for PostgresClusterRepository {
         .fetch_one(&self.pool)
         .await
         .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
-        Ok(record.try_into()?)
+        Ok(record.into())
     }
     async fn update_cluster_node_status(
         &self,
@@ -402,15 +200,17 @@ impl ClusterRepository for PostgresClusterRepository {
                     heartbeat_timestamp = EXCLUDED.heartbeat_timestamp,
                     reported_job_id = EXCLUDED.reported_job_id,
                     updated_at = NOW()
-                RETURNING node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfiguration", gpu as "gpu: GpuConfiguration", created_at, updated_at, assigned_job_id, reported_job_id;
+                RETURNING node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfigurationRecord", gpu as "gpu: GpuConfigurationRecord", created_at, updated_at, assigned_job_id, reported_job_id;
             "#,
             req.node_id.0,
             req.cluster_id.0,
             NodeStatusRecord::from(req.status.clone()) as _,
             req.heartbeat_timestamp,
             req.memory_info,
-            CpuConfiguration::from(req.cpu_info.clone()) as _,
-            req.gpu_info.clone().map(|v| GpuConfiguration::from(v)) as _,
+            CpuConfigurationRecord::from(req.cpu_info.clone()) as _,
+            req.gpu_info
+                .clone()
+                .map(GpuConfigurationRecord::from) as _,
             req.job_info
                 .as_ref()
                 .and_then(|info| info.current_job_id)
@@ -419,7 +219,7 @@ impl ClusterRepository for PostgresClusterRepository {
         .fetch_one(&self.pool)
         .await
         .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
-        Ok(record.try_into()?)
+        Ok(record.into())
     }
     async fn delete_cluster_node(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError> {
         sqlx::query!("DELETE FROM cluster_nodes WHERE node_id = $1", node_id.0)

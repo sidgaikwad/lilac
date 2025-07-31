@@ -1,3 +1,4 @@
+pub mod records;
 pub mod cluster_repository;
 pub mod credential_repository;
 pub mod dataset_repository;

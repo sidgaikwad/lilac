@@ -17,6 +17,7 @@ where
     job_executor: Arc<J>,
     heartbeat_interval: Duration,
     current_job_id: Arc<Mutex<Option<Uuid>>>,
+    node_id: Uuid,
 }
 
 impl<C, S, J> Daemon<C, S, J>
@@ -25,13 +26,14 @@ where
     S: SystemMonitor,
     J: JobExecutor + Clone + 'static,
 {
-    pub fn new(control_plane: C, system_monitor: S, job_executor: J) -> Self {
+    pub fn new(control_plane: C, system_monitor: S, job_executor: J, node_id: Uuid) -> Self {
         Self {
             control_plane: Arc::new(control_plane),
             system_monitor: Arc::new(system_monitor),
             job_executor: Arc::new(job_executor),
             heartbeat_interval: Duration::from_secs(15), // Default to 15 seconds
             current_job_id: Arc::new(Mutex::new(None)),
+            node_id,
         }
     }
 
@@ -67,7 +69,10 @@ where
                 }),
             };
 
-            let response = self.control_plane.send_heartbeat(request).await?;
+            let response = self
+                .control_plane
+                .send_heartbeat(self.node_id, request)
+                .await?;
 
             if let Some(assigned_job) = response.assigned_job {
                 println!("[DAEMON] Assigned job with ID: {}", assigned_job.id);

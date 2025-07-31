@@ -25,14 +25,14 @@ impl ControlPlaneClient {
 
 #[async_trait]
 impl ControlPlaneApi for ControlPlaneClient {
-    async fn send_heartbeat(&self, req: HeartbeatRequest) -> anyhow::Result<HeartbeatResponse> {
+    async fn send_heartbeat(&self, node_id: Uuid, req: HeartbeatRequest) -> anyhow::Result<HeartbeatResponse> {
         let api_key = self
             .config
             .api_key
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("API key is not configured"))?;
 
-        let url = format!("{}/nodes/heartbeat", self.config.api_endpoint);
+        let url = format!("{}/node/{}/status", self.config.api_endpoint, node_id);
         let response = self
             .client
             .post(&url)

@@ -11,6 +11,8 @@ use crate::domain::{
     },
 };
 
+use super::records::{TrainingJobRecord, TrainingJobStatusRecord};
+
 pub struct PostgresTrainingJobRepository {
     pool: PgPool,
 }
@@ -18,72 +20,6 @@ pub struct PostgresTrainingJobRepository {
 impl PostgresTrainingJobRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
-    }
-}
-
-#[derive(sqlx::Type)]
-#[sqlx(type_name = "training_job_status", rename_all = "lowercase")]
-pub(super) enum TrainingJobStatusRecord {
-    Queued,
-    Starting,
-    Running,
-    Succeeded,
-    Failed,
-}
-
-impl From<TrainingJobStatus> for TrainingJobStatusRecord {
-    fn from(value: TrainingJobStatus) -> Self {
-        match value {
-            TrainingJobStatus::Queued => Self::Queued,
-            TrainingJobStatus::Starting => Self::Starting,
-            TrainingJobStatus::Running => Self::Running,
-            TrainingJobStatus::Succeeded => Self::Succeeded,
-            TrainingJobStatus::Failed => Self::Failed,
-        }
-    }
-}
-
-impl From<TrainingJobStatusRecord> for TrainingJobStatus {
-    fn from(value: TrainingJobStatusRecord) -> Self {
-        match value {
-            TrainingJobStatusRecord::Queued => Self::Queued,
-            TrainingJobStatusRecord::Starting => Self::Starting,
-            TrainingJobStatusRecord::Running => Self::Running,
-            TrainingJobStatusRecord::Succeeded => Self::Succeeded,
-            TrainingJobStatusRecord::Failed => Self::Failed,
-        }
-    }
-}
-
-#[derive(sqlx::FromRow)]
-pub(super) struct TrainingJobRecord {
-    pub(super) id: Uuid,
-    pub(super) name: String,
-    pub(super) definition: String,
-    pub(super) status: TrainingJobStatusRecord,
-    pub(super) node_id: Option<Uuid>,
-    pub(super) queue_id: Uuid,
-    pub(super) resource_requirements: serde_json::Value,
-    pub(super) created_at: chrono::DateTime<chrono::Utc>,
-    pub(super) updated_at: chrono::DateTime<chrono::Utc>,
-}
-
-impl TryFrom<TrainingJobRecord> for TrainingJob {
-    type Error = anyhow::Error;
-
-    fn try_from(value: TrainingJobRecord) -> Result<Self, Self::Error> {
-        let resource_requirements = serde_json::from_value(value.resource_requirements)?;
-        Ok(Self {
-            id: value.id.into(),
-            name: value.name,
-            definition: value.definition,
-            status: value.status.into(),
-            node_id: value.node_id.map(|v| v.into()),
-            queue_id: value.queue_id.into(),
-            resource_requirements: resource_requirements,
-            created_at: value.created_at,
-            updated_at: value.updated_at,
-        })
     }
 }
 
