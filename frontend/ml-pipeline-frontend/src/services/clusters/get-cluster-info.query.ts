@@ -1,36 +1,50 @@
 import { getHttp } from '@/lib/fetch';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { QueryKeys } from '../constants';
-import { Cluster, ServiceError } from '@/types';
+import { Cluster, ClusterInfo, ServiceError } from '@/types';
 import { useEffect } from 'react';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 import { camelCaseObject } from '@/lib/utils';
 
-export interface GetClusterResponse {
+export interface GetClusterInfoResponse {
   clusterId: string;
   clusterName: string;
   clusterDescription?: string;
-  clusterConfig: {
-    clusterType: 'aws_eks';
-    clusterName: string;
-  };
-  credentialId: string;
+  totalNodes: number,
+  busyNodes: number,
+  memoryInfo: {
+    totalMemoryMb: number,
+    usedMemoryMb: number,
+  },
+  cpuInfo: {
+    totalMillicores: number,
+    usedMillicores: number,
+  },
+  gpuInfo: {
+    totalGpus: number,
+    usedGpus: number,
+  },
+  jobInfo: {
+    totalRunningJobs: number,
+  },
+  createdAt: string,
+  updatedAt: string,
 }
 
-export async function getCluster(
+export async function getClusterInfo(
   clusterId: string
-): Promise<GetClusterResponse> {
-  const resp = await getHttp<Sn<GetClusterResponse>>(`/clusters/${clusterId}`);
+): Promise<GetClusterInfoResponse> {
+  const resp = await getHttp<Sn<GetClusterInfoResponse>>(`/clusters/${clusterId}/info`);
   return camelCaseObject(resp);
 }
 
-export function getClusterQuery(clusterId?: string, enabled: boolean = true) {
+export function getClusterInfoQuery(clusterId?: string, enabled: boolean = true) {
   return queryOptions({
-    queryKey: [QueryKeys.GET_CLUSTER, clusterId],
-    queryFn: () => getCluster(clusterId!),
+    queryKey: [QueryKeys.GET_CLUSTER_INFO, clusterId],
+    queryFn: () => getClusterInfo(clusterId!),
     enabled: !!clusterId && enabled,
     staleTime: 1000 * 60 * 5,
-    select: (data) => data as Cluster,
+    select: (data) => data as ClusterInfo,
   });
 }
 
@@ -41,8 +55,8 @@ interface UseGetClusterProps {
   onError?: (error: ServiceError) => void;
 }
 
-export function useGetCluster(props: UseGetClusterProps) {
-  const query = useQuery(getClusterQuery(props.clusterId, props.enabled));
+export function useGetClusterInfo(props: UseGetClusterProps) {
+  const query = useQuery(getClusterInfoQuery(props.clusterId, props.enabled));
 
   useEffect(() => {
     if (props?.onSuccess && query.data !== undefined) {

@@ -25,7 +25,7 @@ function LoginPage() {
   const { token, setToken } = useAuthStore();
 
   useEffect(() => {
-    if (token) {
+    if (token !== null) {
       navigate('/');
     }
   }, [token, navigate]);

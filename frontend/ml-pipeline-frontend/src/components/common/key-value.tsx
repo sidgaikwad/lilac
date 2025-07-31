@@ -25,7 +25,7 @@ export interface KeyValueDisplayProps {
 
 export function KeyValueDisplay({
   items,
-  layout = 'vertical',
+  layout = 'grid',
 }: KeyValueDisplayProps) {
   const renderItem = (key: string, item: KeyValueItem) => {
     return (
@@ -34,7 +34,7 @@ export function KeyValueDisplay({
         key={key}
         className='flex flex-col [[data-layout=horizontal]]:flex-row [[data-layout=horizontal]]:items-center [[data-layout=horizontal]]:gap-2'
       >
-        <span className='text-gray-text-muted font-semibold'>{item.key}:</span>
+        <span className='text-gray-text-muted font-medium'>{item.key}:</span>
         <span className='text-gray-text'>{item.value}</span>
       </div>
     );

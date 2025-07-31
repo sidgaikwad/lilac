@@ -22,5 +22,6 @@ pub fn router() -> Router<AppState> {
             "/clusters/{cluster_id}/api_keys",
             post(create_api_key_for_cluster).get(list_api_keys),
         )
+        .route("/clusters/{cluster_id}/jobs", get(list_cluster_jobs))
         .route("/node/{node_id}/status", post(cluster_node_heartbeat))
 }

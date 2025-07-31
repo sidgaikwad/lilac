@@ -160,3 +160,16 @@ pub async fn list_cluster_nodes(
         .await?;
     Ok(Json(cluster_nodes.into()))
 }
+
+
+#[axum::debug_handler(state = AppState)]
+pub async fn list_cluster_jobs(
+    _claims: Claims,
+    State(cluster_service): State<Arc<dyn ClusterService>>,
+    Path(cluster_id): Path<ClusterId>,
+) -> Result<Json<ListClusterJobsHttpResponse>, ApiError> {
+    let jobs = cluster_service
+        .list_cluster_jobs(&cluster_id.into())
+        .await?;
+    Ok(Json(jobs.into()))
+}

@@ -1,4 +1,3 @@
-import { getClusterQuery } from '@/services';
 import {
   Container,
   ContainerAction,
@@ -8,16 +7,28 @@ import {
   ContainerTitle,
 } from '@/components/ui/container';
 import Breadcrumbs from '@/components/common/breadcrumbs';
-import { useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ClusterOverview } from '../components/cluster-overview';
+import { getClusterInfoQuery } from '@/services/clusters/get-cluster-info.query';
+import { ClusterJobs } from '../components/cluster-jobs';
+import { useEffect } from 'react';
 
 function ClusterDetailsPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { clusterId } = useParams<{
     clusterId: string;
   }>();
 
-  const { data: cluster } = useSuspenseQuery(getClusterQuery(clusterId));
+  const { data: cluster } = useSuspenseQuery(getClusterInfoQuery(clusterId));
+
+  useEffect(() => {
+    if (!location.hash) {
+      navigate('#overview')
+    }
+  }, [location.hash, navigate])
 
   return (
     <Container>
@@ -44,16 +55,16 @@ function ClusterDetailsPage() {
       </ContainerHeader>
 
       <ContainerContent>
-        <Tabs defaultValue='overview' className='w-full'>
+        <Tabs onValueChange={(value) => navigate(`#${value}`)} value={location.hash.slice(1)} defaultValue='overview' className='w-full'>
           <TabsList className='max-w-[400px]'>
             <TabsTrigger value='overview'>Overview</TabsTrigger>
             <TabsTrigger value='jobs'>Jobs</TabsTrigger>
           </TabsList>
           <TabsContent value='overview'>
-            TODO
+            <ClusterOverview cluster={cluster} />
           </TabsContent>
           <TabsContent value='jobs'>
-            TODO
+            <ClusterJobs clusterId={clusterId} />
           </TabsContent>
         </Tabs>
       </ContainerContent>

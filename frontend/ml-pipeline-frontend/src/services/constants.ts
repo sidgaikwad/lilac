@@ -32,6 +32,8 @@ export enum QueryKeys {
   DELETE_QUEUE = 'DeleteQueue',
 
   GET_CLUSTER = 'GetCluster',
+  GET_CLUSTER_INFO = 'GetClusterInfo',
+  GET_CLUSTER_JOBS = 'GetClusterJobs',
   CREATE_CLUSTER = 'CreateCluster',
   LIST_CLUSTERS = 'ListClusters',
   DELETE_CLUSTER = 'DeleteCluster',

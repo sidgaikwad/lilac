@@ -15,6 +15,7 @@ import ClustersPage from './features/clusters/pages/clusters-page';
 import { OrgSettings } from './features/settings/pages/org-settings';
 import { ApiKeysSettings } from './features/api-keys/pages/api-keys-settings';
 import { QueuesPage } from './features/queues/pages/queues-page';
+import ClusterDetailsPage from './features/clusters/pages/cluster-details-page';
 
 export const router = createBrowserRouter([
   {
@@ -49,6 +50,10 @@ export const router = createBrowserRouter([
               {
                 path: Routes.CLUSTERS,
                 element: <ClustersPage />,
+              },
+              {
+                path: Routes.CLUSTER_DETAILS,
+                element: <ClusterDetailsPage />,
               },
               {
                 path: Routes.QUEUES,

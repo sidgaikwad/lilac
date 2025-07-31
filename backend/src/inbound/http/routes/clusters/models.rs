@@ -173,7 +173,6 @@ impl From<Vec<ClusterNode>> for ListClusterNodesHttpResponse {
 }
 
 
-
 /// The body of a [ClusterDetails] get response.
 #[derive(Debug, Clone, Serialize)]
 pub struct GetClusterDetailsHttpResponse {
@@ -204,6 +203,20 @@ impl From<ClusterDetails> for GetClusterDetailsHttpResponse {
             job_info: value.job_info,
             created_at: value.created_at,
             updated_at: value.updated_at,
+        }
+    }
+}
+
+/// The body of a [Cluster] [TrainingJob] list response.
+#[derive(Clone, Debug, Serialize)]
+pub struct ListClusterJobsHttpResponse {
+    pub cluster_jobs: Vec<HttpTrainingJob>,
+}
+
+impl From<Vec<TrainingJob>> for ListClusterJobsHttpResponse {
+    fn from(value: Vec<TrainingJob>) -> Self {
+        Self {
+            cluster_jobs: value.into_iter().map(HttpTrainingJob::from).collect(),
         }
     }
 }
