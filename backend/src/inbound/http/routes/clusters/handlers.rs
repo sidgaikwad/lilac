@@ -20,9 +20,7 @@ use crate::{
     inbound::http::{
         errors::ApiError,
         routes::clusters::models::{
-            CreateClusterHttpRequest, CreateClusterHttpResponse, GetClusterHttpResponse, HttpApiKey,
-            HttpClusterNodeDetails, HttpClusterNodeHeartbeat, ListClusterNodesHttpResponse,
-            ListClustersHttpResponse,
+            CreateClusterHttpRequest, CreateClusterHttpResponse, GetClusterDetailsHttpResponse, GetClusterHttpResponse, HttpApiKey, HttpClusterNodeDetails, HttpClusterNodeHeartbeat, ListClusterNodesHttpResponse, ListClustersHttpResponse
         },
     },
 };

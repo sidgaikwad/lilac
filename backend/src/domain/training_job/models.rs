@@ -54,8 +54,6 @@ pub struct TrainingJob {
     pub node_id: Option<NodeId>,
     pub queue_id: QueueId,
     pub resource_requirements: ResourceRequirements,
-    pub scheduled_cluster_id: Option<ClusterId>,
-    // TODO: Add `assigned_node_id: Option<NodeId>`
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

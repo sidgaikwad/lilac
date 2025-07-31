@@ -2,23 +2,20 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use crate::{
-    domain::{
+use crate::domain::{
         cluster::{
             models::{
-                Architecture, Cluster, ClusterId, ClusterNode, Cpu, CpuManufacturer,
-                CreateClusterRequest, Gpu, GpuManufacturer, GpuModel, NodeId, NodeStatus,
-                UpdateNodeStatusRequest,
+                Architecture, Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterId, ClusterJobStats, ClusterMemoryStats, ClusterNode, Cpu, CpuManufacturer, CreateClusterRequest, Gpu, GpuManufacturer, GpuModel, NodeId, NodeStatus, UpdateNodeStatusRequest
             },
             ports::{
                 ClusterApiKeyRepository, ClusterApiKeyRepositoryError, ClusterRepository,
                 ClusterRepositoryError,
             },
-        },
-        user::models::{ApiKey, ApiKeyId},
-    },
-};
+        }, training_job::models::TrainingJob, user::models::{ApiKey, ApiKeyId}
+    };
 
+use crate::outbound::persistence::postgres::training_job_repository::TrainingJobStatusRecord;
+use crate::outbound::persistence::postgres::training_job_repository::TrainingJobRecord;
 #[derive(Clone)]
 pub struct PostgresClusterRepository {
     pool: PgPool,
