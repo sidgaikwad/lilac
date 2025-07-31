@@ -27,12 +27,12 @@ impl DockerExecutor {
 impl JobExecutor for DockerExecutor {
     async fn run_job(&self, job_details: JobDetails) -> anyhow::Result<i64> {
         println!("[DOCKER] Starting job: {}", job_details.id);
-        println!("[DOCKER] Pulling image: {}", job_details.definition);
+        println!("[DOCKER] Pulling image: {}", job_details.docker_uri);
 
         // 1. Pull the Docker image.
         let mut stream = self.docker.create_image(
             Some(CreateImageOptions {
-                from_image: job_details.definition.clone(),
+                from_image: job_details.docker_uri.clone(),
                 ..Default::default()
             }),
             None,
@@ -54,7 +54,7 @@ impl JobExecutor for DockerExecutor {
         });
 
         let config = Config {
-            image: Some(job_details.definition.clone()),
+            image: Some(job_details.docker_uri.clone()),
             cmd: Some(vec!["echo".to_string(), "Hello from Alpine!".to_string()]),
             ..Default::default()
         };

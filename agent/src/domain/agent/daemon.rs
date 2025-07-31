@@ -1,9 +1,10 @@
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::time;
+use uuid::Uuid;
 
-use crate::domain::agent::models::{JobStatus, NodeStatus};
+use crate::domain::agent::models::{HeartbeatRequest, JobInfo, JobStatus, NodeStatus};
 use crate::domain::agent::ports::{ControlPlaneApi, JobExecutor, SystemMonitor};
-use std::sync::Arc;
 
 pub struct Daemon<C, S, J>
 where
@@ -15,6 +16,7 @@ where
     system_monitor: Arc<S>,
     job_executor: Arc<J>,
     heartbeat_interval: Duration,
+    current_job_id: Arc<Mutex<Option<Uuid>>>,
 }
 
 impl<C, S, J> Daemon<C, S, J>
@@ -29,65 +31,71 @@ where
             system_monitor: Arc::new(system_monitor),
             job_executor: Arc::new(job_executor),
             heartbeat_interval: Duration::from_secs(15), // Default to 15 seconds
+            current_job_id: Arc::new(Mutex::new(None)),
         }
     }
 
     pub async fn run(self) -> anyhow::Result<()> {
         println!("[DAEMON] Starting Lilac agent daemon...");
 
-        // 1. On startup, get system resources.
+        // 1. On startup, get system resources. This is sent with every heartbeat.
         let resources = self.system_monitor.get_node_resources().await?;
         println!("[DAEMON] Discovered resources: {:?}", resources);
 
-        // 2. Register with the control plane.
-        self.control_plane.register_node(resources).await?;
-        println!("[DAEMON] Node registered successfully.");
-
-        // 3. Start the main heartbeat loop.
+        // 2. Start the main heartbeat loop.
         let mut interval = time::interval(self.heartbeat_interval);
-        let mut current_status = NodeStatus::Available;
 
         loop {
             interval.tick().await;
 
-            println!("[DAEMON] Sending heartbeat...");
-            let response = self.control_plane.send_heartbeat(current_status.clone()).await?;
+            let reported_job_id = self.current_job_id.lock().unwrap().clone();
+            let status = if reported_job_id.is_some() {
+                NodeStatus::Busy
+            } else {
+                NodeStatus::Available
+            };
 
-            if let Some(job_id) = response.assigned_job_id {
-                println!("[DAEMON] Assigned job with ID: {}", job_id);
-                current_status = NodeStatus::Busy;
+            println!("[DAEMON] Sending heartbeat... Status: {:?}, Reported Job: {:?}", status, reported_job_id);
 
-                let job_details = self.control_plane.get_job_details(job_id).await?;
+            let request = HeartbeatRequest {
+                status,
+                memory_info: resources.memory_mb,
+                cpu_info: resources.cpu.clone(),
+                gpu_info: resources.gpus.first().cloned(), // TODO: Handle multiple GPUs
+                job_info: Some(JobInfo {
+                    current_job_id: reported_job_id,
+                }),
+            };
+
+            let response = self.control_plane.send_heartbeat(request).await?;
+
+            if let Some(assigned_job) = response.assigned_job {
+                println!("[DAEMON] Assigned job with ID: {}", assigned_job.id);
                 
-                // We spawn the job execution in a separate task so it doesn't
-                // block the main heartbeat loop.
-                let executor = self.job_executor.clone(); // Requires JobExecutor to be Clone
-                let control_plane_clone = self.control_plane.clone(); // Requires ControlPlaneApi to be Clone
-                
+                // Set the new job ID
+                *self.current_job_id.lock().unwrap() = Some(assigned_job.id);
+
+                let executor = self.job_executor.clone();
+                let current_job_id_clone = self.current_job_id.clone();
+
                 tokio::spawn(async move {
-                    let final_status = match executor.run_job(job_details).await {
+                    let job_id = assigned_job.id;
+                    match executor.run_job(assigned_job).await {
                         Ok(0) => {
                             println!("[JOB {}] Execution finished successfully.", job_id);
-                            JobStatus::Succeeded
                         }
                         Ok(exit_code) => {
                             eprintln!("[JOB {}] Execution finished with a non-zero exit code: {}", job_id, exit_code);
-                            JobStatus::Failed
                         }
                         Err(e) => {
                             eprintln!("[JOB {}] Execution failed: {}", job_id, e);
-                            JobStatus::Failed
                         }
                     };
 
-                    let _ = control_plane_clone
-                        .update_job_status(job_id, final_status)
-                        .await;
+                    // When the job is done, clear the current job ID.
+                    *current_job_id_clone.lock().unwrap() = None;
+                    println!("[DAEMON] Node is now available.");
                 });
-
-            } else {
-                // If no job is assigned, we are available.
-                current_status = NodeStatus::Available;
             }
         }
     }

@@ -1,22 +1,16 @@
 use async_trait::async_trait;
 use uuid::Uuid;
-use crate::domain::agent::models::{NodeResources, NodeStatus, HeartbeatResponse, JobDetails, JobStatus};
+use crate::domain::agent::models::{NodeResources, HeartbeatResponse, JobDetails, HeartbeatRequest};
 
 /// Port for interacting with the Lilac control plane API. update to do proper error handling
 #[async_trait]
 pub trait ControlPlaneApi: Send + Sync {
-    /// Registers the node with the control plane.
-    async fn register_node(&self, resources: NodeResources) -> anyhow::Result<()>;
-
     /// Sends a heartbeat to the control plane, reporting the current node status.
-    /// Returns a potential job ID if the control plane has assigned one.
-    async fn send_heartbeat(&self, status: NodeStatus) -> anyhow::Result<HeartbeatResponse>;
+    /// Returns a potential job if the control plane has assigned one.
+    async fn send_heartbeat(&self, req: HeartbeatRequest) -> anyhow::Result<HeartbeatResponse>;
 
     /// Fetches the full details for an assigned job.
     async fn get_job_details(&self, job_id: Uuid) -> anyhow::Result<JobDetails>;
-
-    /// Updates the status of a job on the control plane.
-    async fn update_job_status(&self, job_id: Uuid, status: JobStatus) -> anyhow::Result<()>;
 }
 
 /// Port for monitoring the local system's hardware resources.
