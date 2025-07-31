@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::domain::{
-    cluster::models::NodeId, queue::models::QueueId, training_job::models::{JobId, ResourceRequirements, TrainingJob, TrainingJobStatus}
+    cluster::models::NodeId,
+    queue::models::QueueId,
+    training_job::models::{JobId, ResourceRequirements, TrainingJob, TrainingJobStatus},
 };
 
 #[derive(Debug, Deserialize)]

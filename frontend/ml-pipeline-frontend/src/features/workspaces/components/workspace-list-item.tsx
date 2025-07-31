@@ -48,14 +48,14 @@ function WorkspaceListItem({
     <>
       <Card
         className={cn(
-          'max-w-sm w-full h-full flex flex-col gap-4 p-4',
+          'flex h-full w-full max-w-sm flex-col gap-4 p-4',
           status.toLowerCase() === 'running'
             ? 'border-accent-border hover:border-accent-border-hover'
             : ''
         )}
         title={name}
         description={
-          <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+          <div className='text-muted-foreground flex flex-col gap-1 text-sm'>
             <span>{ide}</span>
             <span>
               {cpu_millicores / 1000} vCPUs, {memory_mb / 1024} GB RAM
@@ -104,7 +104,9 @@ function WorkspaceListItem({
         footer={
           status.toLowerCase() === 'running' ? (
             <Button asChild>
-              <Link to={`/projects/${projectId}/workspaces/${id}`}>Connect</Link>
+              <Link to={`/projects/${projectId}/workspaces/${id}`}>
+                Connect
+              </Link>
             </Button>
           ) : (
             <div />

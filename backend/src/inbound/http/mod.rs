@@ -135,7 +135,7 @@ impl HttpServer {
                     )
                     .layer(SetRequestIdLayer::new(
                         X_REQUEST_ID.clone(),
-                        UuidRequestId::default(),
+                        UuidRequestId,
                     ))
                     .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
                     .layer(session_layer),

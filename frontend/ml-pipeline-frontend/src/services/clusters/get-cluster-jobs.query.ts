@@ -16,7 +16,7 @@ export interface GetClusterJobsResponse {
     resourceRequirements: ResourceRequirements;
     createdAt: string;
     updatedAt: string;
-  }[]
+  }[];
 }
 
 export async function getClusterJobs(

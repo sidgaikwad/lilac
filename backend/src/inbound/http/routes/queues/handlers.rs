@@ -3,7 +3,6 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use uuid::Uuid;
 
 use crate::{
     domain::queue::models::{CreateQueueRequest, QueueId, UpdateQueueRequest},

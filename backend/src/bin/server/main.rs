@@ -23,7 +23,8 @@ use server::{
             queue_repository::PostgresQueueRepository, session_repository::PostgresSessionStore,
             training_job_repository::PostgresTrainingJobRepository,
             user_repository::PostgresUserRepository,
-        }, scheduler::agent_adapter::AgentSchedulerAdapter,
+        },
+        scheduler::agent_adapter::AgentSchedulerAdapter,
     },
 };
 use sqlx::postgres::PgPoolOptions;

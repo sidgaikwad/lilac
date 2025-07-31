@@ -372,7 +372,6 @@ function ConfigureAwsCluster() {
   );
 }
 
-
 function ConfigureGcpCluster() {
   const { register } = useFormContext<ClusterTypeFormValues>();
   const { data: credentials, isLoading } = useListCredentials();
@@ -417,7 +416,9 @@ function ConfigureGcpCluster() {
           return (
             <FormItem>
               <FormLabel>Project ID</FormLabel>
-              <FormDescription>The project ID the cluster belongs to.</FormDescription>
+              <FormDescription>
+                The project ID the cluster belongs to.
+              </FormDescription>
               <FormMessage />
               <FormControl>
                 <Input {...field} placeholder='example-project'></Input>

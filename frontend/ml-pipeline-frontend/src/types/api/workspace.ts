@@ -18,7 +18,13 @@ export interface Workspace {
   image: string;
   cpu_millicores: number;
   memory_mb: number;
-  status: 'pending' | 'running' | 'stopping' | 'stopped' | 'failed' | 'terminated';
+  status:
+    | 'pending'
+    | 'running'
+    | 'stopping'
+    | 'stopped'
+    | 'failed'
+    | 'terminated';
   url: string | null;
   gpu?: boolean;
 }

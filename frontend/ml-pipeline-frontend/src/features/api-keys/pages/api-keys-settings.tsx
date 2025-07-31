@@ -13,9 +13,7 @@ export function ApiKeysSettings() {
     <Container className='h-full w-full'>
       <ContainerHeader>
         <ContainerTitle>API Keys</ContainerTitle>
-        <ContainerDescription>
-          Manage your API keys.
-        </ContainerDescription>
+        <ContainerDescription>Manage your API keys.</ContainerDescription>
       </ContainerHeader>
       <ContainerContent>
         <Tabs defaultValue='api-keys' className='w-full'>

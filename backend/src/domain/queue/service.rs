@@ -1,12 +1,8 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use uuid::Uuid;
 
-use crate::domain::{
-    cluster::models::ClusterId,
-    queue::models::{CreateQueueRequest, QueueId, UpdateQueueRequest},
-};
+use crate::domain::queue::models::{CreateQueueRequest, QueueId, UpdateQueueRequest};
 
 use super::{models::Queue, ports::QueueRepository};
 

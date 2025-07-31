@@ -26,7 +26,7 @@ export function EnvironmentCard({
       value={value}
       className={cn(
         'group relative rounded-xl text-start',
-        'h-full w-full data-[state=checked]:ring-accent-border-hover data-[state=checked]:ring-2'
+        'data-[state=checked]:ring-accent-border-hover h-full w-full data-[state=checked]:ring-2'
       )}
     >
       <Card

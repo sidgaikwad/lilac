@@ -26,9 +26,9 @@ function ClusterDetailsPage() {
 
   useEffect(() => {
     if (!location.hash) {
-      navigate('#overview')
+      navigate('#overview');
     }
-  }, [location.hash, navigate])
+  }, [location.hash, navigate]);
 
   return (
     <Container>
@@ -55,7 +55,12 @@ function ClusterDetailsPage() {
       </ContainerHeader>
 
       <ContainerContent>
-        <Tabs onValueChange={(value) => navigate(`#${value}`)} value={location.hash.slice(1)} defaultValue='overview' className='w-full'>
+        <Tabs
+          onValueChange={(value) => navigate(`#${value}`)}
+          value={location.hash.slice(1)}
+          defaultValue='overview'
+          className='w-full'
+        >
           <TabsList className='max-w-[400px]'>
             <TabsTrigger value='overview'>Overview</TabsTrigger>
             <TabsTrigger value='jobs'>Jobs</TabsTrigger>

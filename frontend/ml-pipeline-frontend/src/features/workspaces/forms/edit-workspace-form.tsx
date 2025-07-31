@@ -114,7 +114,7 @@ export function EditWorkspaceForm({
 
         <FormField
           control={form.control}
-          name="preset"
+          name='preset'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Preset</FormLabel>
@@ -131,7 +131,7 @@ export function EditWorkspaceForm({
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a preset" />
+                    <SelectValue placeholder='Select a preset' />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -154,11 +154,11 @@ export function EditWorkspaceForm({
           <>
             <FormField
               control={form.control}
-              name="cpu"
+              name='cpu'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>CPU (vCPUs)</FormLabel>
-                  <div className="flex items-center gap-4">
+                  <div className='flex items-center gap-4'>
                     <FormControl>
                       <Slider
                         min={0.5}
@@ -169,8 +169,8 @@ export function EditWorkspaceForm({
                       />
                     </FormControl>
                     <Input
-                      type="number"
-                      className="w-24"
+                      type='number'
+                      className='w-24'
                       value={field.value}
                       onChange={(e) =>
                         field.onChange(parseFloat(e.target.value))
@@ -183,11 +183,11 @@ export function EditWorkspaceForm({
             />
             <FormField
               control={form.control}
-              name="memory"
+              name='memory'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Memory (MiB)</FormLabel>
-                  <div className="flex items-center gap-4">
+                  <div className='flex items-center gap-4'>
                     <FormControl>
                       <Slider
                         min={1024}
@@ -198,12 +198,10 @@ export function EditWorkspaceForm({
                       />
                     </FormControl>
                     <Input
-                      type="number"
-                      className="w-24"
+                      type='number'
+                      className='w-24'
                       value={field.value}
-                      onChange={(e) =>
-                        field.onChange(parseInt(e.target.value))
-                      }
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
                     />
                   </div>
                   <FormMessage />
@@ -214,17 +212,17 @@ export function EditWorkspaceForm({
         )}
 
         <FormField
-          name="computeCluster"
+          name='computeCluster'
           control={form.control}
           render={({ field }) => (
-            <FormItem className="space-y-3">
+            <FormItem className='space-y-3'>
               <FormLabel>Distributed Compute</FormLabel>
               <FormMessage />
               <FormControl>
                 <RadioGroup
                   onValueChange={field.onChange}
                   defaultValue={field.value}
-                  className="grid grid-cols-3 gap-4"
+                  className='grid grid-cols-3 gap-4'
                 >
                   {mockComputeClusters.map((cluster, i) => (
                     <div

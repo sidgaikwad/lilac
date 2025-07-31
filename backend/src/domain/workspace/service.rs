@@ -1,10 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use k8s_openapi::api::core::v1::Service;
-use kube::Api;
 use thiserror::Error;
-use tokio::time::{sleep, Duration};
 
 use super::{
     models::{CreateWorkspaceRequest, Workspace},
@@ -17,7 +14,7 @@ use crate::domain::{
     credentials::ports::{CredentialRepository, CredentialRepositoryError},
     project::models::ProjectId,
     user::models::UserId,
-    workspace::models::{WorkspaceId, WorkspaceStatus},
+    workspace::models::WorkspaceId,
 };
 
 #[derive(Error, Debug)]

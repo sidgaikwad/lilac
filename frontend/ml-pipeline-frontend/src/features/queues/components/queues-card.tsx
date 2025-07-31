@@ -25,12 +25,10 @@ export function QueuesCard() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className='flex items-center justify-between'>
           <div>
             <CardTitle>Queues</CardTitle>
-            <CardDescription>
-              Manage your job queues.
-            </CardDescription>
+            <CardDescription>Manage your job queues.</CardDescription>
           </div>
           <CreateQueueModal />
         </div>
@@ -56,8 +54,8 @@ export function QueuesCard() {
                   <TableCell>{queue.cluster_targets.join(', ')}</TableCell>
                   <TableCell>
                     <Button
-                      variant="destructive"
-                      size="sm"
+                      variant='destructive'
+                      size='sm'
                       onClick={() =>
                         deleteQueueMutation.mutate({ queueId: queue.id })
                       }

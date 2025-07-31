@@ -31,7 +31,7 @@ impl From<CredentialServiceError> for ApiError {
                 Self::Conflict("Cluster already exists".into())
             }
             CredentialServiceError::CredentialNotFound(_) => {
-                Self::NotFound(format!("Cluster not found"))
+                Self::NotFound("Cluster not found".to_string())
             }
             CredentialServiceError::Unknown(e) => {
                 tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
@@ -48,7 +48,7 @@ impl From<ClusterServiceError> for ApiError {
             ClusterServiceError::ClusterExists { .. } => {
                 Self::Conflict("Cluster already exists".into())
             }
-            ClusterServiceError::ClusterNotFound(_) => Self::NotFound(format!("Cluster not found")),
+            ClusterServiceError::ClusterNotFound(_) => Self::NotFound("Cluster not found".to_string()),
             ClusterServiceError::Unknown(e) => {
                 tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
                 Self::InternalServerError("Something went wrong".to_string())
@@ -62,7 +62,7 @@ impl From<UserServiceError> for ApiError {
         match err {
             UserServiceError::InvalidPermissions => Self::Forbidden,
             UserServiceError::UserExists { .. } => Self::Conflict("User already exists".into()),
-            UserServiceError::UserNotFound(_) => Self::NotFound(format!("User not found")),
+            UserServiceError::UserNotFound(_) => Self::NotFound("User not found".to_string()),
             UserServiceError::ApiKeyNotFound => Self::NotFound("API key not found".to_string()),
             UserServiceError::Unknown(cause) => {
                 tracing::error!("{:?}\n{}", cause, cause.backtrace());
@@ -153,7 +153,7 @@ impl From<TrainingJobServiceError> for ApiError {
                 Self::Conflict("Cluster already exists".into())
             }
             TrainingJobServiceError::TrainingJobNotFound(_) => {
-                Self::NotFound(format!("Cluster not found"))
+                Self::NotFound("Cluster not found".to_string())
             }
             TrainingJobServiceError::Unknown(e) => {
                 tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");

@@ -90,7 +90,7 @@ impl CredentialsClient {
     }
     pub async fn request_token(&self, scopes: &Vec<String>) -> Result<Token, Error> {
         let private_key =
-            PKey::private_key_from_pem(&self.credentials.private_key.expose_secret().as_bytes())?;
+            PKey::private_key_from_pem(self.credentials.private_key.expose_secret().as_bytes())?;
         let encoded = &self.jws_encode(
             &Claim::new(&self.credentials, scopes),
             &Header {
@@ -126,7 +126,7 @@ impl CredentialsClient {
     ) -> Result<String, Error> {
         let encoded_header = self.base64_encode(serde_json::to_string(&header).unwrap().as_bytes());
         let encoded_claims = self.base64_encode(serde_json::to_string(&claim).unwrap().as_bytes());
-        let signature_base = format!("{}.{}", encoded_header, encoded_claims);
+        let signature_base = format!("{encoded_header}.{encoded_claims}");
         let mut signer = Signer::new(MessageDigest::sha256(), &key)?;
         signer.set_rsa_padding(Padding::PKCS1)?;
         signer.update(signature_base.as_bytes())?;

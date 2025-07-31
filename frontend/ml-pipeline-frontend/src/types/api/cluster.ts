@@ -26,25 +26,25 @@ export interface ClusterInfo {
   clusterId: string;
   clusterName: string;
   clusterDescription?: string;
-  totalNodes: number,
-  busyNodes: number,
+  totalNodes: number;
+  busyNodes: number;
   memoryInfo: {
-    totalMemoryMb: number,
-    usedMemoryMb: number,
-  },
+    totalMemoryMb: number;
+    usedMemoryMb: number;
+  };
   cpuInfo: {
-    totalMillicores: number,
-    usedMillicores: number,
-  },
+    totalMillicores: number;
+    usedMillicores: number;
+  };
   gpuInfo: {
-    totalGpus: number,
-    usedGpus: number,
-  },
+    totalGpus: number;
+    usedGpus: number;
+  };
   jobInfo: {
-    totalRunningJobs: number,
-  },
-  createdAt: string,
-  updatedAt: string,
+    totalRunningJobs: number;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ClusterJob {

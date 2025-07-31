@@ -5,7 +5,7 @@ use axum::{
     Json,
 };
 use chrono::Utc;
-use secrecy::{ExposeSecret, SecretString};
+use secrecy::SecretString;
 use uuid::Uuid;
 
 use crate::{
@@ -22,8 +22,9 @@ use crate::{
         errors::ApiError,
         routes::clusters::models::{
             CreateClusterHttpRequest, CreateClusterHttpResponse, GetClusterDetailsHttpResponse,
-            GetClusterHttpResponse, HttpApiKey, HttpHeartbeatResponse, HttpClusterNodeHeartbeat,
-            HttpJobDetails, ListClusterNodesHttpResponse, ListClustersHttpResponse,
+            GetClusterHttpResponse, HttpApiKey, HttpClusterNodeHeartbeat, HttpHeartbeatResponse,
+            HttpJobDetails, ListClusterJobsHttpResponse, ListClusterNodesHttpResponse,
+            ListClustersHttpResponse,
         },
     },
 };
@@ -49,7 +50,7 @@ pub async fn get_cluster(
     Path(cluster_id): Path<ClusterId>,
 ) -> Result<Json<GetClusterHttpResponse>, ApiError> {
     let cluster = cluster_service
-        .get_cluster_by_id(&cluster_id.into())
+        .get_cluster_by_id(&cluster_id)
         .await?;
     Ok(Json(cluster.into()))
 }
@@ -61,7 +62,7 @@ pub async fn get_cluster_info(
     Path(cluster_id): Path<ClusterId>,
 ) -> Result<Json<GetClusterDetailsHttpResponse>, ApiError> {
     let cluster = cluster_service
-        .get_cluster_details(&cluster_id.into())
+        .get_cluster_details(&cluster_id)
         .await?;
     Ok(Json(cluster.into()))
 }
@@ -156,11 +157,10 @@ pub async fn list_cluster_nodes(
     Path(cluster_id): Path<ClusterId>,
 ) -> Result<Json<ListClusterNodesHttpResponse>, ApiError> {
     let cluster_nodes = cluster_service
-        .list_cluster_nodes(&cluster_id.into())
+        .list_cluster_nodes(&cluster_id)
         .await?;
     Ok(Json(cluster_nodes.into()))
 }
-
 
 #[axum::debug_handler(state = AppState)]
 pub async fn list_cluster_jobs(
@@ -169,7 +169,7 @@ pub async fn list_cluster_jobs(
     Path(cluster_id): Path<ClusterId>,
 ) -> Result<Json<ListClusterJobsHttpResponse>, ApiError> {
     let jobs = cluster_service
-        .list_cluster_jobs(&cluster_id.into())
+        .list_cluster_jobs(&cluster_id)
         .await?;
     Ok(Json(jobs.into()))
 }

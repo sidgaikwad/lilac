@@ -6,7 +6,7 @@ use crate::{
     domain::{
         cluster::ports::ClusterRepository,
         queue::ports::QueueRepository,
-        training_job::{models::ResourceRequirements, ports::TrainingJobRepository},
+        training_job::ports::TrainingJobRepository,
     },
     outbound::scheduler::agent_adapter::AgentSchedulerAdapter,
 };
@@ -107,10 +107,7 @@ impl SchedulerService {
                         .await
                     {
                         Ok(Some(node_id)) => {
-                            info!(
-                                "Successfully allocated job {} to node {}",
-                                job.id, node_id
-                            );
+                            info!("Successfully allocated job {} to node {}", job.id, node_id);
                             if let Err(e) = self.job_repo.mark_as_starting(&job.id, &node_id).await
                             {
                                 error!("Failed to update job {} status: {}", job.id, e);

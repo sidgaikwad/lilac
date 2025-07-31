@@ -8,9 +8,7 @@ export interface RetryWorkspaceRequest {
   workspaceId: string;
 }
 
-async function retryWorkspace(
-  payload: RetryWorkspaceRequest
-): Promise<void> {
+async function retryWorkspace(payload: RetryWorkspaceRequest): Promise<void> {
   await postHttp<null, null>(
     `/projects/${payload.projectId}/workspaces/${payload.workspaceId}/retry`,
     null

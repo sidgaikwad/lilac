@@ -73,10 +73,9 @@ impl PostgresSessionStore {
         let schema_name = schema_name.as_ref();
         if !is_valid_identifier(schema_name) {
             return Err(format!(
-                "Invalid schema name '{}'. Schema names must start with a letter or underscore \
+                "Invalid schema name '{schema_name}'. Schema names must start with a letter or underscore \
                  (including letters with diacritical marks and non-Latin letters).Subsequent \
-                 characters can be letters, underscores, digits (0-9), or dollar signs ($).",
-                schema_name
+                 characters can be letters, underscores, digits (0-9), or dollar signs ($)."
             ));
         }
 
@@ -89,10 +88,9 @@ impl PostgresSessionStore {
         let table_name = table_name.as_ref();
         if !is_valid_identifier(table_name) {
             return Err(format!(
-                "Invalid table name '{}'. Table names must start with a letter or underscore \
+                "Invalid table name '{table_name}'. Table names must start with a letter or underscore \
                  (including letters with diacritical marks and non-Latin letters).Subsequent \
-                 characters can be letters, underscores, digits (0-9), or dollar signs ($).",
-                table_name
+                 characters can be letters, underscores, digits (0-9), or dollar signs ($)."
             ));
         }
 

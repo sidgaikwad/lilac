@@ -1,13 +1,13 @@
 use axum::{
     extract::FromRequestParts,
-    http::{request::Parts, StatusCode},
+    http::request::Parts,
 };
 use serde::{Deserialize, Serialize};
 
 use headers::{authorization::Bearer, Authorization, HeaderMapExt};
 
-use crate::{domain::user::models::UserId, inbound::http::errors::ApiError};
 use crate::inbound::http::AppState;
+use crate::{domain::user::models::UserId, inbound::http::errors::ApiError};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenClaims {
@@ -54,10 +54,13 @@ impl FromRequestParts<AppState> for Claims {
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
         // 2. Handle the Option returned by `typed_get` correctly.
-        let bearer_token = parts
-            .headers
-            .typed_get::<Authorization<Bearer>>()
-            .ok_or(ApiError::Unauthorized("Missing Authorization header".into()))?;
+        let bearer_token =
+            parts
+                .headers
+                .typed_get::<Authorization<Bearer>>()
+                .ok_or(ApiError::Unauthorized(
+                    "Missing Authorization header".into(),
+                ))?;
 
         // 3. Validate the token using the application state
         let token_claims = state
@@ -67,7 +70,7 @@ impl FromRequestParts<AppState> for Claims {
 
         // 4. Create the Claims struct
         let claims = Claims {
-            sub: token_claims.sub.into(),
+            sub: token_claims.sub,
             exp: token_claims.exp,
             iat: token_claims.iat,
         };

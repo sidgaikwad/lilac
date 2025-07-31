@@ -49,12 +49,10 @@ export function ApiKeysCard() {
     <>
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className='flex items-center justify-between'>
             <div>
               <CardTitle>API Keys</CardTitle>
-              <CardDescription>
-                Your API keys are listed below.
-              </CardDescription>
+              <CardDescription>Your API keys are listed below.</CardDescription>
             </div>
             <Button
               onClick={handleGenerateKey}
@@ -99,8 +97,8 @@ export function ApiKeysCard() {
                     </TableCell>
                     <TableCell>
                       <Button
-                        variant="destructive"
-                        size="sm"
+                        variant='destructive'
+                        size='sm'
                         onClick={() =>
                           deleteApiKeyMutation.mutate({ keyId: key.id })
                         }
@@ -125,7 +123,7 @@ export function ApiKeysCard() {
               again.
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-4">
+          <div className='mt-4'>
             <Input readOnly value={newApiKey?.key} />
           </div>
         </DialogContent>

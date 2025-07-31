@@ -19,7 +19,7 @@ const rootVariants = cva('relative h-2 w-full overflow-hidden rounded-full', {
 });
 
 const indicatorVariants = cva('h-full w-full flex-1 transition-all', {
- variants: {
+  variants: {
     color: {
       default: 'bg-accent',
       red: 'bg-red-500',
@@ -53,9 +53,10 @@ function Progress({
       <ProgressPrimitive.Indicator
         data-slot='progress-indicator'
         className={cn(
-        indicatorVariants({
-          color,
-        }))}
+          indicatorVariants({
+            color,
+          })
+        )}
         style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
       />
     </ProgressPrimitive.Root>

@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use crate::domain::{
     cluster::models::{ClusterDetails, ClusterNode, UpdateNodeStatusRequest},
     training_job::models::TrainingJob,
-    user::models::{ApiKey, ApiKeyId}
+    user::models::{ApiKey, ApiKeyId},
 };
 
 use crate::domain::user::models::NewApiKey;
@@ -105,7 +105,10 @@ pub trait ClusterService: Send + Sync {
         &self,
         cluster_id: &ClusterId,
     ) -> Result<Vec<ApiKey>, ClusterServiceError>;
-    async fn clear_assigned_job_id(&self, node_id: &super::models::NodeId) -> Result<(), ClusterServiceError>;
+    async fn clear_assigned_job_id(
+        &self,
+        node_id: &super::models::NodeId,
+    ) -> Result<(), ClusterServiceError>;
 }
 
 #[derive(Clone)]
@@ -195,7 +198,10 @@ impl<R: ClusterRepository + ClusterApiKeyRepository> ClusterService for ClusterS
         hasher.update(key.expose_secret().as_bytes());
         let key_hash = format!("{:x}", hasher.finalize());
 
-        let cluster = self.cluster_repo.find_cluster_by_api_key_hash(&key_hash).await?;
+        let cluster = self
+            .cluster_repo
+            .find_cluster_by_api_key_hash(&key_hash)
+            .await?;
 
         Ok(cluster)
     }
@@ -218,7 +224,7 @@ impl<R: ClusterRepository + ClusterApiKeyRepository> ClusterService for ClusterS
         let api_key = ApiKey {
             id: key_id,
             user_id: None,
-            cluster_id: Some(cluster_id.clone()),
+            cluster_id: Some(*cluster_id),
             prefix: API_KEY_PREFIX.to_string(),
             key_hash,
             created_at: Utc::now(),
@@ -250,7 +256,10 @@ impl<R: ClusterRepository + ClusterApiKeyRepository> ClusterService for ClusterS
             .list_api_keys_for_cluster(cluster_id)
             .await?)
     }
-    async fn clear_assigned_job_id(&self, node_id: &super::models::NodeId) -> Result<(), ClusterServiceError> {
+    async fn clear_assigned_job_id(
+        &self,
+        node_id: &super::models::NodeId,
+    ) -> Result<(), ClusterServiceError> {
         self.cluster_repo.clear_assigned_job_id(node_id).await?;
         Ok(())
     }

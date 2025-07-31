@@ -123,7 +123,7 @@ impl<R: UserRepository + UserApiKeyRepository> UserService for UserServiceImpl<R
 
         let api_key = ApiKey {
             id: key_id,
-            user_id: Some(user_id.clone()),
+            user_id: Some(*user_id),
             cluster_id: None,
             prefix: API_KEY_PREFIX.to_string(),
             key_hash,

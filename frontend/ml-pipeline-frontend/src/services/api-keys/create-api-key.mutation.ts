@@ -6,10 +6,7 @@ import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 import { NewApiKey } from '@/model/api-key';
 
 async function createApiKey(): Promise<NewApiKey> {
-  const resp = await postHttp<object, Sn<NewApiKey>>(
-    '/account/api-keys',
-    {}
-  );
+  const resp = await postHttp<object, Sn<NewApiKey>>('/account/api-keys', {});
   return {
     id: resp.id,
     prefix: resp.prefix,

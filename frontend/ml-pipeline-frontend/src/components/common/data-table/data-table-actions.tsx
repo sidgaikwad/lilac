@@ -39,8 +39,8 @@ export function DataTableSettings<TData>({
           <DialogTitle>Table Settings</DialogTitle>
           <DialogDescription></DialogDescription>
         </DialogHeader>
-        <div className='p-2 grid grid-cols-2'>
-          <div className='flex flex-col justify-left space-x-2'>
+        <div className='grid grid-cols-2 p-2'>
+          <div className='justify-left flex flex-col space-x-2'>
             <p className='text-sm font-medium'>Rows per page</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
@@ -62,7 +62,7 @@ export function DataTableSettings<TData>({
               </SelectContent>
             </Select>
           </div>
-          <div className='flex flex-col justify-left space-x-2'>
+          <div className='justify-left flex flex-col space-x-2'>
             <p className='text-sm font-medium'>Columns</p>
             {table
               .getAllColumns()

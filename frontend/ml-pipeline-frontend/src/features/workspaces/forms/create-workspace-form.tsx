@@ -27,9 +27,7 @@ import { Separator } from '@/components/ui/separator';
 import * as React from 'react';
 import { RadioGroup } from '@/components/ui/radio-group';
 import { EnvironmentCard } from '@/features/workspaces/components/environment-card';
-import {
-  mockEnvironments,
-} from '@/features/workspaces/mock-data';
+import { mockEnvironments } from '@/features/workspaces/mock-data';
 import { JupyterIcon } from '@/icons/jupyter';
 import { VSCodeIcon } from '@/icons/vscode';
 import { RStudioIcon } from '@/icons/rstudio';
@@ -75,7 +73,7 @@ const { useStepper, utils } = defineStepper(
     id: 'hardware',
     label: 'Hardware',
     schema: hardwareSchema,
-  },
+  }
 );
 
 export interface CreateWorkspaceFormProps {
@@ -253,7 +251,7 @@ function ClusterStep() {
   const getIcon = (cluster: ClusterSummary) => {
     switch (cluster.clusterType) {
       case 'aws_eks':
-        return <EksLogo className="size-12" />;
+        return <EksLogo className='size-12' />;
       default:
         return null;
     }
@@ -261,9 +259,9 @@ function ClusterStep() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-4">
+      <div className='grid grid-cols-2 gap-4'>
         {Array.from({ length: 2 }).map((_, i) => (
-          <Skeleton key={i} className="h-32 w-full" />
+          <Skeleton key={i} className='h-32 w-full' />
         ))}
       </div>
     );
@@ -274,13 +272,13 @@ function ClusterStep() {
       name={register('clusterId').name}
       control={control}
       render={({ field }) => (
-        <FormItem className="space-y-3">
+        <FormItem className='space-y-3'>
           <FormMessage />
           <FormControl>
             <RadioGroup
               onValueChange={field.onChange}
               defaultValue={field.value}
-              className="grid grid-cols-2 gap-4"
+              className='grid grid-cols-2 gap-4'
             >
               {clusters?.map((cluster) => (
                 <EnvironmentCard
@@ -289,7 +287,7 @@ function ClusterStep() {
                   title={cluster.clusterName}
                   description={cluster.clusterDescription || ''}
                   value={cluster.clusterId}
-                  className="h-full w-full"
+                  className='h-full w-full'
                 />
               ))}
             </RadioGroup>
@@ -324,10 +322,10 @@ function HardwareStep() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className='space-y-8'>
       <FormField
         control={control}
-        name="preset"
+        name='preset'
         render={({ field }) => (
           <FormItem>
             <FormLabel>Preset</FormLabel>
@@ -337,7 +335,7 @@ function HardwareStep() {
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a preset" />
+                  <SelectValue placeholder='Select a preset' />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -360,11 +358,11 @@ function HardwareStep() {
         <>
           <FormField
             control={control}
-            name="cpu"
+            name='cpu'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>CPU (vCPUs)</FormLabel>
-                <div className="flex items-center gap-4">
+                <div className='flex items-center gap-4'>
                   <FormControl>
                     <Slider
                       min={0.5}
@@ -375,12 +373,10 @@ function HardwareStep() {
                     />
                   </FormControl>
                   <Input
-                    type="number"
-                    className="w-24"
+                    type='number'
+                    className='w-24'
                     value={field.value}
-                    onChange={(e) =>
-                      field.onChange(parseFloat(e.target.value))
-                    }
+                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
                   />
                 </div>
                 <FormMessage />
@@ -389,11 +385,11 @@ function HardwareStep() {
           />
           <FormField
             control={control}
-            name="memory"
+            name='memory'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Memory (MiB)</FormLabel>
-                <div className="flex items-center gap-4">
+                <div className='flex items-center gap-4'>
                   <FormControl>
                     <Slider
                       min={1024}
@@ -404,12 +400,10 @@ function HardwareStep() {
                     />
                   </FormControl>
                   <Input
-                    type="number"
-                    className="w-24"
+                    type='number'
+                    className='w-24'
                     value={field.value}
-                    onChange={(e) =>
-                      field.onChange(parseInt(e.target.value))
-                    }
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
                   />
                 </div>
                 <FormMessage />
@@ -420,21 +414,19 @@ function HardwareStep() {
       )}
       <FormField
         control={control}
-        name="gpu"
+        name='gpu'
         render={({ field }) => (
           <FormItem>
             <FormControl>
               <div className='flex flex-row space-x-2'>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={(e) => {
-                  console.log(e);
-                  field.onChange(e);
-                }}
-              />
-              <FormLabel>
-                Request GPU
-              </FormLabel>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={(e) => {
+                    console.log(e);
+                    field.onChange(e);
+                  }}
+                />
+                <FormLabel>Request GPU</FormLabel>
               </div>
             </FormControl>
           </FormItem>
@@ -443,4 +435,3 @@ function HardwareStep() {
     </div>
   );
 }
-

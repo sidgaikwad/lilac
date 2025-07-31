@@ -145,9 +145,9 @@ export function DataTable<TData, TValue>({
                   className='h-24 items-center text-center'
                 >
                   <span className='inline-block w-fit'>
-                    <span className='flex flex-row justify-between items-center gap-2 text-gray-text-muted '>
-                    <Loader2 className='animate-spin' />
-                    Loading...
+                    <span className='text-gray-text-muted flex flex-row items-center justify-between gap-2'>
+                      <Loader2 className='animate-spin' />
+                      Loading...
                     </span>
                   </span>
                 </TableCell>

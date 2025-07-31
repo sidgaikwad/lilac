@@ -12,14 +12,11 @@ export interface CreateQueueRequest {
 }
 
 async function createQueue(payload: CreateQueueRequest): Promise<Queue> {
-  const resp = await postHttp<Sn<CreateQueueRequest>, Sn<Queue>>(
-    '/queues',
-    {
-      name: payload.name,
-      priority: payload.priority,
-      cluster_targets: payload.clusterTargets,
-    }
-  );
+  const resp = await postHttp<Sn<CreateQueueRequest>, Sn<Queue>>('/queues', {
+    name: payload.name,
+    priority: payload.priority,
+    cluster_targets: payload.clusterTargets,
+  });
   return {
     id: resp.id,
     name: resp.name,

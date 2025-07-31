@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     domain::{
-        cluster::models::{ClusterId, NodeId},
+        cluster::models::NodeId,
         queue::models::QueueId,
     },
     identifier,

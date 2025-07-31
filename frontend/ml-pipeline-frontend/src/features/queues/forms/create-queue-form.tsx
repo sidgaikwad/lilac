@@ -18,7 +18,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 const formSchema = z.object({
   name: z.string().min(1, 'Queue name is required'),
   priority: z.coerce.number().int().min(0),
-  clusterTargets: z.array(z.string()).min(1, 'At least one cluster must be selected'),
+  clusterTargets: z
+    .array(z.string())
+    .min(1, 'At least one cluster must be selected'),
 });
 
 export type CreateQueueFormValues = z.infer<typeof formSchema>;
@@ -42,15 +44,15 @@ export function CreateQueueForm({ onSubmit, isPending }: CreateQueueFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
         <FormField
           control={form.control}
-          name="name"
+          name='name'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Queue Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g. H100-queue" {...field} />
+                <Input placeholder='e.g. H100-queue' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -58,12 +60,12 @@ export function CreateQueueForm({ onSubmit, isPending }: CreateQueueFormProps) {
         />
         <FormField
           control={form.control}
-          name="priority"
+          name='priority'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Priority</FormLabel>
               <FormControl>
-                <Input type="number" {...field} />
+                <Input type='number' {...field} />
               </FormControl>
               <FormDescription>
                 Higher numbers have higher priority.
@@ -74,10 +76,10 @@ export function CreateQueueForm({ onSubmit, isPending }: CreateQueueFormProps) {
         />
         <FormField
           control={form.control}
-          name="clusterTargets"
+          name='clusterTargets'
           render={() => (
             <FormItem>
-              <div className="mb-4">
+              <div className='mb-4'>
                 <FormLabel>Cluster Targets</FormLabel>
                 <FormDescription>
                   Select the clusters that this queue can schedule jobs on.
@@ -90,18 +92,16 @@ export function CreateQueueForm({ onSubmit, isPending }: CreateQueueFormProps) {
                   <FormField
                     key={cluster.clusterId}
                     control={form.control}
-                    name="clusterTargets"
+                    name='clusterTargets'
                     render={({ field }) => {
                       return (
                         <FormItem
                           key={cluster.clusterId}
-                          className="flex flex-row items-start space-x-3 space-y-0"
+                          className='flex flex-row items-start space-y-0 space-x-3'
                         >
                           <FormControl>
                             <Checkbox
-                              checked={field.value?.includes(
-                                cluster.clusterId
-                              )}
+                              checked={field.value?.includes(cluster.clusterId)}
                               onCheckedChange={(checked) => {
                                 return checked
                                   ? field.onChange([
@@ -110,14 +110,13 @@ export function CreateQueueForm({ onSubmit, isPending }: CreateQueueFormProps) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) =>
-                                          value !== cluster.clusterId
+                                        (value) => value !== cluster.clusterId
                                       )
                                     );
                               }}
                             />
                           </FormControl>
-                          <FormLabel className="font-normal">
+                          <FormLabel className='font-normal'>
                             {cluster.clusterName}
                           </FormLabel>
                         </FormItem>
@@ -130,7 +129,7 @@ export function CreateQueueForm({ onSubmit, isPending }: CreateQueueFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isPending}>
+        <Button type='submit' disabled={isPending}>
           {isPending ? 'Creating...' : 'Create'}
         </Button>
       </form>

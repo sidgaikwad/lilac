@@ -1,6 +1,14 @@
 import { cn } from '@/lib/utils';
 import { cva, VariantProps } from 'class-variance-authority';
-import { CircleCheck, CircleEllipsis, CircleX, Clock, Info, Loader2, TriangleAlert } from 'lucide-react';
+import {
+  CircleCheck,
+  CircleEllipsis,
+  CircleX,
+  Clock,
+  Info,
+  Loader2,
+  TriangleAlert,
+} from 'lucide-react';
 
 const statusVariants = cva('font-medium flex flex-row items-center gap-1', {
   variants: {
@@ -19,7 +27,7 @@ const statusVariants = cva('font-medium flex flex-row items-center gap-1', {
       red: 'text-red-600',
       yellow: 'text-yellow-600',
       gray: 'text-gray-600',
-    }
+    },
   },
   defaultVariants: {
     status: 'info',
@@ -52,5 +60,10 @@ export type StatusProps = React.ComponentProps<'div'> &
   };
 export function Status(props: StatusProps) {
   const { children, status, color, ...rest } = props;
-  return <div className={cn(statusVariants({ status, color }))} {...rest}>{getIcon(status)}{children}</div>;
+  return (
+    <div className={cn(statusVariants({ status, color }))} {...rest}>
+      {getIcon(status)}
+      {children}
+    </div>
+  );
 }

@@ -5,12 +5,22 @@ use crate::{
     domain::{
         cluster::{
             models::{
-                Cluster, ClusterDetails, ClusterId, ClusterNode, CreateClusterRequest, NodeId, UpdateNodeStatusRequest
+                Cluster, ClusterDetails, ClusterId, ClusterNode, CreateClusterRequest, NodeId,
+                UpdateNodeStatusRequest,
             },
-            ports::{ClusterApiKeyRepository, ClusterApiKeyRepositoryError, ClusterRepository, ClusterRepositoryError},
+            ports::{
+                ClusterApiKeyRepository, ClusterApiKeyRepositoryError, ClusterRepository,
+                ClusterRepositoryError,
+            },
         },
-        training_job::models::{JobId, TrainingJob}, user::models::{ApiKey, ApiKeyId},
-    }, outbound::persistence::postgres::records::{ApiKeyRecord, ClusterDetailsRecord, ClusterNodeRecord, ClusterRecord, CpuConfigurationRecord, GpuConfigurationRecord, NodeStatusRecord, TrainingJobRecord, TrainingJobStatusRecord},
+        training_job::models::{JobId, TrainingJob},
+        user::models::{ApiKey, ApiKeyId},
+    },
+    outbound::persistence::postgres::records::{
+        ApiKeyRecord, ClusterDetailsRecord, ClusterNodeRecord, ClusterRecord,
+        CpuConfigurationRecord, GpuConfigurationRecord, NodeStatusRecord, TrainingJobRecord,
+        TrainingJobStatusRecord,
+    },
 };
 
 #[derive(Clone)]
@@ -23,7 +33,6 @@ impl PostgresClusterRepository {
         Self { pool }
     }
 }
-
 
 #[async_trait]
 impl ClusterRepository for PostgresClusterRepository {
@@ -66,7 +75,10 @@ impl ClusterRepository for PostgresClusterRepository {
         Ok(cluster)
     }
 
-    async fn get_cluster_details(&self, id: &ClusterId) -> Result<ClusterDetails, ClusterRepositoryError> {
+    async fn get_cluster_details(
+        &self,
+        id: &ClusterId,
+    ) -> Result<ClusterDetails, ClusterRepositoryError> {
         let record = sqlx::query_as!(
             ClusterDetailsRecord,
             r#"SELECT c.cluster_id, c.cluster_name, c.cluster_description, c.created_at, c.updated_at,

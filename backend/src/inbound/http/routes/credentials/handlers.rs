@@ -41,7 +41,7 @@ pub async fn get_credential(
     Path(credential_id): Path<CredentialId>,
 ) -> Result<Json<GetCredentialsHttpResponse>, ApiError> {
     let credential = credential_service
-        .get_credential_by_id(&credential_id.into())
+        .get_credential_by_id(&credential_id)
         .await?;
     Ok(Json(credential.into()))
 }

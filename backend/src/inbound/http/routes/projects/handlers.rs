@@ -66,6 +66,6 @@ pub async fn delete_project(
     State(project_service): State<Arc<dyn ProjectService>>,
     Path(project_id): Path<ProjectId>,
 ) -> Result<(), ApiError> {
-    project_service.delete_project(&project_id.into()).await?;
+    project_service.delete_project(&project_id).await?;
     Ok(())
 }

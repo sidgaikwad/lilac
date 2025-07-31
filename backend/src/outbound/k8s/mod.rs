@@ -13,13 +13,6 @@ use kube::{
 use tower::ServiceBuilder;
 use tower_http::BoxError;
 
-use crate::{
-    domain::{
-        cluster::models::Cluster,
-        credentials::models::{Credential, Credentials},
-    },
-    outbound::{aws::AwsEksAdapter, gcp::GkeAdapter},
-};
 
 pub const DEFAULT_CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
 pub const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(295);

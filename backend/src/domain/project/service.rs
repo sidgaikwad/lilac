@@ -58,7 +58,7 @@ impl<R: ProjectRepository> ProjectService for ProjectServiceImpl<R> {
         &self,
         req: &CreateProjectRequest,
     ) -> Result<Project, ProjectServiceError> {
-        Ok(self.repo.create_project(&req).await?)
+        Ok(self.repo.create_project(req).await?)
     }
 
     async fn get_project_by_id(&self, id: &ProjectId) -> Result<Project, ProjectServiceError> {

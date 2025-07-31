@@ -4,7 +4,7 @@ use thiserror::Error;
 use crate::domain::{
     cluster::models::{ClusterDetails, ClusterNode, NodeId, UpdateNodeStatusRequest},
     training_job::models::{JobId, TrainingJob},
-    user::models::{ApiKey, ApiKeyId}
+    user::models::{ApiKey, ApiKeyId},
 };
 
 use super::models::{Cluster, ClusterId, CreateClusterRequest};
@@ -26,7 +26,10 @@ pub trait ClusterRepository: Send + Sync {
         req: &CreateClusterRequest,
     ) -> Result<Cluster, ClusterRepositoryError>;
     async fn get_cluster_by_id(&self, id: &ClusterId) -> Result<Cluster, ClusterRepositoryError>;
-    async fn get_cluster_details(&self, id: &ClusterId) -> Result<ClusterDetails, ClusterRepositoryError>;
+    async fn get_cluster_details(
+        &self,
+        id: &ClusterId,
+    ) -> Result<ClusterDetails, ClusterRepositoryError>;
     async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterRepositoryError>;
     async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterRepositoryError>;
     async fn list_cluster_jobs(

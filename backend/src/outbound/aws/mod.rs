@@ -24,7 +24,7 @@ impl AwsSigner {
     pub fn new(credentials: Credentials, region: String) -> Self {
         Self {
             credentials,
-            region: region,
+            region,
         }
     }
 
@@ -66,7 +66,7 @@ impl AwsSigner {
         signing_instructions.apply_to_request_http1x(&mut request);
         let url = request.uri().to_string();
         let b64_url = BASE64_URL_SAFE_NO_PAD.encode(url);
-        let token = format!("k8s-aws-v1.{}", b64_url);
+        let token = format!("k8s-aws-v1.{b64_url}");
         Ok(token.into())
     }
 }

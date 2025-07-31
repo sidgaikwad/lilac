@@ -12,10 +12,8 @@ export const JOB_COLUMNS: ColumnDef<ClusterJob>[] = [
     accessorKey: 'jobId',
     header: 'Job ID',
     cell: ({ cell }) => {
-      return (
-        <div className='font-mono'>{cell.renderValue() as string}</div>
-      )
-    }
+      return <div className='font-mono'>{cell.renderValue() as string}</div>;
+    },
   },
   {
     accessorKey: 'jobName',
@@ -42,37 +40,33 @@ export const JOB_COLUMNS: ColumnDef<ClusterJob>[] = [
           break;
       }
       return (
-        <Status status={status}>{startCase(cell.renderValue() as string)}</Status>
-      )
-    }
+        <Status status={status}>
+          {startCase(cell.renderValue() as string)}
+        </Status>
+      );
+    },
   },
   {
     accessorKey: 'nodeId',
     header: 'Assigned Node ID',
     cell: ({ cell }) => {
-      return (
-        <div className='font-mono'>{cell.renderValue() as string}</div>
-      )
-    }
+      return <div className='font-mono'>{cell.renderValue() as string}</div>;
+    },
   },
   {
     accessorKey: 'queueId',
     header: 'Queue ID',
     cell: ({ cell }) => {
-      return (
-        <div className='font-mono'>{cell.renderValue() as string}</div>
-      )
-    }
+      return <div className='font-mono'>{cell.renderValue() as string}</div>;
+    },
   },
   {
     accessorKey: 'createdAt',
     header: 'Submitted At',
     cell: ({ cell }) => {
-      const date = new Date(cell.renderValue() as string)
-      return (
-        <div>{date.toLocaleString()}</div>
-      )
-    }
+      const date = new Date(cell.renderValue() as string);
+      return <div>{date.toLocaleString()}</div>;
+    },
   },
 ];
 

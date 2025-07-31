@@ -24,9 +24,18 @@ export function mapObject<T extends object, R>(
   ) as R;
 }
 
-export function snakeCaseObject<T extends object, Options extends WordsOptions>(obj: T, splitNumbers?: boolean): SnakeCasedPropertiesDeep<T, Options>;
-export function snakeCaseObject<T extends object, Options extends WordsOptions = { splitOnNumbers: true }>(obj: T, splitNumbers: true): SnakeCasedPropertiesDeep<T, Options>;
-export function snakeCaseObject<T extends object, Options extends WordsOptions = { splitOnNumbers: false }>(obj: T, splitNumbers: false): SnakeCasedPropertiesDeep<T, Options>;
+export function snakeCaseObject<T extends object, Options extends WordsOptions>(
+  obj: T,
+  splitNumbers?: boolean
+): SnakeCasedPropertiesDeep<T, Options>;
+export function snakeCaseObject<
+  T extends object,
+  Options extends WordsOptions = { splitOnNumbers: true },
+>(obj: T, splitNumbers: true): SnakeCasedPropertiesDeep<T, Options>;
+export function snakeCaseObject<
+  T extends object,
+  Options extends WordsOptions = { splitOnNumbers: false },
+>(obj: T, splitNumbers: false): SnakeCasedPropertiesDeep<T, Options>;
 export function snakeCaseObject<T extends object, Options extends WordsOptions>(
   obj: T,
   splitNumbers: boolean = true
@@ -40,11 +49,10 @@ export function camelCaseObject<T extends object>(
   return mapObject(obj, camelCase) as CamelCasedPropertiesDeep<T>;
 }
 
-
 export function snakeCase(s: string, splitNumbers: boolean = true): string {
   let result = lodashSnakeCase(s);
   if (!splitNumbers) {
-    result = result.replace(/_(\d+)/, "$1")
+    result = result.replace(/_(\d+)/, '$1');
   }
   return result;
 }

@@ -1,11 +1,17 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{
-    cluster::models::{
-        Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterId, ClusterJobStats, ClusterMemoryStats, ClusterNode, Cpu, CreateClusterRequest, Gpu, JobInfo, NodeId, NodeStatus
+use crate::{
+    domain::{
+        cluster::models::{
+            Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterId, ClusterJobStats,
+            ClusterMemoryStats, ClusterNode, Cpu, CreateClusterRequest, Gpu, JobInfo, NodeId,
+            NodeStatus,
+        },
+        training_job::models::TrainingJob,
+        user::models::{ApiKey, ApiKeyId},
     },
-    training_job::models::TrainingJob, user::models::{ApiKey, ApiKeyId},
+    inbound::http::routes::training_jobs::models::HttpTrainingJob,
 };
 
 #[derive(serde::Serialize)]
@@ -155,7 +161,6 @@ impl From<ClusterNode> for HttpClusterNode {
             gpu: value.gpu,
         }
     }
-    
 }
 
 /// The body of a [Cluster] list response.
@@ -171,7 +176,6 @@ impl From<Vec<ClusterNode>> for ListClusterNodesHttpResponse {
         }
     }
 }
-
 
 /// The body of a [ClusterDetails] get response.
 #[derive(Debug, Clone, Serialize)]

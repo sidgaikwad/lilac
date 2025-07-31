@@ -4,12 +4,12 @@ import { camelCaseObject, snakeCase, snakeCaseObject } from './utils';
 describe('snakeCaseObjects', () => {
   test('snake case can split numbers', () => {
     const s = 'clientX509CertUrl';
-    expect(snakeCase(s, true)).toEqual('client_x_509_cert_url')
+    expect(snakeCase(s, true)).toEqual('client_x_509_cert_url');
   });
 
   test('snake case can join numbers', () => {
     const s = 'clientX509CertUrl';
-    expect(snakeCase(s, false)).toEqual('client_x509_cert_url')
+    expect(snakeCase(s, false)).toEqual('client_x509_cert_url');
   });
 
   test('handles objects successfully', () => {

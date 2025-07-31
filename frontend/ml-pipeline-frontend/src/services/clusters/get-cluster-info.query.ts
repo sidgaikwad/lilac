@@ -10,35 +10,40 @@ export interface GetClusterInfoResponse {
   clusterId: string;
   clusterName: string;
   clusterDescription?: string;
-  totalNodes: number,
-  busyNodes: number,
+  totalNodes: number;
+  busyNodes: number;
   memoryInfo: {
-    totalMemoryMb: number,
-    usedMemoryMb: number,
-  },
+    totalMemoryMb: number;
+    usedMemoryMb: number;
+  };
   cpuInfo: {
-    totalMillicores: number,
-    usedMillicores: number,
-  },
+    totalMillicores: number;
+    usedMillicores: number;
+  };
   gpuInfo: {
-    totalGpus: number,
-    usedGpus: number,
-  },
+    totalGpus: number;
+    usedGpus: number;
+  };
   jobInfo: {
-    totalRunningJobs: number,
-  },
-  createdAt: string,
-  updatedAt: string,
+    totalRunningJobs: number;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export async function getClusterInfo(
   clusterId: string
 ): Promise<GetClusterInfoResponse> {
-  const resp = await getHttp<Sn<GetClusterInfoResponse>>(`/clusters/${clusterId}/info`);
+  const resp = await getHttp<Sn<GetClusterInfoResponse>>(
+    `/clusters/${clusterId}/info`
+  );
   return camelCaseObject(resp);
 }
 
-export function getClusterInfoQuery(clusterId?: string, enabled: boolean = true) {
+export function getClusterInfoQuery(
+  clusterId?: string,
+  enabled: boolean = true
+) {
   return queryOptions({
     queryKey: [QueryKeys.GET_CLUSTER_INFO, clusterId],
     queryFn: () => getClusterInfo(clusterId!),

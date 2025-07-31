@@ -78,7 +78,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: Routes.PROJECT_DETAILS,
-                element: <Navigate to="workspaces" replace />,
+                element: <Navigate to='workspaces' replace />,
               },
               {
                 path: Routes.PROJECT_SETTINGS,

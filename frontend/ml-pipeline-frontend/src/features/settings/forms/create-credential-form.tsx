@@ -330,7 +330,6 @@ function ProvideAwsCredentials() {
   );
 }
 
-
 function ProvideGcpCredentials() {
   const { register } = useFormContext<CredentialTypeFormValues>();
 
@@ -344,13 +343,22 @@ function ProvideGcpCredentials() {
               <FormLabel>Upload Credentials</FormLabel>
               <FormMessage />
               <FormControl>
-                <Input onChange={async (event) => {
-                  if (event.target.files !== null) {
-                    const contents = await event.target.files[0].text();
-                    const values = { credentialType: 'gcp', ...camelCaseObject(JSON.parse(contents)) } as Extract<CredentialTypeFormValues['credentials'], { credentialType: 'gcp' }>;
-                    field.onChange(values);
-                  }
-                }} type='file' ></Input>
+                <Input
+                  onChange={async (event) => {
+                    if (event.target.files !== null) {
+                      const contents = await event.target.files[0].text();
+                      const values = {
+                        credentialType: 'gcp',
+                        ...camelCaseObject(JSON.parse(contents)),
+                      } as Extract<
+                        CredentialTypeFormValues['credentials'],
+                        { credentialType: 'gcp' }
+                      >;
+                      field.onChange(values);
+                    }
+                  }}
+                  type='file'
+                ></Input>
               </FormControl>
             </FormItem>
           );

@@ -19,7 +19,10 @@ export function DataTablePagination<TData>({
 }: DataTablePaginationProps<TData>) {
   const pageCount = table.getPageCount();
   const currentIndex = table.getState().pagination.pageIndex;
-  const { leftDots, rightDots, start, end } = getPageRange(currentIndex, pageCount);
+  const { leftDots, rightDots, start, end } = getPageRange(
+    currentIndex,
+    pageCount
+  );
   const pageOptions = table.getPageOptions().slice(start, end);
 
   if (pageOptions.length < 1) {
@@ -44,7 +47,7 @@ export function DataTablePagination<TData>({
                   {1}
                 </PaginationLink>
               </PaginationItem>
-              { leftDots && <PaginationEllipsis />}
+              {leftDots && <PaginationEllipsis />}
               {pageOptions.map((page) => (
                 <PaginationItem key={page}>
                   <PaginationLink
@@ -56,7 +59,7 @@ export function DataTablePagination<TData>({
                   </PaginationLink>
                 </PaginationItem>
               ))}
-              { rightDots && <PaginationEllipsis />}
+              {rightDots && <PaginationEllipsis />}
               <PaginationItem>
                 <PaginationLink
                   className='transition-none'
@@ -67,7 +70,11 @@ export function DataTablePagination<TData>({
                 </PaginationLink>
               </PaginationItem>
               <PaginationItem>
-                <PaginationNext onClick={() => currentIndex < pageCount - 1 && table.nextPage()} />
+                <PaginationNext
+                  onClick={() =>
+                    currentIndex < pageCount - 1 && table.nextPage()
+                  }
+                />
               </PaginationItem>
             </PaginationContent>
           </Pagination>
@@ -76,7 +83,6 @@ export function DataTablePagination<TData>({
     </div>
   );
 }
-
 
 function getPageRange(currentIndex: number, pageCount: number) {
   const pagesToShow = 7;

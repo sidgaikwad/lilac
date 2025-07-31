@@ -1,14 +1,15 @@
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
 use crate::domain::{
     cluster::models::{
-        Architecture, Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterId, ClusterJobStats, ClusterMemoryStats, ClusterNode, Cpu, CpuManufacturer, Gpu, GpuManufacturer, GpuModel, NodeId, NodeStatus
+        Architecture, Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats,
+        ClusterJobStats, ClusterMemoryStats, ClusterNode, Cpu, CpuManufacturer, Gpu,
+        GpuManufacturer, GpuModel, NodeStatus,
     },
     training_job::models::TrainingJob,
-    user::models::ApiKey,
     training_job::models::TrainingJobStatus,
+    user::models::ApiKey,
 };
-
+use chrono::{DateTime, Utc};
+use uuid::Uuid;
 
 //  Cluster Repository Records
 
@@ -429,7 +430,7 @@ impl TryFrom<TrainingJobRecord> for TrainingJob {
             status: value.status.into(),
             node_id: value.node_id.map(|v| v.into()),
             queue_id: value.queue_id.into(),
-            resource_requirements: resource_requirements,
+            resource_requirements,
             created_at: value.created_at,
             updated_at: value.updated_at,
         })
