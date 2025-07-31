@@ -175,4 +175,16 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
 
         Ok(record.try_into()?)
     }
+
+    async fn reset_job_status(&self, job_id: &JobId) -> Result<(), TrainingJobRepositoryError> {
+        sqlx::query!(
+            "UPDATE training_jobs SET status = 'queued', node_id = NULL WHERE id = $1",
+            job_id.0
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e: sqlx::Error| TrainingJobRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+
+        Ok(())
+    }
 }

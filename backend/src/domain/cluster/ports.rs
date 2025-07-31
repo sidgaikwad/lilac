@@ -31,6 +31,7 @@ pub trait ClusterRepository: Send + Sync {
         &self,
         id: &ClusterId,
     ) -> Result<Vec<TrainingJob>, ClusterRepositoryError>;
+    async fn list_all_nodes(&self) -> Result<Vec<ClusterNode>, ClusterRepositoryError>;
     async fn list_cluster_nodes(
         &self,
         id: &ClusterId,

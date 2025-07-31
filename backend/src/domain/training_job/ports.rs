@@ -41,4 +41,5 @@ pub trait TrainingJobRepository: Send + Sync {
         node_id: &NodeId,
     ) -> Result<(), TrainingJobRepositoryError>;
     async fn post_logs(&self, id: &JobId, logs: String) -> Result<(), TrainingJobRepositoryError>;
+    async fn reset_job_status(&self, job_id: &JobId) -> Result<(), TrainingJobRepositoryError>;
 }

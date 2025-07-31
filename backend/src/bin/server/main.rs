@@ -91,6 +91,7 @@ async fn main() -> anyhow::Result<()> {
     let scheduler_service = Arc::new(SchedulerService::new(
         training_job_repo.clone(),
         queue_repo.clone(),
+        cluster_repo.clone(),
         agent_adapter,
     ));
 

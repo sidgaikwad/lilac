@@ -4,15 +4,18 @@ use tracing::{error, info};
 
 use crate::{
     domain::{
+        cluster::ports::ClusterRepository,
         queue::ports::QueueRepository,
         training_job::{models::ResourceRequirements, ports::TrainingJobRepository},
     },
     outbound::scheduler::agent_adapter::AgentSchedulerAdapter,
 };
+use chrono::Utc;
 
 pub struct SchedulerService {
     job_repo: Arc<dyn TrainingJobRepository>,
     queue_repo: Arc<dyn QueueRepository>,
+    cluster_repo: Arc<dyn ClusterRepository>,
     agent_adapter: Arc<AgentSchedulerAdapter>,
 }
 
@@ -20,17 +23,49 @@ impl SchedulerService {
     pub fn new(
         job_repo: Arc<dyn TrainingJobRepository>,
         queue_repo: Arc<dyn QueueRepository>,
+        cluster_repo: Arc<dyn ClusterRepository>,
         agent_adapter: Arc<AgentSchedulerAdapter>,
     ) -> Self {
         Self {
             job_repo,
             queue_repo,
+            cluster_repo,
             agent_adapter,
+        }
+    }
+
+    async fn cleanup_dead_nodes(&self) {
+        info!("Running dead node cleanup...");
+        match self.cluster_repo.list_all_nodes().await {
+            Ok(nodes) => {
+                for node in nodes {
+                    let since_heartbeat = Utc::now() - node.heartbeat_timestamp;
+                    if since_heartbeat > chrono::Duration::seconds(90) {
+                        info!("Found dead node {}. Cleaning up.", node.id);
+
+                        if let Some(job_id) = node.assigned_job_id {
+                            info!("Re-queueing job {} from dead node {}", job_id, node.id);
+                            if let Err(e) = self.job_repo.reset_job_status(&job_id).await {
+                                error!("Failed to re-queue job {}: {}", job_id, e);
+                            }
+                        }
+
+                        if let Err(e) = self.cluster_repo.delete_cluster_node(&node.id).await {
+                            error!("Failed to delete dead node {}: {}", node.id, e);
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                error!("Failed to list nodes for cleanup: {}", e);
+            }
         }
     }
 
     pub async fn run_cycle(&self) {
         info!("Starting scheduler cycle");
+
+        self.cleanup_dead_nodes().await;
 
         let queues = match self.queue_repo.get_all_queues_sorted().await {
             Ok(q) => q,

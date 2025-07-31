@@ -148,6 +148,22 @@ impl ClusterRepository for PostgresClusterRepository {
         Ok(())
     }
 
+    async fn list_all_nodes(&self) -> Result<Vec<ClusterNode>, ClusterRepositoryError> {
+        let records = sqlx::query_as!(
+            ClusterNodeRecord,
+            r#"
+            SELECT node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfigurationRecord", gpu as "gpu: GpuConfigurationRecord", created_at, updated_at, assigned_job_id, reported_job_id
+            FROM cluster_nodes
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+
+        let nodes: Vec<ClusterNode> = records.into_iter().map(|r| r.into()).collect();
+        Ok(nodes)
+    }
+
     async fn list_cluster_nodes(
         &self,
         id: &ClusterId,
