@@ -15,12 +15,15 @@ use crate::{
             models::{ClusterId, NodeId, UpdateNodeStatusRequest},
             service::ClusterService,
         },
+        training_job::service::TrainingJobService,
         user::models::NewApiKey,
     },
     inbound::http::{
         errors::ApiError,
         routes::clusters::models::{
-            CreateClusterHttpRequest, CreateClusterHttpResponse, GetClusterDetailsHttpResponse, GetClusterHttpResponse, HttpApiKey, HttpClusterNodeDetails, HttpClusterNodeHeartbeat, ListClusterNodesHttpResponse, ListClustersHttpResponse
+            CreateClusterHttpRequest, CreateClusterHttpResponse, GetClusterDetailsHttpResponse,
+            GetClusterHttpResponse, HttpApiKey, HttpHeartbeatResponse, HttpClusterNodeHeartbeat,
+            HttpJobDetails, ListClusterNodesHttpResponse, ListClustersHttpResponse,
         },
     },
 };
@@ -114,14 +117,15 @@ pub async fn list_api_keys(
 pub async fn cluster_node_heartbeat(
     Path(node_id): Path<NodeId>,
     State(cluster_service): State<Arc<dyn ClusterService>>,
+    State(training_job_service): State<Arc<dyn TrainingJobService>>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(req): Json<HttpClusterNodeHeartbeat>,
-) -> Result<Json<HttpClusterNodeDetails>, ApiError> {
+) -> Result<Json<HttpHeartbeatResponse>, ApiError> {
     let cluster = cluster_service
         .authenticate_by_api_key(&SecretString::from(auth.token().to_string()))
         .await?;
 
-    let _resp = cluster_service
+    let node = cluster_service
         .update_node_status(UpdateNodeStatusRequest {
             node_id,
             cluster_id: cluster.id,
@@ -133,7 +137,16 @@ pub async fn cluster_node_heartbeat(
             job_info: req.job_info,
         })
         .await?;
-    Ok(Json(HttpClusterNodeDetails {})) // TODO: reply with job assignment info
+
+    let assigned_job = if let Some(job_id) = node.assigned_job_id {
+        let job_details = training_job_service.get_training_job_by_id(&job_id).await?;
+        cluster_service.clear_assigned_job_id(&node.id).await?;
+        Some(HttpJobDetails::from(job_details))
+    } else {
+        None
+    };
+
+    Ok(Json(HttpHeartbeatResponse { assigned_job }))
 }
 
 #[axum::debug_handler(state = AppState)]

@@ -44,6 +44,7 @@ pub trait ClusterRepository: Send + Sync {
         req: &UpdateNodeStatusRequest,
     ) -> Result<ClusterNode, ClusterRepositoryError>;
     async fn delete_cluster_node(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError>;
+    async fn clear_assigned_job_id(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError>;
 }
 
 #[derive(Debug, Error)]

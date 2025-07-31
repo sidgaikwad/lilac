@@ -50,6 +50,10 @@ pub trait TrainingJobService: Send + Sync {
         id: &JobId,
         status: TrainingJobStatus,
     ) -> Result<(), TrainingJobServiceError>;
+    async fn get_training_job_by_id(
+        &self,
+        id: &JobId,
+    ) -> Result<TrainingJob, TrainingJobServiceError>;
     async fn mark_as_starting(
         &self,
         id: &JobId,
@@ -108,6 +112,13 @@ impl TrainingJobService for TrainingJobServiceImpl {
         status: TrainingJobStatus,
     ) -> Result<(), TrainingJobServiceError> {
         Ok(self.repository.update_status(id, status).await?)
+    }
+
+    async fn get_training_job_by_id(
+        &self,
+        id: &JobId,
+    ) -> Result<TrainingJob, TrainingJobServiceError> {
+        Ok(self.repository.get_training_job_by_id(id).await?)
     }
 
     async fn mark_as_starting(

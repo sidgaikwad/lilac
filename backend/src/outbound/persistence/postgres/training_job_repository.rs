@@ -216,4 +216,27 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
         // a separate logging service, or another table.
         todo!("TODO: Implement log posting");
     }
+    async fn get_training_job_by_id(
+        &self,
+        id: &JobId,
+    ) -> Result<TrainingJob, TrainingJobRepositoryError> {
+        let record = sqlx::query_as!(
+            TrainingJobRecord,
+            r#"
+            SELECT id, name, definition, status AS "status: TrainingJobStatusRecord", node_id, queue_id,
+                   resource_requirements, created_at, updated_at
+            FROM training_jobs
+            WHERE id = $1
+            "#,
+            id.0
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => TrainingJobRepositoryError::NotFound(id.0.to_string()),
+            _ => TrainingJobRepositoryError::Unknown(anyhow::anyhow!(e)),
+        })?;
+
+        Ok(record.try_into()?)
+    }
 }

@@ -5,7 +5,7 @@ use crate::domain::{
     cluster::models::{
         Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterId, ClusterJobStats, ClusterMemoryStats, ClusterNode, Cpu, CreateClusterRequest, Gpu, JobInfo, NodeId, NodeStatus
     },
-    user::models::{ApiKey, ApiKeyId},
+    training_job::models::TrainingJob, user::models::{ApiKey, ApiKeyId},
 };
 
 #[derive(serde::Serialize)]
@@ -112,7 +112,24 @@ pub struct HttpClusterNodeHeartbeat {
 
 /// The body of a [Cluster] list response.
 #[derive(Clone, Debug, Serialize)]
-pub struct HttpClusterNodeDetails {}
+pub struct HttpJobDetails {
+    pub id: String,
+    pub docker_uri: String,
+}
+
+impl From<TrainingJob> for HttpJobDetails {
+    fn from(job: TrainingJob) -> Self {
+        Self {
+            id: job.id.to_string(),
+            docker_uri: job.definition,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct HttpHeartbeatResponse {
+    pub assigned_job: Option<HttpJobDetails>,
+}
 
 /// The body of a [ClusterNode] get request.
 #[derive(Debug, Clone, Serialize)]

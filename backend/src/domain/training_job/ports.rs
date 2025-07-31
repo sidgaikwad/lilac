@@ -26,6 +26,10 @@ pub trait TrainingJobRepository: Send + Sync {
         &self,
         queue_id: &QueueId,
     ) -> Result<Vec<TrainingJob>, TrainingJobRepositoryError>;
+    async fn get_training_job_by_id(
+        &self,
+        id: &JobId,
+    ) -> Result<TrainingJob, TrainingJobRepositoryError>;
     async fn update_status(
         &self,
         id: &JobId,

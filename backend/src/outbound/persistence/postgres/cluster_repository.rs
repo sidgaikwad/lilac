@@ -429,6 +429,17 @@ impl ClusterRepository for PostgresClusterRepository {
         Ok(())
     }
 
+    async fn clear_assigned_job_id(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError> {
+        sqlx::query!(
+            "UPDATE cluster_nodes SET assigned_job_id = NULL WHERE node_id = $1",
+            node_id.0
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+
+        Ok(())
+    }
 }
 
 #[async_trait]

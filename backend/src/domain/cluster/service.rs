@@ -105,6 +105,7 @@ pub trait ClusterService: Send + Sync {
         &self,
         cluster_id: &ClusterId,
     ) -> Result<Vec<ApiKey>, ClusterServiceError>;
+    async fn clear_assigned_job_id(&self, node_id: &super::models::NodeId) -> Result<(), ClusterServiceError>;
 }
 
 #[derive(Clone)]
@@ -248,5 +249,9 @@ impl<R: ClusterRepository + ClusterApiKeyRepository> ClusterService for ClusterS
             .cluster_repo
             .list_api_keys_for_cluster(cluster_id)
             .await?)
+    }
+    async fn clear_assigned_job_id(&self, node_id: &super::models::NodeId) -> Result<(), ClusterServiceError> {
+        self.cluster_repo.clear_assigned_job_id(node_id).await?;
+        Ok(())
     }
 }
