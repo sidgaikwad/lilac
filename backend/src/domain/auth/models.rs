@@ -1,7 +1,4 @@
-use axum::{
-    extract::FromRequestParts,
-    http::request::Parts,
-};
+use axum::{extract::FromRequestParts, http::request::Parts};
 use serde::{Deserialize, Serialize};
 
 use headers::{authorization::Bearer, Authorization, HeaderMapExt};

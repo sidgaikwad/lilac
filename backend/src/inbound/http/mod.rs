@@ -133,10 +133,7 @@ impl HttpServer {
                             .on_response(DefaultOnResponse::new().level(Level::INFO))
                             .on_failure(DefaultOnFailure::new().level(Level::ERROR)),
                     )
-                    .layer(SetRequestIdLayer::new(
-                        X_REQUEST_ID.clone(),
-                        UuidRequestId,
-                    ))
+                    .layer(SetRequestIdLayer::new(X_REQUEST_ID.clone(), UuidRequestId))
                     .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
                     .layer(session_layer),
             )

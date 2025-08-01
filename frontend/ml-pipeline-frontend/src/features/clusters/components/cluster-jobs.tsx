@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/common/card';
 import { Status, StatusProps } from '@/components/common/status';
 import { toast } from '@/components/toast';
-import { useGetClusterJobs } from '@/services/clusters/get-cluster-jobs.query';
 import { useCancelTrainingJob } from '@/services/training-jobs/cancel-training-job.mutation';
+import { useListClusterJobs } from '@/services';
 import { ClusterJob } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { startCase } from 'lodash';
@@ -120,7 +120,7 @@ export interface ClusterJobsProps {
 }
 
 export function ClusterJobs(props: ClusterJobsProps) {
-  const { data: jobs, isLoading } = useGetClusterJobs({
+  const { data: jobs, isLoading } = useListClusterJobs({
     clusterId: props.clusterId,
     onError: (error) =>
       toast.error('Error', {

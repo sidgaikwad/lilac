@@ -1,8 +1,8 @@
 use crate::domain::{
     cluster::models::{
-        Architecture, Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats,
-        ClusterJobStats, ClusterMemoryStats, ClusterNode, Cpu, CpuManufacturer, Gpu,
-        GpuManufacturer, GpuModel, NodeStatus,
+        Architecture, Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterJobStats,
+        ClusterMemoryStats, ClusterNode, Cpu, CpuManufacturer, Gpu, GpuManufacturer, GpuModel,
+        NodeStatus,
     },
     training_job::models::TrainingJob,
     training_job::models::TrainingJobStatus,

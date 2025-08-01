@@ -17,6 +17,7 @@ use crate::{
 #[derive(serde::Serialize)]
 pub struct HttpApiKey {
     pub id: ApiKeyId,
+    pub cluster_id: ClusterId,
     pub prefix: String,
     pub created_at: DateTime<Utc>,
     pub last_used_at: Option<DateTime<Utc>>,
@@ -27,6 +28,7 @@ impl From<ApiKey> for HttpApiKey {
     fn from(key: ApiKey) -> Self {
         Self {
             id: key.id,
+            cluster_id: key.cluster_id.unwrap_or_default(),
             prefix: key.prefix,
             created_at: key.created_at,
             last_used_at: key.last_used_at,

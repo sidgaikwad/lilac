@@ -13,7 +13,6 @@ use kube::{
 use tower::ServiceBuilder;
 use tower_http::BoxError;
 
-
 pub const DEFAULT_CONNECT_TIMEOUT: Duration = Duration::from_secs(30);
 pub const DEFAULT_READ_TIMEOUT: Duration = Duration::from_secs(295);
 pub const DEFAULT_WRITE_TIMEOUT: Duration = Duration::from_secs(295);

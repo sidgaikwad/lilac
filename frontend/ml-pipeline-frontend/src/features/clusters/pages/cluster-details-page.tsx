@@ -14,6 +14,7 @@ import { ClusterOverview } from '../components/cluster-overview';
 import { getClusterInfoQuery } from '@/services/clusters/get-cluster-info.query';
 import { ClusterJobs } from '../components/cluster-jobs';
 import { useEffect } from 'react';
+import { ClusterApiKeys } from '../components/cluster-api-keys';
 
 function ClusterDetailsPage() {
   const location = useLocation();
@@ -64,12 +65,16 @@ function ClusterDetailsPage() {
           <TabsList className='max-w-[400px]'>
             <TabsTrigger value='overview'>Overview</TabsTrigger>
             <TabsTrigger value='jobs'>Jobs</TabsTrigger>
+            <TabsTrigger value='keys'>API Keys</TabsTrigger>
           </TabsList>
           <TabsContent value='overview'>
             <ClusterOverview cluster={cluster} />
           </TabsContent>
           <TabsContent value='jobs'>
             <ClusterJobs clusterId={clusterId} />
+          </TabsContent>
+          <TabsContent value='keys'>
+            <ClusterApiKeys clusterId={clusterId} />
           </TabsContent>
         </Tabs>
       </ContainerContent>

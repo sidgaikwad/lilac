@@ -8,12 +8,6 @@ import { camelCaseObject, snakeCaseObject } from '@/lib/utils';
 export interface CreateClusterRequest {
   clusterName: string;
   clusterDescription?: string;
-  clusterConfig: {
-    clusterType: 'aws_eks';
-    clusterName: string;
-    region: string;
-  };
-  credentialId: string;
 }
 
 export interface CreateClusterResponse {

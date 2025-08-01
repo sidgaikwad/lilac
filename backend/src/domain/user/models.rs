@@ -5,46 +5,9 @@ use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::domain::cluster::models::ClusterId;
+use crate::{domain::cluster::models::ClusterId, identifier};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct UserId(Uuid);
-
-impl UserId {
-    pub fn new(id: Uuid) -> Self {
-        Self(id)
-    }
-
-    pub fn generate() -> Self {
-        Self(Uuid::new_v4())
-    }
-
-    pub fn inner(&self) -> &Uuid {
-        &self.0
-    }
-
-    pub fn into_inner(self) -> Uuid {
-        self.0
-    }
-}
-
-impl Display for UserId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl From<Uuid> for UserId {
-    fn from(id: Uuid) -> Self {
-        Self(id)
-    }
-}
-
-impl From<UserId> for Uuid {
-    fn from(id: UserId) -> Self {
-        id.0
-    }
-}
+identifier!(UserId);
 
 #[derive(Clone, Debug)]
 pub struct User {

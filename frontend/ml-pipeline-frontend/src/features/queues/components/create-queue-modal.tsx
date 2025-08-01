@@ -12,16 +12,28 @@ import {
   CreateQueueForm,
   CreateQueueFormValues,
 } from '../forms/create-queue-form';
+import { toast } from '@/components/toast';
+import { useState } from 'react';
 
 export function CreateQueueModal() {
-  const createQueueMutation = useCreateQueue({});
+  const [open, setOpen] = useState(false);
+  const createQueueMutation = useCreateQueue({
+    onSuccess: (_data) => {
+      toast.success('Successfully created queue!');
+      setOpen(false);
+    },
+    onError: (error) =>
+      toast.error('Error', {
+        description: error.error,
+      }),
+  });
 
   const onSubmit = (values: CreateQueueFormValues) => {
     createQueueMutation.mutate(values);
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>Create Queue</Button>
       </DialogTrigger>

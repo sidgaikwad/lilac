@@ -28,11 +28,11 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
         sqlx::query!(
             "INSERT INTO training_jobs (id, name, definition, status, queue_id, resource_requirements, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-            training_job.id.0,
+            training_job.id.inner(),
             training_job.name,
             training_job.definition,
             TrainingJobStatusRecord::from(training_job.status.clone()) as _,
-            training_job.queue_id.map(|q| q.0),
+            training_job.queue_id.map(|q| q.into_inner()),
             &serde_json::to_value(&training_job.resource_requirements).map_err(|e| anyhow::anyhow!(e))?,
             training_job.created_at,
             training_job.updated_at,
@@ -83,13 +83,13 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
 
     async fn update_status(
         &self,
-        id: &JobId,
+        job_id: &JobId,
         status: TrainingJobStatus,
     ) -> Result<(), TrainingJobRepositoryError> {
         sqlx::query!(
             "UPDATE training_jobs SET status = $1 WHERE id = $2",
             TrainingJobStatusRecord::from(status) as _,
-            id.0
+            job_id.inner()
         )
         .execute(&self.pool)
         .await
@@ -100,13 +100,13 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
 
     async fn mark_as_starting(
         &self,
-        id: &JobId,
+        job_id: &JobId,
         node_id: &NodeId,
     ) -> Result<(), TrainingJobRepositoryError> {
         sqlx::query!(
             "UPDATE training_jobs SET status = 'starting', node_id = $1 WHERE id = $2",
-            node_id.0,
-            id.0
+            node_id.inner(),
+            job_id.inner()
         )
         .execute(&self.pool)
         .await
@@ -129,7 +129,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
             WHERE status = 'queued' AND queue_id = $1
             ORDER BY created_at ASC
             "#,
-            queue_id.0,
+            queue_id.inner(),
         )
         .fetch_all(&self.pool)
         .await
@@ -154,7 +154,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
 
     async fn get_training_job_by_id(
         &self,
-        id: &JobId,
+        job_id: &JobId,
     ) -> Result<TrainingJob, TrainingJobRepositoryError> {
         let record = sqlx::query_as!(
             TrainingJobRecord,
@@ -164,12 +164,12 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
             FROM training_jobs
             WHERE id = $1
             "#,
-            id.0
+            job_id.inner()
         )
         .fetch_one(&self.pool)
         .await
         .map_err(|e| match e {
-            sqlx::Error::RowNotFound => TrainingJobRepositoryError::NotFound(id.0.to_string()),
+            sqlx::Error::RowNotFound => TrainingJobRepositoryError::NotFound(job_id.to_string()),
             _ => TrainingJobRepositoryError::Unknown(anyhow::anyhow!(e)),
         })?;
 
@@ -179,7 +179,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
     async fn reset_job_status(&self, job_id: &JobId) -> Result<(), TrainingJobRepositoryError> {
         sqlx::query!(
             "UPDATE training_jobs SET status = 'queued', node_id = NULL WHERE id = $1",
-            job_id.0
+            job_id.inner()
         )
         .execute(&self.pool)
         .await

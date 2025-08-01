@@ -57,3 +57,12 @@ export interface ClusterJob {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ClusterApiKey {
+  id: string;
+  clusterId: string;
+  prefix: string;
+  createdAt: string;
+  lastUsedAt?: string;
+  expiresAt?: string;
+}

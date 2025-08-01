@@ -48,7 +48,9 @@ impl From<ClusterServiceError> for ApiError {
             ClusterServiceError::ClusterExists { .. } => {
                 Self::Conflict("Cluster already exists".into())
             }
-            ClusterServiceError::ClusterNotFound(_) => Self::NotFound("Cluster not found".to_string()),
+            ClusterServiceError::ClusterNotFound(_) => {
+                Self::NotFound("Cluster not found".to_string())
+            }
             ClusterServiceError::Unknown(e) => {
                 tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
                 Self::InternalServerError("Something went wrong".to_string())

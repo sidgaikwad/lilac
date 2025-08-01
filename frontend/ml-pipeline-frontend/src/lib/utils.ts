@@ -12,16 +12,21 @@ export function mapObject<T extends object, R>(
   obj: T,
   fn: (v: string) => string
 ): R {
-  return Object.fromEntries(
-    Object.entries(obj).map(([k, v]) => [
-      fn(k),
-      Array.isArray(v)
-        ? v.map((x) => mapObject(x, fn))
-        : Object(v) === v
-          ? mapObject(v, fn)
-          : v,
-    ])
-  ) as R;
+  if (Array.isArray(obj)) {
+    return obj.map((x) => mapObject(x, fn)) as R;
+  } else if (typeof obj === 'object') {
+    return Object.fromEntries(
+      Object.entries(obj).map(([k, v]) => [
+        fn(k),
+        Array.isArray(v)
+          ? v.map((x) => mapObject(x, fn))
+          : Object(v) === v
+            ? mapObject(v, fn)
+            : v,
+      ])
+    ) as R;
+  }
+  return obj;
 }
 
 export function snakeCaseObject<T extends object, Options extends WordsOptions>(

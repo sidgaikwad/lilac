@@ -24,9 +24,7 @@ pub async fn get_current_user(
     claims: Claims,
     State(user_service): State<Arc<dyn UserService>>,
 ) -> Result<Json<GetUserHttpResponse>, ApiError> {
-    let user = user_service
-        .get_user_by_id(&claims.sub)
-        .await?;
+    let user = user_service.get_user_by_id(&claims.sub).await?;
     Ok(Json(user.into()))
 }
 

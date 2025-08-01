@@ -3,10 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    domain::{
-        cluster::models::NodeId,
-        queue::models::QueueId,
-    },
+    domain::{cluster::models::NodeId, queue::models::QueueId},
     identifier,
 };
 

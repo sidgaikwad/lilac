@@ -43,9 +43,7 @@ pub async fn get_dataset(
     State(dataset_service): State<Arc<dyn DatasetService>>,
     Path(dataset_id): Path<DatasetId>,
 ) -> Result<Json<GetDatasetHttpResponse>, ApiError> {
-    let dataset = dataset_service
-        .get_dataset_by_id(&dataset_id)
-        .await?;
+    let dataset = dataset_service.get_dataset_by_id(&dataset_id).await?;
     Ok(Json(dataset.into()))
 }
 

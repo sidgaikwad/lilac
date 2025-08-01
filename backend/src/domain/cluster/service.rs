@@ -123,6 +123,11 @@ pub trait ClusterService: Send + Sync {
         &self,
         cluster_id: &ClusterId,
     ) -> Result<Vec<ApiKey>, ClusterServiceError>;
+    async fn delete_cluster_api_key(
+        &self,
+        cluster_id: &ClusterId,
+        key_id: &ApiKeyId,
+    ) -> Result<(), ClusterServiceError>;
     async fn clear_assigned_job_id(
         &self,
         node_id: &super::models::NodeId,
@@ -269,11 +274,13 @@ impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository> C
         hasher.update(full_key.as_bytes());
         let key_hash = format!("{:x}", hasher.finalize());
 
+        let prefix = full_key[0..API_KEY_PREFIX.len() + 6].to_string();
+
         let api_key = ApiKey {
             id: key_id,
             user_id: None,
             cluster_id: Some(*cluster_id),
-            prefix: API_KEY_PREFIX.to_string(),
+            prefix: prefix.clone(),
             key_hash,
             created_at: Utc::now(),
             last_used_at: None,
@@ -287,7 +294,7 @@ impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository> C
 
         let new_api_key = NewApiKey {
             id: key_id,
-            prefix: API_KEY_PREFIX.to_string(),
+            prefix,
             key: SecretString::from(full_key),
             created_at: api_key.created_at,
         };
@@ -304,6 +311,18 @@ impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository> C
             .list_api_keys_for_cluster(cluster_id)
             .await?)
     }
+
+    async fn delete_cluster_api_key(
+        &self,
+        cluster_id: &ClusterId,
+        key_id: &ApiKeyId,
+    ) -> Result<(), ClusterServiceError> {
+        // make sure cluster exists
+        let _cluster = self.cluster_repo.get_cluster_by_id(cluster_id).await?;
+        self.cluster_repo.delete_api_key(cluster_id, key_id).await?;
+        Ok(())
+    }
+
     async fn clear_assigned_job_id(
         &self,
         node_id: &super::models::NodeId,

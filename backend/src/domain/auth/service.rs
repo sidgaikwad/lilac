@@ -102,7 +102,7 @@ impl AuthService for AuthServiceImpl {
         let token_str = self
             .token_manager
             .create_token(&auth_user)
-            .map_err(|e| AuthServiceError::Unknown(e))?;
+            .map_err(AuthServiceError::Unknown)?;
         Ok(Token::new(token_str))
     }
 

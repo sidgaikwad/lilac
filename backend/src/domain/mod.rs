@@ -22,24 +22,34 @@ where
 macro_rules! identifier {
     ($struct_name:ident) => {
         #[derive(
-            Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+            Clone,
+            Copy,
+            Debug,
+            PartialEq,
+            Eq,
+            PartialOrd,
+            Ord,
+            Hash,
+            Serialize,
+            Deserialize,
+            Default,
         )]
-        pub struct $struct_name(pub Uuid);
+        pub struct $struct_name(uuid::Uuid);
 
         impl $struct_name {
-            pub fn new(id: Uuid) -> Self {
+            pub fn new(id: uuid::Uuid) -> Self {
                 Self(id)
             }
 
             pub fn generate() -> Self {
-                Self(Uuid::new_v4())
+                Self(uuid::Uuid::new_v4())
             }
 
-            pub fn inner(&self) -> &Uuid {
+            pub fn inner(&self) -> &uuid::Uuid {
                 &self.0
             }
 
-            pub fn into_inner(self) -> Uuid {
+            pub fn into_inner(self) -> uuid::Uuid {
                 self.0
             }
         }
@@ -50,13 +60,13 @@ macro_rules! identifier {
             }
         }
 
-        impl From<Uuid> for $struct_name {
-            fn from(id: Uuid) -> Self {
+        impl From<uuid::Uuid> for $struct_name {
+            fn from(id: uuid::Uuid) -> Self {
                 Self(id)
             }
         }
 
-        impl From<$struct_name> for Uuid {
+        impl From<$struct_name> for uuid::Uuid {
             fn from(id: $struct_name) -> Self {
                 id.0
             }
@@ -66,7 +76,7 @@ macro_rules! identifier {
             type Error = uuid::Error;
 
             fn try_from(id: &str) -> Result<Self, Self::Error> {
-                Ok(Self(Uuid::try_parse(id)?))
+                Ok(Self(uuid::Uuid::try_parse(id)?))
             }
         }
     };

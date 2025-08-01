@@ -83,16 +83,16 @@ export function ApiKeysCard() {
                   <TableRow key={key.id}>
                     <TableCell>{key.prefix}</TableCell>
                     <TableCell>
-                      {new Date(key.created_at).toLocaleString()}
+                      {new Date(key.createdAt).toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      {key.expires_at
-                        ? new Date(key.expires_at).toLocaleString()
+                      {key.expiresAt
+                        ? new Date(key.expiresAt).toLocaleString()
                         : 'Never'}
                     </TableCell>
                     <TableCell>
-                      {key.last_used_at
-                        ? new Date(key.last_used_at).toLocaleString()
+                      {key.lastUsedAt
+                        ? new Date(key.lastUsedAt).toLocaleString()
                         : 'Never'}
                     </TableCell>
                     <TableCell>

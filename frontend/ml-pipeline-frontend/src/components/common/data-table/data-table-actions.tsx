@@ -69,7 +69,10 @@ export function DataTableSettings<TData>({
               .filter((column) => column.getCanHide())
               .map((column) => {
                 return (
-                  <div className='flex flex-row items-center gap-2'>
+                  <div
+                    key={column.id}
+                    className='flex flex-row items-center gap-2'
+                  >
                     <Switch
                       key={column.id}
                       checked={column.getIsVisible()}

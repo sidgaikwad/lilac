@@ -1,49 +1,10 @@
-use std::fmt::Display;
 
-use crate::domain::serialize_secret_string;
+use crate::{domain::serialize_secret_string, identifier};
 use chrono::{DateTime, Utc};
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub struct DatasetId(Uuid);
-
-impl DatasetId {
-    pub fn new(id: Uuid) -> Self {
-        Self(id)
-    }
-
-    pub fn generate() -> Self {
-        Self(Uuid::new_v4())
-    }
-
-    pub fn inner(&self) -> &Uuid {
-        &self.0
-    }
-
-    pub fn into_inner(self) -> Uuid {
-        self.0
-    }
-}
-
-impl Display for DatasetId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl From<Uuid> for DatasetId {
-    fn from(id: Uuid) -> Self {
-        Self(id)
-    }
-}
-
-impl From<DatasetId> for Uuid {
-    fn from(id: DatasetId) -> Self {
-        id.0
-    }
-}
+identifier!(DatasetId);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum DatasetSource {

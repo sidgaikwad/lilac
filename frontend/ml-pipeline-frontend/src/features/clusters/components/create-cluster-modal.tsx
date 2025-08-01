@@ -11,7 +11,7 @@ import { useCreateCluster } from '@/services';
 import { toast } from '@/components/toast';
 import {
   CreateClusterForm,
-  ClusterTypeFormValues,
+  ClusterFormValues,
 } from '../forms/create-cluster-form';
 
 export interface CreateClusterModalProps {
@@ -25,12 +25,10 @@ export function CreateClusterModal(props: CreateClusterModalProps) {
     onError: (error) => toast.error(error.error),
   });
 
-  const onSubmit = async (data: ClusterTypeFormValues) => {
+  const onSubmit = async (data: ClusterFormValues) => {
     createCluster({
       clusterName: data.clusterName,
       clusterDescription: data.clusterDescription,
-      clusterConfig: data.clusterConfig,
-      credentialId: data.credentialId,
     });
     props.setOpen(false);
   };

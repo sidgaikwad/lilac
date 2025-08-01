@@ -78,7 +78,7 @@ impl QueueRepository for PostgresQueueRepository {
 
         sqlx::query!(
             "INSERT INTO queues (queue_id, name, priority) VALUES ($1, $2, $3)",
-            queue.id.0,
+            queue.id.inner(),
             queue.name,
             queue.priority
         )
@@ -89,8 +89,8 @@ impl QueueRepository for PostgresQueueRepository {
         for (i, cluster_id) in queue.cluster_targets.iter().enumerate() {
             sqlx::query!(
                 "INSERT INTO queue_cluster_assignments (queue_id, cluster_id, \"order\") VALUES ($1, $2, $3)",
-                queue.id.0,
-                cluster_id.0,
+                queue.id.inner(),
+                cluster_id.inner(),
                 i as i32
             )
             .execute(&mut *tx)
@@ -123,7 +123,7 @@ impl QueueRepository for PostgresQueueRepository {
             GROUP BY
                 q.queue_id;
             "#,
-            queue_id.0,
+            queue_id.inner(),
         )
         .fetch_optional(&self.pool)
         .await
@@ -143,7 +143,7 @@ impl QueueRepository for PostgresQueueRepository {
             "UPDATE queues SET name = $1, priority = $2 WHERE queue_id = $3",
             queue.name,
             queue.priority,
-            queue.id.0
+            queue.id.inner()
         )
         .execute(&mut *tx)
         .await
@@ -151,7 +151,7 @@ impl QueueRepository for PostgresQueueRepository {
 
         sqlx::query!(
             "DELETE FROM queue_cluster_assignments WHERE queue_id = $1",
-            queue.id.0
+            queue.id.inner()
         )
         .execute(&mut *tx)
         .await
@@ -160,8 +160,8 @@ impl QueueRepository for PostgresQueueRepository {
         for (i, cluster_id) in queue.cluster_targets.iter().enumerate() {
             sqlx::query!(
                 "INSERT INTO queue_cluster_assignments (queue_id, cluster_id, \"order\") VALUES ($1, $2, $3)",
-                queue.id.0,
-                cluster_id.0,
+                queue.id.inner(),
+                cluster_id.inner(),
                 i as i32
             )
             .execute(&mut *tx)
@@ -176,8 +176,8 @@ impl QueueRepository for PostgresQueueRepository {
         Ok(())
     }
 
-    async fn delete(&self, queue_id: &QueueId) -> Result<(), QueueRepositoryError> {
-        sqlx::query!("DELETE FROM queues WHERE queue_id = $1", queue_id.0)
+    async fn delete(&self, queue_id: &QueueId) -> Result<(), anyhow::Error> {
+        sqlx::query!("DELETE FROM queues WHERE queue_id = $1", queue_id.inner())
             .execute(&self.pool)
             .await
             .map_err(|e| QueueRepositoryError::Unknown(e.into()))?;

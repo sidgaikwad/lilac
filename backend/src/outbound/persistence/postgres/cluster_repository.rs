@@ -62,12 +62,12 @@ impl ClusterRepository for PostgresClusterRepository {
             FROM clusters
             WHERE cluster_id = $1
             "#,
-            id.0
+            id.inner(),
         )
         .fetch_one(&self.pool)
         .await
         .map_err(|e| match e {
-            sqlx::Error::RowNotFound => ClusterRepositoryError::NotFound(id.0.to_string()),
+            sqlx::Error::RowNotFound => ClusterRepositoryError::NotFound(id.inner().to_string()),
             _ => ClusterRepositoryError::Unknown(anyhow::anyhow!(e)),
         })?;
 
@@ -98,12 +98,12 @@ impl ClusterRepository for PostgresClusterRepository {
             WHERE c.cluster_id = $1
             GROUP BY c.cluster_id;
             "#,
-            id.0
+            id.inner()
         )
         .fetch_one(&self.pool)
         .await
         .map_err(|e| match e {
-            sqlx::Error::RowNotFound => ClusterRepositoryError::NotFound(id.0.to_string()),
+            sqlx::Error::RowNotFound => ClusterRepositoryError::NotFound(id.to_string()),
             _ => ClusterRepositoryError::Unknown(anyhow::anyhow!(e)),
         })?;
 
@@ -137,7 +137,7 @@ impl ClusterRepository for PostgresClusterRepository {
             FROM training_jobs
             WHERE node_id = ANY(SELECT node_id FROM cluster_nodes WHERE cluster_id = $1)
             "#,
-            cluster_id.0,
+            cluster_id.inner(),
         )
         .fetch_all(&self.pool)
         .await
@@ -149,7 +149,7 @@ impl ClusterRepository for PostgresClusterRepository {
     }
 
     async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterRepositoryError> {
-        sqlx::query!("DELETE FROM clusters WHERE cluster_id = $1", id.0)
+        sqlx::query!("DELETE FROM clusters WHERE cluster_id = $1", id.inner())
             .execute(&self.pool)
             .await
             .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
@@ -183,7 +183,7 @@ impl ClusterRepository for PostgresClusterRepository {
             FROM cluster_nodes
             WHERE cluster_id = $1
             "#,
-            id.0,
+            id.inner(),
         )
         .fetch_all(&self.pool)
         .await
@@ -203,7 +203,7 @@ impl ClusterRepository for PostgresClusterRepository {
             FROM cluster_nodes
             WHERE node_id = $1
             "#,
-            id.0,
+            id.inner(),
         )
         .fetch_one(&self.pool)
         .await
@@ -226,13 +226,9 @@ impl ClusterRepository for PostgresClusterRepository {
                     updated_at = NOW()
                 RETURNING node_id, cluster_id, node_status as "node_status: NodeStatusRecord", heartbeat_timestamp, memory_mb, cpu as "cpu: CpuConfigurationRecord", gpu as "gpu: GpuConfigurationRecord", created_at, updated_at, assigned_job_id, reported_job_id;
             "#,
-            req.node_id.0,
-            req.cluster_id.0,
-            NodeStatusRecord::from(if req.job_info.is_some() {
-                NodeStatus::Busy
-            } else {
-                NodeStatus::Available
-            }) as _,
+            req.node_id.inner(),
+            req.cluster_id.inner(),
+            NodeStatusRecord::from(req.status.clone()) as _,
             req.heartbeat_timestamp,
             req.memory_info,
             CpuConfigurationRecord::from(req.cpu_info.clone()) as _,
@@ -241,8 +237,8 @@ impl ClusterRepository for PostgresClusterRepository {
                 .map(GpuConfigurationRecord::from) as _,
             req.job_info
                 .as_ref()
-                .map(|info| info.current_job_id)
-                .map(|id| id.0),
+                .and_then(|info| info.current_job_id)
+                .map(|id| id.into_inner()),
         )
         .fetch_one(&self.pool)
         .await
@@ -250,17 +246,20 @@ impl ClusterRepository for PostgresClusterRepository {
         Ok(record.into())
     }
     async fn delete_cluster_node(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError> {
-        sqlx::query!("DELETE FROM cluster_nodes WHERE node_id = $1", node_id.0)
-            .execute(&self.pool)
-            .await
-            .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+        sqlx::query!(
+            "DELETE FROM cluster_nodes WHERE node_id = $1",
+            node_id.inner()
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
         Ok(())
     }
 
     async fn clear_assigned_job_id(&self, node_id: &NodeId) -> Result<(), ClusterRepositoryError> {
         sqlx::query!(
             "UPDATE cluster_nodes SET assigned_job_id = NULL WHERE node_id = $1",
-            node_id.0
+            node_id.inner()
         )
         .execute(&self.pool)
         .await
@@ -276,15 +275,17 @@ impl ClusterRepository for PostgresClusterRepository {
     ) -> Result<(), ClusterRepositoryError> {
         let result = sqlx::query!(
             "UPDATE cluster_nodes SET assigned_job_id = $1 WHERE node_id = $2",
-            job_id.0,
-            node_id.0
+            job_id.inner(),
+            node_id.inner()
         )
         .execute(&self.pool)
         .await
         .map_err(|e| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
 
         if result.rows_affected() == 0 {
-            return Err(ClusterRepositoryError::NotFound(node_id.0.to_string()));
+            return Err(ClusterRepositoryError::NotFound(
+                node_id.inner().to_string(),
+            ));
         }
 
         Ok(())
@@ -337,6 +338,28 @@ impl ClusterApiKeyRepository for PostgresClusterRepository {
         Ok(record.into())
     }
 
+    async fn get_api_key(
+        &self,
+        cluster_id: &ClusterId,
+        key_id: &ApiKeyId,
+    ) -> Result<ApiKey, ClusterApiKeyRepositoryError> {
+        let record = sqlx::query_as!(
+            ApiKeyRecord,
+            r#"
+            SELECT id, user_id, cluster_id, prefix, key_hash, created_at, last_used_at, expires_at
+            FROM api_keys
+            WHERE cluster_id = $1 AND id = $2
+            "#,
+            cluster_id.inner(),
+            key_id.inner(),
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|err| ClusterApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)))?;
+
+        Ok(record.into())
+    }
+
     async fn list_api_keys_for_cluster(
         &self,
         cluster_id: &ClusterId,
@@ -348,7 +371,7 @@ impl ClusterApiKeyRepository for PostgresClusterRepository {
             FROM api_keys
             WHERE cluster_id = $1
             "#,
-            cluster_id.0
+            cluster_id.inner()
         )
         .fetch_all(&self.pool)
         .await
@@ -357,11 +380,19 @@ impl ClusterApiKeyRepository for PostgresClusterRepository {
         Ok(records.into_iter().map(ApiKey::from).collect())
     }
 
-    async fn delete_api_key(&self, id: &ApiKeyId) -> Result<(), ClusterApiKeyRepositoryError> {
-        let result = sqlx::query!("DELETE FROM api_keys WHERE id = $1", id.inner())
-            .execute(&self.pool)
-            .await
-            .map_err(|err| ClusterApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)))?;
+    async fn delete_api_key(
+        &self,
+        cluster_id: &ClusterId,
+        key_id: &ApiKeyId,
+    ) -> Result<(), ClusterApiKeyRepositoryError> {
+        let result = sqlx::query!(
+            "DELETE FROM api_keys WHERE cluster_id = $1 AND id = $2",
+            cluster_id.inner(),
+            key_id.inner()
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|err| ClusterApiKeyRepositoryError::Unknown(anyhow::anyhow!(err)))?;
 
         if result.rows_affected() == 0 {
             return Err(ClusterApiKeyRepositoryError::NotFound);

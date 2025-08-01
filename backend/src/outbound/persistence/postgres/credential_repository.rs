@@ -35,7 +35,7 @@ impl TryFrom<CredentialRecord> for Credential {
         let credentials: Credentials = serde_json::from_value(record.credentials)?;
 
         Ok(Self {
-            id: CredentialId(record.credential_id),
+            id: record.credential_id.into(),
             name: record.credential_name,
             description: record.credential_description,
             credentials,
@@ -51,12 +51,9 @@ impl CredentialRepository for PostgresCredentialRepository {
         &self,
         req: &CreateCredentialRequest,
     ) -> Result<Credential, CredentialRepositoryError> {
-        let credential_id = CredentialId(uuid::Uuid::new_v4());
-
         let record = sqlx::query_as!(
             CredentialRecord,
-            "INSERT INTO credentials (credential_id, credential_name, credential_description, credentials) VALUES ($1, $2, $3, $4) RETURNING credential_id, credential_name, credential_description, credentials, created_at, updated_at",
-            credential_id.0,
+            "INSERT INTO credentials (credential_name, credential_description, credentials) VALUES ($1, $2, $3) RETURNING credential_id, credential_name, credential_description, credentials, created_at, updated_at",
             req.name,
             req.description,
             serde_json::to_value(&req.credentials)
@@ -80,12 +77,12 @@ impl CredentialRepository for PostgresCredentialRepository {
             FROM credentials
             WHERE credential_id = $1
             "#,
-            id.0
+            id.inner()
         )
         .fetch_one(&self.pool)
         .await
         .map_err(|e| match e {
-            sqlx::Error::RowNotFound => CredentialRepositoryError::NotFound(id.0.to_string()),
+            sqlx::Error::RowNotFound => CredentialRepositoryError::NotFound(id.to_string()),
             _ => CredentialRepositoryError::Unknown(anyhow::anyhow!(e)),
         })?;
 
@@ -117,10 +114,13 @@ impl CredentialRepository for PostgresCredentialRepository {
     }
 
     async fn delete_credential(&self, id: &CredentialId) -> Result<(), CredentialRepositoryError> {
-        sqlx::query!("DELETE FROM credentials WHERE credential_id = $1", id.0)
-            .execute(&self.pool)
-            .await
-            .map_err(|e: sqlx::Error| CredentialRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+        sqlx::query!(
+            "DELETE FROM credentials WHERE credential_id = $1",
+            id.inner()
+        )
+        .execute(&self.pool)
+        .await
+        .map_err(|e: sqlx::Error| CredentialRepositoryError::Unknown(anyhow::anyhow!(e)))?;
         Ok(())
     }
 }

@@ -88,7 +88,7 @@ impl<Q: QueueRepository> QueueService for QueueServiceImpl<Q> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{domain::cluster::models::ClusterId, domain::queue::ports::MockQueueRepository};
+    use crate::domain::{cluster::models::ClusterId, queue::ports::MockQueueRepository};
     use mockall::predicate::eq;
     use std::sync::Arc;
 

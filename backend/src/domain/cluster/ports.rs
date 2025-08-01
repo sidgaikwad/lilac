@@ -72,9 +72,18 @@ pub trait ClusterApiKeyRepository: Send + Sync + 'static {
         &self,
         key_hash: &str,
     ) -> Result<Cluster, ClusterApiKeyRepositoryError>;
+    async fn get_api_key(
+        &self,
+        cluster_id: &ClusterId,
+        key_id: &ApiKeyId,
+    ) -> Result<ApiKey, ClusterApiKeyRepositoryError>;
     async fn list_api_keys_for_cluster(
         &self,
         cluster_id: &ClusterId,
     ) -> Result<Vec<ApiKey>, ClusterApiKeyRepositoryError>;
-    async fn delete_api_key(&self, id: &ApiKeyId) -> Result<(), ClusterApiKeyRepositoryError>;
+    async fn delete_api_key(
+        &self,
+        cluster_id: &ClusterId,
+        key_id: &ApiKeyId,
+    ) -> Result<(), ClusterApiKeyRepositoryError>;
 }

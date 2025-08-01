@@ -10,7 +10,7 @@ async function createApiKey(): Promise<NewApiKey> {
   return {
     id: resp.id,
     prefix: resp.prefix,
-    created_at: resp.created_at,
+    createdAt: resp.createdAt,
     key: resp.key,
   };
 }

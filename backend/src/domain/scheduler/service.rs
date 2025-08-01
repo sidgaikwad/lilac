@@ -4,8 +4,7 @@ use tracing::{error, info};
 
 use crate::{
     domain::{
-        cluster::ports::ClusterRepository,
-        queue::ports::QueueRepository,
+        cluster::ports::ClusterRepository, queue::ports::QueueRepository,
         training_job::ports::TrainingJobRepository,
     },
     outbound::scheduler::agent_adapter::{AgentSchedulerAdapter, AgentSchedulerError},

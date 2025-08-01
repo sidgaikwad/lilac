@@ -12,7 +12,7 @@ export function QueuesPage() {
     <Container className='h-full w-full'>
       <ContainerHeader>
         <ContainerTitle>Queues</ContainerTitle>
-        <ContainerDescription>Manage your job queues.</ContainerDescription>
+        <ContainerDescription></ContainerDescription>
       </ContainerHeader>
       <ContainerContent>
         <QueuesCard />

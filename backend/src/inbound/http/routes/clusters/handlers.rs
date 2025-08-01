@@ -6,7 +6,6 @@ use axum::{
 };
 use chrono::Utc;
 use secrecy::SecretString;
-use uuid::Uuid;
 
 use crate::{
     domain::{
@@ -16,7 +15,7 @@ use crate::{
             service::ClusterService,
         },
         training_job::service::TrainingJobService,
-        user::models::NewApiKey,
+        user::models::{ApiKeyId, NewApiKey},
     },
     inbound::http::{
         errors::ApiError,
@@ -49,9 +48,7 @@ pub async fn get_cluster(
     State(cluster_service): State<Arc<dyn ClusterService>>,
     Path(cluster_id): Path<ClusterId>,
 ) -> Result<Json<GetClusterHttpResponse>, ApiError> {
-    let cluster = cluster_service
-        .get_cluster_by_id(&cluster_id)
-        .await?;
+    let cluster = cluster_service.get_cluster_by_id(&cluster_id).await?;
     Ok(Json(cluster.into()))
 }
 
@@ -61,9 +58,7 @@ pub async fn get_cluster_info(
     State(cluster_service): State<Arc<dyn ClusterService>>,
     Path(cluster_id): Path<ClusterId>,
 ) -> Result<Json<GetClusterDetailsHttpResponse>, ApiError> {
-    let cluster = cluster_service
-        .get_cluster_details(&cluster_id)
-        .await?;
+    let cluster = cluster_service.get_cluster_details(&cluster_id).await?;
     Ok(Json(cluster.into()))
 }
 
@@ -80,9 +75,9 @@ pub async fn list_clusters(
 pub async fn delete_cluster(
     _claims: Claims,
     State(cluster_service): State<Arc<dyn ClusterService>>,
-    Path(cluster_id): Path<Uuid>,
+    Path(cluster_id): Path<ClusterId>,
 ) -> Result<(), ApiError> {
-    cluster_service.delete_cluster(&cluster_id.into()).await?;
+    cluster_service.delete_cluster(&cluster_id).await?;
     Ok(())
 }
 
@@ -101,6 +96,18 @@ pub async fn create_api_key_for_cluster(
         .create_api_key_for_cluster(&cluster_id)
         .await?;
     Ok(Json(new_api_key))
+}
+
+#[axum::debug_handler(state = AppState)]
+pub async fn delete_cluster_api_key(
+    _claims: Claims,
+    State(cluster_service): State<Arc<dyn ClusterService>>,
+    Path((cluster_id, key_id)): Path<(ClusterId, ApiKeyId)>,
+) -> Result<(), ApiError> {
+    cluster_service
+        .delete_cluster_api_key(&cluster_id, &key_id)
+        .await?;
+    Ok(())
 }
 
 #[axum::debug_handler(state = AppState)]
@@ -154,9 +161,7 @@ pub async fn list_cluster_nodes(
     State(cluster_service): State<Arc<dyn ClusterService>>,
     Path(cluster_id): Path<ClusterId>,
 ) -> Result<Json<ListClusterNodesHttpResponse>, ApiError> {
-    let cluster_nodes = cluster_service
-        .list_cluster_nodes(&cluster_id)
-        .await?;
+    let cluster_nodes = cluster_service.list_cluster_nodes(&cluster_id).await?;
     Ok(Json(cluster_nodes.into()))
 }
 
@@ -166,8 +171,6 @@ pub async fn list_cluster_jobs(
     State(cluster_service): State<Arc<dyn ClusterService>>,
     Path(cluster_id): Path<ClusterId>,
 ) -> Result<Json<ListClusterJobsHttpResponse>, ApiError> {
-    let jobs = cluster_service
-        .list_cluster_jobs(&cluster_id)
-        .await?;
+    let jobs = cluster_service.list_cluster_jobs(&cluster_id).await?;
     Ok(Json(jobs.into()))
 }

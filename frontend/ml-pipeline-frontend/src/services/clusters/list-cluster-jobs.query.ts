@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 import { camelCaseObject } from '@/lib/utils';
 
-export interface GetClusterJobsResponse {
+export interface ListClusterJobsResponse {
   clusterJobs: {
     jobId: string;
     jobName: string;
@@ -19,37 +19,37 @@ export interface GetClusterJobsResponse {
   }[];
 }
 
-export async function getClusterJobs(
+export async function listClusterJobs(
   clusterId: string
-): Promise<GetClusterJobsResponse> {
-  const resp = await getHttp<Sn<GetClusterJobsResponse>>(
+): Promise<ListClusterJobsResponse> {
+  const resp = await getHttp<Sn<ListClusterJobsResponse>>(
     `/clusters/${clusterId}/jobs`
   );
   return camelCaseObject(resp);
 }
 
-export function getClusterJobsQuery(
+export function listClusterJobsQuery(
   clusterId?: string,
   enabled: boolean = true
 ) {
   return queryOptions({
     queryKey: [QueryKeys.GET_CLUSTER_JOBS, clusterId],
-    queryFn: () => getClusterJobs(clusterId!),
+    queryFn: () => listClusterJobs(clusterId!),
     enabled: !!clusterId && enabled,
     staleTime: 1000 * 60 * 5,
     select: (data) => data.clusterJobs as ClusterJob[],
   });
 }
 
-interface UseGetClusterProps {
+interface UseListClusterProps {
   clusterId: string | undefined;
   enabled?: boolean;
   onSuccess?: (jobs: ClusterJob[]) => void;
   onError?: (error: ServiceError) => void;
 }
 
-export function useGetClusterJobs(props: UseGetClusterProps) {
-  const query = useQuery(getClusterJobsQuery(props.clusterId, props.enabled));
+export function useListClusterJobs(props: UseListClusterProps) {
+  const query = useQuery(listClusterJobsQuery(props.clusterId, props.enabled));
 
   useEffect(() => {
     if (props?.onSuccess && query.data !== undefined) {
