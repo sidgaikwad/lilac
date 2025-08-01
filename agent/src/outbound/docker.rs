@@ -61,8 +61,17 @@ impl JobExecutor for DockerExecutor {
             }
         }
 
-        // 2. Create the container.
+        // 2. Clean up any old container with the same name, just in case.
         let container_name = format!("lilac-job-{}", job_details.id);
+        let remove_options = Some(RemoveContainerOptions {
+            force: true,
+            ..Default::default()
+        });
+        // We don't care if this fails, it just means the container didn't exist.
+        let _ = self.docker.remove_container(&container_name, remove_options).await;
+
+
+        // 3. Create the container.
         let options = Some(CreateContainerOptions {
             name: container_name.clone(),
             ..Default::default()
