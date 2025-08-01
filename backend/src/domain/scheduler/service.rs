@@ -44,9 +44,16 @@ impl SchedulerService {
                         info!("Found dead node {}. Cleaning up.", node.id);
 
                         if let Some(job_id) = node.assigned_job_id {
-                            info!("Re-queueing job {} from dead node {}", job_id, node.id);
+                            info!("Re-queueing assigned job {} from dead node {}", job_id, node.id);
                             if let Err(e) = self.job_repo.reset_job_status(&job_id).await {
-                                error!("Failed to re-queue job {}: {}", job_id, e);
+                                error!("Failed to re-queue assigned job {}: {}", job_id, e);
+                            }
+                        }
+
+                        if let Some(job_id) = node.reported_job_id {
+                            info!("Re-queueing reported job {} from dead node {}", job_id, node.id);
+                            if let Err(e) = self.job_repo.reset_job_status(&job_id).await {
+                                error!("Failed to re-queue reported job {}: {}", job_id, e);
                             }
                         }
 
