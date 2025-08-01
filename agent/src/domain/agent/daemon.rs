@@ -3,7 +3,7 @@ use std::time::Duration;
 use tokio::time;
 use uuid::Uuid;
 
-use crate::domain::agent::models::{HeartbeatRequest, JobInfo, JobStatus, NodeStatus};
+use crate::domain::agent::models::{HeartbeatRequest, JobInfo, NodeStatus};
 use crate::domain::agent::ports::{ControlPlaneApi, JobExecutor, SystemMonitor};
 
 pub struct Daemon<C, S, J>

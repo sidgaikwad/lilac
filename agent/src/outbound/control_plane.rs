@@ -2,20 +2,20 @@ use async_trait::async_trait;
 use reqwest::Client;
 use uuid::Uuid;
 
-use crate::config::Config;
+use crate::config::AgentConfig;
 use crate::domain::agent::{
-    models::{HeartbeatRequest, HeartbeatResponse, JobDetails, JobStatus, NodeResources, NodeStatus},
+    models::{HeartbeatRequest, HeartbeatResponse, JobDetails},
     ports::ControlPlaneApi,
 };
 
 #[derive(Clone)]
 pub struct ControlPlaneClient {
     client: Client,
-    config: Config,
+    config: AgentConfig,
 }
 
 impl ControlPlaneClient {
-    pub fn new(config: Config) -> Self {
+    pub fn new(config: AgentConfig) -> Self {
         Self {
             client: Client::new(),
             config,
@@ -26,11 +26,7 @@ impl ControlPlaneClient {
 #[async_trait]
 impl ControlPlaneApi for ControlPlaneClient {
     async fn send_heartbeat(&self, node_id: Uuid, req: HeartbeatRequest) -> anyhow::Result<HeartbeatResponse> {
-        let api_key = self
-            .config
-            .api_key
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("API key is not configured"))?;
+        let api_key = &self.config.cluster_api_key;
 
         let url = format!("{}/node/{}/status", self.config.api_endpoint, node_id);
         let response = self
@@ -53,11 +49,7 @@ impl ControlPlaneApi for ControlPlaneClient {
     }
 
     async fn get_job_details(&self, job_id: Uuid) -> anyhow::Result<JobDetails> {
-        let api_key = self
-            .config
-            .api_key
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("API key is not configured"))?;
+        let api_key = &self.config.cluster_api_key;
 
         let url = format!("{}/jobs/{}/details", self.config.api_endpoint, job_id);
         let response = self

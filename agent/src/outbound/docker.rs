@@ -4,22 +4,26 @@ use bollard::container::{
     WaitContainerOptions,
 };
 use bollard::image::CreateImageOptions;
-use bollard::Docker;
+use bollard::{auth::DockerCredentials, Docker};
 use futures_util::stream::StreamExt;
 
-use crate::domain::agent::{models::JobDetails, ports::JobExecutor};
+use crate::{
+    config::AgentConfig,
+    domain::agent::{models::JobDetails, ports::JobExecutor},
+};
 
 #[derive(Clone)]
 pub struct DockerExecutor {
     docker: Docker,
+    config: AgentConfig,
 }
 
 impl DockerExecutor {
-    pub fn new() -> anyhow::Result<Self> {
+    pub fn new(config: AgentConfig) -> anyhow::Result<Self> {
         // Connect to the local Docker daemon.
         // This will fail if Docker is not running.
         let docker = Docker::connect_with_local_defaults()?;
-        Ok(Self { docker })
+        Ok(Self { docker, config })
     }
 }
 
@@ -30,13 +34,24 @@ impl JobExecutor for DockerExecutor {
         println!("[DOCKER] Pulling image: {}", job_details.docker_uri);
 
         // 1. Pull the Docker image.
+        let credentials = if let Some(private_registry) = &self.config.private_registry {
+            Some(DockerCredentials {
+                serveraddress: Some(private_registry.registry_url.clone()),
+                username: Some(private_registry.username.clone()),
+                password: Some(private_registry.secret.clone()),
+                ..Default::default()
+            })
+        } else {
+            None
+        };
+
         let mut stream = self.docker.create_image(
             Some(CreateImageOptions {
                 from_image: job_details.docker_uri.clone(),
                 ..Default::default()
             }),
             None,
-            None,
+            credentials,
         );
 
         while let Some(result) = stream.next().await {
@@ -55,7 +70,6 @@ impl JobExecutor for DockerExecutor {
 
         let config = Config {
             image: Some(job_details.docker_uri.clone()),
-            cmd: Some(vec!["echo".to_string(), "Hello from Alpine!".to_string()]),
             ..Default::default()
         };
 

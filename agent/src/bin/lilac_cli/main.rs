@@ -7,20 +7,26 @@ use lilac_cli::config;
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    let config = config::load()?;
-
     match &cli.command {
         Commands::Submit => {
+            let config = config::load_user_config()?;
             handlers::submit_job(config).await?;
         }
         Commands::Configure => {
-            handlers::configure_lilac(config).await?;
+            let config = config::load_user_config()?;
+            handlers::configure_user(config).await?;
         }
-        Commands::Agent(args) => match &args.command {
-            AgentCommands::Start => {
-                handlers::start_agent(config).await?;
+        Commands::Agent(args) => {
+            let config = config::load_agent_config()?;
+            match &args.command {
+                AgentCommands::Start => {
+                    handlers::start_agent(config).await?;
+                }
+                AgentCommands::Configure => {
+                    handlers::configure_agent(config).await?;
+                }
             }
-        },
+        }
     }
 
     Ok(())

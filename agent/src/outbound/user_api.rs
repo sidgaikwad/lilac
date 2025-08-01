@@ -1,6 +1,6 @@
 use reqwest::{Client, RequestBuilder};
 use serde::{Deserialize, Serialize};
-use crate::config::Config;
+use crate::config::UserConfig;
 
 
 #[derive(Serialize, Debug)]
@@ -43,11 +43,11 @@ pub struct Queue {
 #[derive(Clone)]
 pub struct ApiClient {
     client: Client,
-    config: Config,
+    config: UserConfig,
 }
 
 impl ApiClient {
-    pub fn new(config: Config) -> Self {
+    pub fn new(config: UserConfig) -> Self {
         Self {
             client: Client::new(),
             config,

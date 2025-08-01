@@ -11,7 +11,7 @@ pub struct Cli {
 pub enum Commands {
     /// Interactively submit a new training job
     Submit,
-    /// Configure the Lilac CLI
+    /// Configure the Lilac CLI for submitting jobs
     Configure,
     /// Commands for the Lilac agent daemon
     Agent(AgentArgs),
@@ -27,4 +27,6 @@ pub struct AgentArgs {
 pub enum AgentCommands {
     /// Start the agent daemon
     Start,
+    /// Configure the Lilac agent
+    Configure,
 }
