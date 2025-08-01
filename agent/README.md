@@ -109,3 +109,16 @@ Environment variables override settings from the configuration files.
 | `LILAC_PRIVATE_REGISTRY_URL`      | URL of the private Docker registry.        | Agent       |
 | `LILAC_PRIVATE_REGISTRY_USERNAME` | Username for the private registry.         | Agent       |
 | `LILAC_PRIVATE_REGISTRY_PASSWORD` | Password or token for the private registry.| Agent       |
+
+---
+
+## Known Limitations
+
+### Resource Reporting
+
+The agent's resource discovery mechanism is designed to be accurate in the most common deployment scenarios. However, there are some nuances to be aware of:
+
+*   **Linux Containers**: When running in a Linux container with resource limits, the agent will correctly report the container's allocated memory and CPU by reading from the `cgroup` filesystem.
+*   **Bare-Metal (Linux, macOS, Windows)**: When running directly on a host machine, the agent will report the total resources of that machine.
+*   **Docker Desktop (macOS)**: When running in a non-linux container on Docker Desktop for Mac, the agent will report the resources of the Docker VM (e.g., 8GB RAM, 8 Cores by default), not the entire Mac's resources.
+*   **Windows Containers**: When running in a non-linux Windows container with resource limits, the agent will fall back to reporting the host's total resources. This is an unsupported configuration, and for accurate scheduling, the agent should be run in a Linux container.

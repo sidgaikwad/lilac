@@ -14,7 +14,7 @@ pub async fn start_agent(config: config::AgentConfig) -> Result<()> {
 
     // 1. Initialize all the adapters.
     let control_plane_client = outbound::control_plane::ControlPlaneClient::new(config.clone());
-    let system_monitor = outbound::system::SysinfoMonitor::new();
+    let system_monitor = outbound::system::HybridMonitor::new();
     let docker_executor = outbound::docker::DockerExecutor::new(config.clone())?;
 
     // 2. Initialize and run the daemon.
@@ -117,7 +117,6 @@ pub async fn submit_job(config: config::UserConfig) -> Result<()> {
 
     let name: String = Input::with_theme(&theme)
         .with_prompt("What would you like to name this job?")
-        .with_initial_text("my-training-run")
         .interact_text()?;
 
     let docker_uri: String = Input::with_theme(&theme)
@@ -135,14 +134,12 @@ pub async fn submit_job(config: config::UserConfig) -> Result<()> {
 
     let selected_queue = &queues[queue_selection];
 
-    let cpu: i32 = Input::with_theme(&theme)
+    let requested_cpu: i32 = Input::with_theme(&theme)
         .with_prompt("How much CPU do you need (in millicores)?")
-        .with_initial_text("1000")
         .interact_text()?;
 
-    let memory: i32 = Input::with_theme(&theme)
+    let requested_memory: i32 = Input::with_theme(&theme)
         .with_prompt("How much Memory (in MB)?")
-        .with_initial_text("4096")
         .interact_text()?;
 
     let gpu_required = Confirm::with_theme(&theme)
@@ -188,8 +185,8 @@ pub async fn submit_job(config: config::UserConfig) -> Result<()> {
         "- Queue: {} ({})",
         selected_queue.name, selected_queue.id
     );
-    println!("- CPU: {}m", cpu);
-    println!("- Memory: {}MB", memory);
+    println!("- CPU: {}m", requested_cpu);
+    println!("- Memory: {}MB", requested_memory);
     if let Some(count) = gpu_count {
         let model_str = gpu_model.as_deref().unwrap_or("any");
         let memory_str = gpu_memory_gb.map_or("".to_string(), |mem| format!(" ({}GB VRAM)", mem));
@@ -221,8 +218,8 @@ pub async fn submit_job(config: config::UserConfig) -> Result<()> {
         definition: docker_uri,
         queue_id: selected_queue.id.clone(),
         resource_requirements: ResourceRequirements {
-            cpu_millicores: cpu,
-            memory_mb: memory,
+            cpu_millicores: requested_cpu,
+            memory_mb: requested_memory,
             gpus,
         },
     };

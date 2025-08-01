@@ -69,14 +69,20 @@ impl ApiClient {
         let req_builder = self.client.post(&url).json(&request);
         let req_builder = self.add_auth(req_builder);
 
-        let response = req_builder
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<SubmitJobResponse>()
-            .await?;
+        let response = req_builder.send().await?;
 
-        Ok(response)
+        let status = response.status();
+        if !status.is_success() {
+            let error_body = response.text().await?;
+            return Err(anyhow::anyhow!(
+                "Failed to submit job. Status: {}, Body: {}",
+                status,
+                error_body
+            ));
+        }
+
+        let job_response = response.json::<SubmitJobResponse>().await?;
+        Ok(job_response)
     }
 
 
