@@ -4,15 +4,28 @@ use async_trait::async_trait;
 
 use crate::domain::queue::models::{CreateQueueRequest, QueueId, UpdateQueueRequest};
 
-use super::{models::Queue, ports::QueueRepository};
+use super::{
+    models::Queue,
+    ports::{QueueRepository, QueueRepositoryError},
+};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum QueueServiceError {
+    #[error(transparent)]
+    Repository(#[from] QueueRepositoryError),
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
+}
 
 #[async_trait]
 pub trait QueueService: Send + Sync {
-    async fn create_queue(&self, request: CreateQueueRequest) -> Result<Queue, anyhow::Error>;
-    async fn get_queue_by_id(&self, queue_id: &QueueId) -> Result<Option<Queue>, anyhow::Error>;
-    async fn list_all_queues(&self) -> Result<Vec<Queue>, anyhow::Error>;
-    async fn update_queue(&self, request: UpdateQueueRequest) -> Result<Queue, anyhow::Error>;
-    async fn delete_queue(&self, queue_id: &QueueId) -> Result<(), anyhow::Error>;
+    async fn create_queue(&self, request: CreateQueueRequest) -> Result<Queue, QueueServiceError>;
+    async fn get_queue_by_id(&self, queue_id: &QueueId)
+        -> Result<Option<Queue>, QueueServiceError>;
+    async fn list_all_queues(&self) -> Result<Vec<Queue>, QueueServiceError>;
+    async fn update_queue(&self, request: UpdateQueueRequest) -> Result<Queue, QueueServiceError>;
+    async fn delete_queue(&self, queue_id: &QueueId) -> Result<(), QueueServiceError>;
 }
 
 pub struct QueueServiceImpl<Q: QueueRepository> {
@@ -27,7 +40,7 @@ impl<Q: QueueRepository> QueueServiceImpl<Q> {
 
 #[async_trait]
 impl<Q: QueueRepository> QueueService for QueueServiceImpl<Q> {
-    async fn create_queue(&self, request: CreateQueueRequest) -> Result<Queue, anyhow::Error> {
+    async fn create_queue(&self, request: CreateQueueRequest) -> Result<Queue, QueueServiceError> {
         let queue = Queue {
             id: QueueId::generate(),
             name: request.name,
@@ -40,18 +53,21 @@ impl<Q: QueueRepository> QueueService for QueueServiceImpl<Q> {
         Ok(queue)
     }
 
-    async fn get_queue_by_id(&self, queue_id: &QueueId) -> Result<Option<Queue>, anyhow::Error> {
-        self.queue_repo.find_by_id(queue_id).await
+    async fn get_queue_by_id(
+        &self,
+        queue_id: &QueueId,
+    ) -> Result<Option<Queue>, QueueServiceError> {
+        Ok(self.queue_repo.find_by_id(queue_id).await?)
     }
 
-    async fn list_all_queues(&self) -> Result<Vec<Queue>, anyhow::Error> {
-        self.queue_repo.get_all_queues_sorted().await
+    async fn list_all_queues(&self) -> Result<Vec<Queue>, QueueServiceError> {
+        Ok(self.queue_repo.get_all_queues_sorted().await?)
     }
 
     async fn update_queue(
         &self,
         updated_queue: UpdateQueueRequest,
-    ) -> Result<Queue, anyhow::Error> {
+    ) -> Result<Queue, QueueServiceError> {
         let queue = Queue {
             id: updated_queue.id,
             name: updated_queue.name,
@@ -64,15 +80,15 @@ impl<Q: QueueRepository> QueueService for QueueServiceImpl<Q> {
         Ok(queue)
     }
 
-    async fn delete_queue(&self, queue_id: &QueueId) -> Result<(), anyhow::Error> {
-        self.queue_repo.delete(queue_id).await
+    async fn delete_queue(&self, queue_id: &QueueId) -> Result<(), QueueServiceError> {
+        Ok(self.queue_repo.delete(queue_id).await?)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::queue::ports::MockQueueRepository;
+    use crate::{domain::cluster::models::ClusterId, domain::queue::ports::MockQueueRepository};
     use mockall::predicate::eq;
     use std::sync::Arc;
 

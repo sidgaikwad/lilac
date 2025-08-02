@@ -6,12 +6,13 @@ use crate::{
         cluster::{
             models::{
                 Cluster, ClusterDetails, ClusterId, ClusterNode, CreateClusterRequest, NodeId,
-                UpdateNodeStatusRequest,
+                NodeStatus, UpdateNodeStatusRequest,
             },
             ports::{
-                ClusterApiKeyRepository, ClusterApiKeyRepositoryError, ClusterRepository,
+                ClusterApiKeyRepository, ClusterRepository,
                 ClusterRepositoryError,
             },
+            errors::ClusterApiKeyRepositoryError,
         },
         training_job::models::{JobId, TrainingJob},
         user::models::{ApiKey, ApiKeyId},
@@ -227,7 +228,11 @@ impl ClusterRepository for PostgresClusterRepository {
             "#,
             req.node_id.0,
             req.cluster_id.0,
-            NodeStatusRecord::from(req.status.clone()) as _,
+            NodeStatusRecord::from(if req.job_info.is_some() {
+                NodeStatus::Busy
+            } else {
+                NodeStatus::Available
+            }) as _,
             req.heartbeat_timestamp,
             req.memory_info,
             CpuConfigurationRecord::from(req.cpu_info.clone()) as _,
@@ -236,7 +241,7 @@ impl ClusterRepository for PostgresClusterRepository {
                 .map(GpuConfigurationRecord::from) as _,
             req.job_info
                 .as_ref()
-                .and_then(|info| info.current_job_id)
+                .map(|info| info.current_job_id)
                 .map(|id| id.0),
         )
         .fetch_one(&self.pool)

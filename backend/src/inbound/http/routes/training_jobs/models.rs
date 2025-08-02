@@ -34,7 +34,7 @@ pub struct HttpTrainingJob {
     pub job_name: String,
     pub job_status: TrainingJobStatus,
     pub node_id: Option<NodeId>,
-    pub queue_id: QueueId,
+    pub queue_id: Option<QueueId>,
     pub resource_requirements: ResourceRequirements,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

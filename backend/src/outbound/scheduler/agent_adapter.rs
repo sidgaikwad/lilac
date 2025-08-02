@@ -9,6 +9,17 @@ use crate::domain::{
     },
     training_job::models::{JobId, ResourceRequirements},
 };
+use thiserror::Error;
+
+use crate::domain::cluster::ports::ClusterRepositoryError;
+
+#[derive(Debug, Error)]
+pub enum AgentSchedulerError {
+    #[error(transparent)]
+    Cluster(#[from] ClusterRepositoryError),
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
+}
 
 #[derive(Clone)]
 pub struct AgentSchedulerAdapter {
@@ -25,26 +36,33 @@ impl AgentSchedulerAdapter {
         job_id: &JobId,
         cluster_id: &ClusterId,
         requirements: &ResourceRequirements,
-    ) -> Result<Option<NodeId>, anyhow::Error> {
-        let nodes = self.cluster_repo.list_cluster_nodes(cluster_id).await?;
+    ) -> Result<Option<NodeId>, AgentSchedulerError> {
+        let mut nodes = self.cluster_repo.list_cluster_nodes(cluster_id).await?;
 
-        let suitable_node = nodes.into_iter().find(|node| {
-            if node.node_status != NodeStatus::Available || node.assigned_job_id.is_some() {
+        // Filter nodes that are available and meet the resource requirements.
+        nodes.retain(|node| {
+            let status_ok = node.node_status == NodeStatus::Available && node.assigned_job_id.is_none();
+            if !status_ok {
                 return false;
             }
 
             let cpu_ok = node.cpu.millicores >= requirements.cpu_millicores;
             let mem_ok = node.memory_mb >= requirements.memory_mb;
             let gpu_ok = match &requirements.gpus {
-                None => true, // Job does not require GPUs.
+                None => true,
                 Some(req_gpu) => match &node.gpu {
-                    Some(node_gpu) => node_gpu.count >= req_gpu.count, // Node has GPUs, check count.
-                    None => false, // Job requires GPUs, but node has none.
+                    Some(node_gpu) => node_gpu.count >= req_gpu.count,
+                    None => false,
                 },
             };
 
             cpu_ok && mem_ok && gpu_ok
         });
+
+        // Sort the suitable nodes by memory in ascending order (best fit).
+        nodes.sort_by_key(|node| node.memory_mb);
+
+        let suitable_node = nodes.into_iter().next();
 
         if let Some(node) = suitable_node {
             debug!("Found suitable node {} for job {}", node.id, job_id);

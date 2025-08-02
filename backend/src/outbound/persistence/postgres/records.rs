@@ -379,6 +379,7 @@ pub enum TrainingJobStatusRecord {
     Running,
     Succeeded,
     Failed,
+    Cancelled,
 }
 
 impl From<TrainingJobStatus> for TrainingJobStatusRecord {
@@ -389,6 +390,7 @@ impl From<TrainingJobStatus> for TrainingJobStatusRecord {
             TrainingJobStatus::Running => Self::Running,
             TrainingJobStatus::Succeeded => Self::Succeeded,
             TrainingJobStatus::Failed => Self::Failed,
+            TrainingJobStatus::Cancelled => Self::Cancelled,
         }
     }
 }
@@ -401,6 +403,7 @@ impl From<TrainingJobStatusRecord> for TrainingJobStatus {
             TrainingJobStatusRecord::Running => Self::Running,
             TrainingJobStatusRecord::Succeeded => Self::Succeeded,
             TrainingJobStatusRecord::Failed => Self::Failed,
+            TrainingJobStatusRecord::Cancelled => Self::Cancelled,
         }
     }
 }
@@ -412,7 +415,7 @@ pub struct TrainingJobRecord {
     pub definition: String,
     pub status: TrainingJobStatusRecord,
     pub node_id: Option<Uuid>,
-    pub queue_id: Uuid,
+    pub queue_id: Option<Uuid>,
     pub resource_requirements: serde_json::Value,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
@@ -429,7 +432,7 @@ impl TryFrom<TrainingJobRecord> for TrainingJob {
             definition: value.definition,
             status: value.status.into(),
             node_id: value.node_id.map(|v| v.into()),
-            queue_id: value.queue_id.into(),
+            queue_id: value.queue_id.map(Into::into),
             resource_requirements,
             created_at: value.created_at,
             updated_at: value.updated_at,

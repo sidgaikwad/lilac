@@ -109,7 +109,6 @@ impl From<Vec<Cluster>> for ListClustersHttpResponse {
 /// The body of a [ClusterNode] heartbeat request.
 #[derive(Debug, Clone, Deserialize)]
 pub struct HttpClusterNodeHeartbeat {
-    pub status: NodeStatus,
     pub memory_info: i32,
     pub cpu_info: Cpu,
     pub gpu_info: Option<Gpu>,

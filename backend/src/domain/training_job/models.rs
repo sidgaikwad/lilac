@@ -20,6 +20,7 @@ pub enum TrainingJobStatus {
     Running,
     Succeeded,
     Failed,
+    Cancelled,
 }
 
 /// Describes a specific requirement for a GPU.
@@ -52,7 +53,7 @@ pub struct TrainingJob {
     pub definition: String,
     pub status: TrainingJobStatus,
     pub node_id: Option<NodeId>,
-    pub queue_id: QueueId,
+    pub queue_id: Option<QueueId>,
     pub resource_requirements: ResourceRequirements,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

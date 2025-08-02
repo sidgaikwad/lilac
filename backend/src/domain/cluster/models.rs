@@ -1,5 +1,5 @@
 use crate::{
-    domain::training_job::models::JobId,
+    domain::training_job::models::{JobId, TrainingJobStatus},
     identifier,
 };
 use chrono::{DateTime, Utc};
@@ -179,14 +179,14 @@ impl ClusterNode {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct JobInfo {
-    pub current_job_id: Option<JobId>,
+    pub current_job_id: JobId,
+    pub status: TrainingJobStatus,
 }
 
 #[derive(Clone, Debug)]
 pub struct UpdateNodeStatusRequest {
     pub node_id: NodeId,
     pub cluster_id: ClusterId,
-    pub status: NodeStatus,
     pub heartbeat_timestamp: DateTime<Utc>,
     pub memory_info: i32,
     pub cpu_info: Cpu,

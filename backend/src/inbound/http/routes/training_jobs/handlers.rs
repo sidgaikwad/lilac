@@ -71,10 +71,19 @@ pub async fn update_training_job_status(
 }
 
 pub async fn post_logs(
-    State(state): State<AppState>,
-    Path(job_id): Path<JobId>,
-    Json(request): Json<PostLogsRequest>,
+    State(_state): State<AppState>,
+    Path(_job_id): Path<JobId>,
+    Json(_request): Json<PostLogsRequest>,
 ) -> impl IntoResponse {
     // TODO: Implement log ingestion
     (StatusCode::OK, Json(()))
+}
+
+pub async fn cancel_training_job(
+    _claims: Claims,
+    State(state): State<AppState>,
+    Path(job_id): Path<JobId>,
+) -> Result<impl IntoResponse, ApiError> {
+    state.training_job_service.cancel(&job_id).await?;
+    Ok((StatusCode::OK, Json(())))
 }

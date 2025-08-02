@@ -1,11 +1,42 @@
 import { DataTable } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/common/card';
 import { Status, StatusProps } from '@/components/common/status';
 import { toast } from '@/components/toast';
 import { useGetClusterJobs } from '@/services/clusters/get-cluster-jobs.query';
+import { useCancelTrainingJob } from '@/services/training-jobs/cancel-training-job.mutation';
 import { ClusterJob } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
 import { startCase } from 'lodash';
+
+const CancelJobButton = ({
+  jobId,
+  status,
+}: {
+  jobId: string;
+  status: string;
+}) => {
+  const { mutate, isPending } = useCancelTrainingJob({
+    onSuccess: () => {
+      toast.success('Job cancelled successfully');
+    },
+  });
+
+  const isTerminal = ['succeeded', 'failed', 'cancelled'].includes(
+    status.toLowerCase()
+  );
+
+  return (
+    <Button
+      variant='destructive'
+      size='sm'
+      onClick={() => mutate({ jobId })}
+      disabled={isPending || isTerminal}
+    >
+      Cancel
+    </Button>
+  );
+};
 
 export const JOB_COLUMNS: ColumnDef<ClusterJob>[] = [
   {
@@ -38,6 +69,9 @@ export const JOB_COLUMNS: ColumnDef<ClusterJob>[] = [
         case 'failed':
           status = 'error';
           break;
+        case 'cancelled':
+          status = 'warning';
+          break;
       }
       return (
         <Status status={status}>
@@ -66,6 +100,17 @@ export const JOB_COLUMNS: ColumnDef<ClusterJob>[] = [
     cell: ({ cell }) => {
       const date = new Date(cell.renderValue() as string);
       return <div>{date.toLocaleString()}</div>;
+    },
+  },
+  {
+    id: 'actions',
+    cell: ({ row }) => {
+      return (
+        <CancelJobButton
+          jobId={row.original.jobId}
+          status={row.original.jobStatus}
+        />
+      );
     },
   },
 ];

@@ -48,4 +48,6 @@ export enum QueryKeys {
   LIST_DATASET_S3_OBJECTS = 'ListDatsetS3Objects',
   LIST_WORKSPACES = 'ListWorkspaces',
   CREATE_WORKSPACE = 'CreateWorkspace',
+
+  CANCEL_TRAINING_JOB = 'CancelTrainingJob',
 }

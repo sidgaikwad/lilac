@@ -155,6 +155,9 @@ impl From<TrainingJobServiceError> for ApiError {
             TrainingJobServiceError::TrainingJobNotFound(_) => {
                 Self::NotFound("Cluster not found".to_string())
             }
+            TrainingJobServiceError::InvalidDefinition(e) => {
+                Self::BadRequest(format!("Invalid job definition: {}", e))
+            }
             TrainingJobServiceError::Unknown(e) => {
                 tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
                 Self::InternalServerError("Something went wrong".to_string())
@@ -165,7 +168,7 @@ impl From<TrainingJobServiceError> for ApiError {
 
 impl From<anyhow::Error> for ApiError {
     fn from(err: anyhow::Error) -> Self {
-        tracing::error!(error = ?err, backtrace = %err.backtrace(), "unknown error occurred");
+        tracing::error!(error = ?err, "Detailed error: {:?}", err);
         Self::InternalServerError("Something went wrong".to_string())
     }
 }

@@ -1,0 +1,6 @@
+ALTER TABLE queue_cluster_assignments DROP CONSTRAINT queue_cluster_assignments_queue_id_fkey;
+ALTER TABLE queue_cluster_assignments
+ADD CONSTRAINT queue_cluster_assignments_queue_id_fkey
+FOREIGN KEY (queue_id)
+REFERENCES queues(queue_id)
+ON DELETE CASCADE;

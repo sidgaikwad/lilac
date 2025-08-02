@@ -1,6 +1,9 @@
 use async_trait::async_trait;
 use thiserror::Error;
 
+#[cfg(test)]
+use mockall::automock;
+
 use crate::domain::{
     cluster::models::{ClusterDetails, ClusterNode, NodeId, UpdateNodeStatusRequest},
     training_job::models::{JobId, TrainingJob},
@@ -19,6 +22,7 @@ pub enum ClusterRepositoryError {
     Unknown(#[from] anyhow::Error),
 }
 
+#[cfg_attr(test, automock)]
 #[async_trait]
 pub trait ClusterRepository: Send + Sync {
     async fn create_cluster(
@@ -58,14 +62,9 @@ pub trait ClusterRepository: Send + Sync {
     ) -> Result<(), ClusterRepositoryError>;
 }
 
-#[derive(Debug, Error)]
-pub enum ClusterApiKeyRepositoryError {
-    #[error("api key not found")]
-    NotFound,
-    #[error(transparent)]
-    Unknown(#[from] anyhow::Error),
-}
+use super::errors::ClusterApiKeyRepositoryError;
 
+#[cfg_attr(test, automock)]
 #[async_trait]
 pub trait ClusterApiKeyRepository: Send + Sync + 'static {
     async fn create_api_key(&self, key: &ApiKey) -> Result<(), ClusterApiKeyRepositoryError>;

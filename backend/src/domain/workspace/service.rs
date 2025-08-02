@@ -82,8 +82,8 @@ impl WorkspaceServiceImpl {
 impl WorkspaceService for WorkspaceServiceImpl {
     async fn create_workspace(
         &self,
-        req: CreateWorkspaceRequest,
-        owner_id: UserId,
+        _req: CreateWorkspaceRequest,
+        _owner_id: UserId,
     ) -> Result<Workspace, WorkspaceServiceError> {
         todo!();
         // // 1. Create the initial workspace record in the database

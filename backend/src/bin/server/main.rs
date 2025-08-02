@@ -68,7 +68,10 @@ async fn main() -> anyhow::Result<()> {
     let queue_repo = Arc::new(PostgresQueueRepository::new(db_pool.clone()));
 
     // 3. Construct domain services
-    let cluster_service = Arc::new(ClusterServiceImpl::new(cluster_repo.clone()));
+    let cluster_service = Arc::new(ClusterServiceImpl::new(
+        cluster_repo.clone(),
+        training_job_repo.clone(),
+    ));
     let credential_service = Arc::new(CredentialServiceImpl::new(credential_repo.clone()));
     let user_service = Arc::new(UserServiceImpl::new(user_repo.clone()));
     let project_service = Arc::new(ProjectServiceImpl::new(project_repo.clone()));
@@ -84,7 +87,10 @@ async fn main() -> anyhow::Result<()> {
         .with_expiry(Expiry::OnInactivity(time::Duration::minutes(30)));
 
     let auth_service = Arc::new(AuthServiceImpl::new(user_repo.clone(), jwt_manager));
-    let training_job_service = Arc::new(TrainingJobServiceImpl::new(training_job_repo.clone()));
+    let training_job_service = Arc::new(TrainingJobServiceImpl::new(
+        training_job_repo.clone(),
+        cluster_repo.clone(),
+    ));
     let queue_service = Arc::new(QueueServiceImpl::new(queue_repo.clone()));
 
     // 4. Construct Scheduler
@@ -101,7 +107,9 @@ async fn main() -> anyhow::Result<()> {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
         loop {
             interval.tick().await;
-            scheduler_service.run_cycle().await;
+            if let Err(e) = scheduler_service.run_cycle().await {
+                tracing::error!("Scheduler cycle failed: {}", e);
+            }
         }
     });
 

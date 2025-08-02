@@ -1,0 +1,1 @@
+ALTER TYPE training_job_status ADD VALUE 'cancelled';

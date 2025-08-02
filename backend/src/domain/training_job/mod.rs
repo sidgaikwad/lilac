@@ -11,6 +11,7 @@ mod tests {
     };
     use crate::{
         domain::{
+            cluster::ports::MockClusterRepository,
             queue::models::QueueId,
             training_job::{models::JobId, service::TrainingJobService},
         },
@@ -22,6 +23,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_training_job() {
         let mut mock_repo = MockTrainingJobRepository::new();
+        let mock_cluster_repo = MockClusterRepository::new();
         let queue_id = QueueId::generate();
         let request = CreateTrainingJobRequest {
             name: "test".to_string(),
@@ -36,11 +38,12 @@ mod tests {
 
         mock_repo
             .expect_create()
-            .withf(move |job| job.name == "test" && job.queue_id == queue_id)
+            .withf(move |job| job.name == "test" && job.queue_id == Some(queue_id))
             .times(1)
             .returning(|_| Ok(()));
 
-        let service = TrainingJobServiceImpl::new(Arc::new(mock_repo));
+        let service =
+            TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
         let result = service.create(request).await;
 
         assert!(result.is_ok());
@@ -48,12 +51,13 @@ mod tests {
         assert_eq!(training_job.name, "test");
         assert_eq!(training_job.definition, "definition");
         assert_eq!(training_job.status, TrainingJobStatus::Queued);
-        assert_eq!(training_job.queue_id, queue_id);
+        assert_eq!(training_job.queue_id, Some(queue_id));
     }
 
     #[tokio::test]
     async fn test_get_training_jobs() {
         let mut mock_repo = MockTrainingJobRepository::new();
+        let mock_cluster_repo = MockClusterRepository::new();
         let filters = GetTrainingJobsFilters {
             status: Some(TrainingJobStatus::Queued),
             ..Default::default()
@@ -65,7 +69,8 @@ mod tests {
             .times(1)
             .returning(|_| Ok(vec![]));
 
-        let service = TrainingJobServiceImpl::new(Arc::new(mock_repo));
+        let service =
+            TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
         let result = service.get_training_jobs(filters).await;
 
         assert!(result.is_ok());
@@ -74,6 +79,7 @@ mod tests {
     #[tokio::test]
     async fn test_update_status() {
         let mut mock_repo = MockTrainingJobRepository::new();
+        let mock_cluster_repo = MockClusterRepository::new();
         let id = JobId::generate();
         let status = TrainingJobStatus::Running;
 
@@ -83,7 +89,8 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok(()));
 
-        let service = TrainingJobServiceImpl::new(Arc::new(mock_repo));
+        let service =
+            TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
         let result = service.update_status(&id, status).await;
 
         assert!(result.is_ok());
@@ -92,6 +99,7 @@ mod tests {
     #[tokio::test]
     async fn test_post_logs() {
         let mut mock_repo = MockTrainingJobRepository::new();
+        let mock_cluster_repo = MockClusterRepository::new();
         let id = JobId::generate();
 
         mock_repo
@@ -100,7 +108,8 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok(()));
 
-        let service = TrainingJobServiceImpl::new(Arc::new(mock_repo));
+        let service =
+            TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
         let result = service.post_logs(&id, "logs".to_string()).await;
 
         assert!(result.is_ok());

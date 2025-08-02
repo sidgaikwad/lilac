@@ -130,7 +130,6 @@ pub async fn cluster_node_heartbeat(
         .update_node_status(UpdateNodeStatusRequest {
             node_id,
             cluster_id: cluster.id,
-            status: req.status,
             heartbeat_timestamp: Utc::now(),
             memory_info: req.memory_info,
             cpu_info: req.cpu_info,
@@ -141,7 +140,6 @@ pub async fn cluster_node_heartbeat(
 
     let assigned_job = if let Some(job_id) = node.assigned_job_id {
         let job_details = training_job_service.get_training_job_by_id(&job_id).await?;
-        cluster_service.clear_assigned_job_id(&node.id).await?;
         Some(HttpJobDetails::from(job_details))
     } else {
         None

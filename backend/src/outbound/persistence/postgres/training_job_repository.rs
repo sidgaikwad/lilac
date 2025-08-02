@@ -32,7 +32,7 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
             training_job.name,
             training_job.definition,
             TrainingJobStatusRecord::from(training_job.status.clone()) as _,
-            training_job.queue_id.0,
+            training_job.queue_id.map(|q| q.0),
             &serde_json::to_value(&training_job.resource_requirements).map_err(|e| anyhow::anyhow!(e))?,
             training_job.created_at,
             training_job.updated_at,
@@ -186,5 +186,32 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
         .map_err(|e: sqlx::Error| TrainingJobRepositoryError::Unknown(anyhow::anyhow!(e)))?;
 
         Ok(())
+    }
+
+    async fn get_jobs_by_status(
+        &self,
+        status: TrainingJobStatus,
+    ) -> Result<Vec<TrainingJob>, TrainingJobRepositoryError> {
+        let rows = sqlx::query_as!(
+            TrainingJobRecord,
+            r#"
+            SELECT
+                id, name, definition, status AS "status: TrainingJobStatusRecord", node_id, queue_id,
+                resource_requirements, created_at, updated_at
+            FROM training_jobs
+            WHERE status = $1
+            "#,
+            TrainingJobStatusRecord::from(status) as _,
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e: sqlx::Error| TrainingJobRepositoryError::Unknown(anyhow::anyhow!(e)))?;
+
+        let jobs = rows
+            .into_iter()
+            .map(|row| row.try_into())
+            .collect::<Result<Vec<_>, anyhow::Error>>()?;
+
+        Ok(jobs)
     }
 }

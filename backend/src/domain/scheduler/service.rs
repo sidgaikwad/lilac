@@ -8,9 +8,29 @@ use crate::{
         queue::ports::QueueRepository,
         training_job::ports::TrainingJobRepository,
     },
-    outbound::scheduler::agent_adapter::AgentSchedulerAdapter,
+    outbound::scheduler::agent_adapter::{AgentSchedulerAdapter, AgentSchedulerError},
 };
 use chrono::Utc;
+use thiserror::Error;
+
+use crate::domain::{
+    cluster::ports::ClusterRepositoryError, queue::ports::QueueRepositoryError,
+    training_job::ports::TrainingJobRepositoryError,
+};
+
+#[derive(Debug, Error)]
+pub enum SchedulerServiceError {
+    #[error(transparent)]
+    Job(#[from] TrainingJobRepositoryError),
+    #[error(transparent)]
+    Queue(#[from] QueueRepositoryError),
+    #[error(transparent)]
+    Cluster(#[from] ClusterRepositoryError),
+    #[error(transparent)]
+    Agent(#[from] AgentSchedulerError),
+    #[error(transparent)]
+    Unknown(#[from] anyhow::Error),
+}
 
 pub struct SchedulerService {
     job_repo: Arc<dyn TrainingJobRepository>,
@@ -34,64 +54,142 @@ impl SchedulerService {
         }
     }
 
-    async fn cleanup_dead_nodes(&self) {
+    async fn cleanup_dead_nodes(&self) -> Result<(), SchedulerServiceError> {
         info!("Running dead node cleanup...");
-        match self.cluster_repo.list_all_nodes().await {
-            Ok(nodes) => {
-                for node in nodes {
-                    let since_heartbeat = Utc::now() - node.heartbeat_timestamp;
-                    if since_heartbeat > chrono::Duration::seconds(90) {
-                        info!("Found dead node {}. Cleaning up.", node.id);
+        let nodes = self.cluster_repo.list_all_nodes().await?;
+        for node in nodes {
+            let since_heartbeat = Utc::now() - node.heartbeat_timestamp;
+            if since_heartbeat > chrono::Duration::seconds(90) {
+                info!("Found dead node {}. Cleaning up.", node.id);
 
-                        if let Some(job_id) = node.assigned_job_id {
-                            info!("Re-queueing assigned job {} from dead node {}", job_id, node.id);
-                            if let Err(e) = self.job_repo.reset_job_status(&job_id).await {
-                                error!("Failed to re-queue assigned job {}: {}", job_id, e);
-                            }
-                        }
+                if let Some(job_id) = node.assigned_job_id {
+                    info!("Re-queueing assigned job {} from dead node {}", job_id, node.id);
+                    self.job_repo.reset_job_status(&job_id).await?;
+                }
 
-                        if let Some(job_id) = node.reported_job_id {
-                            info!("Re-queueing reported job {} from dead node {}", job_id, node.id);
-                            if let Err(e) = self.job_repo.reset_job_status(&job_id).await {
-                                error!("Failed to re-queue reported job {}: {}", job_id, e);
-                            }
-                        }
+                if let Some(job_id) = node.reported_job_id {
+                    info!("Re-queueing reported job {} from dead node {}", job_id, node.id);
+                    self.job_repo.reset_job_status(&job_id).await?;
+                }
 
-                        if let Err(e) = self.cluster_repo.delete_cluster_node(&node.id).await {
-                            error!("Failed to delete dead node {}: {}", node.id, e);
-                        }
+                self.cluster_repo.delete_cluster_node(&node.id).await?;
+            }
+        }
+        Ok(())
+    }
+
+    async fn cleanup_stale_starting_jobs(&self) -> Result<(), SchedulerServiceError> {
+        info!("Running stale job cleanup...");
+        let jobs = self
+            .job_repo
+            .get_jobs_by_status(super::super::training_job::models::TrainingJobStatus::Starting)
+            .await?;
+
+        for job in jobs {
+            let mut requeue = false;
+            let mut cancel = false;
+
+            if let Some(node_id) = job.node_id {
+                if self.cluster_repo.get_cluster_node_by_id(&node_id).await.is_err() {
+                    info!(
+                        "Found stale job {} assigned to non-existent node {}. Re-queueing.",
+                        job.id, node_id
+                    );
+                    requeue = true;
+                }
+            }
+
+            if let Some(queue_id) = &job.queue_id {
+                if self.queue_repo.get_queue_by_id(queue_id).await.is_err() {
+                    info!(
+                        "Found stale job {} assigned to non-existent queue {}. Cancelling.",
+                        job.id, queue_id
+                    );
+                    cancel = true;
+                }
+            }
+
+            if cancel {
+                self.job_repo
+                    .update_status(
+                        &job.id,
+                        super::super::training_job::models::TrainingJobStatus::Cancelled,
+                    )
+                    .await?;
+            } else if requeue {
+                self.job_repo.reset_job_status(&job.id).await?;
+            }
+        }
+        Ok(())
+    }
+
+    async fn cleanup_preempted_jobs(&self) -> Result<(), SchedulerServiceError> {
+        info!("Running preempted job cleanup...");
+        let nodes = self.cluster_repo.list_all_nodes().await?;
+        for node in nodes {
+            if node.assigned_job_id.is_none() {
+                if let Some(reported_job_id) = node.reported_job_id {
+                    let job = self.job_repo.get_training_job_by_id(&reported_job_id).await?;
+                    if !matches!(
+                        job.status,
+                        super::super::training_job::models::TrainingJobStatus::Succeeded
+                            | super::super::training_job::models::TrainingJobStatus::Failed
+                            | super::super::training_job::models::TrainingJobStatus::Cancelled
+                    ) {
+                        info!(
+                            "Found preempted job {} on node {}. Re-queueing.",
+                            job.id, node.id
+                        );
+                        self.job_repo.reset_job_status(&job.id).await?;
                     }
                 }
             }
-            Err(e) => {
-                error!("Failed to list nodes for cleanup: {}", e);
-            }
         }
+        Ok(())
     }
 
-    pub async fn run_cycle(&self) {
+    async fn cleanup_orphaned_queued_jobs(&self) -> Result<(), SchedulerServiceError> {
+        info!("Running orphaned queued job cleanup...");
+        let jobs = self
+            .job_repo
+            .get_jobs_by_status(super::super::training_job::models::TrainingJobStatus::Queued)
+            .await?;
+        for job in jobs {
+            if job.queue_id.is_none() {
+                info!("Found orphaned queued job {}. Cancelling.", job.id);
+                self.job_repo
+                    .update_status(
+                        &job.id,
+                        super::super::training_job::models::TrainingJobStatus::Cancelled,
+                    )
+                    .await?;
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn run_cycle(&self) -> Result<(), SchedulerServiceError> {
         info!("Starting scheduler cycle");
 
-        self.cleanup_dead_nodes().await;
+        if let Err(e) = self.cleanup_dead_nodes().await {
+            error!("Error during dead node cleanup: {}", e);
+        }
+        if let Err(e) = self.cleanup_stale_starting_jobs().await {
+            error!("Error during stale starting job cleanup: {}", e);
+        }
+        if let Err(e) = self.cleanup_preempted_jobs().await {
+            error!("Error during preempted job cleanup: {}", e);
+        }
+        if let Err(e) = self.cleanup_orphaned_queued_jobs().await {
+            error!("Error during orphaned queued job cleanup: {}", e);
+        }
 
-        let queues = match self.queue_repo.get_all_queues_sorted().await {
-            Ok(q) => q,
-            Err(e) => {
-                error!("Failed to fetch queues: {}", e);
-                return;
-            }
-        };
+        let queues = self.queue_repo.get_all_queues_sorted().await?;
 
         info!("Processing {} queues", queues.len());
 
         for queue in queues {
-            let queued_jobs = match self.job_repo.get_queued_jobs_for_queue(&queue.id).await {
-                Ok(jobs) => jobs,
-                Err(e) => {
-                    error!("Failed to fetch jobs for queue {}: {}", queue.id, e);
-                    continue; // Move to the next queue
-                }
-            };
+            let queued_jobs = self.job_repo.get_queued_jobs_for_queue(&queue.id).await?;
 
             if queued_jobs.is_empty() {
                 continue;
@@ -115,10 +213,7 @@ impl SchedulerService {
                     {
                         Ok(Some(node_id)) => {
                             info!("Successfully allocated job {} to node {}", job.id, node_id);
-                            if let Err(e) = self.job_repo.mark_as_starting(&job.id, &node_id).await
-                            {
-                                error!("Failed to update job {} status: {}", job.id, e);
-                            }
+                            self.job_repo.mark_as_starting(&job.id, &node_id).await?;
                             scheduled = true;
                             break; // Break from cluster loop, move to next job
                         }
@@ -148,5 +243,6 @@ impl SchedulerService {
             }
         }
         info!("Scheduler cycle finished");
+        Ok(())
     }
 }

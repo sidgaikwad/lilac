@@ -40,4 +40,8 @@ pub trait TrainingJobRepository: Send + Sync {
     ) -> Result<(), TrainingJobRepositoryError>;
     async fn post_logs(&self, id: &JobId, logs: String) -> Result<(), TrainingJobRepositoryError>;
     async fn reset_job_status(&self, job_id: &JobId) -> Result<(), TrainingJobRepositoryError>;
+    async fn get_jobs_by_status(
+        &self,
+        status: TrainingJobStatus,
+    ) -> Result<Vec<TrainingJob>, TrainingJobRepositoryError>;
 }

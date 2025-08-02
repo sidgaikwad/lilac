@@ -4,7 +4,10 @@ use async_trait::async_trait;
 
 use crate::domain::{
     cluster::models::{ClusterDetails, ClusterNode, UpdateNodeStatusRequest},
-    training_job::models::TrainingJob,
+    training_job::{
+        models::{TrainingJob, TrainingJobStatus},
+        ports::TrainingJobRepository,
+    },
     user::models::{ApiKey, ApiKeyId},
 };
 
@@ -26,10 +29,12 @@ const NANOID_ALPHABET: [char; 62] = [
 use super::{
     models::{Cluster, ClusterId, CreateClusterRequest},
     ports::{
-        ClusterApiKeyRepository, ClusterApiKeyRepositoryError, ClusterRepository,
+        ClusterApiKeyRepository, ClusterRepository,
         ClusterRepositoryError,
     },
+    errors::ClusterApiKeyRepositoryError,
 };
+use crate::domain::training_job::ports::TrainingJobRepositoryError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClusterServiceError {
@@ -59,7 +64,20 @@ impl From<ClusterApiKeyRepositoryError> for ClusterServiceError {
     fn from(error: ClusterApiKeyRepositoryError) -> Self {
         match error {
             ClusterApiKeyRepositoryError::NotFound => Self::ClusterNotFound("".to_string()), // TODO: Better error
+            ClusterApiKeyRepositoryError::DatabaseError(e) => Self::Unknown(e.into()),
             ClusterApiKeyRepositoryError::Unknown(error) => Self::Unknown(error),
+        }
+    }
+}
+
+impl From<TrainingJobRepositoryError> for ClusterServiceError {
+    fn from(error: TrainingJobRepositoryError) -> Self {
+        match error {
+            TrainingJobRepositoryError::Duplicate { field, value } => {
+                Self::ClusterExists { field, value }
+            }
+            TrainingJobRepositoryError::NotFound(id) => Self::ClusterNotFound(id),
+            TrainingJobRepositoryError::Unknown(error) => Self::Unknown(error),
         }
     }
 }
@@ -112,18 +130,27 @@ pub trait ClusterService: Send + Sync {
 }
 
 #[derive(Clone)]
-pub struct ClusterServiceImpl<R: ClusterRepository + ClusterApiKeyRepository> {
+pub struct ClusterServiceImpl<
+    R: ClusterRepository + ClusterApiKeyRepository,
+    T: TrainingJobRepository,
+> {
     cluster_repo: Arc<R>,
+    training_job_repo: Arc<T>,
 }
 
-impl<R: ClusterRepository + ClusterApiKeyRepository> ClusterServiceImpl<R> {
-    pub fn new(cluster_repo: Arc<R>) -> Self {
-        Self { cluster_repo }
+impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository> ClusterServiceImpl<R, T> {
+    pub fn new(cluster_repo: Arc<R>, training_job_repo: Arc<T>) -> Self {
+        Self {
+            cluster_repo,
+            training_job_repo,
+        }
     }
 }
 
 #[async_trait]
-impl<R: ClusterRepository + ClusterApiKeyRepository> ClusterService for ClusterServiceImpl<R> {
+impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository> ClusterService
+    for ClusterServiceImpl<R, T>
+{
     async fn create_cluster(
         &self,
         req: &CreateClusterRequest,
@@ -165,19 +192,40 @@ impl<R: ClusterRepository + ClusterApiKeyRepository> ClusterService for ClusterS
         &self,
         req: UpdateNodeStatusRequest,
     ) -> Result<ClusterNode, ClusterServiceError> {
+        if let Some(job_info) = &req.job_info {
+            let job_id = job_info.current_job_id.into();
+            let job = self.training_job_repo.get_training_job_by_id(&job_id).await?;
+
+            if !matches!(
+                job.status,
+                TrainingJobStatus::Succeeded | TrainingJobStatus::Failed | TrainingJobStatus::Cancelled
+            ) {
+                self.training_job_repo
+                    .update_status(&job_id, job_info.status.clone())
+                    .await?;
+
+                if matches!(
+                    job_info.status,
+                    TrainingJobStatus::Succeeded | TrainingJobStatus::Failed
+                ) {
+                    self.cluster_repo
+                        .clear_assigned_job_id(&req.node_id)
+                        .await?;
+                }
+            }
+        }
+
         let node = self.cluster_repo.update_cluster_node_status(&req).await?;
 
         if node.assigned_job_id != node.reported_job_id {
-            // TODO: Implement reconciliation logic.
-            // This could involve logging a warning, emitting an event,
-            // or telling the agent to terminate the unexpected job.
-            // For now, we will just log it.
             tracing::warn!(
                 node_id = %node.id,
                 assigned_job_id = ?node.assigned_job_id,
                 reported_job_id = ?node.reported_job_id,
-                "Mismatched job ID reported by agent."
+                "Mismatched job ID reported by agent. This may be expected during job transitions."
             );
+
+            // The scheduler will handle requeueing of jobs.
         }
 
         Ok(node)
