@@ -6,50 +6,47 @@ import {
   CircleX,
   Clock,
   Info,
-  Loader2,
   TriangleAlert,
 } from 'lucide-react';
+import { Spinner } from './spinner/spinner';
 
-const statusVariants = cva('font-medium flex flex-row items-center gap-1', {
+const statusVariants = cva('w-fit px-3 py-1 rounded-full font-medium flex grow-0 flex-row items-center gap-2', {
   variants: {
     status: {
-      'in-progress': 'text-blue-600',
-      info: 'text-blue-600',
-      success: 'text-green-600',
-      error: 'text-red-600',
-      warning: 'text-yellow-600',
-      pending: 'text-gray-600',
-      loading: 'text-gray-600',
+      'in-progress': 'text-blue-700 bg-blue-100',
+      info: 'text-blue-700 bg-blue-100',
+      success: 'text-green-700 bg-green-100',
+      error: 'text-red-700 bg-red-100',
+      warning: 'text-yellow-700 bg-yellow-100',
+      pending: 'text-gray-700 bg-gray-100',
+      loading: 'text-gray-700 bg-gray-100',
     },
     color: {
-      blue: 'text-blue-600',
-      green: 'text-green-600',
-      red: 'text-red-600',
-      yellow: 'text-yellow-600',
-      gray: 'text-gray-600',
+      blue: 'text-blue-700 bg-blue-100',
+      green: 'text-green-700 bg-green-100',
+      red: 'text-red-700 bg-red-100',
+      yellow: 'text-yellow-700 bg-yellow-100',
+      gray: 'text-gray-700 bg-gray-100',
     },
-  },
-  defaultVariants: {
-    status: 'info',
   },
 });
 
 function getIcon(status: VariantProps<typeof statusVariants>['status']) {
   switch (status) {
     case 'info':
-      return <Info />;
+      return <Info className='size-4.5' />;
     case 'error':
-      return <CircleX />;
+      return <CircleX className='size-4.5' />;
     case 'success':
-      return <CircleCheck />;
+      return <CircleCheck className='size-4.5' />;
     case 'warning':
-      return <TriangleAlert />;
+      return <TriangleAlert className='size-4.5' />;
     case 'in-progress':
-      return <CircleEllipsis />;
+      return <CircleEllipsis className='size-4.5' />;
     case 'pending':
-      return <Clock />;
+      return <Clock className='size-4.5' />;
     case 'loading':
-      return <Loader2 className='animate-spin' />;
+      return <Spinner className='size-4.5' />;
   }
   return undefined;
 }
@@ -57,12 +54,13 @@ function getIcon(status: VariantProps<typeof statusVariants>['status']) {
 export type StatusProps = React.ComponentProps<'div'> &
   VariantProps<typeof statusVariants> & {
     asChild?: boolean;
+    icon?: React.ReactNode;
   };
 export function Status(props: StatusProps) {
-  const { children, status, color, ...rest } = props;
+  const { children, status, color, className, icon, ...rest } = props;
   return (
-    <div className={cn(statusVariants({ status, color }))} {...rest}>
-      {getIcon(status)}
+    <div className={cn(statusVariants({ status, color }), className)} {...rest}>
+      {icon ?? getIcon(status)}
       {children}
     </div>
   );

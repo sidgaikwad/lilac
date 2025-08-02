@@ -3,32 +3,25 @@ import { Outlet } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import Header from './header';
 import Footer from './footer';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import Sidebar from './sidebar';
 import { SkeletonCards } from '@/components/common/skeleton-cards';
 
 export default function Layout() {
   return (
     <div className='[--header-height:calc(theme(spacing.14))]'>
-      <SidebarProvider className='flex flex-col' defaultOpen={false}>
-        <Header />
+      <Header />
 
-        <div className='flex flex-1'>
-          <Sidebar />
-          <SidebarInset>
-            <div className='@container flex flex-1 flex-row md:flex-col'>
-              <Toaster position='top-center' richColors closeButton />
-              <React.Suspense fallback={<SkeletonCards />}>
-                <Outlet />
-              </React.Suspense>
-            </div>
-          </SidebarInset>
+      <div className='flex flex-1'>
+        <div className='@container flex flex-1 flex-row md:flex-col'>
+          <Toaster position='top-center' richColors closeButton />
+          <React.Suspense fallback={<SkeletonCards />}>
+            <Outlet />
+          </React.Suspense>
         </div>
+      </div>
 
-        <footer>
-          <Footer />
-        </footer>
-      </SidebarProvider>
+      <footer>
+        <Footer />
+      </footer>
     </div>
   );
 }

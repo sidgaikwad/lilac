@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { ClusterInfo } from '@/types';
-import { Label as ChartLabel, PieChart, Pie, Cell } from 'recharts';
+import { Label as ChartLabel, PieChart, Pie } from 'recharts';
 
 const NODE_CHART_CONFIG = {
   busy: {
@@ -21,6 +21,10 @@ const NODE_CHART_CONFIG = {
     label: 'Idle nodes',
     color: 'var(--color-green-400)',
   },
+  empty: {
+    label: 'No nodes',
+    color: 'var(--color-gray-400)',
+  },
 } satisfies ChartConfig;
 
 export interface ClusterOverviewProps {
@@ -28,11 +32,18 @@ export interface ClusterOverviewProps {
 }
 
 export function ClusterOverview(props: ClusterOverviewProps) {
-  const NODE_DATA = [
-    { nodeStatus: 'busy', nodeCount: props.cluster.busyNodes },
+  const NODE_DATA = props.cluster.totalNodes != 0 ? [
+    { nodeStatus: 'busy', nodeCount: props.cluster.busyNodes, fill: "var(--color-busy)" },
     {
       nodeStatus: 'idle',
       nodeCount: props.cluster.totalNodes - props.cluster.busyNodes,
+      fill: "var(--color-idle)" 
+    },
+  ] : [
+    {
+      nodeStatus: 'empty',
+      nodeCount: 1,
+      fill: "var(--color-empty)" 
     },
   ];
   return (
@@ -73,10 +84,11 @@ export function ClusterOverview(props: ClusterOverviewProps) {
               className='mx-auto aspect-square max-h-[250px]'
             >
               <PieChart>
+                {props.cluster.totalNodes != 0 &&
                 <ChartTooltip
                   cursor={false}
                   content={<ChartTooltipContent hideLabel />}
-                />
+                /> }
                 <Pie
                   data={NODE_DATA}
                   dataKey='nodeCount'
@@ -87,8 +99,6 @@ export function ClusterOverview(props: ClusterOverviewProps) {
                   outerRadius={80}
                   strokeWidth={5}
                 >
-                  <Cell name='busy' fill='var(--color-busy)' />
-                  <Cell name='idle' fill='var(--color-idle)' />
                   <ChartLabel
                     content={({ viewBox }) => {
                       if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
@@ -109,14 +119,14 @@ export function ClusterOverview(props: ClusterOverviewProps) {
                             <tspan
                               x={viewBox.cx}
                               y={(viewBox.cy || 0) + 24}
-                              className='fill-muted-foreground'
+                              className='fill-gray-text-muted'
                             >
                               Registered
                             </tspan>
                             <tspan
                               x={viewBox.cx}
                               y={(viewBox.cy || 0) + 38}
-                              className='fill-muted-foreground'
+                              className='fill-gray-text-muted'
                             >
                               Nodes
                             </tspan>
@@ -139,12 +149,12 @@ export function ClusterOverview(props: ClusterOverviewProps) {
               <KeyValueDisplay
                 items={[
                   {
-                    key: 'Used CPU',
-                    value: <div>{props.cluster.cpuInfo.usedMillicores}m</div>,
-                  },
-                  {
                     key: 'Total CPU',
                     value: <div>{props.cluster.cpuInfo.totalMillicores}m</div>,
+                  },
+                  {
+                    key: 'Used CPU',
+                    value: <div>{props.cluster.cpuInfo.usedMillicores}m</div>,
                   },
                 ]}
               />

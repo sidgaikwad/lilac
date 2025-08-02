@@ -11,7 +11,9 @@ export interface ListClustersResponse {
     clusterId: string;
     clusterName: string;
     clusterDescription?: string;
-    clusterType: string;
+    totalNodes: number;
+    busyNodes: number;
+    totalRunningJobs: number;
   }[];
 }
 

@@ -27,6 +27,7 @@ import {
 import { useState } from 'react';
 import { NewApiKey } from '@/model/api-key';
 import { Input } from '@/components/ui/input';
+import { Trash2 } from 'lucide-react';
 
 export function ApiKeysCard() {
   const [newApiKey, setNewApiKey] = useState<NewApiKey | null>(null);
@@ -75,7 +76,7 @@ export function ApiKeysCard() {
                   <TableHead>Created At</TableHead>
                   <TableHead>Expires At</TableHead>
                   <TableHead>Last Used</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,16 +97,14 @@ export function ApiKeysCard() {
                         : 'Never'}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant='destructive'
-                        size='sm'
+                      <Trash2
+                        className='text-red-600 hover:cursor-pointer hover:text-red-700'
                         onClick={() =>
-                          deleteApiKeyMutation.mutate({ keyId: key.id })
+                          deleteApiKeyMutation.mutate({
+                            keyId: key.id,
+                          })
                         }
-                        disabled={deleteApiKeyMutation.isPending}
-                      >
-                        Delete
-                      </Button>
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

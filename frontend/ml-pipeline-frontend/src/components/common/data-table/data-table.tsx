@@ -20,11 +20,13 @@ import {
   Updater,
   useReactTable,
   VisibilityState,
+  Table as TanstackTable,
 } from '@tanstack/react-table';
 import { useCallback, useEffect, useState } from 'react';
 import { DataTablePagination } from './data-table-pagination';
-import { DataTableSettings } from './data-table-actions';
-import { Loader2 } from 'lucide-react';
+import { DataTableSettings } from './data-table-settings';
+import { Spinner } from '../spinner/spinner';
+import { DataTableFilters } from './data-table-filters';
 
 export type Props = {
   rowSelectionProp: RowSelectionState;
@@ -57,7 +59,7 @@ export interface DataTableProps<TData, TValue> {
   selectionType?: 'single' | 'multi';
   onSelectedRowsChange?: (value: TData[]) => void;
   columns: ColumnDef<TData, TValue>[];
-  filterColumn?: string;
+  renderFilters?: (table: TanstackTable<TData>) => React.ReactNode;
   data: TData[];
 }
 
@@ -67,6 +69,7 @@ export function DataTable<TData, TValue>({
   selectionType = 'multi',
   onSelectedRowsChange,
   columns,
+  renderFilters,
   data,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -113,9 +116,14 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className='space-y-1 overflow-scroll'>
-      <div className='flex flex-row items-center justify-end'>
-        <DataTablePagination table={table} />
-        <DataTableSettings table={table} />
+      <div className='space-y-2 flex flex-row flex-wrap items-center justify-between'>
+        {renderFilters && (
+          <DataTableFilters table={table} renderFilters={renderFilters} />
+        )}
+        <div className='flex flex-row items-center'>
+          <DataTablePagination table={table} />
+          <DataTableSettings table={table} />
+        </div>
       </div>
       <div className='overflow-hidden'>
         <Table>
@@ -146,7 +154,7 @@ export function DataTable<TData, TValue>({
                 >
                   <span className='inline-block w-fit'>
                     <span className='text-gray-text-muted flex flex-row items-center justify-between gap-2'>
-                      <Loader2 className='animate-spin' />
+                      <Spinner />
                       Loading...
                     </span>
                   </span>

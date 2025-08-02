@@ -12,7 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2Icon, TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
+import { Spinner } from './spinner/spinner';
 
 interface DestructiveActionConfirmationModalProps {
   dialogTrigger: React.ReactNode;
@@ -100,7 +101,7 @@ function DestructiveActionConfirmationModal({
               >
                 {isLoading ? (
                   <>
-                    <Loader2Icon className='mr-2 h-4 w-4 animate-spin' />
+                    <Spinner />
                     Deleting...
                   </>
                 ) : (

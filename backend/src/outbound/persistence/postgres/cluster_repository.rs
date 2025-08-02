@@ -5,8 +5,7 @@ use crate::{
     domain::{
         cluster::{
             models::{
-                Cluster, ClusterDetails, ClusterId, ClusterNode, CreateClusterRequest, NodeId,
-                NodeStatus, UpdateNodeStatusRequest,
+                Cluster, ClusterDetails, ClusterId, ClusterNode, ClusterSummary, CreateClusterRequest, NodeId, UpdateNodeStatusRequest
             },
             ports::{
                 ClusterApiKeyRepository, ClusterRepository,
@@ -18,9 +17,7 @@ use crate::{
         user::models::{ApiKey, ApiKeyId},
     },
     outbound::persistence::postgres::records::{
-        ApiKeyRecord, ClusterDetailsRecord, ClusterNodeRecord, ClusterRecord,
-        CpuConfigurationRecord, GpuConfigurationRecord, NodeStatusRecord, TrainingJobRecord,
-        TrainingJobStatusRecord,
+        ApiKeyRecord, ClusterDetailsRecord, ClusterNodeRecord, ClusterRecord, ClusterSummaryRecord, CpuConfigurationRecord, GpuConfigurationRecord, NodeStatusRecord, TrainingJobRecord, TrainingJobStatusRecord
     },
 };
 
@@ -43,7 +40,9 @@ impl ClusterRepository for PostgresClusterRepository {
     ) -> Result<Cluster, ClusterRepositoryError> {
         let record = sqlx::query_as!(
             ClusterRecord,
-            "INSERT INTO clusters (cluster_name, cluster_description) VALUES ($1, $2) RETURNING cluster_id, cluster_name, cluster_description, created_at, updated_at",
+            r#"INSERT INTO clusters (cluster_name, cluster_description)
+            VALUES ($1, $2)
+            RETURNING cluster_id, cluster_name, cluster_description, created_at, updated_at"#,
             req.name,
             req.description,
         )
@@ -58,9 +57,9 @@ impl ClusterRepository for PostgresClusterRepository {
         let record = sqlx::query_as!(
             ClusterRecord,
             r#"
-            SELECT cluster_id, cluster_name, cluster_description, created_at, updated_at
-            FROM clusters
-            WHERE cluster_id = $1
+            SELECT c.cluster_id, c.cluster_name, c.cluster_description, c.created_at, c.updated_at
+            FROM clusters c
+            WHERE c.cluster_id = $1
             "#,
             id.inner(),
         )
@@ -84,7 +83,7 @@ impl ClusterRepository for PostgresClusterRepository {
             ClusterDetailsRecord,
             r#"SELECT c.cluster_id, c.cluster_name, c.cluster_description, c.created_at, c.updated_at,
                 COUNT(DISTINCT n.node_id) AS "total_nodes!: i64",
-                COUNT(DISTINCT running_jobs.node_id) AS "busy_nodes!: i64",
+                COUNT(DISTINCT n.node_id) FILTER (WHERE n.node_status = 'busy') AS "busy_nodes!: i64",
                 COUNT(running_jobs.id) AS "total_running_jobs!: i64",
                 COALESCE(SUM((n.cpu).millicores), 0) AS "total_millicores!: i64",
                 COALESCE(SUM((running_jobs.resource_requirements->>'cpu_millicores')::int), 0) AS "used_millicores!: i64",
@@ -110,19 +109,25 @@ impl ClusterRepository for PostgresClusterRepository {
         Ok(record.into())
     }
 
-    async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterRepositoryError> {
+    async fn list_clusters(&self) -> Result<Vec<ClusterSummary>, ClusterRepositoryError> {
         let records = sqlx::query_as!(
-            ClusterRecord,
+            ClusterSummaryRecord,
             r#"
-            SELECT cluster_id, cluster_name, cluster_description, created_at, updated_at
-            FROM clusters
+            SELECT c.cluster_id, c.cluster_name, c.cluster_description, c.created_at, c.updated_at,
+                COUNT(DISTINCT n.node_id) AS "total_nodes!: i64",
+                COUNT(DISTINCT n.node_id) FILTER (WHERE n.node_status = 'busy') AS "busy_nodes!: i64",
+                COUNT(running_jobs.id) AS "total_running_jobs!: i64"
+            FROM clusters c
+            LEFT JOIN cluster_nodes n ON c.cluster_id = n.cluster_id
+            LEFT JOIN training_jobs running_jobs ON running_jobs.status = 'running' AND n.node_id = running_jobs.node_id
+            GROUP BY c.cluster_id;
             "#,
         )
         .fetch_all(&self.pool)
         .await
         .map_err(|e: sqlx::Error| ClusterRepositoryError::Unknown(anyhow::anyhow!(e)))?;
 
-        let clusters: Vec<Cluster> = records.into_iter().map(|r| r.into()).collect();
+        let clusters: Vec<ClusterSummary> = records.into_iter().map(|r| r.into()).collect();
         Ok(clusters)
     }
 
@@ -228,7 +233,10 @@ impl ClusterRepository for PostgresClusterRepository {
             "#,
             req.node_id.inner(),
             req.cluster_id.inner(),
-            NodeStatusRecord::from(req.status.clone()) as _,
+            match req.job_info {
+                Some(_) => NodeStatusRecord::Busy,
+                None => NodeStatusRecord::Available,
+            } as _,
             req.heartbeat_timestamp,
             req.memory_info,
             CpuConfigurationRecord::from(req.cpu_info.clone()) as _,
@@ -237,7 +245,7 @@ impl ClusterRepository for PostgresClusterRepository {
                 .map(GpuConfigurationRecord::from) as _,
             req.job_info
                 .as_ref()
-                .and_then(|info| info.current_job_id)
+                .map(|info| info.current_job_id)
                 .map(|id| id.into_inner()),
         )
         .fetch_one(&self.pool)

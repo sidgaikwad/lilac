@@ -4,9 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     domain::{
         cluster::models::{
-            Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterId, ClusterJobStats,
-            ClusterMemoryStats, ClusterNode, Cpu, CreateClusterRequest, Gpu, JobInfo, NodeId,
-            NodeStatus,
+            Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterId, ClusterJobStats, ClusterMemoryStats, ClusterNode, ClusterSummary, Cpu, CreateClusterRequest, Gpu, JobInfo, NodeId, NodeStatus
         },
         training_job::models::TrainingJob,
         user::models::{ApiKey, ApiKeyId},
@@ -81,15 +79,21 @@ impl From<Cluster> for GetClusterHttpResponse {
 pub struct HttpClusterSummary {
     pub cluster_id: ClusterId,
     pub cluster_name: String,
+    pub total_nodes: i64,
+    pub busy_nodes: i64,
+    pub total_running_jobs: i64,
     pub cluster_description: Option<String>,
 }
 
-impl From<Cluster> for HttpClusterSummary {
-    fn from(cluster: Cluster) -> Self {
+impl From<ClusterSummary> for HttpClusterSummary {
+    fn from(cluster: ClusterSummary) -> Self {
         Self {
             cluster_id: cluster.id,
             cluster_name: cluster.name,
             cluster_description: cluster.description,
+            total_nodes: cluster.total_nodes,
+            busy_nodes: cluster.busy_nodes,
+            total_running_jobs: cluster.total_running_jobs,
         }
     }
 }
@@ -100,8 +104,8 @@ pub struct ListClustersHttpResponse {
     pub clusters: Vec<HttpClusterSummary>,
 }
 
-impl From<Vec<Cluster>> for ListClustersHttpResponse {
-    fn from(value: Vec<Cluster>) -> Self {
+impl From<Vec<ClusterSummary>> for ListClustersHttpResponse {
+    fn from(value: Vec<ClusterSummary>) -> Self {
         Self {
             clusters: value.into_iter().map(HttpClusterSummary::from).collect(),
         }

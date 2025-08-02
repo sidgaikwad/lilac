@@ -11,9 +11,9 @@ export async function listApiKeys(): Promise<ApiKey[]> {
   return resp.map((key) => ({
     id: key.id,
     prefix: key.prefix,
-    created_at: key.createdAt,
-    last_used_at: key.lastUsedAt,
-    expires_at: key.expiresAt,
+    createdAt: key.created_at,
+    lastUsedAt: key.last_used_at,
+    expiresAt: key.expires_at,
   }));
 }
 

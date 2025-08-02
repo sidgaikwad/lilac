@@ -8,6 +8,9 @@ export interface ClusterSummary {
   clusterId: string;
   clusterName: string;
   clusterDescription?: string;
+  totalNodes: number;
+  busyNodes: number;
+  totalRunningJobs: number;
 }
 
 export interface GpuRequirement {

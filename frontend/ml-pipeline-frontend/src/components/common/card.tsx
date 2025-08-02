@@ -36,23 +36,31 @@ export function Card(props: CardProps) {
   } = props;
   return (
     <CardComponent {...divProps} className={cn('h-fit w-fit', className)}>
-      <CardHeader>
-        <div
-          className={cn(
-            'flex gap-4',
-            layout === 'horizontal'
-              ? 'flex-row items-center'
-              : 'flex-col items-center text-center'
-          )}
-        >
-          {icon}
-          <div className='flex min-w-0 flex-col'>
-            <CardTitle className='break-words'>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
-        </div>
-        {action && <CardAction>{action}</CardAction>}
-      </CardHeader>
+      {(title || description) && (
+        <CardHeader>
+          <>
+            <div
+              className={cn(
+                'flex gap-4',
+                layout === 'horizontal'
+                  ? 'flex-row items-center'
+                  : 'flex-col items-center text-center'
+              )}
+            >
+              {icon}
+              <div className='flex min-w-0 flex-col'>
+                {title && (
+                  <CardTitle className='break-words'>{title}</CardTitle>
+                )}
+                {description && (
+                  <CardDescription>{description}</CardDescription>
+                )}
+              </div>
+            </div>
+            {action && <CardAction>{action}</CardAction>}
+          </>
+        </CardHeader>
+      )}
       {content && <CardContent>{content}</CardContent>}
       {footer && (
         <CardFooter>

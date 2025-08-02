@@ -1,9 +1,10 @@
-import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
+import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-dom';
 import { isServiceError } from '@/types';
 
 function ErrorBoundary() {
   const error = useRouteError();
   console.error(error);
+  const navigate = useNavigate();
 
   if (isRouteErrorResponse(error)) {
     return (
@@ -20,6 +21,9 @@ function ErrorBoundary() {
       </div>
     );
   } else if (isServiceError(error)) {
+    if (error.statusCode === 401 && error.error === 'Invalid token') {
+      navigate('/login');
+    }
     return (
       <div>
         <h1>Oops! Something went wrong.</h1>

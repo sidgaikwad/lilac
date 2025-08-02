@@ -1,11 +1,8 @@
 use crate::domain::{
     cluster::models::{
-        Architecture, Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterJobStats,
-        ClusterMemoryStats, ClusterNode, Cpu, CpuManufacturer, Gpu, GpuManufacturer, GpuModel,
-        NodeStatus,
+        Architecture, Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterJobStats, ClusterMemoryStats, ClusterNode, ClusterSummary, Cpu, CpuManufacturer, Gpu, GpuManufacturer, GpuModel, NodeStatus
     },
-    training_job::models::TrainingJob,
-    training_job::models::TrainingJobStatus,
+    training_job::models::{TrainingJob, TrainingJobStatus},
     user::models::ApiKey,
 };
 use chrono::{DateTime, Utc};
@@ -28,6 +25,33 @@ impl From<ClusterRecord> for Cluster {
             id: record.cluster_id.into(),
             name: record.cluster_name,
             description: record.cluster_description,
+            created_at: record.created_at,
+            updated_at: record.updated_at,
+        }
+    }
+}
+
+#[derive(sqlx::FromRow)]
+pub struct ClusterSummaryRecord {
+    pub cluster_id: uuid::Uuid,
+    pub cluster_name: String,
+    pub cluster_description: Option<String>,
+    pub total_nodes: i64,
+    pub busy_nodes: i64,
+    pub total_running_jobs: i64,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<ClusterSummaryRecord> for ClusterSummary {
+    fn from(record: ClusterSummaryRecord) -> Self {
+        Self {
+            id: record.cluster_id.into(),
+            name: record.cluster_name,
+            description: record.cluster_description,
+            total_nodes: record.total_nodes,
+            busy_nodes: record.busy_nodes,
+            total_running_jobs: record.total_running_jobs,
             created_at: record.created_at,
             updated_at: record.updated_at,
         }

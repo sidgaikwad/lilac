@@ -10,8 +10,8 @@ import {
   CircleHelp,
   CircleX,
   Info,
-  Loader2,
 } from 'lucide-react';
+import { Spinner } from './spinner/spinner';
 
 export interface AlertProps {
   className?: string;
@@ -43,7 +43,7 @@ function getIcon(variant: AlertProps['variant']) {
     case 'pending':
       return <CircleEllipsis />;
     case 'loading':
-      return <Loader2 className='animate-spin' />;
+      return <Spinner />;
     case 'help':
       return <CircleHelp />;
     default:

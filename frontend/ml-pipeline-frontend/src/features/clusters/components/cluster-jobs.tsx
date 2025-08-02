@@ -4,6 +4,7 @@ import { Card } from '@/components/common/card';
 import { Status, StatusProps } from '@/components/common/status';
 import { toast } from '@/components/toast';
 import { useCancelTrainingJob } from '@/services/training-jobs/cancel-training-job.mutation';
+import { Input } from '@/components/ui/input';
 import { useListClusterJobs } from '@/services';
 import { ClusterJob } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
@@ -136,6 +137,20 @@ export function ClusterJobs(props: ClusterJobsProps) {
           columns={JOB_COLUMNS}
           data={jobs ?? []}
           isLoading={isLoading}
+          renderFilters={(table) => {
+            return (
+              <Input
+                className='w-full min-w-sm'
+                placeholder='Filter jobs by name...'
+                value={
+                  (table.getColumn('jobName')?.getFilterValue() as string) ?? ''
+                }
+                onChange={(event) =>
+                  table.getColumn('jobName')?.setFilterValue(event.target.value)
+                }
+              />
+            );
+          }}
         />
       }
     />

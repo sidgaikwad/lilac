@@ -3,7 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 
 use crate::domain::{
-    cluster::models::{ClusterDetails, ClusterNode, UpdateNodeStatusRequest},
+    cluster::models::{ClusterDetails, ClusterNode, ClusterSummary, UpdateNodeStatusRequest},
     training_job::{
         models::{TrainingJob, TrainingJobStatus},
         ports::TrainingJobRepository,
@@ -97,7 +97,7 @@ pub trait ClusterService: Send + Sync {
         &self,
         cluster_id: &ClusterId,
     ) -> Result<ClusterDetails, ClusterServiceError>;
-    async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterServiceError>;
+    async fn list_clusters(&self) -> Result<Vec<ClusterSummary>, ClusterServiceError>;
     async fn delete_cluster(&self, cluster_id: &ClusterId) -> Result<(), ClusterServiceError>;
     async fn list_cluster_jobs(
         &self,
@@ -178,7 +178,7 @@ impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository> C
         Ok(self.cluster_repo.get_cluster_details(cluster_id).await?)
     }
 
-    async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterServiceError> {
+    async fn list_clusters(&self) -> Result<Vec<ClusterSummary>, ClusterServiceError> {
         Ok(self.cluster_repo.list_clusters().await?)
     }
 

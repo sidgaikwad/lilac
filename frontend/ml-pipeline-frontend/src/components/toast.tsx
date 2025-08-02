@@ -1,6 +1,7 @@
 import { toast as sonnerToast } from 'sonner';
 import { Button } from './ui/button';
-import { CircleAlert, CircleCheck, CircleX, Info, Loader2 } from 'lucide-react';
+import { CircleAlert, CircleCheck, CircleX, Info} from 'lucide-react';
+import { Spinner } from './common/spinner/spinner';
 
 function basic(title: string, toast: Omit<ToastProps, 'title'> = {}) {
   const { id, description, action, icon } = toast;
@@ -196,7 +197,7 @@ function loading(title: string, toast: Omit<ToastProps, 'title'> = {}) {
     (id) => (
       <div className='bg-slate-3 border-slate-8 flex w-full items-center rounded-lg border p-4 shadow-lg md:max-w-[364px]'>
         <div className='text-slate-9 mr-3 self-start'>
-          {icon ?? <Loader2 className='animate-spin' />}
+          {icon ?? <Spinner />}
         </div>
         <div className='flex flex-1 items-center'>
           <div className='w-full'>

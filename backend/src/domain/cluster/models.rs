@@ -18,6 +18,18 @@ pub struct Cluster {
 }
 
 #[derive(Clone, Debug)]
+pub struct ClusterSummary {
+    pub id: ClusterId,
+    pub name: String,
+    pub description: Option<String>,
+    pub total_nodes: i64,
+    pub busy_nodes: i64,
+    pub total_running_jobs: i64,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Clone, Debug)]
 pub struct CreateClusterRequest {
     pub name: String,
     pub description: Option<String>,

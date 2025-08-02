@@ -4,7 +4,6 @@ import {
   AlertCircleIcon,
   BadgeCheckIcon,
   GitBranch,
-  Loader2,
   Calculator,
   CreditCard,
   Settings,
@@ -237,6 +236,7 @@ import {
 } from '../ui/container';
 import { toast } from '../toast';
 import { random } from 'lodash';
+import { Spinner } from './spinner/spinner';
 
 export default function ThemePanel() {
   const [date, setDate] = React.useState<DateRange | undefined>();
@@ -340,7 +340,7 @@ export default function ThemePanel() {
             </AlertDescription>
           </Alert>
           <Alert variant='loading'>
-            <Loader2 className='animate-spin' />
+            <Spinner />
             <AlertTitle>Loading</AlertTitle>
           </Alert>
         </div>
@@ -523,7 +523,7 @@ export default function ThemePanel() {
             <GitBranch /> New Branch
           </Button>
           <Button size='sm' disabled>
-            <Loader2 className='animate-spin' />
+            <Spinner />
             Please wait
           </Button>
         </div>
@@ -1094,7 +1094,7 @@ export default function ThemePanel() {
         </div>
       </div>
       <div className='space-y-2'>
-        <p className='text-center'>Buttons</p>
+        <p className='text-center'>Toasts</p>
         <div className='flex flex-row space-x-4'>
           <Button
             variant='outline'

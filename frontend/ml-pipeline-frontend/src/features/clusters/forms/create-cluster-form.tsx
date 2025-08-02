@@ -171,7 +171,7 @@ function ConfigureClusterDetails() {
               </FormLabel>
               <FormDescription>A description of your cluster</FormDescription>
               <FormControl>
-                <Input {...field}></Input>
+                <Input {...field} placeholder='Cluster description...'></Input>
               </FormControl>
               <FormMessage />
             </FormItem>

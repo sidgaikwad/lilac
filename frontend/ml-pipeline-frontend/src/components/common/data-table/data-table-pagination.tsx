@@ -17,7 +17,10 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
-  const pageCount = table.getPageCount();
+  const pageCount = Math.round(
+    table.getFilteredRowModel().rows.length /
+      table.getState().pagination.pageSize
+  );
   const currentIndex = table.getState().pagination.pageIndex;
   const { leftDots, rightDots, start, end } = getPageRange(
     currentIndex,
@@ -25,12 +28,42 @@ export function DataTablePagination<TData>({
   );
   const pageOptions = table.getPageOptions().slice(start, end);
 
-  if (pageOptions.length < 1) {
-    return undefined;
+  if (pageCount <= 1) {
+    return (
+      <div className='flex items-center justify-center px-2'>
+        <div className='flex items-center space-x-6 lg:space-x-8'>
+          <div className='flex items-center space-x-2'>
+            <Pagination className='w-full'>
+              <PaginationContent className='flex flex-row justify-between'>
+                <PaginationItem>
+                  <PaginationPrevious onClick={() => table.previousPage()} />
+                </PaginationItem>
+                <PaginationItem key={1}>
+                  <PaginationLink
+                    className='transition-none'
+                    isActive={0 === currentIndex}
+                    onClick={() => table.firstPage()}
+                  >
+                    {1}
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      currentIndex < pageCount - 1 && table.nextPage()
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className='flex items-center justify-center px-2'>
+    <div className='flex items-center justify-center'>
       <div className='flex items-center space-x-6 lg:space-x-8'>
         <div className='flex items-center space-x-2'>
           <Pagination className='w-full'>

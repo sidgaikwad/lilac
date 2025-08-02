@@ -10,6 +10,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { getFormattedTime, getRelativeTime } from '@/lib';
 import { NewApiKey } from '@/model/api-key';
 import {
   useCreateClusterKey,
@@ -58,10 +60,20 @@ export function ClusterApiKeys(props: ClusterApiKeyProps) {
       header: 'Prefix',
     }),
     columnHelper.accessor('createdAt', {
-      header: 'Submitted At',
+      header: 'Created',
       cell: ({ cell }) => {
         const date = new Date(cell.getValue());
-        return <div>{date.toLocaleString()}</div>;
+        return (
+          <Tooltip>
+            <TooltipTrigger>
+              <p className='underline decoration-dotted'>{getRelativeTime(date)}</p>
+            </TooltipTrigger>
+            <TooltipContent side='bottom'>
+              <p>{getFormattedTime(date)}</p>
+            </TooltipContent>
+          </Tooltip>
+        );
+        return <div>{getRelativeTime(date)}</div>;
       },
     }),
     columnHelper.display({
@@ -70,7 +82,7 @@ export function ClusterApiKeys(props: ClusterApiKeyProps) {
       cell: ({ row }) => {
         return (
           <Trash2
-            className='text-red-600'
+            className='text-red-600 hover:cursor-pointer hover:text-red-700'
             onClick={() =>
               deleteApiKey({
                 clusterId: row.original.clusterId,

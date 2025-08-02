@@ -5,7 +5,7 @@ use thiserror::Error;
 use mockall::automock;
 
 use crate::domain::{
-    cluster::models::{ClusterDetails, ClusterNode, NodeId, UpdateNodeStatusRequest},
+    cluster::models::{ClusterDetails, ClusterNode, ClusterSummary, NodeId, UpdateNodeStatusRequest},
     training_job::models::{JobId, TrainingJob},
     user::models::{ApiKey, ApiKeyId},
 };
@@ -34,7 +34,7 @@ pub trait ClusterRepository: Send + Sync {
         &self,
         id: &ClusterId,
     ) -> Result<ClusterDetails, ClusterRepositoryError>;
-    async fn list_clusters(&self) -> Result<Vec<Cluster>, ClusterRepositoryError>;
+    async fn list_clusters(&self) -> Result<Vec<ClusterSummary>, ClusterRepositoryError>;
     async fn delete_cluster(&self, id: &ClusterId) -> Result<(), ClusterRepositoryError>;
     async fn list_cluster_jobs(
         &self,
