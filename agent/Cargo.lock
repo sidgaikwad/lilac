@@ -978,6 +978,7 @@ dependencies = [
  "strum_macros",
  "sysinfo",
  "tempfile",
+ "thiserror 1.0.69",
  "tokio",
  "toml",
  "uuid",

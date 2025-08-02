@@ -1,7 +1,6 @@
-use reqwest::{Client, RequestBuilder};
+use crate::{config::UserConfig, errors::UserApiError};
+use reqwest::{Client, RequestBuilder, StatusCode};
 use serde::{Deserialize, Serialize};
-use crate::config::UserConfig;
-
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "snake_case")]
@@ -33,7 +32,6 @@ pub struct SubmitJobResponse {
     pub id: String,
 }
 
-
 #[derive(Deserialize, Debug, Clone)]
 pub struct Queue {
     pub id: String,
@@ -62,8 +60,10 @@ impl ApiClient {
         }
     }
 
-
-    pub async fn submit_job(&self, request: SubmitJobRequest) -> anyhow::Result<SubmitJobResponse> {
+    pub async fn submit_job(
+        &self,
+        request: SubmitJobRequest,
+    ) -> Result<SubmitJobResponse, UserApiError> {
         let url = format!("{}/training_jobs", self.config.api_endpoint);
 
         let req_builder = self.client.post(&url).json(&request);
@@ -71,34 +71,41 @@ impl ApiClient {
 
         let response = req_builder.send().await?;
 
-        let status = response.status();
-        if !status.is_success() {
-            let error_body = response.text().await?;
-            return Err(anyhow::anyhow!(
-                "Failed to submit job. Status: {}, Body: {}",
-                status,
-                error_body
-            ));
+        match response.status() {
+            StatusCode::OK => {
+                let job_response = response.json::<SubmitJobResponse>().await?;
+                Ok(job_response)
+            }
+            StatusCode::UNAUTHORIZED => Err(UserApiError::Unauthorized),
+            StatusCode::NOT_FOUND => Err(UserApiError::NotFound),
+            StatusCode::INTERNAL_SERVER_ERROR => Err(UserApiError::InternalServerError),
+            _ => Err(UserApiError::Unknown(anyhow::anyhow!(
+                "Failed to submit job: {}",
+                response.status()
+            ))),
         }
-
-        let job_response = response.json::<SubmitJobResponse>().await?;
-        Ok(job_response)
     }
 
-
-    pub async fn get_queues(&self) -> anyhow::Result<Vec<Queue>> {
+    pub async fn get_queues(&self) -> Result<Vec<Queue>, UserApiError> {
         let url = format!("{}/queues", self.config.api_endpoint);
-        
+
         let req_builder = self.client.get(&url);
         let req_builder = self.add_auth(req_builder);
 
-        let response = req_builder
-            .send()
-            .await?
-            .error_for_status()?
-            .json::<Vec<Queue>>()
-            .await?;
+        let response = req_builder.send().await?;
 
-        Ok(response)
+        match response.status() {
+            StatusCode::OK => {
+                let queues = response.json::<Vec<Queue>>().await?;
+                Ok(queues)
+            }
+            StatusCode::UNAUTHORIZED => Err(UserApiError::Unauthorized),
+            StatusCode::NOT_FOUND => Err(UserApiError::NotFound),
+            StatusCode::INTERNAL_SERVER_ERROR => Err(UserApiError::InternalServerError),
+            _ => Err(UserApiError::Unknown(anyhow::anyhow!(
+                "Failed to get queues: {}",
+                response.status()
+            ))),
+        }
     }
 }

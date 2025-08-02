@@ -1,3 +1,4 @@
+use crate::errors::ConfigError;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
@@ -27,7 +28,7 @@ pub struct PrivateRegistryConfig {
     pub secret: String,
 }
 
-pub fn load_user_config() -> anyhow::Result<UserConfig> {
+pub fn load_user_config() -> Result<UserConfig, ConfigError> {
     let config_path = get_config_path("config.toml")?;
 
     // Prioritize environment variables
@@ -37,9 +38,10 @@ pub fn load_user_config() -> anyhow::Result<UserConfig> {
             api_key: env::var("LILAC_USER_API_KEY").ok(),
         };
         // Write to file if env vars are used, to persist the config
-        let toml_string = toml::to_string(&config)?;
-        fs::create_dir_all(config_path.parent().unwrap())?;
-        fs::write(&config_path, toml_string)?;
+        let toml_string = toml::to_string(&config).map_err(|_| ConfigError::WriteFile)?;
+        fs::create_dir_all(config_path.parent().unwrap())
+            .map_err(|_| ConfigError::ConfigDirNotFound)?;
+        fs::write(&config_path, toml_string).map_err(|_| ConfigError::WriteFile)?;
         return Ok(config);
     }
 
@@ -49,25 +51,27 @@ pub fn load_user_config() -> anyhow::Result<UserConfig> {
             api_endpoint: "http://localhost:8080".to_string(),
             ..Default::default()
         };
-        let toml_string = toml::to_string(&config)?;
-        fs::create_dir_all(config_path.parent().unwrap())?;
-        fs::write(&config_path, toml_string)?;
+        let toml_string = toml::to_string(&config).map_err(|_| ConfigError::WriteFile)?;
+        fs::create_dir_all(config_path.parent().unwrap())
+            .map_err(|_| ConfigError::ConfigDirNotFound)?;
+        fs::write(&config_path, toml_string).map_err(|_| ConfigError::WriteFile)?;
         println!("Created new user config file at: {:?}", config_path);
         return Ok(config);
     }
 
-    let content = fs::read_to_string(&config_path)?;
-    Ok(toml::from_str(&content)?)
+    let content = fs::read_to_string(&config_path).map_err(|_| ConfigError::ReadFile)?;
+    Ok(toml::from_str(&content).map_err(|_| ConfigError::Parse)?)
 }
 
-pub fn load_agent_config() -> anyhow::Result<AgentConfig> {
+pub fn load_agent_config() -> Result<AgentConfig, ConfigError> {
     let config_path = get_config_path("agent.toml")?;
 
     // Prioritize environment variables
     if let Ok(api_endpoint) = env::var("LILAC_API_ENDPOINT") {
         let config = AgentConfig {
             api_endpoint,
-            cluster_api_key: env::var("LILAC_CLUSTER_API_KEY")?,
+            cluster_api_key: env::var("LILAC_CLUSTER_API_KEY")
+                .map_err(|_| ConfigError::ReadFile)?,
             node_id: env::var("LILAC_NODE_ID")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -75,17 +79,20 @@ pub fn load_agent_config() -> anyhow::Result<AgentConfig> {
             private_registry: if let Ok(registry_url) = env::var("LILAC_PRIVATE_REGISTRY_URL") {
                 Some(PrivateRegistryConfig {
                     registry_url,
-                    username: env::var("LILAC_PRIVATE_REGISTRY_USERNAME")?,
-                    secret: env::var("LILAC_PRIVATE_REGISTRY_PASSWORD")?,
+                    username: env::var("LILAC_PRIVATE_REGISTRY_USERNAME")
+                        .map_err(|_| ConfigError::ReadFile)?,
+                    secret: env::var("LILAC_PRIVATE_REGISTRY_PASSWORD")
+                        .map_err(|_| ConfigError::ReadFile)?,
                 })
             } else {
                 None
             },
         };
         // Write to file if env vars are used, to persist the config
-        let toml_string = toml::to_string(&config)?;
-        fs::create_dir_all(config_path.parent().unwrap())?;
-        fs::write(&config_path, toml_string)?;
+        let toml_string = toml::to_string(&config).map_err(|_| ConfigError::WriteFile)?;
+        fs::create_dir_all(config_path.parent().unwrap())
+            .map_err(|_| ConfigError::ConfigDirNotFound)?;
+        fs::write(&config_path, toml_string).map_err(|_| ConfigError::WriteFile)?;
         return Ok(config);
     }
 
@@ -97,20 +104,20 @@ pub fn load_agent_config() -> anyhow::Result<AgentConfig> {
             node_id: Uuid::new_v4(),
             private_registry: None,
         };
-        let toml_string = toml::to_string(&config)?;
-        fs::create_dir_all(config_path.parent().unwrap())?;
-        fs::write(&config_path, toml_string)?;
+        let toml_string = toml::to_string(&config).map_err(|_| ConfigError::WriteFile)?;
+        fs::create_dir_all(config_path.parent().unwrap())
+            .map_err(|_| ConfigError::ConfigDirNotFound)?;
+        fs::write(&config_path, toml_string).map_err(|_| ConfigError::WriteFile)?;
         println!("Created new agent config file at: {:?}", config_path);
         return Ok(config);
     }
 
-    let content = fs::read_to_string(&config_path)?;
-    Ok(toml::from_str(&content)?)
+    let content = fs::read_to_string(&config_path).map_err(|_| ConfigError::ReadFile)?;
+    Ok(toml::from_str(&content).map_err(|_| ConfigError::Parse)?)
 }
 
-pub fn get_config_path(file_name: &str) -> anyhow::Result<PathBuf> {
-    let home_dir =
-        dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Could not find home directory"))?;
+pub fn get_config_path(file_name: &str) -> Result<PathBuf, ConfigError> {
+    let home_dir = dirs::home_dir().ok_or(ConfigError::HomeDirNotFound)?;
     let config_dir = home_dir.join(".lilac");
     Ok(config_dir.join(file_name))
 }

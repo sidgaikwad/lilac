@@ -1,21 +1,22 @@
-use anyhow::Result;
+use crate::{
+    config,
+    domain::agent::daemon::Daemon,
+    errors::CliError,
+    inbound::cli::SubmitArgs,
+    outbound,
+    outbound::user_api::{ApiClient, GpuRequirement, ResourceRequirements, SubmitJobRequest},
+};
 use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
 use std::fs;
 
-use crate::{
-    outbound,
-    config,
-    outbound::user_api::{ApiClient, GpuRequirement, ResourceRequirements, SubmitJobRequest},
-    domain::agent::daemon::Daemon,
-};
-
-pub async fn start_agent(config: config::AgentConfig) -> Result<()> {
+pub async fn start_agent(config: config::AgentConfig) -> Result<(), CliError> {
     println!("Initializing Lilac agent...");
 
     // 1. Initialize all the adapters.
     let control_plane_client = outbound::control_plane::ControlPlaneClient::new(config.clone());
     let system_monitor = outbound::system::HybridMonitor::new();
-    let docker_executor = outbound::docker::DockerExecutor::new(config.clone())?;
+    let docker_executor = outbound::docker::DockerExecutor::new(config.clone())
+        .map_err(|e| CliError::Unknown(e.into()))?;
 
     // 2. Initialize and run the daemon.
     let daemon = Daemon::new(
@@ -25,11 +26,14 @@ pub async fn start_agent(config: config::AgentConfig) -> Result<()> {
         config.node_id,
     );
 
-    daemon.run().await?;
+    daemon
+        .run()
+        .await
+        .map_err(|e| CliError::Unknown(e.into()))?;
     Ok(())
 }
 
-pub async fn configure_user(config: config::UserConfig) -> Result<()> {
+pub async fn configure_user(config: config::UserConfig) -> Result<(), CliError> {
     let theme = ColorfulTheme::default();
 
     let api_endpoint: String = Input::with_theme(&theme)
@@ -51,8 +55,10 @@ pub async fn configure_user(config: config::UserConfig) -> Result<()> {
         },
     };
 
-    let toml_string = toml::to_string(&new_config)?;
-    let config_path = config::get_config_path("config.toml")?;
+    let toml_string =
+        toml::to_string(&new_config).map_err(|e| CliError::Unknown(e.into()))?;
+    let config_path =
+        config::get_config_path("config.toml")?;
     fs::create_dir_all(config_path.parent().unwrap())?;
     fs::write(config_path, toml_string)?;
 
@@ -60,7 +66,7 @@ pub async fn configure_user(config: config::UserConfig) -> Result<()> {
     Ok(())
 }
 
-pub async fn configure_agent(config: config::AgentConfig) -> Result<()> {
+pub async fn configure_agent(config: config::AgentConfig) -> Result<(), CliError> {
     let theme = ColorfulTheme::default();
 
     let api_endpoint: String = Input::with_theme(&theme)
@@ -102,8 +108,10 @@ pub async fn configure_agent(config: config::AgentConfig) -> Result<()> {
         });
     }
 
-    let toml_string = toml::to_string(&new_config)?;
-    let config_path = config::get_config_path("agent.toml")?;
+    let toml_string =
+        toml::to_string(&new_config).map_err(|e| CliError::Unknown(e.into()))?;
+    let config_path =
+        config::get_config_path("agent.toml")?;
     fs::create_dir_all(config_path.parent().unwrap())?;
     fs::write(config_path, toml_string)?;
 
@@ -111,70 +119,102 @@ pub async fn configure_agent(config: config::AgentConfig) -> Result<()> {
     Ok(())
 }
 
-pub async fn submit_job(config: config::UserConfig) -> Result<()> {
+pub async fn submit_job(config: config::UserConfig, args: &SubmitArgs) -> Result<(), CliError> {
+    if args.non_interactive
+        && (args.name.is_none()
+            || args.docker_uri.is_none()
+            || args.queue_id.is_none()
+            || args.cpu.is_none()
+            || args.memory.is_none())
+    {
+        return Err(CliError::InvalidArguments);
+    }
+
     let theme = ColorfulTheme::default();
     let client = ApiClient::new(config.clone());
 
-    let name: String = Input::with_theme(&theme)
-        .with_prompt("What would you like to name this job?")
-        .interact_text()?;
+    let name: String = if let Some(name) = &args.name {
+        name.clone()
+    } else {
+        Input::with_theme(&theme)
+            .with_prompt("What would you like to name this job?")
+            .interact_text()?
+    };
 
-    let docker_uri: String = Input::with_theme(&theme)
-        .with_prompt("What is the Docker image URI for your job?")
-        .interact_text()?;
+    let docker_uri: String = if let Some(docker_uri) = &args.docker_uri {
+        docker_uri.clone()
+    } else {
+        Input::with_theme(&theme)
+            .with_prompt("What is the Docker image URI for your job?")
+            .interact_text()?
+    };
 
     let queues = client.get_queues().await?;
-    let queue_names: Vec<String> = queues.iter().map(|q| q.name.clone()).collect();
+    let selected_queue = if let Some(queue_id) = &args.queue_id {
+        queues
+            .iter()
+            .find(|q| q.id.to_string() == *queue_id)
+            .ok_or_else(|| CliError::InvalidArguments)?
+            .clone()
+    } else {
+        let queue_names: Vec<String> = queues.iter().map(|q| q.name.clone()).collect();
+        let queue_selection = Select::with_theme(&theme)
+            .with_prompt("Which queue should this job be submitted to?")
+            .items(&queue_names)
+            .default(0)
+            .interact()?;
+        queues[queue_selection].clone()
+    };
 
-    let queue_selection = Select::with_theme(&theme)
-        .with_prompt("Which queue should this job be submitted to?")
-        .items(&queue_names)
-        .default(0)
-        .interact()?;
+    let requested_cpu: i32 = if let Some(cpu) = args.cpu {
+        cpu
+    } else {
+        Input::with_theme(&theme)
+            .with_prompt("How much CPU do you need (in millicores)?")
+            .interact_text()?
+    };
 
-    let selected_queue = &queues[queue_selection];
+    let requested_memory: i32 = if let Some(memory) = args.memory {
+        memory
+    } else {
+        Input::with_theme(&theme)
+            .with_prompt("How much Memory (in MB)?")
+            .interact_text()?
+    };
 
-    let requested_cpu: i32 = Input::with_theme(&theme)
-        .with_prompt("How much CPU do you need (in millicores)?")
-        .interact_text()?;
+    let mut gpu_count: Option<i32> = args.gpu_count;
+    let mut gpu_model: Option<String> = args.gpu_model.clone();
+    let mut gpu_memory_gb: Option<i32> = args.gpu_memory;
 
-    let requested_memory: i32 = Input::with_theme(&theme)
-        .with_prompt("How much Memory (in MB)?")
-        .interact_text()?;
-
-    let gpu_required = Confirm::with_theme(&theme)
-        .with_prompt("Do you require GPUs?")
-        .default(false)
-        .interact()?;
-
-    let mut gpu_count: Option<i32> = None;
-    let mut gpu_model: Option<String> = None;
-    let mut gpu_memory_gb: Option<i32> = None;
-
-    if gpu_required {
-        gpu_count = Some(
-            Input::with_theme(&theme)
+    if !args.non_interactive && gpu_count.is_none() {
+        if Confirm::with_theme(&theme)
+            .with_prompt("Do you require GPUs?")
+            .default(false)
+            .interact()?
+        {
+            let count: i32 = Input::with_theme(&theme)
                 .with_prompt("How many GPUs?")
-                .interact_text()?,
-        );
-
-        gpu_model = Some(
-            Input::with_theme(&theme)
+                .interact_text()?;
+            let model: String = Input::with_theme(&theme)
                 .with_prompt("What model of GPU? (e.g., A100, V100, leave blank for any)")
                 .allow_empty(true)
-                .interact_text()?,
-        );
-        if gpu_model.as_deref() == Some("") {
-            gpu_model = None;
-        }
+                .interact_text()?;
+            let memory_input: String = Input::with_theme(&theme)
+                .with_prompt("What is the minimum memory per GPU (in GB)? (leave blank for any)")
+                .allow_empty(true)
+                .interact_text()?;
 
-        let memory_input: String = Input::with_theme(&theme)
-            .with_prompt("What is the minimum memory per GPU (in GB)? (leave blank for any)")
-            .allow_empty(true)
-            .interact_text()?;
-
-        if !memory_input.is_empty() {
-            gpu_memory_gb = Some(memory_input.parse()?);
+            gpu_count = Some(count);
+            gpu_model = if model.is_empty() { None } else { Some(model) };
+            gpu_memory_gb = if memory_input.is_empty() {
+                None
+            } else {
+                Some(
+                    memory_input
+                        .parse()
+                        .map_err(|_| CliError::InvalidArguments)?,
+                )
+            };
         }
     }
 
@@ -193,13 +233,15 @@ pub async fn submit_job(config: config::UserConfig) -> Result<()> {
         println!("- GPUs: {} x {}{}", count, model_str, memory_str);
     }
 
-    if !Confirm::with_theme(&theme)
-        .with_prompt("Proceed with job submission?")
-        .default(true)
-        .interact()?
-    {
-        println!("Submission cancelled.");
-        return Ok(());
+    if !args.non_interactive {
+        if !Confirm::with_theme(&theme)
+            .with_prompt("Proceed with job submission?")
+            .default(true)
+            .interact()?
+        {
+            println!("Submission cancelled.");
+            return Ok(());
+        }
     }
 
     println!("\n📨 Submitting job to the Lilac scheduler...");

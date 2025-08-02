@@ -53,6 +53,23 @@ The command will interactively guide you through the submission process, asking 
 
 > **Note:** The CLI no longer builds Docker images. You are responsible for building your image and pushing it to a registry that the Lilac agent can access.
 
+### Non-Interactive Submission
+
+For automated workflows, you can provide all job parameters as command-line arguments. If all required arguments are provided along with the `--non-interactive` flag, the job will be submitted directly without interactive prompts.
+
+| Argument | Description | Example |
+|---|---|---|
+| `--name` | The name of the job. | `--name my-training-job` |
+| `--docker-uri` | The Docker image URI for the job. | `--docker-uri my-registry/my-image:latest` |
+| `--queue-id` | The ID of the queue to submit the job to. | `--queue-id 8943e3de-e745-42bc-9c85-a037c58ac03a` |
+| `--cpu` | The amount of CPU to request in millicores. | `--cpu 1000` |
+| `--memory` | The amount of memory to request in MB. | `--memory 2048` |
+| `--gpu-count` | The number of GPUs to request. | `--gpu-count 1` |
+| `--gpu-model` | The model of GPU to request (e.g., A100). | `--gpu-model A100` |
+| `--gpu-memory`| The minimum VRAM per GPU in GB. | `--gpu-memory 16` |
+| `--non-interactive` | A flag to skip all interactive prompts. | `--non-interactive` |
+
+If you provide arguments without the `--non-interactive` flag, they will be used as default values in the interactive prompts.
 ---
 
 ## For Administrators: Running the Agent
@@ -84,6 +101,18 @@ lilac_cli agent start
 ```
 
 The agent will connect to the control plane, report its available resources, and wait for jobs to be assigned.
+
+> **Note on GPUs**: We do not recomment running the agent in a container. If you do, for the agent to utilize and report on NVIDIA GPU resources in the container, you must start its container with the `--gpus all` flag.
+
+### 3. Minimum Requirements
+
+While the agent itself is lightweight, it needs to handle Docker operations, which can be resource-intensive, especially during the `docker pull` phase for large images. To ensure reliable operation, we recommend the following minimum resources for any environment running the agent:
+>
+>   **CPU**: 1 core
+
+>   **Memory**: 2 GB RAM
+>
+ Running the agent with fewer resources may lead to instability, especially OOM (Out of Memory) errors when pulling large Docker images.
 
 ---
 

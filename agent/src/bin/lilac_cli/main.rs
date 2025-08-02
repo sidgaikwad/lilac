@@ -1,16 +1,20 @@
 use clap::Parser;
-
-use lilac_cli::inbound::cli::{AgentCommands, Cli, Commands};
-use lilac_cli::inbound::handlers;
-use lilac_cli::config;
+use lilac_cli::{
+    config,
+    errors::CliError,
+    inbound::{
+        cli::{AgentCommands, Cli, Commands},
+        handlers,
+    },
+};
 
 #[tokio::main]
-pub async fn main() -> anyhow::Result<()> {
+pub async fn main() -> Result<(), CliError> {
     let cli = Cli::parse();
     match &cli.command {
-        Commands::Submit => {
+        Commands::Submit(args) => {
             let config = config::load_user_config()?;
-            handlers::submit_job(config).await?;
+            handlers::submit_job(config, args).await?;
         }
         Commands::Configure => {
             let config = config::load_user_config()?;

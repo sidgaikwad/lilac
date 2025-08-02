@@ -115,18 +115,10 @@ pub struct Gpu {
     pub memory_mb: i32,
 }
 
-/// The status of a node, reported during a heartbeat.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum NodeStatus {
-    Available,
-    Busy,
-}
 
 /// The request sent from the agent during a heartbeat.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HeartbeatRequest {
-    pub status: NodeStatus,
     pub memory_info: i32,
     pub cpu_info: Cpu,
     pub gpu_info: Option<Gpu>,
@@ -141,7 +133,8 @@ pub struct HeartbeatResponse {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct JobInfo {
-    pub current_job_id: Option<Uuid>,
+    pub current_job_id: Uuid,
+    pub status: JobStatus,
 }
 
 /// The full details of a job, fetched by the agent when assigned.
@@ -155,6 +148,8 @@ pub struct JobDetails {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum JobStatus {
+    Acknowledged,
+    Starting,
     Running,
     Succeeded,
     Failed,
