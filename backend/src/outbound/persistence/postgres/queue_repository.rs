@@ -105,33 +105,6 @@ impl QueueRepository for PostgresQueueRepository {
         Ok(())
     }
 
-    async fn find_by_id(&self, queue_id: &QueueId) -> Result<Option<Queue>, QueueRepositoryError> {
-        let record = sqlx::query_as!(
-            QueueRecord,
-            r#"
-            SELECT
-                q.queue_id,
-                q.name,
-                q.priority,
-                ARRAY_AGG(qca.cluster_id ORDER BY qca.order) FILTER (WHERE qca.cluster_id IS NOT NULL) as "cluster_targets: Vec<Uuid>"
-            FROM
-                queues q
-            LEFT JOIN
-                queue_cluster_assignments qca ON q.queue_id = qca.queue_id
-            WHERE
-                q.queue_id = $1
-            GROUP BY
-                q.queue_id;
-            "#,
-            queue_id.inner(),
-        )
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(|e| QueueRepositoryError::Unknown(e.into()))?;
-
-        Ok(record.map(|v| v.into()))
-    }
-
     async fn update(&self, queue: &Queue) -> Result<(), QueueRepositoryError> {
         let mut tx = self
             .pool
@@ -176,7 +149,7 @@ impl QueueRepository for PostgresQueueRepository {
         Ok(())
     }
 
-    async fn delete(&self, queue_id: &QueueId) -> Result<(), anyhow::Error> {
+    async fn delete(&self, queue_id: &QueueId) -> Result<(), QueueRepositoryError> {
         sqlx::query!("DELETE FROM queues WHERE queue_id = $1", queue_id.inner())
             .execute(&self.pool)
             .await
@@ -202,7 +175,7 @@ impl QueueRepository for PostgresQueueRepository {
             GROUP BY
                 q.queue_id;
             "#,
-            queue_id.0,
+            queue_id.inner(),
         )
         .fetch_one(&self.pool)
         .await

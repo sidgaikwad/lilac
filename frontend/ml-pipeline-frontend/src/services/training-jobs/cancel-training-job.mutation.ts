@@ -7,7 +7,9 @@ export interface CancelTrainingJobRequest {
   jobId: string;
 }
 
-async function cancelTrainingJob(payload: CancelTrainingJobRequest): Promise<void> {
+async function cancelTrainingJob(
+  payload: CancelTrainingJobRequest
+): Promise<void> {
   await postHttp(`/training_jobs/${payload.jobId}/cancel`, {});
 }
 

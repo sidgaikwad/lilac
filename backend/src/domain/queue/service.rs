@@ -2,44 +2,76 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::domain::queue::models::{CreateQueueRequest, QueueId, UpdateQueueRequest};
-
-use super::{
-    models::Queue,
-    ports::{QueueRepository, QueueRepositoryError},
+use crate::domain::{
+    queue::{
+        models::{CreateQueueRequest, Queue, QueueId, UpdateQueueRequest},
+        ports::{QueueRepository, QueueRepositoryError},
+    },
+    training_job::{
+        models::TrainingJob,
+        ports::{TrainingJobRepository, TrainingJobRepositoryError},
+    },
 };
-use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum QueueServiceError {
-    #[error(transparent)]
-    Repository(#[from] QueueRepositoryError),
+    #[error("invalid permissions")]
+    InvalidPermissions,
+    #[error("queue with {field} {value} already exists")]
+    QueueExists { field: String, value: String },
+    #[error("queue {0} not found")]
+    QueueNotFound(String),
     #[error(transparent)]
     Unknown(#[from] anyhow::Error),
+}
+
+impl From<QueueRepositoryError> for QueueServiceError {
+    fn from(error: QueueRepositoryError) -> Self {
+        match error {
+            QueueRepositoryError::Duplicate { field, value } => Self::QueueExists { field, value },
+            QueueRepositoryError::NotFound(id) => Self::QueueNotFound(id),
+            QueueRepositoryError::Unknown(error) => Self::Unknown(error),
+        }
+    }
+}
+
+impl From<TrainingJobRepositoryError> for QueueServiceError {
+    fn from(error: TrainingJobRepositoryError) -> Self {
+        match error {
+            error => Self::Unknown(error.into()),
+        }
+    }
 }
 
 #[async_trait]
 pub trait QueueService: Send + Sync {
     async fn create_queue(&self, request: CreateQueueRequest) -> Result<Queue, QueueServiceError>;
-    async fn get_queue_by_id(&self, queue_id: &QueueId)
-        -> Result<Option<Queue>, QueueServiceError>;
+    async fn get_queue_by_id(&self, queue_id: &QueueId) -> Result<Queue, QueueServiceError>;
     async fn list_all_queues(&self) -> Result<Vec<Queue>, QueueServiceError>;
+    async fn list_queues_jobs(
+        &self,
+        queue_id: &QueueId,
+    ) -> Result<Vec<TrainingJob>, QueueServiceError>;
     async fn update_queue(&self, request: UpdateQueueRequest) -> Result<Queue, QueueServiceError>;
     async fn delete_queue(&self, queue_id: &QueueId) -> Result<(), QueueServiceError>;
 }
 
-pub struct QueueServiceImpl<Q: QueueRepository> {
+pub struct QueueServiceImpl<Q: QueueRepository, T: TrainingJobRepository> {
     queue_repo: Arc<Q>,
+    job_repo: Arc<T>,
 }
 
-impl<Q: QueueRepository> QueueServiceImpl<Q> {
-    pub fn new(queue_repo: Arc<Q>) -> Self {
-        Self { queue_repo }
+impl<Q: QueueRepository, T: TrainingJobRepository> QueueServiceImpl<Q, T> {
+    pub fn new(queue_repo: Arc<Q>, job_repo: Arc<T>) -> Self {
+        Self {
+            queue_repo,
+            job_repo,
+        }
     }
 }
 
 #[async_trait]
-impl<Q: QueueRepository> QueueService for QueueServiceImpl<Q> {
+impl<Q: QueueRepository, T: TrainingJobRepository> QueueService for QueueServiceImpl<Q, T> {
     async fn create_queue(&self, request: CreateQueueRequest) -> Result<Queue, QueueServiceError> {
         let queue = Queue {
             id: QueueId::generate(),
@@ -53,15 +85,19 @@ impl<Q: QueueRepository> QueueService for QueueServiceImpl<Q> {
         Ok(queue)
     }
 
-    async fn get_queue_by_id(
-        &self,
-        queue_id: &QueueId,
-    ) -> Result<Option<Queue>, QueueServiceError> {
-        Ok(self.queue_repo.find_by_id(queue_id).await?)
+    async fn get_queue_by_id(&self, queue_id: &QueueId) -> Result<Queue, QueueServiceError> {
+        Ok(self.queue_repo.get_queue_by_id(queue_id).await?)
     }
 
     async fn list_all_queues(&self) -> Result<Vec<Queue>, QueueServiceError> {
         Ok(self.queue_repo.get_all_queues_sorted().await?)
+    }
+
+    async fn list_queues_jobs(
+        &self,
+        queue_id: &QueueId,
+    ) -> Result<Vec<TrainingJob>, QueueServiceError> {
+        Ok(self.job_repo.get_queued_jobs_for_queue(queue_id).await?)
     }
 
     async fn update_queue(
@@ -88,12 +124,16 @@ impl<Q: QueueRepository> QueueService for QueueServiceImpl<Q> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::{cluster::models::ClusterId, queue::ports::MockQueueRepository};
+    use crate::domain::{
+        cluster::models::ClusterId, queue::ports::MockQueueRepository,
+        training_job::ports::MockTrainingJobRepository,
+    };
     use mockall::predicate::eq;
     use std::sync::Arc;
 
     #[tokio::test]
     async fn test_create_queue() {
+        let mock_job_repo = MockTrainingJobRepository::new();
         let mut mock_repo = MockQueueRepository::new();
         let new_queue_dto = CreateQueueRequest {
             name: "test_queue".to_string(),
@@ -114,7 +154,7 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()));
 
-        let service = QueueServiceImpl::new(Arc::new(mock_repo));
+        let service = QueueServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_job_repo));
         let result = service.create_queue(new_queue_dto).await;
 
         assert!(result.is_ok());
@@ -122,6 +162,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_queue_by_id_found() {
+        let mock_job_repo = MockTrainingJobRepository::new();
         let mut mock_repo = MockQueueRepository::new();
         let queue_id = QueueId::generate();
         let queue = Queue {
@@ -132,38 +173,40 @@ mod tests {
         };
 
         mock_repo
-            .expect_find_by_id()
+            .expect_get_queue_by_id()
             .with(eq(queue_id))
             .times(1)
-            .returning(move |_| Ok(Some(queue.clone())));
+            .returning(move |_| Ok(queue.clone()));
 
-        let service = QueueServiceImpl::new(Arc::new(mock_repo));
+        let service = QueueServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_job_repo));
         let result = service.get_queue_by_id(&queue_id).await;
 
         assert!(result.is_ok());
-        assert!(result.unwrap().is_some());
     }
 
     #[tokio::test]
     async fn test_get_queue_by_id_not_found() {
+        let mock_job_repo = MockTrainingJobRepository::new();
         let mut mock_repo = MockQueueRepository::new();
         let queue_id = QueueId::generate();
 
         mock_repo
-            .expect_find_by_id()
+            .expect_get_queue_by_id()
             .with(eq(queue_id))
             .times(1)
-            .returning(|_| Ok(None));
+            .returning(|_| Err(QueueRepositoryError::NotFound("not found".into())));
 
-        let service = QueueServiceImpl::new(Arc::new(mock_repo));
+        let service = QueueServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_job_repo));
         let result = service.get_queue_by_id(&queue_id).await;
 
-        assert!(result.is_ok());
-        assert!(result.unwrap().is_none());
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, QueueServiceError::QueueNotFound(_)))
     }
 
     #[tokio::test]
     async fn test_list_all_queues() {
+        let mock_job_repo = MockTrainingJobRepository::new();
         let mut mock_repo = MockQueueRepository::new();
         let queues = vec![Queue {
             id: QueueId::generate(),
@@ -177,7 +220,7 @@ mod tests {
             .times(1)
             .returning(move || Ok(queues.clone()));
 
-        let service = QueueServiceImpl::new(Arc::new(mock_repo));
+        let service = QueueServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_job_repo));
         let result = service.list_all_queues().await;
 
         assert!(result.is_ok());
@@ -186,6 +229,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_queue() {
+        let mock_job_repo = MockTrainingJobRepository::new();
         let mut mock_repo = MockQueueRepository::new();
         let updated_queue_dto = UpdateQueueRequest {
             id: QueueId::generate(),
@@ -207,7 +251,7 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()));
 
-        let service = QueueServiceImpl::new(Arc::new(mock_repo));
+        let service = QueueServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_job_repo));
         let result = service.update_queue(updated_queue_dto).await;
 
         assert!(result.is_ok());
@@ -215,6 +259,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_delete_queue() {
+        let mock_job_repo = MockTrainingJobRepository::new();
         let mut mock_repo = MockQueueRepository::new();
         let queue_id = QueueId::generate();
 
@@ -224,7 +269,7 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()));
 
-        let service = QueueServiceImpl::new(Arc::new(mock_repo));
+        let service = QueueServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_job_repo));
         let result = service.delete_queue(&queue_id).await;
 
         assert!(result.is_ok());

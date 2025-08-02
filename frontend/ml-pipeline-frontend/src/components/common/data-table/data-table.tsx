@@ -116,7 +116,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className='space-y-1 overflow-scroll'>
-      <div className='space-y-2 flex flex-row flex-wrap items-center justify-between'>
+      <div className='m-1 flex flex-row flex-wrap items-center justify-between space-y-2'>
         {renderFilters && (
           <DataTableFilters table={table} renderFilters={renderFilters} />
         )}

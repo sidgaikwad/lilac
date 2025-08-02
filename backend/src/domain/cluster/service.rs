@@ -27,12 +27,9 @@ const NANOID_ALPHABET: [char; 62] = [
 ];
 
 use super::{
-    models::{Cluster, ClusterId, CreateClusterRequest},
-    ports::{
-        ClusterApiKeyRepository, ClusterRepository,
-        ClusterRepositoryError,
-    },
     errors::ClusterApiKeyRepositoryError,
+    models::{Cluster, ClusterId, CreateClusterRequest},
+    ports::{ClusterApiKeyRepository, ClusterRepository, ClusterRepositoryError},
 };
 use crate::domain::training_job::ports::TrainingJobRepositoryError;
 
@@ -143,7 +140,9 @@ pub struct ClusterServiceImpl<
     training_job_repo: Arc<T>,
 }
 
-impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository> ClusterServiceImpl<R, T> {
+impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository>
+    ClusterServiceImpl<R, T>
+{
     pub fn new(cluster_repo: Arc<R>, training_job_repo: Arc<T>) -> Self {
         Self {
             cluster_repo,
@@ -198,12 +197,17 @@ impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository> C
         req: UpdateNodeStatusRequest,
     ) -> Result<ClusterNode, ClusterServiceError> {
         if let Some(job_info) = &req.job_info {
-            let job_id = job_info.current_job_id.into();
-            let job = self.training_job_repo.get_training_job_by_id(&job_id).await?;
+            let job_id = job_info.current_job_id;
+            let job = self
+                .training_job_repo
+                .get_training_job_by_id(&job_id)
+                .await?;
 
             if !matches!(
                 job.status,
-                TrainingJobStatus::Succeeded | TrainingJobStatus::Failed | TrainingJobStatus::Cancelled
+                TrainingJobStatus::Succeeded
+                    | TrainingJobStatus::Failed
+                    | TrainingJobStatus::Cancelled
             ) {
                 self.training_job_repo
                     .update_status(&job_id, job_info.status.clone())

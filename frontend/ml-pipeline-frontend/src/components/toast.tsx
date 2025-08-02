@@ -1,6 +1,6 @@
 import { toast as sonnerToast } from 'sonner';
 import { Button } from './ui/button';
-import { CircleAlert, CircleCheck, CircleX, Info} from 'lucide-react';
+import { CircleAlert, CircleCheck, CircleX, Info } from 'lucide-react';
 import { Spinner } from './common/spinner/spinner';
 
 function basic(title: string, toast: Omit<ToastProps, 'title'> = {}) {

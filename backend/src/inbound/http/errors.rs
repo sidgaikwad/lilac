@@ -1,8 +1,9 @@
 use crate::domain::{
     auth::service::AuthServiceError, cluster::service::ClusterServiceError,
     credentials::service::CredentialServiceError, dataset::service::DatasetServiceError,
-    project::service::ProjectServiceError, training_job::service::TrainingJobServiceError,
-    user::service::UserServiceError, workspace::service::WorkspaceServiceError,
+    project::service::ProjectServiceError, queue::service::QueueServiceError,
+    training_job::service::TrainingJobServiceError, user::service::UserServiceError,
+    workspace::service::WorkspaceServiceError,
 };
 
 use axum::{
@@ -21,6 +22,20 @@ pub enum ApiError {
     NotFound(String),
     Unauthorized(String),
     Forbidden,
+}
+
+impl From<QueueServiceError> for ApiError {
+    fn from(err: QueueServiceError) -> Self {
+        match err {
+            QueueServiceError::InvalidPermissions => Self::Forbidden,
+            QueueServiceError::QueueExists { .. } => Self::Conflict("Queue already exists".into()),
+            QueueServiceError::QueueNotFound(_) => Self::NotFound("Queue not found".to_string()),
+            QueueServiceError::Unknown(e) => {
+                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
+                Self::InternalServerError("Something went wrong".to_string())
+            }
+        }
+    }
 }
 
 impl From<CredentialServiceError> for ApiError {
@@ -158,7 +173,7 @@ impl From<TrainingJobServiceError> for ApiError {
                 Self::NotFound("Cluster not found".to_string())
             }
             TrainingJobServiceError::InvalidDefinition(e) => {
-                Self::BadRequest(format!("Invalid job definition: {}", e))
+                Self::BadRequest(format!("Invalid job definition: {e}"))
             }
             TrainingJobServiceError::Unknown(e) => {
                 tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");

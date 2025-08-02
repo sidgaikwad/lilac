@@ -62,12 +62,18 @@ impl SchedulerService {
                 info!("Found dead node {}. Cleaning up.", node.id);
 
                 if let Some(job_id) = node.assigned_job_id {
-                    info!("Re-queueing assigned job {} from dead node {}", job_id, node.id);
+                    info!(
+                        "Re-queueing assigned job {} from dead node {}",
+                        job_id, node.id
+                    );
                     self.job_repo.reset_job_status(&job_id).await?;
                 }
 
                 if let Some(job_id) = node.reported_job_id {
-                    info!("Re-queueing reported job {} from dead node {}", job_id, node.id);
+                    info!(
+                        "Re-queueing reported job {} from dead node {}",
+                        job_id, node.id
+                    );
                     self.job_repo.reset_job_status(&job_id).await?;
                 }
 
@@ -89,7 +95,12 @@ impl SchedulerService {
             let mut cancel = false;
 
             if let Some(node_id) = job.node_id {
-                if self.cluster_repo.get_cluster_node_by_id(&node_id).await.is_err() {
+                if self
+                    .cluster_repo
+                    .get_cluster_node_by_id(&node_id)
+                    .await
+                    .is_err()
+                {
                     info!(
                         "Found stale job {} assigned to non-existent node {}. Re-queueing.",
                         job.id, node_id
@@ -128,7 +139,10 @@ impl SchedulerService {
         for node in nodes {
             if node.assigned_job_id.is_none() {
                 if let Some(reported_job_id) = node.reported_job_id {
-                    let job = self.job_repo.get_training_job_by_id(&reported_job_id).await?;
+                    let job = self
+                        .job_repo
+                        .get_training_job_by_id(&reported_job_id)
+                        .await?;
                     if !matches!(
                         job.status,
                         super::super::training_job::models::TrainingJobStatus::Succeeded

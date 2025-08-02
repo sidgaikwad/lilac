@@ -9,12 +9,12 @@ import {
 import Breadcrumbs from '@/components/common/breadcrumbs';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ClusterOverview } from '../components/cluster-overview';
 import { getClusterInfoQuery } from '@/services/clusters/get-cluster-info.query';
 import { ClusterJobs } from '../components/cluster-jobs';
 import { useEffect } from 'react';
 import { ClusterApiKeys } from '../components/cluster-api-keys';
+import { Tabs } from '@/components/common/tabs';
 
 function ClusterDetailsPage() {
   const location = useLocation();
@@ -27,7 +27,9 @@ function ClusterDetailsPage() {
 
   useEffect(() => {
     if (!location.hash) {
-      navigate('#overview');
+      navigate('#overview', {
+        replace: true,
+      });
     }
   }, [location.hash, navigate]);
 
@@ -57,26 +59,22 @@ function ClusterDetailsPage() {
 
       <ContainerContent>
         <Tabs
-          onValueChange={(value) => navigate(`#${value}`)}
-          value={location.hash.slice(1)}
-          defaultValue='overview'
-          className='w-full'
-        >
-          <TabsList className='max-w-[400px]'>
-            <TabsTrigger value='overview'>Overview</TabsTrigger>
-            <TabsTrigger value='jobs'>Jobs</TabsTrigger>
-            <TabsTrigger value='keys'>API Keys</TabsTrigger>
-          </TabsList>
-          <TabsContent value='overview'>
-            <ClusterOverview cluster={cluster} />
-          </TabsContent>
-          <TabsContent value='jobs'>
-            <ClusterJobs clusterId={clusterId} />
-          </TabsContent>
-          <TabsContent value='keys'>
-            <ClusterApiKeys clusterId={clusterId} />
-          </TabsContent>
-        </Tabs>
+          defaultTab='overview'
+          items={[
+            {
+              id: 'overview',
+              content: <ClusterOverview cluster={cluster} />,
+            },
+            {
+              id: 'jobs',
+              content: <ClusterJobs clusterId={clusterId} />,
+            },
+            {
+              id: 'keys',
+              content: <ClusterApiKeys clusterId={clusterId} />,
+            },
+          ]}
+        />
       </ContainerContent>
     </Container>
   );

@@ -1,4 +1,3 @@
-
 use crate::{domain::serialize_secret_string, identifier};
 use chrono::{DateTime, Utc};
 use secrecy::SecretString;

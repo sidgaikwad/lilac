@@ -1,4 +1,3 @@
-
 use crate::{domain::serialize_secret_string, identifier};
 use chrono::{DateTime, Utc};
 use google_cloud_auth::credentials::{service_account::Builder, Credentials as GcpCredentials};

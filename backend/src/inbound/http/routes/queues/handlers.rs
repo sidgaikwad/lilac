@@ -1,60 +1,65 @@
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     Json,
 };
 
 use crate::{
-    domain::queue::models::{CreateQueueRequest, QueueId, UpdateQueueRequest},
-    inbound::http::AppState,
+    domain::queue::{
+        models::{CreateQueueRequest, QueueId, UpdateQueueRequest},
+        service::QueueService,
+    },
+    inbound::http::{
+        errors::ApiError, routes::training_jobs::models::ListTrainingJobsHttpResponse,
+    },
 };
 
 use super::models::{HttpCreateQueueRequest, HttpQueueResponse, HttpUpdateQueueRequest};
 
 pub async fn create_queue(
-    State(state): State<AppState>,
+    State(queue_service): State<Arc<dyn QueueService>>,
     Json(request): Json<HttpCreateQueueRequest>,
-) -> Result<Json<HttpQueueResponse>, StatusCode> {
+) -> Result<Json<HttpQueueResponse>, ApiError> {
     let new_queue = CreateQueueRequest {
         name: request.name,
         priority: request.priority,
         cluster_targets: request.cluster_targets,
     };
 
-    match state.queue_service.create_queue(new_queue).await {
-        Ok(queue) => Ok(Json(queue.into())),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    let queue = queue_service.create_queue(new_queue).await?;
+    Ok(Json(queue.into()))
 }
 
 pub async fn list_queues(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<HttpQueueResponse>>, StatusCode> {
-    match state.queue_service.list_all_queues().await {
-        Ok(queues) => {
-            let response = queues.into_iter().map(|q| q.into()).collect();
-            Ok(Json(response))
-        }
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    State(queue_service): State<Arc<dyn QueueService>>,
+) -> Result<Json<Vec<HttpQueueResponse>>, ApiError> {
+    let queues = queue_service.list_all_queues().await?;
+    let response = queues.into_iter().map(|q| q.into()).collect();
+    Ok(Json(response))
+}
+
+pub async fn list_queue_jobs(
+    State(queue_service): State<Arc<dyn QueueService>>,
+    Path(queue_id): Path<QueueId>,
+) -> Result<Json<ListTrainingJobsHttpResponse>, ApiError> {
+    let jobs = queue_service.list_queues_jobs(&queue_id).await?;
+    Ok(Json(jobs.into()))
 }
 
 pub async fn get_queue(
-    State(state): State<AppState>,
+    State(queue_service): State<Arc<dyn QueueService>>,
     Path(queue_id): Path<QueueId>,
-) -> Result<Json<HttpQueueResponse>, StatusCode> {
-    match state.queue_service.get_queue_by_id(&queue_id).await {
-        Ok(Some(queue)) => Ok(Json(queue.into())),
-        Ok(None) => Err(StatusCode::NOT_FOUND),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+) -> Result<Json<HttpQueueResponse>, ApiError> {
+    let queue = queue_service.get_queue_by_id(&queue_id).await?;
+    Ok(Json(queue.into()))
 }
 
 pub async fn update_queue(
-    State(state): State<AppState>,
+    State(queue_service): State<Arc<dyn QueueService>>,
     Path(queue_id): Path<QueueId>,
     Json(request): Json<HttpUpdateQueueRequest>,
-) -> Result<Json<HttpQueueResponse>, StatusCode> {
+) -> Result<Json<HttpQueueResponse>, ApiError> {
     let updated_queue = UpdateQueueRequest {
         id: queue_id,
         name: request.name,
@@ -62,18 +67,14 @@ pub async fn update_queue(
         cluster_targets: request.cluster_targets,
     };
 
-    match state.queue_service.update_queue(updated_queue).await {
-        Ok(queue) => Ok(Json(queue.into())),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    let queue = queue_service.update_queue(updated_queue).await?;
+    Ok(Json(queue.into()))
 }
 
 pub async fn delete_queue(
-    State(state): State<AppState>,
+    State(queue_service): State<Arc<dyn QueueService>>,
     Path(queue_id): Path<QueueId>,
-) -> Result<StatusCode, StatusCode> {
-    match state.queue_service.delete_queue(&queue_id).await {
-        Ok(_) => Ok(StatusCode::NO_CONTENT),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+) -> Result<(), ApiError> {
+    queue_service.delete_queue(&queue_id).await?;
+    Ok(())
 }

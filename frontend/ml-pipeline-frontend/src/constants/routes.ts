@@ -11,6 +11,7 @@ export enum Routes {
   CLUSTERS = '/clusters',
   CLUSTER_DETAILS = '/clusters/:clusterId',
   QUEUES = '/queues',
+  QUEUE_DETAILS = '/queues/:queueId',
   ORG_SETTINGS = '/organization/settings',
 
   PROJECTS = '/projects',

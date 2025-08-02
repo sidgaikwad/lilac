@@ -35,7 +35,9 @@ impl From<TrainingJobRepositoryError> for TrainingJobServiceError {
             TrainingJobRepositoryError::Duplicate { field, value } => {
                 TrainingJobServiceError::TrainingJobExists { field, value }
             }
-            TrainingJobRepositoryError::NotFound(id) => TrainingJobServiceError::TrainingJobNotFound(id),
+            TrainingJobRepositoryError::NotFound(id) => {
+                TrainingJobServiceError::TrainingJobNotFound(id)
+            }
             TrainingJobRepositoryError::Unknown(err) => TrainingJobServiceError::Unknown(err),
         }
     }
@@ -51,7 +53,6 @@ impl From<ClusterRepositoryError> for TrainingJobServiceError {
         }
     }
 }
-
 
 #[async_trait]
 pub trait TrainingJobService: Send + Sync {

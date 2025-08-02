@@ -22,8 +22,5 @@ pub fn training_jobs_router() -> Router<AppState> {
             patch(update_training_job_status),
         )
         .route("/training_jobs/{job_id}/logs", post(post_logs))
-        .route(
-            "/training_jobs/{job_id}/cancel",
-            post(cancel_training_job),
-        )
+        .route("/training_jobs/{job_id}/cancel", post(cancel_training_job))
 }

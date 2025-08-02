@@ -32,20 +32,27 @@ export interface ClusterOverviewProps {
 }
 
 export function ClusterOverview(props: ClusterOverviewProps) {
-  const NODE_DATA = props.cluster.totalNodes != 0 ? [
-    { nodeStatus: 'busy', nodeCount: props.cluster.busyNodes, fill: "var(--color-busy)" },
-    {
-      nodeStatus: 'idle',
-      nodeCount: props.cluster.totalNodes - props.cluster.busyNodes,
-      fill: "var(--color-idle)" 
-    },
-  ] : [
-    {
-      nodeStatus: 'empty',
-      nodeCount: 1,
-      fill: "var(--color-empty)" 
-    },
-  ];
+  const NODE_DATA =
+    props.cluster.totalNodes != 0
+      ? [
+          {
+            nodeStatus: 'busy',
+            nodeCount: props.cluster.busyNodes,
+            fill: 'var(--color-busy)',
+          },
+          {
+            nodeStatus: 'idle',
+            nodeCount: props.cluster.totalNodes - props.cluster.busyNodes,
+            fill: 'var(--color-idle)',
+          },
+        ]
+      : [
+          {
+            nodeStatus: 'empty',
+            nodeCount: 1,
+            fill: 'var(--color-empty)',
+          },
+        ];
   return (
     <Card
       className='w-full'
@@ -84,11 +91,12 @@ export function ClusterOverview(props: ClusterOverviewProps) {
               className='mx-auto aspect-square max-h-[250px]'
             >
               <PieChart>
-                {props.cluster.totalNodes != 0 &&
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideLabel />}
-                /> }
+                {props.cluster.totalNodes != 0 && (
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel />}
+                  />
+                )}
                 <Pie
                   data={NODE_DATA}
                   dataKey='nodeCount'

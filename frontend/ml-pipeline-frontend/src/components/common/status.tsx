@@ -10,26 +10,29 @@ import {
 } from 'lucide-react';
 import { Spinner } from './spinner/spinner';
 
-const statusVariants = cva('w-fit px-3 py-1 rounded-full font-medium flex grow-0 flex-row items-center gap-2', {
-  variants: {
-    status: {
-      'in-progress': 'text-blue-700 bg-blue-100',
-      info: 'text-blue-700 bg-blue-100',
-      success: 'text-green-700 bg-green-100',
-      error: 'text-red-700 bg-red-100',
-      warning: 'text-yellow-700 bg-yellow-100',
-      pending: 'text-gray-700 bg-gray-100',
-      loading: 'text-gray-700 bg-gray-100',
+const statusVariants = cva(
+  'w-fit px-3 py-1 rounded-md font-medium flex grow-0 flex-row items-center gap-2',
+  {
+    variants: {
+      status: {
+        'in-progress': 'text-blue-700 bg-blue-100',
+        info: 'text-blue-700 bg-blue-100',
+        success: 'text-green-700 bg-green-100',
+        error: 'text-red-700 bg-red-100',
+        warning: 'text-yellow-700 bg-yellow-100',
+        pending: 'text-gray-700 bg-gray-100',
+        loading: 'text-gray-700 bg-gray-100',
+      },
+      color: {
+        blue: 'text-blue-700 bg-blue-100',
+        green: 'text-green-700 bg-green-100',
+        red: 'text-red-700 bg-red-100',
+        yellow: 'text-yellow-700 bg-yellow-100',
+        gray: 'text-gray-700 bg-gray-100',
+      },
     },
-    color: {
-      blue: 'text-blue-700 bg-blue-100',
-      green: 'text-green-700 bg-green-100',
-      red: 'text-red-700 bg-red-100',
-      yellow: 'text-yellow-700 bg-yellow-100',
-      gray: 'text-gray-700 bg-gray-100',
-    },
-  },
-});
+  }
+);
 
 function getIcon(status: VariantProps<typeof statusVariants>['status']) {
   switch (status) {

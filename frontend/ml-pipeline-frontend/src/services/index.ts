@@ -5,3 +5,4 @@ export * from './projects';
 export * from './workspaces';
 export * from './clusters';
 export * from './credentials';
+export * from './queues';

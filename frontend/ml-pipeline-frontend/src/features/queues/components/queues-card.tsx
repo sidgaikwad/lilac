@@ -17,6 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { CreateQueueModal } from './create-queue-modal';
+import { Link } from 'react-router-dom';
 
 export function QueuesCard() {
   const { data: queues, isLoading } = useListQueues();
@@ -49,9 +50,16 @@ export function QueuesCard() {
             <TableBody>
               {queues?.map((queue) => (
                 <TableRow key={queue.id}>
-                  <TableCell>{queue.name}</TableCell>
+                  <TableCell>
+                    <Link
+                      className='text-blue-600 visited:text-purple-600 hover:underline'
+                      to={`/queues/${queue.id}`}
+                    >
+                      {queue.name}
+                    </Link>
+                  </TableCell>
                   <TableCell>{queue.priority}</TableCell>
-                  <TableCell>{queue.cluster_targets.join(', ')}</TableCell>
+                  <TableCell>{queue.clusterTargets.join(', ')}</TableCell>
                   <TableCell>
                     <Button
                       variant='destructive'

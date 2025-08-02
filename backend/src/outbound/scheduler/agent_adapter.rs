@@ -41,7 +41,8 @@ impl AgentSchedulerAdapter {
 
         // Filter nodes that are available and meet the resource requirements.
         nodes.retain(|node| {
-            let status_ok = node.node_status == NodeStatus::Available && node.assigned_job_id.is_none();
+            let status_ok =
+                node.node_status == NodeStatus::Available && node.assigned_job_id.is_none();
             if !status_ok {
                 return false;
             }

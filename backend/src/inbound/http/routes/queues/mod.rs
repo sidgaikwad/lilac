@@ -20,4 +20,5 @@ pub fn routes() -> Router<AppState> {
                 .put(handlers::update_queue)
                 .delete(handlers::delete_queue),
         )
+        .route("/queues/{queue_id}/jobs", get(handlers::list_queue_jobs))
 }

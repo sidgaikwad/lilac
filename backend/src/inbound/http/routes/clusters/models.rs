@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 use crate::{
     domain::{
         cluster::models::{
-            Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterId, ClusterJobStats, ClusterMemoryStats, ClusterNode, ClusterSummary, Cpu, CreateClusterRequest, Gpu, JobInfo, NodeId, NodeStatus
+            Cluster, ClusterCpuStats, ClusterDetails, ClusterGpuStats, ClusterId, ClusterJobStats,
+            ClusterMemoryStats, ClusterNode, ClusterSummary, Cpu, CreateClusterRequest, Gpu,
+            JobInfo, NodeId, NodeStatus,
         },
         training_job::models::TrainingJob,
         user::models::{ApiKey, ApiKeyId},

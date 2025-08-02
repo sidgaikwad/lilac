@@ -27,7 +27,9 @@ export enum QueryKeys {
   CREATE_API_KEY = 'CreateApiKey',
   DELETE_API_KEY = 'DeleteApiKey',
 
+  GET_QUEUE = 'GetQueue',
   LIST_QUEUES = 'ListQueues',
+  LIST_QUEUE_JOBS = 'ListQueueJobs',
   CREATE_QUEUE = 'CreateQueue',
   DELETE_QUEUE = 'DeleteQueue',
 

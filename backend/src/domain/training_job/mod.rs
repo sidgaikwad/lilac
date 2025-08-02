@@ -42,8 +42,7 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()));
 
-        let service =
-            TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
+        let service = TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
         let result = service.create(request).await;
 
         assert!(result.is_ok());
@@ -69,8 +68,7 @@ mod tests {
             .times(1)
             .returning(|_| Ok(vec![]));
 
-        let service =
-            TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
+        let service = TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
         let result = service.get_training_jobs(filters).await;
 
         assert!(result.is_ok());
@@ -89,8 +87,7 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok(()));
 
-        let service =
-            TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
+        let service = TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
         let result = service.update_status(&id, status).await;
 
         assert!(result.is_ok());
@@ -108,8 +105,7 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok(()));
 
-        let service =
-            TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
+        let service = TrainingJobServiceImpl::new(Arc::new(mock_repo), Arc::new(mock_cluster_repo));
         let result = service.post_logs(&id, "logs".to_string()).await;
 
         assert!(result.is_ok());

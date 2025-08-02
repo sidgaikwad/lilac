@@ -4,7 +4,7 @@ import { ServiceError } from '@/types';
 import { useEffect } from 'react';
 import { getHttp } from '@/lib/fetch';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
-import { Queue } from '@/model/queue';
+import { Queue } from '@/types';
 
 export async function listQueues(): Promise<Queue[]> {
   const resp = await getHttp<Sn<Queue[]>>('/queues');
@@ -12,7 +12,7 @@ export async function listQueues(): Promise<Queue[]> {
     id: queue.id,
     name: queue.name,
     priority: queue.priority,
-    cluster_targets: queue.cluster_targets,
+    clusterTargets: queue.cluster_targets,
   }));
 }
 

@@ -28,7 +28,7 @@ const CLUSTER_COLUMNS: ColumnDef<ClusterSummary>[] = [
           to={generatePath(Routes.CLUSTER_DETAILS, {
             clusterId: row.original.clusterId,
           })}
-          className='font-mono text-blue-600 hover:underline visited:text-purple-600'
+          className='font-mono text-blue-600 visited:text-purple-600 hover:underline'
         >
           {cell.renderValue()}
         </Link>
@@ -38,20 +38,32 @@ const CLUSTER_COLUMNS: ColumnDef<ClusterSummary>[] = [
   columnHelper.accessor('totalNodes', {
     header: 'Total Nodes',
     cell: ({ cell }) => {
-      return <Badge color='gray' variant='secondary'>{cell.renderValue()}</Badge>
-    }
+      return (
+        <Badge color='gray' variant='secondary'>
+          {cell.renderValue()}
+        </Badge>
+      );
+    },
   }),
   columnHelper.accessor('busyNodes', {
     header: 'Busy Nodes',
     cell: ({ cell }) => {
-      return <Badge color='red' variant='secondary'>{cell.renderValue()}</Badge>
-    }
+      return (
+        <Badge color='red' variant='secondary'>
+          {cell.renderValue()}
+        </Badge>
+      );
+    },
   }),
   columnHelper.accessor('totalRunningJobs', {
     header: 'Running Jobs',
     cell: ({ cell }) => {
-      return <Badge color='blue' variant='secondary'>{cell.renderValue()}</Badge>
-    }
+      return (
+        <Badge color='blue' variant='secondary'>
+          {cell.renderValue()}
+        </Badge>
+      );
+    },
   }),
 ] as Array<ColumnDef<ClusterSummary>>;
 

@@ -15,7 +15,6 @@
   }
 }
 
-
 @keyframes rotate {
   0% {
     transform: rotateZ(0deg);
@@ -26,13 +25,9 @@
 }
 
 .rotate {
-  animation:
-    rotate 1.4s linear infinite;
-
+  animation: rotate 1.4s linear infinite;
 }
 
 .spinner {
-  animation:
-    spinner 1.4s ease-in-out infinite both;
+  animation: spinner 1.4s ease-in-out infinite both;
 }
-

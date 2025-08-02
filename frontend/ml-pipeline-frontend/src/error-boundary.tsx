@@ -1,4 +1,8 @@
-import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-dom';
+import {
+  isRouteErrorResponse,
+  useNavigate,
+  useRouteError,
+} from 'react-router-dom';
 import { isServiceError } from '@/types';
 
 function ErrorBoundary() {

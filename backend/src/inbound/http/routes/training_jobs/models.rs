@@ -54,3 +54,16 @@ impl From<TrainingJob> for HttpTrainingJob {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ListTrainingJobsHttpResponse {
+    jobs: Vec<HttpTrainingJob>,
+}
+
+impl From<Vec<TrainingJob>> for ListTrainingJobsHttpResponse {
+    fn from(value: Vec<TrainingJob>) -> Self {
+        Self {
+            jobs: value.into_iter().map(|v| v.into()).collect(),
+        }
+    }
+}

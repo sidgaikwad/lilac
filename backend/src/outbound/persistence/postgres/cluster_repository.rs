@@ -4,20 +4,20 @@ use sqlx::PgPool;
 use crate::{
     domain::{
         cluster::{
-            models::{
-                Cluster, ClusterDetails, ClusterId, ClusterNode, ClusterSummary, CreateClusterRequest, NodeId, UpdateNodeStatusRequest
-            },
-            ports::{
-                ClusterApiKeyRepository, ClusterRepository,
-                ClusterRepositoryError,
-            },
             errors::ClusterApiKeyRepositoryError,
+            models::{
+                Cluster, ClusterDetails, ClusterId, ClusterNode, ClusterSummary,
+                CreateClusterRequest, NodeId, UpdateNodeStatusRequest,
+            },
+            ports::{ClusterApiKeyRepository, ClusterRepository, ClusterRepositoryError},
         },
         training_job::models::{JobId, TrainingJob},
         user::models::{ApiKey, ApiKeyId},
     },
     outbound::persistence::postgres::records::{
-        ApiKeyRecord, ClusterDetailsRecord, ClusterNodeRecord, ClusterRecord, ClusterSummaryRecord, CpuConfigurationRecord, GpuConfigurationRecord, NodeStatusRecord, TrainingJobRecord, TrainingJobStatusRecord
+        ApiKeyRecord, ClusterDetailsRecord, ClusterNodeRecord, ClusterRecord, ClusterSummaryRecord,
+        CpuConfigurationRecord, GpuConfigurationRecord, NodeStatusRecord, TrainingJobRecord,
+        TrainingJobStatusRecord,
     },
 };
 

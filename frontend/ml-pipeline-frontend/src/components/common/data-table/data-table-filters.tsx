@@ -7,7 +7,7 @@ interface DataTableFiltersProps<TData> {
 
 export function DataTableFilters<TData>(props: DataTableFiltersProps<TData>) {
   return (
-    <div className='flex flex-row items-center w-full max-w-sm'>
+    <div className='flex w-full max-w-sm flex-row items-center'>
       {props.renderFilters(props.table)}
     </div>
   );

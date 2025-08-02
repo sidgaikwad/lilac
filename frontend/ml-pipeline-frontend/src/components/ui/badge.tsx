@@ -23,28 +23,28 @@ const badgeVariants = cva(
         green: 'bg-green-600',
         blue: 'bg-blue-600',
         gray: 'bg-gray-600',
-      }
+      },
     },
     compoundVariants: [
       {
         variant: 'secondary',
         color: 'red',
-        className: 'bg-red-200'
+        className: 'bg-red-200',
       },
       {
         variant: 'secondary',
         color: 'green',
-        className: 'bg-green-200'
+        className: 'bg-green-200',
       },
       {
         variant: 'secondary',
         color: 'blue',
-        className: 'bg-blue-200'
+        className: 'bg-blue-200',
       },
       {
         variant: 'secondary',
         color: 'gray',
-        className: 'bg-gray-200'
+        className: 'bg-gray-200',
       },
     ],
     defaultVariants: {

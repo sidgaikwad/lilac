@@ -5,7 +5,9 @@ use thiserror::Error;
 use mockall::automock;
 
 use crate::domain::{
-    cluster::models::{ClusterDetails, ClusterNode, ClusterSummary, NodeId, UpdateNodeStatusRequest},
+    cluster::models::{
+        ClusterDetails, ClusterNode, ClusterSummary, NodeId, UpdateNodeStatusRequest,
+    },
     training_job::models::{JobId, TrainingJob},
     user::models::{ApiKey, ApiKeyId},
 };

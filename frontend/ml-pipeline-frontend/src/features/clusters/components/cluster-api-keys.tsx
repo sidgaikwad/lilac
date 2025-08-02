@@ -10,7 +10,11 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { getFormattedTime, getRelativeTime } from '@/lib';
 import { NewApiKey } from '@/model/api-key';
 import {
@@ -66,7 +70,9 @@ export function ClusterApiKeys(props: ClusterApiKeyProps) {
         return (
           <Tooltip>
             <TooltipTrigger>
-              <p className='underline decoration-dotted'>{getRelativeTime(date)}</p>
+              <p className='underline decoration-dotted'>
+                {getRelativeTime(date)}
+              </p>
             </TooltipTrigger>
             <TooltipContent side='bottom'>
               <p>{getFormattedTime(date)}</p>
