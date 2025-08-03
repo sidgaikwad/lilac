@@ -183,8 +183,6 @@ pub async fn submit_job(config: config::UserConfig, args: &SubmitArgs) -> Result
     };
 
     let mut gpu_count: Option<i32> = args.gpu_count;
-    let mut gpu_model: Option<String> = args.gpu_model.clone();
-    let mut gpu_memory_gb: Option<i32> = args.gpu_memory;
 
     if !args.non_interactive && gpu_count.is_none() {
         if Confirm::with_theme(&theme)
@@ -195,26 +193,7 @@ pub async fn submit_job(config: config::UserConfig, args: &SubmitArgs) -> Result
             let count: i32 = Input::with_theme(&theme)
                 .with_prompt("How many GPUs?")
                 .interact_text()?;
-            let model: String = Input::with_theme(&theme)
-                .with_prompt("What model of GPU? (e.g., A100, V100, leave blank for any)")
-                .allow_empty(true)
-                .interact_text()?;
-            let memory_input: String = Input::with_theme(&theme)
-                .with_prompt("What is the minimum memory per GPU (in GB)? (leave blank for any)")
-                .allow_empty(true)
-                .interact_text()?;
-
             gpu_count = Some(count);
-            gpu_model = if model.is_empty() { None } else { Some(model) };
-            gpu_memory_gb = if memory_input.is_empty() {
-                None
-            } else {
-                Some(
-                    memory_input
-                        .parse()
-                        .map_err(|_| CliError::InvalidArguments)?,
-                )
-            };
         }
     }
 
@@ -228,9 +207,7 @@ pub async fn submit_job(config: config::UserConfig, args: &SubmitArgs) -> Result
     println!("- CPU: {}m", requested_cpu);
     println!("- Memory: {}MB", requested_memory);
     if let Some(count) = gpu_count {
-        let model_str = gpu_model.as_deref().unwrap_or("any");
-        let memory_str = gpu_memory_gb.map_or("".to_string(), |mem| format!(" ({}GB VRAM)", mem));
-        println!("- GPUs: {} x {}{}", count, model_str, memory_str);
+        println!("- GPUs: {} x any", count);
     }
 
     if !args.non_interactive {
@@ -248,8 +225,8 @@ pub async fn submit_job(config: config::UserConfig, args: &SubmitArgs) -> Result
     let gpus = if let Some(count) = gpu_count {
         Some(GpuRequirement {
             count,
-            model: gpu_model,
-            memory_gb: gpu_memory_gb,
+            model: None,
+            memory_gb: None,
         })
     } else {
         None

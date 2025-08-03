@@ -37,12 +37,6 @@ pub struct SubmitArgs {
     /// Number of GPUs required
     #[arg(long)]
     pub gpu_count: Option<i32>,
-    /// Model of GPU required (e.g. A100, V100)
-    #[arg(long)]
-    pub gpu_model: Option<String>,
-    /// Minimum VRAM per GPU in GB
-    #[arg(long)]
-    pub gpu_memory: Option<i32>,
     /// Skip interactive prompts and submit directly
     #[arg(long, action)]
     pub non_interactive: bool,
