@@ -45,15 +45,20 @@ impl HybridMonitor {
 
     fn get_memory_mb() -> Result<i32, SystemMonitorError> {
         if Path::new("/sys/fs/cgroup/memory.max").exists() {
-            let mem_max_bytes: i64 = fs::read_to_string("/sys/fs/cgroup/memory.max")
+            let mem_max_str = fs::read_to_string("/sys/fs/cgroup/memory.max")
                 .map_err(|_| SystemMonitorError::ReadError)?
                 .trim()
-                .parse()
-                .map_err(|_| SystemMonitorError::ReadError)?;
-            return Ok((mem_max_bytes / 1024 / 1024) as i32);
+                .to_string();
+
+            if mem_max_str != "max" {
+                let mem_max_bytes: i64 = mem_max_str
+                    .parse()
+                    .map_err(|_| SystemMonitorError::ReadError)?;
+                return Ok((mem_max_bytes / 1024 / 1024) as i32);
+            }
         }
 
-        // Fallback for non-cgroup environments
+        // Fallback for non-cgroup environments or when memory is unlimited ("max")
         let mut sys = System::new();
         sys.refresh_memory();
         Ok((sys.total_memory() / 1024 / 1024) as i32)

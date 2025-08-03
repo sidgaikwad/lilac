@@ -140,6 +140,14 @@ impl JobExecutor for DockerExecutor {
             .map_err(|e| JobExecutorError::Unknown(e.into()))?;
         println!("[DOCKER] Removed container: {}", container_name);
 
+        // 7. Remove the image to save space.
+        let _ = self
+            .docker
+            .remove_image(&job_details.docker_uri, None, None)
+            .await;
+        println!("[DOCKER] Attempted to remove image: {}", job_details.docker_uri);
+
+
         Ok(exit_code)
     }
 

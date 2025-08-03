@@ -102,7 +102,31 @@ lilac_cli agent start
 
 The agent will connect to the control plane, report its available resources, and wait for jobs to be assigned.
 
-> **Note on GPUs**: We do not recomment running the agent in a container. If you do, for the agent to utilize and report on NVIDIA GPU resources in the container, you must start its container with the `--gpus all` flag.
+> **Note on GPUs**: For the agent to utilize and report on NVIDIA GPU resources, the host machine must have NVIDIA drivers installed.
+
+### 4. Running the Universal Agent (Docker)
+
+The recommended way to run the agent is using the official "universal" Docker image. This image is self-contained and includes all necessary dependencies, including its own Docker daemon (Docker-in-Docker) and the NVIDIA Container Toolkit.
+
+Use the following command to run the agent. This command will pull the latest image, start the agent in the background, and ensure it restarts automatically.
+
+**Important:** You must replace `<YOUR_API_ENDPOINT>` and `<YOUR_CLUSTER_API_KEY>` with your actual credentials.
+
+```bash
+docker pull getlilac/lilac-agent:latest && docker run -d \
+  --name lilac-agent \
+  --restart always \
+  --privileged \
+  -e LILAC_API_ENDPOINT="<YOUR_API_ENDPOINT>" \
+  -e LILAC_CLUSTER_API_KEY="<YOUR_CLUSTER_API_KEY>" \
+  --gpus all \
+  getlilac/lilac-agent:latest
+```
+
+**Flags Explained:**
+- `--privileged`: This is **required** for the agent to run its own Docker daemon (Docker-in-Docker) inside the container.
+- `--gpus all`: This exposes all of the host's GPUs to the agent, allowing it to run GPU-accelerated jobs.
+- `-e ...`: These environment variables are used to configure the agent, overriding any settings from a config file.
 
 ### 3. Minimum Requirements
 
