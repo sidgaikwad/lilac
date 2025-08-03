@@ -29,5 +29,6 @@
 }
 
 .spinner {
+  transform-origin: 50% 50%;
   animation: spinner 1.4s ease-in-out infinite both;
 }

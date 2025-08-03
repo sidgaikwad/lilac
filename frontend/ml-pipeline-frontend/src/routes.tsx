@@ -17,6 +17,9 @@ import { ApiKeysSettings } from './features/api-keys/pages/api-keys-settings';
 import { QueuesPage } from './features/queues/pages/queues-page';
 import ClusterDetailsPage from './features/clusters/pages/cluster-details-page';
 import QueueDetailsPage from './features/queues/pages/queue-details-page';
+import JobsPage from './features/jobs/pages/jobs-page';
+import JobDetailsPage from './features/jobs/pages/job-details';
+import NodeDetailsPage from './features/nodes/pages/node-details';
 
 export const router = createBrowserRouter([
   {
@@ -57,12 +60,24 @@ export const router = createBrowserRouter([
                 element: <ClusterDetailsPage />,
               },
               {
+                path: Routes.NODE_DETAILS,
+                element: <NodeDetailsPage />,
+              },
+              {
                 path: Routes.QUEUES,
                 element: <QueuesPage />,
               },
               {
                 path: Routes.QUEUE_DETAILS,
                 element: <QueueDetailsPage />,
+              },
+              {
+                path: Routes.JOBS,
+                element: <JobsPage />,
+              },
+              {
+                path: Routes.JOB_DETAILS,
+                element: <JobDetailsPage />,
               },
               {
                 path: Routes.API_KEYS,

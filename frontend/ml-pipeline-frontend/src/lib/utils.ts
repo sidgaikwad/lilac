@@ -1,5 +1,7 @@
+import { Routes } from '@/constants';
 import { clsx, type ClassValue } from 'clsx';
 import { camelCase, snakeCase as lodashSnakeCase } from 'lodash';
+import { generatePath, PathParam } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
 import { CamelCasedPropertiesDeep, SnakeCasedPropertiesDeep } from 'type-fest';
 import { WordsOptions } from 'type-fest/source/words';
@@ -60,4 +62,10 @@ export function snakeCase(s: string, splitNumbers: boolean = true): string {
     result = result.replace(/_(\d+)/, '$1');
   }
   return result;
+}
+
+export function route<Path extends Routes>(route: Path, params: {
+  [key in PathParam<Path>]: string | null;
+}) {
+  return generatePath(route, params);
 }

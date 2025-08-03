@@ -5,8 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useListQueues } from '@/services/queues/list-queues.query';
-import { useDeleteQueue } from '@/services/queues/delete-queue.mutation';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -17,11 +15,23 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { CreateQueueModal } from './create-queue-modal';
-import { Link } from 'react-router-dom';
+import { useDeleteQueue, useListClusters, useListQueues } from '@/services';
+import { Link } from '@/components/common/link';
 
 export function QueuesCard() {
   const { data: queues, isLoading } = useListQueues();
   const deleteQueueMutation = useDeleteQueue({});
+  const { data: clusters } = useListClusters();
+
+  const clustersMap: Record<string, string> = (clusters ?? []).reduce(
+    (obj, cluster) => {
+      return {
+        [cluster.clusterId]: cluster.clusterName,
+        ...obj,
+      };
+    },
+    {}
+  );
 
   return (
     <Card>
@@ -51,15 +61,19 @@ export function QueuesCard() {
               {queues?.map((queue) => (
                 <TableRow key={queue.id}>
                   <TableCell>
-                    <Link
-                      className='text-blue-600 visited:text-purple-600 hover:underline'
-                      to={`/queues/${queue.id}`}
-                    >
-                      {queue.name}
-                    </Link>
+                    <Link to={`/queues/${queue.id}`}>{queue.name}</Link>
                   </TableCell>
                   <TableCell>{queue.priority}</TableCell>
-                  <TableCell>{queue.clusterTargets.join(', ')}</TableCell>
+                  <TableCell>
+                    {queue.clusterTargets.map((id, index) => {
+                      return (
+                        <span>
+                          <Link to={`/clusters/${id}`}>{clustersMap[id]}</Link>
+                          {index !== queue.clusterTargets.length - 1 && <>,&nbsp;</>}
+                        </span>
+                      );
+                    })}
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant='destructive'

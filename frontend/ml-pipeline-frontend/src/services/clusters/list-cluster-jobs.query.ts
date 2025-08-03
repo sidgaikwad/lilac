@@ -33,7 +33,7 @@ export function listClusterJobsQuery(
   enabled: boolean = true
 ) {
   return queryOptions({
-    queryKey: [QueryKeys.GET_CLUSTER_JOBS, clusterId],
+    queryKey: [QueryKeys.LIST_CLUSTER_JOBS, clusterId],
     queryFn: () => listClusterJobs(clusterId!),
     enabled: !!clusterId && enabled,
     staleTime: 1000 * 60 * 5,

@@ -38,7 +38,7 @@ export function useCreateClusterKey(props?: UseCreateClusterKeyProps) {
     mutationFn: createClusterKey,
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.GET_CLUSTER_KEYS],
+        queryKey: [QueryKeys.LIST_CLUSTER_KEYS],
       });
       if (props?.onSuccess !== undefined) {
         props.onSuccess(data);

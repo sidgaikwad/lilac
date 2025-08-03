@@ -86,11 +86,11 @@ impl ClusterRepository for PostgresClusterRepository {
                 COUNT(DISTINCT n.node_id) FILTER (WHERE n.node_status = 'busy') AS "busy_nodes!: i64",
                 COUNT(running_jobs.id) AS "total_running_jobs!: i64",
                 COALESCE(SUM((n.cpu).millicores), 0) AS "total_millicores!: i64",
-                COALESCE(SUM((running_jobs.resource_requirements->>'cpu_millicores')::int), 0) AS "used_millicores!: i64",
-                COALESCE(SUM(n.memory_mb), 0) AS "total_memory_mb!: i64",
-                COALESCE(SUM((running_jobs.resource_requirements->>'memory_mb')::int), 0) AS "used_memory_mb!: i64",
+                COALESCE(SUM((n.cpu).millicores), 0) AS "used_millicores!: i64",
+                COALESCE(SUM(n.memory_mb) FILTER (WHERE n.node_status = 'busy'), 0) AS "total_memory_mb!: i64",
+                COALESCE(SUM(n.memory_mb) FILTER (WHERE n.node_status = 'busy'), 0) AS "used_memory_mb!: i64",
                 COALESCE(SUM((n.gpu).count), 0) AS "total_gpus!: i64",
-                COALESCE(SUM((running_jobs.resource_requirements->'gpus'->>'count')::int), 0) AS "used_gpus!: i64"
+                COALESCE(SUM((n.gpu).count) FILTER (WHERE n.node_status = 'busy'), 0) AS "used_gpus!: i64"
             FROM clusters c
             LEFT JOIN cluster_nodes n ON c.cluster_id = n.cluster_id
             LEFT JOIN training_jobs running_jobs ON running_jobs.status = 'running' AND n.node_id = running_jobs.node_id

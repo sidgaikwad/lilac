@@ -129,6 +129,10 @@ pub trait ClusterService: Send + Sync {
         &self,
         node_id: &super::models::NodeId,
     ) -> Result<(), ClusterServiceError>;
+    async fn get_node_by_id(
+        &self,
+        node_id: &super::models::NodeId,
+    ) -> Result<ClusterNode, ClusterServiceError>;
 }
 
 #[derive(Clone)]
@@ -333,5 +337,14 @@ impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository> C
     ) -> Result<(), ClusterServiceError> {
         self.cluster_repo.clear_assigned_job_id(node_id).await?;
         Ok(())
+    }
+
+
+    async fn get_node_by_id(
+        &self,
+        node_id: &super::models::NodeId,
+    ) -> Result<ClusterNode, ClusterServiceError> {
+        let node = self.cluster_repo.get_cluster_node_by_id(&node_id).await?;
+        Ok(node)
     }
 }

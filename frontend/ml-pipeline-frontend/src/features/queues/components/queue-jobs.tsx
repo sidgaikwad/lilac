@@ -1,8 +1,11 @@
 import { DataTable } from '@/components/common';
 import { Card } from '@/components/common/card';
+import { Link } from '@/components/common/link';
 import { Status, StatusProps } from '@/components/common/status';
 import { toast } from '@/components/toast';
 import { Input } from '@/components/ui/input';
+import { Routes } from '@/constants';
+import { route } from '@/lib';
 import { useListQueueJobs } from '@/services';
 import { QueueJob } from '@/types';
 import { ColumnDef } from '@tanstack/react-table';
@@ -13,7 +16,7 @@ const JOB_COLUMNS: ColumnDef<QueueJob>[] = [
     accessorKey: 'jobId',
     header: 'Job ID',
     cell: ({ cell }) => {
-      return <div className='font-mono'>{cell.renderValue() as string}</div>;
+      return <Link to={route(Routes.JOB_DETAILS, { jobId: cell.getValue() as string })} className='font-mono'>{cell.renderValue() as string}</Link>;
     },
   },
   {

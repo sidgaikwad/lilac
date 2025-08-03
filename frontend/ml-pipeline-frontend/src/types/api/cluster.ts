@@ -1,3 +1,5 @@
+import { ResourceRequirements } from "./job";
+
 export interface Cluster {
   clusterId: string;
   clusterName: string;
@@ -11,18 +13,6 @@ export interface ClusterSummary {
   totalNodes: number;
   busyNodes: number;
   totalRunningJobs: number;
-}
-
-export interface GpuRequirement {
-  count: number;
-  model?: string;
-  memoryGb?: number;
-}
-
-export interface ResourceRequirements {
-  cpuMillicores: number;
-  memoryMb: number;
-  gpus?: GpuRequirement;
 }
 
 export interface ClusterInfo {
@@ -68,4 +58,24 @@ export interface ClusterApiKey {
   createdAt: string;
   lastUsedAt?: string;
   expiresAt?: string;
+}
+
+
+export interface ClusterNode {
+  id: string,
+  clusterId: string,
+  nodeStatus: 'busy' | 'available',
+  lastHeartbeat: string,
+  memoryMb: number,
+  cpu: {
+    manufacturer: string,
+    architecture: string,
+    millicores: number,
+  },
+  gpu?: {
+    manufacturer: string,
+    model: string,
+    count: number,
+    memoryMb: number,
+  },
 }

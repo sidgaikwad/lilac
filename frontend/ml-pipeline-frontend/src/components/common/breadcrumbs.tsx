@@ -18,7 +18,7 @@ import { Fragment } from 'react/jsx-runtime';
 
 interface BreadcrumbProps {
   content: React.ReactNode;
-  link: string;
+  link?: string;
 }
 
 export interface BreadcrumbsProps {
@@ -30,6 +30,17 @@ export default function Breadcrumbs({
   breadcrumbs,
   className,
 }: BreadcrumbsProps) {
+  const getBreadcrubsLink = (breadcrumb: BreadcrumbProps) => {
+    return (
+      <BreadcrumbLink asChild>
+        {breadcrumb.link ? (
+          <Link to={breadcrumb.link}>{breadcrumb.content}</Link>
+        ) : (
+          <div>{breadcrumb.content}</div>
+        )}
+      </BreadcrumbLink>
+    );
+  };
   if (breadcrumbs.length <= 1) {
     return undefined;
   }
@@ -39,7 +50,7 @@ export default function Breadcrumbs({
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to={breadcrumbs[0].link}>{breadcrumbs[0].content}</Link>
+              {getBreadcrubsLink(breadcrumbs[0])}
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -53,7 +64,11 @@ export default function Breadcrumbs({
               <DropdownMenuContent align='start'>
                 {breadcrumbs.slice(1, -2).map((bc, index) => (
                   <DropdownMenuItem key={index}>
-                    <Link to={bc.link}>{bc.content}</Link>
+                    {bc.link ? (
+                      <Link to={bc.link}>{bc.content}</Link>
+                    ) : (
+                      <div>{bc.content}</div>
+                    )}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -62,9 +77,7 @@ export default function Breadcrumbs({
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to={breadcrumbs[breadcrumbs.length - 2].link}>
-                {breadcrumbs[breadcrumbs.length - 2].content}
-              </Link>
+              {getBreadcrubsLink(breadcrumbs[breadcrumbs.length - 2])}
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -84,7 +97,7 @@ export default function Breadcrumbs({
           <Fragment key={index}>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to={bc.link}>{bc.content}</Link>
+                {getBreadcrubsLink(bc)}
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

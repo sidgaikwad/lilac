@@ -10,8 +10,11 @@ export enum Routes {
   DATA_SOURCE_DETAILS = '/data-sources/:dataSourceId',
   CLUSTERS = '/clusters',
   CLUSTER_DETAILS = '/clusters/:clusterId',
+  NODE_DETAILS = '/nodes/:nodeId',
   QUEUES = '/queues',
   QUEUE_DETAILS = '/queues/:queueId',
+  JOBS = '/jobs',
+  JOB_DETAILS = '/jobs/:jobId',
   ORG_SETTINGS = '/organization/settings',
 
   PROJECTS = '/projects',

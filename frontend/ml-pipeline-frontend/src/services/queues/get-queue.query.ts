@@ -17,7 +17,7 @@ export async function getQueue(queueId: string): Promise<Queue> {
 
 export function getQueueQuery(queueId?: string, enabled: boolean = true) {
   return queryOptions({
-    queryKey: [QueryKeys.GET_QUEUE],
+    queryKey: [QueryKeys.GET_QUEUE, queueId],
     queryFn: () => getQueue(queueId!),
     enabled: !!queueId && enabled,
     staleTime: 1000 * 60 * 5,

@@ -58,7 +58,7 @@ pub struct TrainingJob {
 
 #[derive(Debug, Default, Deserialize, PartialEq, Clone)]
 pub struct GetTrainingJobsFilters {
-    pub id: Option<Uuid>,
+    pub id: Option<JobId>,
     pub name: Option<String>,
     pub status: Option<TrainingJobStatus>,
 }

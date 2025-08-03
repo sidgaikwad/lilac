@@ -9,6 +9,9 @@ export enum QueryKeys {
 
   GET_USER = 'GetUser',
 
+  GET_JOB = 'GetJob',
+  LIST_JOBS = 'ListJobs',
+
   GET_PROJECT = 'GetProject',
   CREATE_PROJECT = 'CreateProject',
   UPDATE_PROJECT = 'UpdateProject',
@@ -35,8 +38,10 @@ export enum QueryKeys {
 
   GET_CLUSTER = 'GetCluster',
   GET_CLUSTER_INFO = 'GetClusterInfo',
-  GET_CLUSTER_JOBS = 'GetClusterJobs',
-  GET_CLUSTER_KEYS = 'GetClusterKeys',
+  GET_CLUSTER_NODE = 'GetClusterNode',
+  LIST_CLUSTER_JOBS = 'ListClusterJobs',
+  LIST_CLUSTER_KEYS = 'ListClusterKeys',
+  LIST_CLUSTER_NODES = 'ListClusterNodes',
   CREATE_CLUSTER = 'CreateCluster',
   CREATE_CLUSTER_KEY = 'CreateClusterKey',
   LIST_CLUSTERS = 'ListClusters',

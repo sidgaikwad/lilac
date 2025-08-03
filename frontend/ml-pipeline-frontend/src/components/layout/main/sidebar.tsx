@@ -1,11 +1,10 @@
 import { useLocation } from 'react-router-dom';
 import {
-  Settings,
-  HardDrive,
   Shapes,
   Server,
   KeyRound,
   Layers,
+  Briefcase,
 } from 'lucide-react';
 import {
   Sidebar as SidebarComponent,
@@ -31,10 +30,9 @@ export default function Sidebar() {
   const paths = useMemo(() => {
     return {
       [Routes.PROJECTS]: Routes.PROJECTS,
-      [Routes.DATA_SOURCES]: Routes.DATA_SOURCES,
       [Routes.CLUSTERS]: Routes.CLUSTERS,
       [Routes.QUEUES]: Routes.QUEUES,
-      [Routes.ORG_SETTINGS]: Routes.ORG_SETTINGS,
+      [Routes.JOBS]: Routes.JOBS,
       [Routes.API_KEYS]: Routes.API_KEYS,
     };
   }, []);
@@ -66,17 +64,6 @@ export default function Sidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={location.pathname === paths[Routes.DATA_SOURCES]}
-                >
-                  <Link to={paths[Routes.DATA_SOURCES]}>
-                    <HardDrive />
-                    <span>Data Sources</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
                   isActive={location.pathname === paths[Routes.CLUSTERS]}
                 >
                   <Link to={paths[Routes.CLUSTERS]}>
@@ -88,22 +75,22 @@ export default function Sidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={location.pathname === paths[Routes.QUEUES]}
+                  isActive={location.pathname === paths[Routes.JOBS]}
                 >
-                  <Link to={paths[Routes.QUEUES]}>
-                    <Layers />
-                    <span>Queues</span>
+                  <Link to={paths[Routes.JOBS]}>
+                    <Briefcase />
+                    <span>Jobs</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={location.pathname === paths[Routes.ORG_SETTINGS]}
+                  isActive={location.pathname === paths[Routes.QUEUES]}
                 >
-                  <Link to={paths[Routes.ORG_SETTINGS]}>
-                    <Settings />
-                    <span>Organization Settings</span>
+                  <Link to={paths[Routes.QUEUES]}>
+                    <Layers />
+                    <span>Queues</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

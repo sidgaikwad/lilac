@@ -1,5 +1,6 @@
 import { DataTable } from '@/components/common';
 import { Card } from '@/components/common/card';
+import { RelativeTime } from '@/components/common/relative-time';
 import { toast } from '@/components/toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,18 +12,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { getFormattedTime, getRelativeTime } from '@/lib';
-import { NewApiKey } from '@/model/api-key';
-import {
   useCreateClusterKey,
   useDeleteClusterKey,
   useListClusterKeys,
 } from '@/services';
-import { ClusterApiKey } from '@/types';
+import { ClusterApiKey, NewApiKey } from '@/types';
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -68,18 +62,8 @@ export function ClusterApiKeys(props: ClusterApiKeyProps) {
       cell: ({ cell }) => {
         const date = new Date(cell.getValue());
         return (
-          <Tooltip>
-            <TooltipTrigger>
-              <p className='underline decoration-dotted'>
-                {getRelativeTime(date)}
-              </p>
-            </TooltipTrigger>
-            <TooltipContent side='bottom'>
-              <p>{getFormattedTime(date)}</p>
-            </TooltipContent>
-          </Tooltip>
+          <RelativeTime date={date} />
         );
-        return <div>{getRelativeTime(date)}</div>;
       },
     }),
     columnHelper.display({

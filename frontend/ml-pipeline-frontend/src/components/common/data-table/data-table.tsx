@@ -54,6 +54,7 @@ export const useRowSelection = ({ rowSelectionProp, onRowSelect }: Props) => {
 };
 
 export interface DataTableProps<TData, TValue> {
+  withHeader?: boolean;
   isLoading?: boolean;
   getRowId?: (row: TData) => string;
   selectionType?: 'single' | 'multi';
@@ -64,6 +65,7 @@ export interface DataTableProps<TData, TValue> {
 }
 
 export function DataTable<TData, TValue>({
+  withHeader = true,
   isLoading = false,
   getRowId,
   selectionType = 'multi',
@@ -116,15 +118,19 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className='space-y-1 overflow-scroll'>
-      <div className='m-1 flex flex-row flex-wrap items-center justify-between space-y-2'>
-        {renderFilters && (
-          <DataTableFilters table={table} renderFilters={renderFilters} />
-        )}
-        <div className='flex flex-row items-center'>
-          <DataTablePagination table={table} />
-          <DataTableSettings table={table} />
+      {withHeader && (
+        <div className='m-1 flex flex-row flex-wrap items-center justify-between space-y-2'>
+          <div>
+          {renderFilters && (
+            <DataTableFilters table={table} renderFilters={renderFilters} />
+          )}
+          </div>
+          <div className='flex flex-row items-center'>
+            <DataTablePagination table={table} />
+            <DataTableSettings table={table} />
+          </div>
         </div>
-      </div>
+      )}
       <div className='overflow-hidden'>
         <Table>
           <TableHeader>

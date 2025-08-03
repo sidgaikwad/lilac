@@ -1,51 +1,46 @@
 import { getHttp } from '@/lib/fetch';
 import { queryOptions, useQuery } from '@tanstack/react-query';
-import { QueryKeys } from '../constants';
-import { ClusterApiKey, ServiceError } from '@/types';
+import { ClusterNode, ServiceError } from '@/types';
 import { useEffect } from 'react';
 import type { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 import { camelCaseObject } from '@/lib/utils';
+import { QueryKeys } from '../constants';
 
-export interface ListClusterKeysResponse {
-  id: string;
-  clusterId: string;
-  prefix: string;
-  createdAt: string;
-  lastUsedAt: string;
-  expiresAt: string;
+export interface ListClusterNodesResponse {
+  clusterNodes: ClusterNode[];
 }
 
-export async function listClusterKeys(
+export async function listClusterNodes(
   clusterId: string
-): Promise<ListClusterKeysResponse[]> {
-  const resp = await getHttp<Sn<ListClusterKeysResponse[]>>(
-    `/clusters/${clusterId}/api-keys`
+): Promise<ListClusterNodesResponse> {
+  const resp = await getHttp<Sn<ListClusterNodesResponse>>(
+    `/clusters/${clusterId}/nodes`
   );
   return camelCaseObject(resp);
 }
 
-export function listClusterKeysQuery(
+export function listClusterNodesQuery(
   clusterId?: string,
   enabled: boolean = true
 ) {
   return queryOptions({
-    queryKey: [QueryKeys.LIST_CLUSTER_KEYS, clusterId],
-    queryFn: () => listClusterKeys(clusterId!),
+    queryKey: [QueryKeys.LIST_CLUSTER_NODES, clusterId],
+    queryFn: () => listClusterNodes(clusterId!),
     enabled: !!clusterId && enabled,
     staleTime: 1000 * 60 * 5,
-    select: (data) => data as ClusterApiKey[],
+    select: (data) => data.clusterNodes as ClusterNode[],
   });
 }
 
-interface UseListClusterProps {
+interface UseListClusterNodesProps {
   clusterId: string | undefined;
   enabled?: boolean;
-  onSuccess?: (keys: ClusterApiKey[]) => void;
+  onSuccess?: (nodes: ClusterNode[]) => void;
   onError?: (error: ServiceError) => void;
 }
 
-export function useListClusterKeys(props: UseListClusterProps) {
-  const query = useQuery(listClusterKeysQuery(props.clusterId, props.enabled));
+export function useListClusterNodes(props: UseListClusterNodesProps) {
+  const query = useQuery(listClusterNodesQuery(props.clusterId, props.enabled));
 
   useEffect(() => {
     if (props?.onSuccess && query.data !== undefined) {

@@ -25,7 +25,7 @@ export function useCancelTrainingJob(props: UseCancelTrainingJobProps) {
     mutationFn: cancelTrainingJob,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.GET_CLUSTER_JOBS],
+        queryKey: [QueryKeys.LIST_CLUSTER_JOBS],
       });
       if (props.onSuccess !== undefined) {
         props.onSuccess();

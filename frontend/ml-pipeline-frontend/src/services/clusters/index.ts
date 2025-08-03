@@ -7,3 +7,4 @@ export * from './get-cluster.query';
 export * from './list-clusters.query';
 export * from './list-cluster-jobs.query';
 export * from './list-cluster-keys.query';
+export * from './list-cluster-nodes.query';

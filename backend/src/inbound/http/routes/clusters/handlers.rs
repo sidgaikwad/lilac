@@ -20,10 +20,7 @@ use crate::{
     inbound::http::{
         errors::ApiError,
         routes::clusters::models::{
-            CreateClusterHttpRequest, CreateClusterHttpResponse, GetClusterDetailsHttpResponse,
-            GetClusterHttpResponse, HttpApiKey, HttpClusterNodeHeartbeat, HttpHeartbeatResponse,
-            HttpJobDetails, ListClusterJobsHttpResponse, ListClusterNodesHttpResponse,
-            ListClustersHttpResponse,
+            CreateClusterHttpRequest, CreateClusterHttpResponse, GetClusterDetailsHttpResponse, GetClusterHttpResponse, HttpApiKey, HttpClusterNode, HttpClusterNodeHeartbeat, HttpHeartbeatResponse, HttpJobDetails, ListClusterJobsHttpResponse, ListClusterNodesHttpResponse, ListClustersHttpResponse
         },
     },
 };
@@ -153,6 +150,16 @@ pub async fn cluster_node_heartbeat(
     };
 
     Ok(Json(HttpHeartbeatResponse { assigned_job }))
+}
+
+#[axum::debug_handler(state = AppState)]
+pub async fn get_node(
+    _claims: Claims,
+    State(cluster_service): State<Arc<dyn ClusterService>>,
+    Path(node_id): Path<NodeId>,
+) -> Result<Json<HttpClusterNode>, ApiError> {
+    let node = cluster_service.get_node_by_id(&node_id).await?;
+    Ok(Json(node.into()))
 }
 
 #[axum::debug_handler(state = AppState)]

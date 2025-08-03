@@ -1,24 +1,30 @@
+use std::sync::Arc;
+
+use super::models::{
+    CreateTrainingJobRequest, CreateTrainingJobResponse, PostLogsRequest,
+    UpdateTrainingJobStatusRequest,
+};
+use crate::domain::training_job::models::GetTrainingJobsFilters;
+use crate::domain::training_job::service::TrainingJobService;
+use crate::inbound::http::routes::training_jobs::models::HttpTrainingJob;
+use crate::{
+    domain::{auth::models::Claims, training_job::models::JobId},
+    inbound::http::{
+        errors::ApiError, routes::training_jobs::models::ListTrainingJobsHttpResponse, AppState,
+    },
+};
+use axum::extract::Path;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
 };
-
-use crate::{
-    domain::{auth::models::Claims, training_job::models::JobId},
-    inbound::http::{errors::ApiError, AppState},
-};
 use axum_extra::{
     headers::{authorization::Bearer, Authorization},
     TypedHeader,
 };
 use secrecy::SecretString;
-
-use super::models::{
-    CreateTrainingJobRequest, CreateTrainingJobResponse, PostLogsRequest,
-    UpdateTrainingJobStatusRequest,
-};
 
 pub async fn create_training_job(
     State(state): State<AppState>,
@@ -38,23 +44,27 @@ pub async fn create_training_job(
     ))
 }
 
-use crate::domain::training_job::models::GetTrainingJobsFilters;
+#[axum::debug_handler(state = AppState)]
+pub async fn get_training_job(
+    _claims: Claims,
+    State(training_job_service): State<Arc<dyn TrainingJobService>>,
+    Path(job_id): Path<JobId>,
+) -> Result<Json<HttpTrainingJob>, ApiError> {
+    let training_job = training_job_service.get_training_job_by_id(&job_id).await?;
+
+    Ok(Json(training_job.into()))
+}
 
 #[axum::debug_handler]
-pub async fn get_training_jobs(
+pub async fn list_training_jobs(
     _claims: Claims,
     State(state): State<AppState>,
     Query(params): Query<GetTrainingJobsFilters>,
-) -> impl IntoResponse {
-    let training_jobs = state
-        .training_job_service
-        .get_training_jobs(params)
-        .await
-        .unwrap();
+) -> Result<Json<ListTrainingJobsHttpResponse>, ApiError> {
+    let training_jobs = state.training_job_service.get_training_jobs(params).await?;
 
-    (StatusCode::OK, Json(training_jobs))
+    Ok(Json(training_jobs.into()))
 }
-use axum::extract::Path;
 
 pub async fn update_training_job_status(
     State(state): State<AppState>,

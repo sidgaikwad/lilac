@@ -5,6 +5,7 @@ import { cn } from '@/lib';
 const spinnerVariants = cva('rotate', {
   variants: {
     size: {
+      xsmall: 'size-4',
       small: 'size-6',
       medium: 'size-8',
       large: 'size-12',
@@ -31,12 +32,11 @@ export function Spinner(
         cy='50'
         fill='none'
         r='46'
-        stroke-width='8'
+        strokeWidth='8'
         stroke='var(--color-gray-400)'
         opacity='70%'
-        transform-origin='50% 50%'
-        stroke-dasharray='289'
-        stroke-linecap='round'
+        strokeDasharray='289'
+        strokeLinecap='round'
       />
     </svg>
   );

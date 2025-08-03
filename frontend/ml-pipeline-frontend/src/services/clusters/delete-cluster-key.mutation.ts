@@ -26,7 +26,7 @@ export function useDeleteClusterKey(props?: UseDeleteClusterKeyProps) {
     mutationFn: deleteClusterKey,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.GET_CLUSTER_KEYS],
+        queryKey: [QueryKeys.LIST_CLUSTER_KEYS],
       });
       if (props?.onSuccess) {
         props.onSuccess();

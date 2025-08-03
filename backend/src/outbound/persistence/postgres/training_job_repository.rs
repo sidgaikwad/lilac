@@ -49,12 +49,15 @@ impl TrainingJobRepository for PostgresTrainingJobRepository {
         filters: GetTrainingJobsFilters,
     ) -> Result<Vec<TrainingJob>, TrainingJobRepositoryError> {
         let mut query = sqlx::QueryBuilder::new(
-            "SELECT id, name, definition, status, instance_id, queue_id, resource_requirements, scheduled_cluster_id, created_at, updated_at FROM training_jobs WHERE 1 = 1"
+            r#"
+            SELECT id, name, definition, status,
+                node_id, queue_id, resource_requirements, created_at, updated_at
+                FROM training_jobs WHERE 1 = 1"#,
         );
 
         if let Some(id) = filters.id {
             query.push(" AND id = ");
-            query.push_bind(id);
+            query.push_bind(id.into_inner());
         }
 
         if let Some(name) = filters.name {
