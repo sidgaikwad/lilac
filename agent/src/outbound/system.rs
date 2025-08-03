@@ -13,6 +13,8 @@ use std::fs;
 use std::path::Path;
 use std::str::FromStr;
 use sysinfo::System;
+use log::{warn};
+use strum::IntoEnumIterator;
 
 pub struct HybridMonitor;
 
@@ -56,6 +58,16 @@ impl HybridMonitor {
         sys.refresh_memory();
         Ok((sys.total_memory() / 1024 / 1024) as i32)
     }
+
+    fn parse_gpu_model(model_name: &str) -> GpuModel {
+        for model in GpuModel::iter() {
+            if model_name.contains(&model.to_string()) {
+                return model;
+            }
+        }
+        warn!("Unknown GPU model: '{}'. Defaulting to T4.", model_name);
+        GpuModel::T4
+    }
 }
 
 #[async_trait]
@@ -84,7 +96,7 @@ impl SystemMonitor for HybridMonitor {
                     let model_name = device.name().map_err(|_| SystemMonitorError::ReadError)?;
                     gpu_configs.push(Gpu {
                         manufacturer: GpuManufacturer::Nvidia,
-                        model: GpuModel::from_str(&model_name).unwrap_or(GpuModel::A100),
+                        model: Self::parse_gpu_model(&model_name),
                         count: 1,
                         memory_mb: (device
                             .memory_info()
@@ -96,7 +108,10 @@ impl SystemMonitor for HybridMonitor {
                 }
                 gpu_configs
             }
-            Err(_) => Vec::new(),
+            Err(e) => {
+                warn!("Failed to initialize NVML, no GPUs will be reported. Error: {:?}", e);
+                Vec::new()
+            }
         };
 
         let resources = NodeResources {

@@ -968,6 +968,7 @@ dependencies = [
  "fs_extra",
  "futures-util",
  "indicatif",
+ "log",
  "nvml-wrapper",
  "rand",
  "rand_distr",

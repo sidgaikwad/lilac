@@ -1,6 +1,6 @@
 use crate::{
     config::AgentConfig,
-    domain::agent::{models::JobDetails, ports::JobExecutor},
+    domain::agent::{models::JobDetails, ports::JobExecutor, models::NodeResources},
     errors::JobExecutorError,
 };
 use async_trait::async_trait;
@@ -30,7 +30,11 @@ impl DockerExecutor {
 
 #[async_trait]
 impl JobExecutor for DockerExecutor {
-    async fn run_job(&self, job_details: JobDetails) -> Result<i64, JobExecutorError> {
+    async fn run_job(
+        &self,
+        job_details: JobDetails,
+        resources: &NodeResources,
+    ) -> Result<i64, JobExecutorError> {
         println!("[DOCKER] Starting job: {}", job_details.id);
         println!("[DOCKER] Pulling image: {}", job_details.docker_uri);
 
@@ -77,8 +81,23 @@ impl JobExecutor for DockerExecutor {
             ..Default::default()
         });
 
+        let mut host_config = bollard::service::HostConfig {
+            ..Default::default()
+        };
+
+        if !resources.gpus.is_empty() {
+            host_config.device_requests = Some(vec![bollard::service::DeviceRequest {
+                driver: Some("".to_string()),
+                count: Some(-1),
+                device_ids: None,
+                capabilities: Some(vec![vec!["gpu".to_string()]]),
+                options: None,
+            }]);
+        }
+
         let config = Config {
             image: Some(job_details.docker_uri.clone()),
+            host_config: Some(host_config),
             ..Default::default()
         };
 
@@ -86,17 +105,17 @@ impl JobExecutor for DockerExecutor {
             .docker
             .create_container(options, config)
             .await
-            .map_err(|_| JobExecutorError::StartError)?;
+            .map_err(|e| JobExecutorError::Unknown(e.into()))?;
         println!("[DOCKER] Created container with ID: {}", container.id);
 
-        // 3. Start the container.
+        // 4. Start the container.
         self.docker
             .start_container(&container.id, None::<StartContainerOptions<String>>)
             .await
-            .map_err(|_| JobExecutorError::StartError)?;
+            .map_err(|e| JobExecutorError::Unknown(e.into()))?;
         println!("[DOCKER] Started container for job {}", job_details.id);
 
-        // 4. Wait for the container to finish.
+        // 5. Wait for the container to finish.
         let wait_options = Some(WaitContainerOptions {
             condition: "not-running",
         });
@@ -108,7 +127,7 @@ impl JobExecutor for DockerExecutor {
             job_details.id, exit_code
         );
 
-        // 5. Remove the container.
+        // 6. Remove the container.
         self.docker
             .remove_container(
                 &container_name,
@@ -118,7 +137,7 @@ impl JobExecutor for DockerExecutor {
                 }),
             )
             .await
-            .map_err(|_| JobExecutorError::StopError)?;
+            .map_err(|e| JobExecutorError::Unknown(e.into()))?;
         println!("[DOCKER] Removed container: {}", container_name);
 
         Ok(exit_code)
@@ -133,7 +152,7 @@ impl JobExecutor for DockerExecutor {
         self.docker
             .stop_container(&container_name, stop_options)
             .await
-            .map_err(|_| JobExecutorError::StopError)?;
+            .map_err(|e| JobExecutorError::Unknown(e.into()))?;
         println!("[DOCKER] Stopped container: {}", container_name);
 
         // Remove the container.
@@ -145,11 +164,10 @@ impl JobExecutor for DockerExecutor {
             .remove_container(&container_name, remove_options)
             .await
             .map_err(|e| {
-                // It's possible the container was already removed, so we'll log non-404 errors.
                 if !e.to_string().contains("404") {
                     eprintln!("[DOCKER] Error removing container {}: {}", container_name, e);
                 }
-                JobExecutorError::StopError
+                JobExecutorError::Unknown(e.into())
             })?;
         println!("[DOCKER] Removed container: {}", container_name);
 

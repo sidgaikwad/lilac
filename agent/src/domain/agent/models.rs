@@ -66,7 +66,7 @@ pub enum GpuManufacturer {
 }
 
 #[derive(
-    Clone, Debug, Serialize, Deserialize, PartialEq, Eq, strum::EnumString, strum::Display,
+    Clone, Debug, Serialize, Deserialize, PartialEq, Eq, strum::EnumString, strum::Display, strum::EnumIter,
 )]
 pub enum GpuModel {
     #[serde(rename = "Radeon Pro V520")]

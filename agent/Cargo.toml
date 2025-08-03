@@ -32,6 +32,7 @@ futures-util = "0.3"
 strum = { version = "0.26", features = ["derive"] }
 strum_macros = "0.26"
 thiserror = "1.0"
+log = "0.4"
 
 [[bin]]
 name = "lilac_cli"

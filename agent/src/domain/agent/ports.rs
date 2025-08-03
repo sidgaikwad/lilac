@@ -31,6 +31,10 @@ pub trait SystemMonitor: Send + Sync {
 #[async_trait]
 pub trait JobExecutor: Send + Sync {
     /// Runs the specified job and returns the exit code.
-    async fn run_job(&self, job_details: JobDetails) -> Result<i64, JobExecutorError>;
+    async fn run_job(
+        &self,
+        job_details: JobDetails,
+        resources: &NodeResources,
+    ) -> Result<i64, JobExecutorError>;
     async fn stop_job(&self, job_id: &str) -> Result<(), JobExecutorError>;
 }

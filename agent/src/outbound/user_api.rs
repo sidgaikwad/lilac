@@ -72,17 +72,20 @@ impl ApiClient {
         let response = req_builder.send().await?;
 
         match response.status() {
-            StatusCode::OK => {
+            StatusCode::OK | StatusCode::CREATED => {
                 let job_response = response.json::<SubmitJobResponse>().await?;
                 Ok(job_response)
             }
             StatusCode::UNAUTHORIZED => Err(UserApiError::Unauthorized),
             StatusCode::NOT_FOUND => Err(UserApiError::NotFound),
             StatusCode::INTERNAL_SERVER_ERROR => Err(UserApiError::InternalServerError),
-            _ => Err(UserApiError::Unknown(anyhow::anyhow!(
-                "Failed to submit job: {}",
-                response.status()
-            ))),
+            _ => {
+                let error_text = response.text().await?;
+                Err(UserApiError::Unknown(anyhow::anyhow!(
+                    "Failed to submit job: {}",
+                    error_text
+                )))
+            }
         }
     }
 
@@ -102,10 +105,13 @@ impl ApiClient {
             StatusCode::UNAUTHORIZED => Err(UserApiError::Unauthorized),
             StatusCode::NOT_FOUND => Err(UserApiError::NotFound),
             StatusCode::INTERNAL_SERVER_ERROR => Err(UserApiError::InternalServerError),
-            _ => Err(UserApiError::Unknown(anyhow::anyhow!(
-                "Failed to get queues: {}",
-                response.status()
-            ))),
+            _ => {
+                let error_text = response.text().await?;
+                Err(UserApiError::Unknown(anyhow::anyhow!(
+                    "Failed to get queues: {}",
+                    error_text
+                )))
+            }
         }
     }
 }

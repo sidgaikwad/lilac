@@ -121,6 +121,7 @@ where
                             let executor = self.job_executor.clone();
                             let current_job_clone = self.current_job.clone();
                             let job_handle_clone = self.job_handle.clone();
+                            let resources_clone = resources.clone();
 
                             let handle = tokio::spawn(async move {
                                 if let Some(job_info) = &mut *current_job_clone.lock().unwrap() {
@@ -132,7 +133,8 @@ where
                                     job_info.status = JobStatus::Running;
                                 }
 
-                                let final_status = match executor.run_job(assigned_job).await {
+                                let final_status =
+                                    match executor.run_job(assigned_job, &resources_clone).await {
                                     Ok(0) => {
                                         println!("[JOB {}] Execution finished successfully.", job_id);
                                         JobStatus::Succeeded
