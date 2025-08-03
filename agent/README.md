@@ -108,12 +108,14 @@ The agent will connect to the control plane, report its available resources, and
 
 The recommended way to run the agent is using the official "universal" Docker image. This image is self-contained and includes all necessary dependencies, including its own Docker daemon (Docker-in-Docker) and the NVIDIA Container Toolkit.
 
-Use the following command to run the agent. This command will pull the latest image, start the agent in the background, and ensure it restarts automatically.
+Use the following command to run or update the agent. This command will gracefully stop and remove any old agent container before pulling the latest image and starting a new one.
 
 **Important:** You must replace `<YOUR_API_ENDPOINT>` and `<YOUR_CLUSTER_API_KEY>` with your actual credentials.
 
 ```bash
-docker pull getlilac/lilac-agent:latest && docker run -d \
+docker stop lilac-agent && docker rm lilac-agent && \
+docker pull getlilac/lilac-agent:latest && \
+docker run -d \
   --name lilac-agent \
   --restart always \
   --privileged \
@@ -124,11 +126,48 @@ docker pull getlilac/lilac-agent:latest && docker run -d \
 ```
 
 **Flags Explained:**
+- `docker stop ... && docker rm ...`: This safely stops and removes the old container, allowing for seamless updates. It will fail harmlessly if no container exists on the first run.
 - `--privileged`: This is **required** for the agent to run its own Docker daemon (Docker-in-Docker) inside the container.
 - `--gpus all`: This exposes all of the host's GPUs to the agent, allowing it to run GPU-accelerated jobs.
 - `-e ...`: These environment variables are used to configure the agent, overriding any settings from a config file.
 
-### 3. Minimum Requirements
+### 5. Connecting to Private Registries
+
+If your jobs use images from a private registry, you can configure the credentials using environment variables.
+
+Below is the full command template. Add the three `LILAC_PRIVATE_REGISTRY_*` variables to connect to your private registry.
+
+```bash
+docker stop lilac-agent && docker rm lilac-agent && \
+docker pull getlilac/lilac-agent:latest && \
+docker run -d \
+  --name lilac-agent \
+  --restart always \
+  --privileged \
+  -e LILAC_API_ENDPOINT="<YOUR_API_ENDPOINT>" \
+  -e LILAC_CLUSTER_API_KEY="<YOUR_CLUSTER_API_KEY>" \
+  -e LILAC_PRIVATE_REGISTRY_URL="<YOUR_REGISTRY_URL>" \
+  -e LILAC_PRIVATE_REGISTRY_USERNAME="<YOUR_REGISTRY_USERNAME>" \
+  -e LILAC_PRIVATE_REGISTRY_PASSWORD="<YOUR_REGISTRY_PASSWORD_OR_TOKEN>" \
+  --gpus all \
+  getlilac/lilac-agent:latest
+```
+
+#### Registry-Specific Configurations
+
+Here are the correct values to use for popular container registries:
+
+| Registry | `LILAC_PRIVATE_REGISTRY_URL` | `LILAC_PRIVATE_REGISTRY_USERNAME` | `LILAC_PRIVATE_REGISTRY_PASSWORD` |
+|---|---|---|---|
+| **Docker Hub** | `https://index.docker.io/v1/` | Your Docker Hub Username | Your Personal Access Token (PAT) |
+| **Google (GCR)** | `https://gcr.io` | `_json_key` | The full content of your JSON service account key |
+| **Amazon (ECR)** | `https://<aws_account_id>.dkr.ecr.<region>.amazonaws.com` | `AWS` | The temporary token from `aws ecr get-login-password` |
+
+> #### **Known Limitation: AWS ECR**
+>
+> You are correct to note that the token for AWS ECR is temporary (typically valid for 12 hours). The current agent version does **not** automatically refresh these tokens. This means that after the token expires, the agent will fail to pull new images from ECR. Proper support for ECR's token refresh mechanism is a planned future improvement. For now, the agent works best with registries that use static, long-lived credentials like Personal Access Tokens.
+
+### 6. Minimum Requirements
 
 While the agent itself is lightweight, it needs to handle Docker operations, which can be resource-intensive, especially during the `docker pull` phase for large images. To ensure reliable operation, we recommend the following minimum resources for any environment running the agent:
 >
