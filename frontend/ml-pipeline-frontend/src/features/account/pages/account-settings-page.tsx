@@ -15,13 +15,6 @@ import { useGetAccountDetails } from '@/services';
 function AccountSettingsPage() {
   const { data: user } = useGetAccountDetails({});
 
-  // const _handleProfileSave = () => {
-  //   console.log('Saving profile...');
-  // };
-
-  const handlePasswordUpdate = () => {
-    console.log('Updating password...');
-  };
 
   return (
     <div className='space-y-6'>
@@ -29,20 +22,20 @@ function AccountSettingsPage() {
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <CardDescription>
-            Update your account's profile information and email address.
+            Update your account's profile information.
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='space-y-1'>
-            <Label htmlFor='email'>Email</Label>
+            <Label htmlFor='username'>Username</Label>
             <Input
-              id='email'
-              type='email'
-              defaultValue={user?.email ?? ''}
+              id='username'
+              type='text'
+              defaultValue={user?.username ?? ''}
               disabled
             />
             <p className='text-gray-text-muted text-xs'>
-              Email address cannot be changed.
+              Username cannot be changed.
             </p>
           </div>
         </CardContent>
@@ -54,7 +47,7 @@ function AccountSettingsPage() {
         <CardHeader>
           <CardTitle>Change Password</CardTitle>
           <CardDescription>
-            Update your password. Choose a strong one!
+            Update your password.
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
@@ -72,7 +65,7 @@ function AccountSettingsPage() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={handlePasswordUpdate} disabled>
+          <Button disabled>
             Update Password
           </Button>
         </CardFooter>

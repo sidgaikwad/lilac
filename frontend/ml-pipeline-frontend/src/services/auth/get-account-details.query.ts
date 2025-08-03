@@ -8,8 +8,9 @@ import { camelCaseObject } from '@/lib/utils';
 
 export interface GetAccountDetailsResponse {
   userId: string;
-  email: string;
-  emailVerified: boolean;
+  username: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export async function getAccountDetails(): Promise<GetAccountDetailsResponse> {

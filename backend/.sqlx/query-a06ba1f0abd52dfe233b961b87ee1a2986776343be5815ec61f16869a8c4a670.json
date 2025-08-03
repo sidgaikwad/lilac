@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT u.user_id, u.username, u.first_name, u.last_name, u.password_hash, u.created_at, u.updated_at\n            FROM users u\n            JOIN api_keys ak ON u.user_id = ak.user_id\n            WHERE ak.key_hash = $1 AND (ak.expires_at IS NULL OR ak.expires_at > now())\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "username",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "first_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "last_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "password_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "a06ba1f0abd52dfe233b961b87ee1a2986776343be5815ec61f16869a8c4a670"
+}

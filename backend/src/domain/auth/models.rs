@@ -18,7 +18,6 @@ pub struct TokenClaims {
 pub struct AuthUser {
     pub id: UserId,
     pub username: String,
-    pub email: String,
 }
 
 #[derive(Debug, Serialize)]

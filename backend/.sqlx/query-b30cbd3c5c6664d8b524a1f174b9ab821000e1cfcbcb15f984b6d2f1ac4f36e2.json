@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO queue_cluster_assignments (queue_id, cluster_id, \"order\") VALUES ($1, $2, $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b30cbd3c5c6664d8b524a1f174b9ab821000e1cfcbcb15f984b6d2f1ac4f36e2"
+}

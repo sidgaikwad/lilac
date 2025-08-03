@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT c.cluster_id, c.cluster_name, c.cluster_description, c.created_at, c.updated_at\n            FROM clusters c\n            JOIN api_keys ak ON c.cluster_id = ak.cluster_id\n            WHERE ak.key_hash = $1 AND (ak.expires_at IS NULL OR ak.expires_at > now())\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "cluster_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "cluster_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "cluster_description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "a12a0d19cafbdaca6e8b994b19f3a668d94164a288d8e84e4d1015e031b4a276"
+}

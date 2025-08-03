@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE training_jobs SET status = 'queued', node_id = NULL WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "668e4a83cc31da3ecf9b90a7d9250814b3a1cf3e774cc06ba646446c7e80b3a2"
+}

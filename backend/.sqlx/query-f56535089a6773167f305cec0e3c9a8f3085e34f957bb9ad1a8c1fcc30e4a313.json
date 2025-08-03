@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM cluster_nodes WHERE node_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f56535089a6773167f305cec0e3c9a8f3085e34f957bb9ad1a8c1fcc30e4a313"
+}

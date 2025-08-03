@@ -1,0 +1,62 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT c.cluster_id, c.cluster_name, c.cluster_description, c.created_at, c.updated_at,\n                COUNT(DISTINCT n.node_id) AS \"total_nodes!: i64\",\n                COUNT(DISTINCT n.node_id) FILTER (WHERE n.node_status = 'busy') AS \"busy_nodes!: i64\",\n                COUNT(running_jobs.id) AS \"total_running_jobs!: i64\"\n            FROM clusters c\n            LEFT JOIN cluster_nodes n ON c.cluster_id = n.cluster_id\n            LEFT JOIN training_jobs running_jobs ON running_jobs.status = 'running' AND n.node_id = running_jobs.node_id\n            GROUP BY c.cluster_id;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "cluster_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "cluster_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "cluster_description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "total_nodes!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "busy_nodes!: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 7,
+        "name": "total_running_jobs!: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "54fa3a2625f07a39f203dd4297876055e770db90efae42102d2186d79836120e"
+}

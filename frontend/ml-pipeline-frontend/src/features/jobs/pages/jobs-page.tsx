@@ -82,7 +82,7 @@ const JOB_COLUMNS: ColumnDef<Job>[] = [
           status = 'error';
           break;
         case 'cancelled':
-          status = 'warning';
+          status = 'cancelled';
           break;
       }
       return (
@@ -161,6 +161,8 @@ function JobsPage() {
         <div className='flex flex-row space-x-4'>
           <Card
             className='w-full'
+            title='Jobs'
+            description='View your submitted jobs.'
             content={
               <DataTable
                 columns={JOB_COLUMNS}

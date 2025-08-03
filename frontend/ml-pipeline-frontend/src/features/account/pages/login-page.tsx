@@ -13,8 +13,9 @@ import useAuthStore from '@/store/use-auth-store';
 import { toast } from '@/components/toast';
 import { Card } from '@/components/common/card';
 
+const usernameRegex = /^[a-zA-Z0-9_-]+$/;
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address' }),
+  username: z.string().min(3).refine((username) => usernameRegex.test(username), 'Must only contain -, _, or alphanumeric characters.'),
   password: z.string().min(1, { message: 'Password is required' }),
 });
 
@@ -51,7 +52,7 @@ function LoginPage() {
 
   // Form submission handler now directly sets auth state
   const onSubmit = (data: LoginFormInputs) => {
-    loginUser({ email: data.email, password: data.password });
+    loginUser({ username: data.username, password: data.password });
   };
 
   return (
@@ -64,18 +65,18 @@ function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
             {/* Removed general auth error display as we bypass API */}
             <div className='space-y-1'>
-              <Label htmlFor='email'>Email</Label>
+              <Label htmlFor='username'>Username</Label>
               <Input
-                id='email'
-                type='email'
+                id='username'
+                type='text'
                 placeholder='Enter any email'
-                {...register('email')}
-                aria-invalid={errors.email ? 'true' : 'false'}
+                {...register('username')}
+                aria-invalid={errors.username ? 'true' : 'false'}
                 disabled={isPending}
               />
-              {errors.email && (
+              {errors.username && (
                 <p className='text-destructive text-sm'>
-                  {errors.email.message}
+                  {errors.username.message}
                 </p>
               )}
             </div>

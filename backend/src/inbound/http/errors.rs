@@ -1,9 +1,7 @@
 use crate::domain::{
     auth::service::AuthServiceError, cluster::service::ClusterServiceError,
-    credentials::service::CredentialServiceError, dataset::service::DatasetServiceError,
-    project::service::ProjectServiceError, queue::service::QueueServiceError,
+    credentials::service::CredentialServiceError, queue::service::QueueServiceError,
     training_job::service::TrainingJobServiceError, user::service::UserServiceError,
-    workspace::service::WorkspaceServiceError,
 };
 
 use axum::{
@@ -89,41 +87,6 @@ impl From<UserServiceError> for ApiError {
     }
 }
 
-impl From<ProjectServiceError> for ApiError {
-    fn from(err: ProjectServiceError) -> Self {
-        match err {
-            ProjectServiceError::InvalidPermissions => Self::Forbidden,
-            ProjectServiceError::ProjectExists { .. } => {
-                Self::Conflict("Project already exists".into())
-            }
-            ProjectServiceError::ProjectNotFound(_) => Self::NotFound("Project not found".into()),
-            ProjectServiceError::Unknown(e) => {
-                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
-                Self::InternalServerError("Something went wrong".to_string())
-            }
-        }
-    }
-}
-
-impl From<DatasetServiceError> for ApiError {
-    fn from(err: DatasetServiceError) -> Self {
-        match err {
-            DatasetServiceError::DatasetExists { .. } => {
-                Self::Conflict("Dataset already exists".into())
-            }
-            DatasetServiceError::DatasetNotFound(_) => Self::NotFound("Dataset not found".into()),
-            DatasetServiceError::ConnectionError(_) => {
-                Self::BadRequest("Failed to connect to data source".into())
-            }
-            DatasetServiceError::InvalidPermissions => Self::Forbidden,
-            DatasetServiceError::Unknown(e) => {
-                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
-                Self::InternalServerError("Something went wrong".to_string())
-            }
-        }
-    }
-}
-
 impl From<AuthServiceError> for ApiError {
     fn from(err: AuthServiceError) -> Self {
         match err {
@@ -132,33 +95,6 @@ impl From<AuthServiceError> for ApiError {
             }
             AuthServiceError::UserNotFound => Self::Unauthorized("Invalid credentials".to_string()),
             _ => Self::InternalServerError("Something went wrong".to_string()),
-        }
-    }
-}
-
-impl From<WorkspaceServiceError> for ApiError {
-    fn from(err: WorkspaceServiceError) -> Self {
-        match err {
-            WorkspaceServiceError::Repository(err) => {
-                tracing::error!("Repository error: {:?}", err);
-                Self::InternalServerError("Something went wrong".to_string())
-            }
-            WorkspaceServiceError::Provisioner(err) => {
-                tracing::error!("Provisioner error: {:?}", err);
-                Self::InternalServerError("Something went wrong".to_string())
-            }
-            WorkspaceServiceError::ClusterRepository(err) => {
-                tracing::error!("Cluster repository error: {:?}", err);
-                Self::InternalServerError("Something went wrong".to_string())
-            }
-            WorkspaceServiceError::CredentialRepository(err) => {
-                tracing::error!("Credential repository error: {:?}", err);
-                Self::InternalServerError("Something went wrong".to_string())
-            }
-            WorkspaceServiceError::Unknown(e) => {
-                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
-                Self::InternalServerError("Something went wrong".to_string())
-            }
         }
     }
 }

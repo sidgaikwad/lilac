@@ -28,7 +28,7 @@ const CLUSTER_COLUMNS: ColumnDef<ClusterSummary>[] = [
           to={generatePath(Routes.CLUSTER_DETAILS, {
             clusterId: row.original.clusterId,
           })}
-          className='font-mono text-blue-600 visited:text-purple-600 hover:underline'
+          className='text-blue-600 visited:text-purple-600 hover:underline'
         >
           {cell.renderValue()}
         </Link>

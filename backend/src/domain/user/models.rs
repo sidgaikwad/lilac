@@ -12,8 +12,9 @@ identifier!(UserId);
 #[derive(Clone, Debug)]
 pub struct User {
     pub id: UserId,
-    pub name: String,
-    pub email: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub username: String,
     pub password_hash: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -21,8 +22,9 @@ pub struct User {
 
 #[derive(Clone, Debug)]
 pub struct CreateUserRequest {
-    pub email: String,
-    pub name: Option<String>,
+    pub username: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
     pub password: SecretString,
 }
 

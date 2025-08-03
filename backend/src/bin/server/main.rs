@@ -6,20 +6,16 @@ use server::{
     config::{LilacConfig, LogFormat},
     domain::{
         auth::service::AuthServiceImpl, cluster::service::ClusterServiceImpl,
-        credentials::service::CredentialServiceImpl, dataset::service::DatasetServiceImpl,
-        project::service::ProjectServiceImpl, queue::service::QueueServiceImpl,
+        credentials::service::CredentialServiceImpl, queue::service::QueueServiceImpl,
         scheduler::service::SchedulerService, training_job::service::TrainingJobServiceImpl,
         user::service::UserServiceImpl,
     },
     inbound::http::{AppState, HttpServer},
     outbound::{
-        data_source::adapter::DataSourceTesterImpl,
         jwt::JwtManager,
         persistence::postgres::{
             cluster_repository::PostgresClusterRepository,
             credential_repository::PostgresCredentialRepository,
-            dataset_repository::PostgresDatasetRepository,
-            project_repository::PostgresProjectRepository,
             queue_repository::PostgresQueueRepository, session_repository::PostgresSessionStore,
             training_job_repository::PostgresTrainingJobRepository,
             user_repository::PostgresUserRepository,
@@ -61,8 +57,6 @@ async fn main() -> anyhow::Result<()> {
     let credential_repo = Arc::new(PostgresCredentialRepository::new(db_pool.clone()));
     let cluster_repo = Arc::new(PostgresClusterRepository::new(db_pool.clone()));
     let user_repo = Arc::new(PostgresUserRepository::new(db_pool.clone()));
-    let project_repo = Arc::new(PostgresProjectRepository::new(db_pool.clone()));
-    let dataset_repo = Arc::new(PostgresDatasetRepository::new(db_pool.clone()));
     let jwt_manager = Arc::new(JwtManager::new(config.secret_key.expose_secret()));
     let training_job_repo = Arc::new(PostgresTrainingJobRepository::new(db_pool.clone()));
     let queue_repo = Arc::new(PostgresQueueRepository::new(db_pool.clone()));
@@ -74,11 +68,6 @@ async fn main() -> anyhow::Result<()> {
     ));
     let credential_service = Arc::new(CredentialServiceImpl::new(credential_repo.clone()));
     let user_service = Arc::new(UserServiceImpl::new(user_repo.clone()));
-    let project_service = Arc::new(ProjectServiceImpl::new(project_repo.clone()));
-    let dataset_service = Arc::new(DatasetServiceImpl::new(
-        dataset_repo.clone(),
-        Arc::new(DataSourceTesterImpl),
-    ));
     let session_store = PostgresSessionStore::new(db_pool.clone());
     session_store.migrate().await?;
     let session_layer = SessionManagerLayer::new(session_store)
@@ -122,8 +111,6 @@ async fn main() -> anyhow::Result<()> {
         credential_service,
         cluster_service,
         user_service,
-        project_service,
-        dataset_service,
         auth_service,
         training_job_service,
         queue_service,

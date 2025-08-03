@@ -7,7 +7,7 @@ import { postHttp } from '@/lib/fetch';
 import { SnakeCasedPropertiesDeep as Sn } from 'type-fest';
 
 interface LoginRequest {
-  email: string;
+  username: string;
   password: string;
 }
 

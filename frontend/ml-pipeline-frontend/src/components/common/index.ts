@@ -10,7 +10,6 @@ export * from './index';
 export * from './key-value';
 export * from './logout-button';
 export * from './palette-blocks';
-export * from './project-selection-dropdown';
 export * from './secret';
 export * from './skeleton-cards';
 export * from './theme-panel';

@@ -1,0 +1,47 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO clusters (cluster_name, cluster_description)\n            VALUES ($1, $2)\n            RETURNING cluster_id, cluster_name, cluster_description, created_at, updated_at",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "cluster_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "cluster_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "cluster_description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "32d41c7f0c12a88912cf4beba7c3220ee3cc60531c34ad12c3d05fc79bf0dcd9"
+}

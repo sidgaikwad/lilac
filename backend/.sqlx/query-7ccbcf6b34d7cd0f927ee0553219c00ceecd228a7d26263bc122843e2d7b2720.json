@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT c.cluster_id, c.cluster_name, c.cluster_description, c.created_at, c.updated_at\n            FROM clusters c\n            WHERE c.cluster_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "cluster_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "cluster_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "cluster_description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "7ccbcf6b34d7cd0f927ee0553219c00ceecd228a7d26263bc122843e2d7b2720"
+}

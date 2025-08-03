@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM queue_cluster_assignments WHERE queue_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "df23b0f994c82617b3245231c6b5d6ce206e99af06b8a799075dce4d4ef7eb41"
+}

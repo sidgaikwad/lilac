@@ -85,12 +85,7 @@ impl<R: UserRepository + UserApiKeyRepository> UserServiceImpl<R> {
 #[async_trait]
 impl<R: UserRepository + UserApiKeyRepository> UserService for UserServiceImpl<R> {
     async fn create_user(&self, req: &CreateUserRequest) -> Result<User, UserServiceError> {
-        let mut req = req.clone();
-        if req.name.is_none() {
-            req.name = Some(req.email.split('@').next().unwrap_or("").to_string());
-        }
-
-        Ok(self.repo.create_user(&req).await?)
+        Ok(self.repo.create_user(req).await?)
     }
 
     async fn get_user_by_id(&self, id: &UserId) -> Result<User, UserServiceError> {

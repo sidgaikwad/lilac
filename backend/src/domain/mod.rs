@@ -3,13 +3,10 @@ use secrecy::{ExposeSecret, SecretString};
 pub mod auth;
 pub mod cluster;
 pub mod credentials;
-pub mod dataset;
-pub mod project;
 pub mod queue;
 pub mod scheduler;
 pub mod training_job;
 pub mod user;
-pub mod workspace;
 
 pub fn serialize_secret_string<S>(secret: &SecretString, serializer: S) -> Result<S::Ok, S::Error>
 where

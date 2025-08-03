@@ -47,9 +47,9 @@ impl From<VerifyError> for AuthServiceError {
 
 #[async_trait]
 pub trait AuthService: Send + Sync {
-    async fn login_with_email(
+    async fn login_with_username(
         &self,
-        email: &str,
+        username: &str,
         password: &SecretString,
     ) -> Result<Token, AuthServiceError>;
     fn validate_token(&self, token: &str) -> Result<TokenClaims, AuthServiceError>;
@@ -85,18 +85,17 @@ impl AuthServiceImpl {
 
 #[async_trait]
 impl AuthService for AuthServiceImpl {
-    async fn login_with_email(
+    async fn login_with_username(
         &self,
-        email: &str,
+        username: &str,
         password: &SecretString,
     ) -> Result<Token, AuthServiceError> {
-        let user = self.user_repo.get_user_by_email(email).await?;
+        let user = self.user_repo.get_user_by_username(username).await?;
         self.verify_password(password, &user).await?;
 
         let auth_user = AuthUser {
             id: user.id,
-            username: user.name.clone(),
-            email: user.email.clone(),
+            username: user.username.clone(),
         };
 
         let token_str = self

@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                q.queue_id,\n                q.name,\n                q.priority,\n                ARRAY_AGG(qca.cluster_id ORDER BY qca.order) FILTER (WHERE qca.cluster_id IS NOT NULL) as \"cluster_targets: Vec<Uuid>\"\n            FROM\n                queues q\n            LEFT JOIN\n                queue_cluster_assignments qca ON q.queue_id = qca.queue_id\n            WHERE\n                q.queue_id = $1\n            GROUP BY\n                q.queue_id;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "queue_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "priority",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "cluster_targets: Vec<Uuid>",
+        "type_info": "UuidArray"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "556d068230755e6b43aeb887e5ed4482856cd7e2bbcd65e18dadd3ac8513c6d0"
+}

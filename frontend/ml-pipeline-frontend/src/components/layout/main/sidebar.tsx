@@ -1,6 +1,5 @@
 import { useLocation } from 'react-router-dom';
 import {
-  Shapes,
   Server,
   KeyRound,
   Layers,
@@ -29,7 +28,6 @@ export default function Sidebar() {
 
   const paths = useMemo(() => {
     return {
-      [Routes.PROJECTS]: Routes.PROJECTS,
       [Routes.CLUSTERS]: Routes.CLUSTERS,
       [Routes.QUEUES]: Routes.QUEUES,
       [Routes.JOBS]: Routes.JOBS,
@@ -50,17 +48,6 @@ export default function Sidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={location.pathname === paths[Routes.PROJECTS]}
-                >
-                  <Link to={paths[Routes.PROJECTS]}>
-                    <Shapes />
-                    <span>Projects</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild

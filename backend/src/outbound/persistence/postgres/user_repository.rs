@@ -22,8 +22,9 @@ impl PostgresUserRepository {
 #[derive(sqlx::FromRow)]
 struct UserRecord {
     user_id: uuid::Uuid,
-    email: String,
-    name: Option<String>,
+    username: String,
+    first_name: Option<String>,
+    last_name: Option<String>,
     password_hash: Option<String>,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
@@ -33,8 +34,9 @@ impl From<UserRecord> for User {
     fn from(record: UserRecord) -> Self {
         Self {
             id: record.user_id.into(),
-            name: record.name.unwrap_or_default(),
-            email: record.email,
+            first_name: record.first_name,
+            last_name: record.last_name,
+            username: record.username,
             password_hash: record.password_hash,
             created_at: record.created_at,
             updated_at: record.updated_at,
@@ -77,12 +79,13 @@ impl UserRepository for PostgresUserRepository {
         let record = sqlx::query_as!(
             UserRecord,
             r#"
-            INSERT INTO users (email, name, password_hash, email_verified, login_method)
-            VALUES ($1, $2, $3, false, 'email')
-            RETURNING user_id, email, name, password_hash, created_at, updated_at
+            INSERT INTO users (username, first_name, last_name, password_hash, login_method)
+            VALUES ($1, $2, $3, $4, 'password')
+            RETURNING user_id, username, first_name, last_name, password_hash, created_at, updated_at
             "#,
-            req.email,
-            req.name.as_ref(),
+            req.username,
+            req.first_name.as_ref(),
+            req.last_name.as_ref(),
             password_hash,
         )
         .fetch_one(&self.pool)
@@ -90,8 +93,8 @@ impl UserRepository for PostgresUserRepository {
         .map_err(|err| match err {
             sqlx::Error::Database(db_err) if db_err.is_unique_violation() => {
                 UserRepositoryError::Duplicate {
-                    field: "email".to_string(),
-                    value: req.email.clone(),
+                    field: "username".to_string(),
+                    value: req.username.clone(),
                 }
             }
             _ => UserRepositoryError::Unknown(anyhow::anyhow!(err)),
@@ -101,7 +104,7 @@ impl UserRepository for PostgresUserRepository {
     }
 
     async fn get_user_by_id(&self, id: &UserId) -> Result<User, UserRepositoryError> {
-        let record = sqlx::query_as!(UserRecord, r#"SELECT user_id, email, name, password_hash, created_at, updated_at FROM users WHERE user_id = $1"#, id.inner())
+        let record = sqlx::query_as!(UserRecord, r#"SELECT user_id, username, first_name, last_name, password_hash, created_at, updated_at FROM users WHERE user_id = $1"#, id.inner())
             .fetch_one(&self.pool)
             .await
             .map_err(|e| match e {
@@ -111,12 +114,12 @@ impl UserRepository for PostgresUserRepository {
         Ok(record.into())
     }
 
-    async fn get_user_by_email(&self, email: &str) -> Result<User, UserRepositoryError> {
-        let record = sqlx::query_as!(UserRecord, r#"SELECT user_id, email, name, password_hash, created_at, updated_at FROM users WHERE email = $1"#, email)
+    async fn get_user_by_username(&self, username: &str) -> Result<User, UserRepositoryError> {
+        let record = sqlx::query_as!(UserRecord, r#"SELECT user_id, username, first_name, last_name, password_hash, created_at, updated_at FROM users WHERE username = $1"#, username)
             .fetch_one(&self.pool)
             .await
             .map_err(|e| match e {
-                sqlx::Error::RowNotFound => UserRepositoryError::NotFound(email.to_string()),
+                sqlx::Error::RowNotFound => UserRepositoryError::NotFound(username.to_string()),
                 _ => UserRepositoryError::Unknown(anyhow::anyhow!(e)),
             })?;
         Ok(record.into())
@@ -160,7 +163,7 @@ impl UserApiKeyRepository for PostgresUserRepository {
         let user_record = sqlx::query_as!(
             UserRecord,
             r#"
-            SELECT u.user_id, u.email, u.name, u.password_hash, u.created_at, u.updated_at
+            SELECT u.user_id, u.username, u.first_name, u.last_name, u.password_hash, u.created_at, u.updated_at
             FROM users u
             JOIN api_keys ak ON u.user_id = ak.user_id
             WHERE ak.key_hash = $1 AND (ak.expires_at IS NULL OR ak.expires_at > now())

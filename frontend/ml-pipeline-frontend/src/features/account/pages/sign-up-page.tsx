@@ -11,10 +11,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSignUp } from '@/services';
 import { Card } from '@/components/common/card';
 
+const usernameRegex = /^[a-zA-Z0-9_-]+$/;
 const registerSchema = z
   .object({
-    name: z.string().min(1, { message: 'Name is required' }),
-    email: z.string().email({ message: 'Invalid email address' }),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    username: z.string().min(3).refine((username) => usernameRegex.test(username), 'Must only contain -, _, or alphanumeric characters.'),
     password: z
       .string()
       .min(8, { message: 'Password must be at least 8 characters' }),
@@ -50,7 +52,7 @@ function SignUpPage() {
 
   // Form submission handler now directly sets auth state
   const onSubmit = (data: RegisterFormInputs) => {
-    signUp({ name: data.name, email: data.email, password: data.password });
+    signUp({ firstName: data.firstName, lastName: data.lastName, username: data.username, password: data.password });
   };
 
   return (
@@ -62,36 +64,19 @@ function SignUpPage() {
         content={
           <div>
             <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
-              {/* Removed general auth error display as we bypass API */}
               <div className='space-y-1'>
-                <Label htmlFor='name'>Name</Label>
+                <Label htmlFor='username'>Username</Label>
                 <Input
-                  id='name'
+                  id='username'
                   type='text'
-                  placeholder='Enter your name'
-                  {...register('name')}
-                  aria-invalid={errors.name ? 'true' : 'false'}
+                  placeholder='Enter your username'
+                  {...register('username')}
+                  aria-invalid={errors.username ? 'true' : 'false'}
                   disabled={isPending}
                 />
-                {errors.name && (
+                {errors.username && (
                   <p className='text-destructive text-sm'>
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-              <div className='space-y-1'>
-                <Label htmlFor='email'>Email</Label>
-                <Input
-                  id='email'
-                  type='email'
-                  placeholder='Enter your email'
-                  {...register('email')}
-                  aria-invalid={errors.email ? 'true' : 'false'}
-                  disabled={isPending}
-                />
-                {errors.email && (
-                  <p className='text-destructive text-sm'>
-                    {errors.email.message}
+                    {errors.username.message}
                   </p>
                 )}
               </div>

@@ -10,7 +10,7 @@ mod models;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/auth/login", post(login_with_email))
+        .route("/auth/login", post(login_with_username))
         .route("/auth/signup", post(sign_up))
         .route("/auth/logout", get(logout))
 }

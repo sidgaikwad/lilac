@@ -6,7 +6,7 @@ export function Link(props: LinkProps) {
   return (
     <RouterLink
       className={cn(
-        'text-blue-600 visited:text-purple-600 hover:underline',
+        'text-blue-600 dark:text-blue-400 dark:visited:text-purple-400 visited:text-purple-600 hover:underline',
         className
       )}
       {...linkProps}

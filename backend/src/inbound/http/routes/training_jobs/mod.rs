@@ -6,8 +6,8 @@ use axum::{
 use crate::inbound::http::AppState;
 
 use self::handlers::{
-    cancel_training_job, create_training_job, list_training_jobs, post_logs,
-    update_training_job_status, get_training_job
+    cancel_training_job, create_training_job, get_training_job, list_training_jobs, post_logs,
+    update_training_job_status,
 };
 
 pub mod handlers;

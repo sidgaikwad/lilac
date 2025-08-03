@@ -9,7 +9,7 @@ $$ language 'plpgsql';
 
 -- user tables
 CREATE TYPE auth_provider AS ENUM (
-    'email',
+    'password',
     'google',
     'github',
     'gitlab',
@@ -19,8 +19,9 @@ CREATE TYPE auth_provider AS ENUM (
 
 CREATE TABLE users (
     user_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    email text NOT NULL UNIQUE,
-    email_verified boolean NOT NULL,
+    username text NOT NULL UNIQUE,
+    first_name text,
+    last_name text,
     password_hash text,
     login_method auth_provider,
     sso_provider_id TEXT,

@@ -18,15 +18,14 @@ use crate::{
     config::LilacConfig,
     domain::{
         auth::service::AuthService, cluster::service::ClusterService,
-        credentials::service::CredentialService, dataset::service::DatasetService,
-        project::service::ProjectService, queue::service::QueueService,
+        credentials::service::CredentialService, queue::service::QueueService,
         training_job::service::TrainingJobService, user::service::UserService,
     },
     inbound::http::routes::{clusters, credentials, queues, training_jobs},
     outbound::persistence::postgres::session_repository::PostgresSessionStore,
 };
 
-use self::routes::{auth, datasets, projects, users};
+use self::routes::{auth, users};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -34,8 +33,6 @@ pub struct AppState {
     pub cluster_service: Arc<dyn ClusterService>,
     pub credential_service: Arc<dyn CredentialService>,
     pub user_service: Arc<dyn UserService>,
-    pub project_service: Arc<dyn ProjectService>,
-    pub dataset_service: Arc<dyn DatasetService>,
     pub auth_service: Arc<dyn AuthService>,
     pub training_job_service: Arc<dyn TrainingJobService>,
     pub queue_service: Arc<dyn QueueService>,
@@ -56,18 +53,6 @@ impl FromRef<AppState> for Arc<dyn ClusterService> {
 impl FromRef<AppState> for Arc<dyn UserService> {
     fn from_ref(state: &AppState) -> Self {
         state.user_service.clone()
-    }
-}
-
-impl FromRef<AppState> for Arc<dyn ProjectService> {
-    fn from_ref(state: &AppState) -> Self {
-        state.project_service.clone()
-    }
-}
-
-impl FromRef<AppState> for Arc<dyn DatasetService> {
-    fn from_ref(state: &AppState) -> Self {
-        state.dataset_service.clone()
     }
 }
 
@@ -117,8 +102,6 @@ impl HttpServer {
     ) -> anyhow::Result<Self> {
         let app: Router = Router::new()
             .merge(users::router())
-            .merge(projects::router())
-            .merge(datasets::router())
             .merge(auth::router())
             .merge(clusters::router())
             .merge(credentials::router())

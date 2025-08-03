@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE queues SET name = $1, priority = $2 WHERE queue_id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "de01533979c70eb7e5c57f78888a52fffacfb03230c7cea4bab0c754671aa200"
+}

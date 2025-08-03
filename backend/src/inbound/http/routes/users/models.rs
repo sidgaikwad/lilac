@@ -11,16 +11,18 @@ use crate::domain::{
 #[derive(Debug, Clone, Serialize)]
 pub struct GetUserHttpResponse {
     pub user_id: UserId,
-    pub name: String,
-    pub email: String,
+    pub username: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
 }
 
 impl From<User> for GetUserHttpResponse {
     fn from(user: User) -> Self {
         Self {
             user_id: user.id,
-            name: user.name,
-            email: user.email,
+            username: user.username,
+            first_name: user.first_name,
+            last_name: user.last_name,
         }
     }
 }

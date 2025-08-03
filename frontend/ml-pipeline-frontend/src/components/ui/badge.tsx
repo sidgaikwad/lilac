@@ -12,39 +12,39 @@ const badgeVariants = cva(
         default:
           'border-transparent bg-accent text-accent-foreground [a&]:hover:bg-accent-hover',
         secondary:
-          'border-transparent bg-accent-secondary text-gray-text [a&]:hover:bg-accent-secondary-hover',
+          'border-transparent bg-accent-secondary text-gray-text dark:text-gray-900 [a&]:hover:bg-accent-secondary-hover',
         destructive:
           'border-transparent bg-destructive text-destructive-foreground [a&]:hover:bg-destructive-hover focus-visible:ring-destructive/20 dark:bg-destructive/60',
         outline:
           'border-accent-border-hover text-gray-text [a&]:hover:bg-accent-secondary [a&]:hover:text-gray-text/90',
       },
       color: {
-        red: 'bg-red-600',
-        green: 'bg-green-600',
-        blue: 'bg-blue-600',
-        gray: 'bg-gray-600',
+        red: 'bg-red-600 dark:bg-red-700',
+        green: 'bg-green-600 dark:bg-green-700',
+        blue: 'bg-blue-600 dark:bg-blue-700',
+        gray: 'bg-gray-600 dark:bg-gray-700',
       },
     },
     compoundVariants: [
       {
         variant: 'secondary',
         color: 'red',
-        className: 'bg-red-200',
+        className: 'bg-red-200 dark:bg-red-400',
       },
       {
         variant: 'secondary',
         color: 'green',
-        className: 'bg-green-200',
+        className: 'bg-green-200 dark:bg-green-400',
       },
       {
         variant: 'secondary',
         color: 'blue',
-        className: 'bg-blue-200',
+        className: 'bg-blue-200 dark:bg-blue-400',
       },
       {
         variant: 'secondary',
         color: 'gray',
-        className: 'bg-gray-200',
+        className: 'bg-gray-200 dark:bg-gray-400',
       },
     ],
     defaultVariants: {

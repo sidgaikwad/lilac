@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE cluster_nodes SET assigned_job_id = $1 WHERE node_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "db5ee85100e806474d5f7d18b60c51d5ee4f6f894fe2cc38306b85df2ba81f51"
+}

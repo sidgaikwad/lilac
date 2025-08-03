@@ -17,7 +17,7 @@ pub enum UserRepositoryError {
 pub trait UserRepository: Send + Sync + 'static {
     async fn create_user(&self, req: &CreateUserRequest) -> Result<User, UserRepositoryError>;
     async fn get_user_by_id(&self, id: &UserId) -> Result<User, UserRepositoryError>;
-    async fn get_user_by_email(&self, email: &str) -> Result<User, UserRepositoryError>;
+    async fn get_user_by_username(&self, username: &str) -> Result<User, UserRepositoryError>;
     async fn delete_user(&self, id: &UserId) -> Result<(), UserRepositoryError>;
 }
 

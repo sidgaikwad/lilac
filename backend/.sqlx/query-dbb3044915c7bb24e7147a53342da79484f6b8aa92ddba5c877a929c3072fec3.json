@@ -1,0 +1,84 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                id, name, definition, status AS \"status: TrainingJobStatusRecord\", node_id, queue_id,\n                resource_requirements, created_at, updated_at\n            FROM training_jobs\n            WHERE status = 'queued' AND queue_id = $1\n            ORDER BY created_at ASC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "definition",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "status: TrainingJobStatusRecord",
+        "type_info": {
+          "Custom": {
+            "name": "training_job_status",
+            "kind": {
+              "Enum": [
+                "queued",
+                "starting",
+                "running",
+                "succeeded",
+                "failed",
+                "cancelled"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "node_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "queue_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "resource_requirements",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "dbb3044915c7bb24e7147a53342da79484f6b8aa92ddba5c877a929c3072fec3"
+}

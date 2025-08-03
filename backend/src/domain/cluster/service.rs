@@ -339,12 +339,11 @@ impl<R: ClusterRepository + ClusterApiKeyRepository, T: TrainingJobRepository> C
         Ok(())
     }
 
-
     async fn get_node_by_id(
         &self,
         node_id: &super::models::NodeId,
     ) -> Result<ClusterNode, ClusterServiceError> {
-        let node = self.cluster_repo.get_cluster_node_by_id(&node_id).await?;
+        let node = self.cluster_repo.get_cluster_node_by_id(node_id).await?;
         Ok(node)
     }
 }

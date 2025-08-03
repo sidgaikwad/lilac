@@ -14,13 +14,13 @@ use crate::{
 };
 use tower_sessions::Session;
 
-pub async fn login_with_email(
+pub async fn login_with_username(
     State(app_state): State<AppState>,
     Json(req): Json<LoginHttpRequest>,
 ) -> Result<Json<Token>, ApiError> {
     let token = app_state
         .auth_service
-        .login_with_email(&req.email, &req.password)
+        .login_with_username(&req.username, &req.password)
         .await?;
     Ok(Json(token))
 }

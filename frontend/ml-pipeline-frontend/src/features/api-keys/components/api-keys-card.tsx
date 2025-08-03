@@ -5,9 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useListApiKeys } from '@/services/api-keys/list-api-keys.query';
-import { useCreateApiKey } from '@/services/api-keys/create-api-key.mutation';
-import { useDeleteApiKey } from '@/services/api-keys/delete-api-key.mutation';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -25,26 +22,64 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useState } from 'react';
-import { NewApiKey } from '@/model/api-key';
 import { Input } from '@/components/ui/input';
 import { Trash2 } from 'lucide-react';
+import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
+import { ApiKey, NewApiKey } from '@/types';
+import { RelativeTime } from '@/components/common/relative-time';
+import { useCreateApiKey, useDeleteApiKey, useListApiKeys } from '@/services';
+import { DataTable } from '@/components/common';
 
 export function ApiKeysCard() {
   const [newApiKey, setNewApiKey] = useState<NewApiKey | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
 
   const { data: apiKeys, isLoading } = useListApiKeys();
-  const createApiKeyMutation = useCreateApiKey({
+  const { mutate: createApiKey, isPending } = useCreateApiKey({
     onSuccess: (data) => {
       setNewApiKey(data);
       setDialogOpen(true);
     },
   });
-  const deleteApiKeyMutation = useDeleteApiKey({});
+  const { mutate: deleteApiKey } = useDeleteApiKey({});
 
-  const handleGenerateKey = () => {
-    createApiKeyMutation.mutate();
-  };
+  const columnHelper = createColumnHelper<ApiKey>();
+  const columns: ColumnDef<ApiKey>[] = [
+    columnHelper.accessor('id', {
+      header: 'Key ID',
+      cell: ({ cell }) => {
+        return <div className='font-mono'>{cell.renderValue()}</div>;
+      },
+    }),
+    columnHelper.accessor('prefix', {
+      header: 'Prefix',
+    }),
+    columnHelper.accessor('createdAt', {
+      header: 'Created',
+      cell: ({ cell }) => {
+        const date = new Date(cell.getValue());
+        return (
+          <RelativeTime date={date} />
+        );
+      },
+    }),
+    columnHelper.display({
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => {
+        return (
+          <Trash2
+            className='text-red-600 hover:cursor-pointer hover:text-red-700'
+            onClick={() =>
+              deleteApiKey({
+                keyId: row.original.id,
+              })
+            }
+          />
+        );
+      },
+    }),
+  ] as Array<ColumnDef<ApiKey>>;
 
   return (
     <>
@@ -56,10 +91,10 @@ export function ApiKeysCard() {
               <CardDescription>Your API keys are listed below.</CardDescription>
             </div>
             <Button
-              onClick={handleGenerateKey}
-              disabled={createApiKeyMutation.isPending}
+              onClick={() => createApiKey()}
+              disabled={isPending}
             >
-              {createApiKeyMutation.isPending
+              {isPending
                 ? 'Generating...'
                 : 'Generate New Key'}
             </Button>
@@ -69,47 +104,10 @@ export function ApiKeysCard() {
           {isLoading ? (
             <p>Loading...</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Prefix</TableHead>
-                  <TableHead>Created At</TableHead>
-                  <TableHead>Expires At</TableHead>
-                  <TableHead>Last Used</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {apiKeys?.map((key) => (
-                  <TableRow key={key.id}>
-                    <TableCell>{key.prefix}</TableCell>
-                    <TableCell>
-                      {new Date(key.createdAt).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      {key.expiresAt
-                        ? new Date(key.expiresAt).toLocaleString()
-                        : 'Never'}
-                    </TableCell>
-                    <TableCell>
-                      {key.lastUsedAt
-                        ? new Date(key.lastUsedAt).toLocaleString()
-                        : 'Never'}
-                    </TableCell>
-                    <TableCell>
-                      <Trash2
-                        className='text-red-600 hover:cursor-pointer hover:text-red-700'
-                        onClick={() =>
-                          deleteApiKeyMutation.mutate({
-                            keyId: key.id,
-                          })
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={apiKeys ?? []}
+            />
           )}
         </CardContent>
       </Card>

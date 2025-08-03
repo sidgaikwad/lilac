@@ -37,9 +37,7 @@ impl From<QueueRepositoryError> for QueueServiceError {
 
 impl From<TrainingJobRepositoryError> for QueueServiceError {
     fn from(error: TrainingJobRepositoryError) -> Self {
-        match error {
-            error => Self::Unknown(error.into()),
-        }
+        Self::Unknown(error.into())
     }
 }
 
