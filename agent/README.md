@@ -19,7 +19,17 @@ As a user, your primary interaction with `lilac_cli` will be to configure your A
 
 ### 1. Installation
 
-_(TODO: Installation instructions here)_
+We provide an easy-to-use installer script for macOS and Linux. To install the `lilac_cli`, run the following command in your terminal. It will automatically detect your operating system, download the correct binary from the latest GitHub release, and install it into `/usr/local/bin`.
+
+```bash
+curl -sSL https://raw.githubusercontent.com/getlilac/lilac/main/scripts/install.sh | sh
+```
+
+The script may ask for your password to move the binary into `/usr/local/bin` using `sudo`. Once installed, you can verify it's working by running:
+
+```bash
+lilac_cli --version
+```
 
 ### 2. Configuration
 
@@ -32,7 +42,7 @@ lilac_cli configure
 This will prompt you for the following information:
 
 -   **Lilac API Endpoint**: The URL of the Lilac control plane (e.g., `http://lilac.example.com`).
--   **User API Key**: Your personal API key for authenticating with the Lilac API.
+-   **User API Key**: Your personal API key for authenticating with the Lilac API. You can get this by going to the UI and clicking the key icon in the sidebar.
 
 This command creates a configuration file at `~/.lilac/config.toml`.
 

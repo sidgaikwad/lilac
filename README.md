@@ -1,87 +1,124 @@
-# Data Pipeline App
+# Lilac
 
-## Setup
-### Requirements
-#### Docker
-Install Docker following the instructions at: https://docs.docker.com/engine/install/.
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-#### Install Kubectl
-Install `kubectl` for managing your Kubernetes cluster: https://kubernetes.io/docs/tasks/tools/#kubectl
+Lilac is a distributed computing platform designed to run containerized jobs across a cluster of nodes. It provides a web-based UI for management, a powerful control plane for scheduling, and a lightweight agent for job execution.
 
-#### Helm
-To install and run Lilac and its dependencies, we rely on Helm charts. You will need to install the Helm CLI: https://helm.sh/docs/intro/install/
+## Features
 
-#### Kind
-For local Kubernetes development, install Kind: https://kind.sigs.k8s.io/docs/user/quick-start/#installation
+*   **Distributed Job Execution**: Run containerized jobs across a cluster of nodes.
+*   **Web-Based UI**: A user-friendly interface for managing the Lilac cluster.
+*   **RESTful API**: A comprehensive API for programmatic access to the platform.
+*   **Job Queues**: Organize jobs into queues with different priorities.
+*   **Resource-Based Scheduling**: The scheduler assigns jobs to nodes based on their resource availability and the job's requirements.
+*   **Real-Time Monitoring**: Monitor the status of nodes, queues, and jobs in real-time.
+*   **User and API Key Management**: Securely manage user accounts and API keys.
 
-### Development Environment
-To run Lilac on a local Kubernetes cluster, simply run the setup script: `./scripts/dev-setup.sh`. This will set up the following:
-- A local kubernetes cluster using Kind
-- A local Docker registry that the Kubernetes will pull images from
-- Build and push the docker images for Lilac to the local registry
-- Install and setup Cilium on the cluster
-- Install and setup Postgresql on the cluster
-    - Note: for production environments we recommend hosting Postgresql outside of the cluster
-- Sets up Lilac on the local Kubernets cluster
+## Architecture
 
-After the cluster is deployed, you will need to forward the local ports 8080 and 8081 to be able to reach Lilac from your localhost. Run the following:
+Lilac's architecture is composed of three main components: a Rust-based backend (the control plane), a React-based frontend, and a Rust-based agent.
+
+```mermaid
+graph TD
+    subgraph "User Interaction"
+        A[User] -->|Manages Cluster| B(Frontend UI)
+        A -->|Submits Jobs| C(lilac_cli)
+    end
+
+    subgraph "Lilac Platform"
+        B -->|REST API| D{Backend (Control Plane)}
+        C -->|REST API| D
+
+        D -->|Schedules Jobs| E[Agent]
+        D -->|Manages State| F[(PostgreSQL DB)]
+    end
+
+    subgraph "Compute Nodes"
+        E -->|Executes Jobs| G(Docker Container)
+    end
 ```
-$ kubectl port-forward -n lilac svc/lilac-web 8080:8080 &
-$ kubectl port-forward -n lilac svc/lilac-api 8081:8081 &
-```
 
-After this, you should be able to visit `localhost:8080` in your browser and begin interacting with your local version of Lilac.
+### Backend (Control Plane)
 
-#### Accessing Workspaces Locally
-When you create a workspace (e.g., a JupyterLab environment), the backend will provision it within the Kubernetes cluster and return a URL to access it, like `http://localhost:31234`.
+The backend is a robust Rust application using Axum for its web server and SQLx for asynchronous database interaction with PostgreSQL. It exposes a RESTful API and employs a domain-driven design to structure its business logic.
 
-Accessing this URL depends on the port assigned by Kubernetes:
+#### Backend Domains
 
-1.  **Direct Access (Ports 30000-30010):** The `local-dev-cluster/kind-setup.sh` script pre-configures the cluster to automatically expose ports in the `30000-30010` range on your `localhost`. If the URL's port is in this range, it should work out-of-the-box.
+The backend's logic is organized into several distinct domains:
 
-2.  **Manual Port-Forwarding (Other Ports):** If Kubernetes assigns a port outside the `30000-30010` range, you will need to manually forward it. For example, if the application gives you a URL with port `31626`, you must run the following command in a separate terminal:
+*   **Auth**: Handles all aspects of user authentication, including username/password login and JWT (JSON Web Token) validation.
+*   **Cluster**: Manages the compute clusters, their associated nodes, and API keys. This domain is the primary point of contact for the agents, processing their heartbeats, updating node statuses, and authenticating them.
+*   **Queue**: Manages job queues, which allow for the prioritization and organization of jobs. Queues can be configured to target specific clusters.
+*   **Training Job**: Oversees the entire lifecycle of a job, from its creation and submission to its final state (succeeded, failed, or canceled).
+*   **Scheduler**: The core of Lilac's orchestration. It runs as a continuous background service that:
+    *   **Performs Cleanup**: Regularly prunes dead nodes, requeues jobs from failed nodes, and resolves other state inconsistencies.
+    *   **Schedules Jobs**: Iterates through the queues in order of priority, finds pending jobs, and assigns them to the first available node in a target cluster that meets the job's resource requirements.
 
-    ```sh
-    # First, find the service name for your workspace
-    $ kubectl get services -n lilac-dev
-    NAME                                                 TYPE           ...
-    workspace-e92bc3b0-35d1-43df-a73f-007eda9906a6-svc   LoadBalancer   ...
+### Frontend
 
-    # Then, forward the port. Use the port from the URL and the service name you found.
-    # The format is: kubectl port-forward -n <namespace> svc/<service-name> <local-port>:<service-port>
-    $ kubectl port-forward -n lilac-dev svc/workspace-e92bc3b0-35d1-43df-a73f-007eda9906a6-svc 31626:80
-    ```
-    The URL `http://localhost:31626` will now work correctly as long as the port-forward command is running.
+The frontend is a modern single-page application built with React, TypeScript, and Vite. It provides an intuitive and reactive user interface for managing the entire Lilac ecosystem.
 
-### Usage
-Once the controlplane API and Database are up and running, you can make queries against the API. I recommend installing [HTTPie](https://httpie.io/cli).
+Key features include:
 
-```sh
-# create a user
-$ http :3000/users email=johndoe@example.com password=12345
-{
-    "id": "bb355a6f-a7c2-4d14-ba59-bbc433e2f4f5"
-}
+*   **Dashboard**: A central hub for monitoring the status of nodes, queues, and jobs.
+*   **Cluster Management**: Tools for adding, removing, and inspecting the nodes that form the compute cluster.
+*   **Queue Management**: A UI for creating, configuring, and deleting job queues.
+*   **Job Management**: A view for submitting new jobs, monitoring their progress, and inspecting their logs and output.
+*   **User & API Key Management**: Secure interfaces for managing user accounts and generating API keys for programmatic access.
 
-# try to get user without credentials
-$ http :3000/users/bb355a6f-a7c2-4d14-ba59-bbc433e2f4f5 
-{
-    "error": "Missing credentials"
-}
+### Agent
 
-# login as user
-$ http :3000/auth/login email=johndoe@example.com password=12345
-{
-    "access_token": "exampleiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImV3aW5ncnlhbjk4QGdtYWlsLmNvbSIsImV4cCI6MTc0MzY2ODM2OX0.KIDR3vFw6Jar-7K9dU_xq5u4SjemW6DFtNWocpuv2os",
-    "token_type": "Bearer"
-}
+The agent is a lightweight Rust application that runs on every node within a cluster. It's responsible for the hands-on work of job execution.
 
-# Use JWT token to make request and get user
-$ http :3000/users/bb355a6f-a7c2-4d14-ba59-bbc433e2f4f5 Authorization:"Bearer exampleJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImV3aW5ncnlhbjk4QGdtYWlsLmNvbSIsImV4cCI6MTc0MzY2ODM2OX0.KIDR3vFw6Jar-7K9dU_xq5u4SjemW6DFtNWocpuv2os"
-{
-    "created_at": "2025-04-03T02:19:00.728586Z",
-    "email": "johndoe@example.com",
-    "id": "bb355a6f-a7c2-4d14-ba59-bbc433e2f4f5"
-}
+The agent consists of two parts:
 
-```
+*   **Daemon**: A background service that continuously communicates with the control plane. It sends heartbeats to report the node's health and resource availability, and it executes any jobs assigned to it by the scheduler.
+*   **CLI (`lilac_cli`)**: A command-line tool for interacting with Lilac. It's used to start and configure the agent daemon on a node and can also be used to submit jobs to the cluster.
+
+A more detailed README for the agent and `lilac_cli` can be found in the `agent` directory.
+
+## Getting Started
+
+To get Lilac up and running, you'll need to set up the backend, frontend, and at least one agent.
+
+### Prerequisites
+
+*   Rust toolchain
+*   Node.js and npm
+*   Docker
+*   PostgreSQL
+
+### Backend Setup
+
+1.  Clone the repository.
+2.  Set up a PostgreSQL database.
+3.  Copy `.env.example` to `.env` and configure the `DATABASE_URL` and other settings.
+4.  Run the database migrations: `sqlx migrate run`
+5.  Start the backend server: `cargo run --bin server`
+
+### Frontend Setup
+
+1.  Navigate to the `frontend` directory.
+2.  Install dependencies: `npm install`
+3.  Start the development server: `npm run dev`
+
+### Agent Setup
+
+1.  Navigate to the `agent` directory.
+2.  Build the agent: `cargo build --release`
+3.  Copy the `lilac_agent` binary to each node in your cluster and run it. 
+
+More documentation for the agent exists in the /agent/README.md directory.
+
+## Usage
+
+With all components running, you can access the Lilac UI in your web browser to manage your cluster and jobs. You can also use the `lilac_cli` tool to submit and manage jobs from your terminal.
+
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a pull request or open an issue.
+
+## License
+
+Lilac is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
