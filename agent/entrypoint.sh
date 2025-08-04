@@ -39,4 +39,4 @@ echo "NVIDIA runtime is available."
 
 
 # Run the Lilac agent
-exec /usr/local/bin/lilac_cli agent start
+exec /usr/local/bin/lilac agent start

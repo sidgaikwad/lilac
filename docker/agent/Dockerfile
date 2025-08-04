@@ -1,5 +1,5 @@
 # --- Builder Stage ---
-# This stage compiles the lilac_cli binary for amd64.
+# This stage compiles the lilac binary for amd64.
 FROM rust:1.88 AS builder
 
 # Install the C build toolchain and the x86_64-linux-gnu cross-compiler
@@ -57,8 +57,8 @@ RUN apt-get update && apt-get install -y nvidia-container-toolkit
 # Configure the Docker daemon to use the NVIDIA runtime
 RUN nvidia-ctk runtime configure --runtime=docker
 
-# Copy the compiled lilac_cli binary from the builder stage
-COPY --from=builder /usr/src/lilac/target/x86_64-unknown-linux-gnu/release/lilac_cli /usr/local/bin/lilac_cli
+# Copy the compiled lilac binary from the builder stage
+COPY --from=builder /usr/src/lilac/target/x86_64-unknown-linux-gnu/release/lilac /usr/local/bin/lilac
 
 # Copy the entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
