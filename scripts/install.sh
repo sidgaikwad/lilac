@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# This script downloads and installs the latest lilac_cli binary for your system.
+# This script downloads and installs the latest lilac binary for your system.
 #
 # Usage:
 #   curl -sSL https://raw.githubusercontent.com/getlilac/lilac/main/scripts/install.sh | sh
@@ -23,10 +23,10 @@ error() {
 # --- Configuration ---
 GITHUB_REPO="getlilac/lilac"
 INSTALL_DIR="/usr/local/bin"
-BINARY_NAME="lilac_cli"
+BINARY_NAME="lilac"
 
 # --- Main Script ---
-info "Starting lilac_cli installer..."
+info "Starting lilac installer..."
 
 # 1. Determine OS and Architecture
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"

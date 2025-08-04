@@ -4,7 +4,7 @@ Welcome to the Lilac CLI and Agent documentation. This guide provides instructio
 
 ## Overview
 
-The `lilac_cli` binary serves two primary purposes:
+The `lilac` binary serves two primary purposes:
 
 1.  **User CLI**: For data scientists and ML engineers to submit training jobs to the Lilac control plane.
 2.  **Agent**: A daemon that runs on compute nodes, connects to the control plane, and executes assigned jobs.
@@ -15,11 +15,11 @@ These two modes have separate configurations to ensure clarity and security.
 
 ## For Users: Submitting Jobs
 
-As a user, your primary interaction with `lilac_cli` will be to configure your API credentials and submit jobs.
+As a user, your primary interaction with `lilac` will be to configure your API credentials and submit jobs.
 
 ### 1. Installation
 
-We provide an easy-to-use installer script for macOS and Linux. To install the `lilac_cli`, run the following command in your terminal. It will automatically detect your operating system, download the correct binary from the latest GitHub release, and install it into `/usr/local/bin`.
+We provide an easy-to-use installer script for macOS and Linux. To install the `lilac`, run the following command in your terminal. It will automatically detect your operating system, download the correct binary from the latest GitHub release, and install it into `/usr/local/bin`.
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/getlilac/lilac/main/scripts/install.sh | sh
@@ -28,7 +28,7 @@ curl -sSL https://raw.githubusercontent.com/getlilac/lilac/main/scripts/install.
 The script may ask for your password to move the binary into `/usr/local/bin` using `sudo`. Once installed, you can verify it's working by running:
 
 ```bash
-lilac_cli --version
+lilac --version
 ```
 
 ### 2. Configuration
@@ -36,7 +36,7 @@ lilac_cli --version
 To configure the CLI, run the interactive `configure` command:
 
 ```bash
-lilac_cli configure
+lilac configure
 ```
 
 This will prompt you for the following information:
@@ -51,7 +51,7 @@ This command creates a configuration file at `~/.lilac/config.toml`.
 The `submit` command allows you to submit a pre-built Docker image for execution on the cluster.
 
 ```bash
-lilac_cli submit
+lilac submit
 ```
 
 The command will interactively guide you through the submission process, asking for:
@@ -91,7 +91,7 @@ As an administrator, you will configure and run the Lilac agent on the compute n
 To configure the agent, run the interactive `agent configure` command:
 
 ```bash
-lilac_cli agent configure
+lilac agent configure
 ```
 
 This will prompt you for:
@@ -107,7 +107,7 @@ This command creates a configuration file at `~/.lilac/agent.toml`.
 Once configured, you can start the agent daemon with the following command:
 
 ```bash
-lilac_cli agent start
+lilac agent start
 ```
 
 The agent will connect to the control plane, report its available resources, and wait for jobs to be assigned.

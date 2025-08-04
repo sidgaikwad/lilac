@@ -956,7 +956,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lilac_cli"
+name = "lilac"
 version = "0.1.0"
 dependencies = [
  "anyhow",

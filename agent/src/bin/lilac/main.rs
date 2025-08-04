@@ -1,5 +1,5 @@
 use clap::Parser;
-use lilac_cli::{
+use lilac::{
     config,
     errors::CliError,
     inbound::{

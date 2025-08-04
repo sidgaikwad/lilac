@@ -35,13 +35,13 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            asset_name: lilac_cli-linux-amd64
+            asset_name: lilac-linux-amd64
           - os: macos-latest
             target: x86_64-apple-darwin
-            asset_name: lilac_cli-macos-intel
+            asset_name: lilac-macos-intel
           - os: macos-latest
             target: aarch64-apple-darwin
-            asset_name: lilac_cli-macos-arm64
+            asset_name: lilac-macos-arm64
 
     steps:
       - name: Checkout code
@@ -61,7 +61,7 @@ jobs:
       - name: Package binary
         shell: bash
         run: |
-          BINARY_PATH="agent/target/${{ matrix.target }}/release/lilac_cli"
+          BINARY_PATH="agent/target/${{ matrix.target }}/release/lilac"
           tar -czf "${{ matrix.asset_name }}.tar.gz" -C "$(dirname "$BINARY_PATH")" "$(basename "$BINARY_PATH")"
 
       - name: Upload Release Asset

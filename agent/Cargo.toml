@@ -1,5 +1,5 @@
 [package]
-name = "lilac_cli"
+name = "lilac"
 version = "0.1.0"
 edition = "2021"
 
@@ -35,5 +35,5 @@ thiserror = "1.0"
 log = "0.4"
 
 [[bin]]
-name = "lilac_cli"
-path = "src/bin/lilac_cli/main.rs"
+name = "lilac"
+path = "src/bin/lilac/main.rs"
