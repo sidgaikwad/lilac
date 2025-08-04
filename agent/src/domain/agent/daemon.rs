@@ -6,9 +6,12 @@ use crate::{
 };
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio::{task::JoinHandle, time};
+use tokio::{
+    sync::Notify,
+    task::JoinHandle,
+    time::{self, MissedTickBehavior},
+};
 use uuid::Uuid;
-
 
 pub struct Daemon<C, S, J>
 where
@@ -23,6 +26,7 @@ where
     current_job: Arc<Mutex<Option<JobInfo>>>,
     job_handle: Arc<Mutex<Option<(Uuid, JoinHandle<()>)>>>,
     node_id: Uuid,
+    heartbeat_now: Arc<Notify>,
 }
 
 impl<C, S, J> Daemon<C, S, J>
@@ -36,17 +40,17 @@ where
             control_plane: Arc::new(control_plane),
             system_monitor: Arc::new(system_monitor),
             job_executor: Arc::new(job_executor),
-            heartbeat_interval: Duration::from_secs(30), // Default to 15 seconds
+            heartbeat_interval: Duration::from_secs(30),
             current_job: Arc::new(Mutex::new(None)),
             job_handle: Arc::new(Mutex::new(None)),
             node_id,
+            heartbeat_now: Arc::new(Notify::new()),
         }
     }
 
     pub async fn run(self) -> Result<(), anyhow::Error> {
         println!("[DAEMON] Starting Lilac agent daemon...");
 
-        // 1. On startup, get system resources. This is sent with every heartbeat.
         let resources = self
             .system_monitor
             .get_node_resources()
@@ -54,23 +58,24 @@ where
             .map_err(|e| anyhow::Error::new(e).context("Failed to get node resources"))?;
         println!("[DAEMON] Discovered resources: {:?}", resources);
 
-        // 2. Start the main heartbeat loop.
         let mut interval = time::interval(self.heartbeat_interval);
+        interval.set_missed_tick_behavior(MissedTickBehavior::Delay);
 
         loop {
-            interval.tick().await;
+            tokio::select! {
+                _ = interval.tick() => {
+                    println!("[DAEMON] Sending scheduled heartbeat...");
+                },
+                _ = self.heartbeat_now.notified() => {
+                    println!("[DAEMON] Job status changed, sending immediate heartbeat...");
+                }
+            }
 
             let current_job_info = self.current_job.lock().unwrap().clone();
-
-            println!(
-                "[DAEMON] Sending heartbeat... Reported Job: {:?}",
-                current_job_info
-            );
-
             let request = HeartbeatRequest {
                 memory_info: resources.memory_mb,
                 cpu_info: resources.cpu.clone(),
-                gpu_info: resources.gpus.first().cloned(), // TODO: Handle multiple GPUs
+                gpu_info: resources.gpus.first().cloned(),
                 job_info: current_job_info,
             };
 
@@ -85,19 +90,15 @@ where
                     let assigned_job_id = response.assigned_job.as_ref().map(|j| j.id);
                     let current_job_id = current_job_guard.as_ref().map(|j| j.current_job_id);
 
-                    // Reconciliation logic
                     if current_job_id != assigned_job_id {
                         println!(
                             "[DAEMON] Reconciliation needed. Current: {:?}, Assigned: {:?}",
                             current_job_id, assigned_job_id
                         );
 
-                        // Cancel the current job if there is one
                         if let Some((job_id, handle)) = self.job_handle.lock().unwrap().take() {
                             println!("[DAEMON] Aborting previous job {}.", job_id);
                             handle.abort();
-
-                            // Also stop the Docker container
                             let job_executor = self.job_executor.clone();
                             tokio::spawn(async move {
                                 if let Err(e) = job_executor.stop_job(&job_id.to_string()).await {
@@ -110,7 +111,7 @@ where
                         }
 
                         if let Some(assigned_job) = response.assigned_job {
-                            let job_id = assigned_job.id; // Uuid is Copy, so this is fine.
+                            let job_id = assigned_job.id;
                             println!("[DAEMON] Starting new job with ID: {}", job_id);
                             let new_job_info = JobInfo {
                                 current_job_id: job_id,
@@ -122,36 +123,38 @@ where
                             let current_job_clone = self.current_job.clone();
                             let job_handle_clone = self.job_handle.clone();
                             let resources_clone = resources.clone();
+                            let heartbeat_now_clone = self.heartbeat_now.clone();
 
                             let handle = tokio::spawn(async move {
                                 if let Some(job_info) = &mut *current_job_clone.lock().unwrap() {
                                     job_info.status = JobStatus::Starting;
                                 }
+                                heartbeat_now_clone.notify_one();
 
-                                // TODO: Better state updates
                                 if let Some(job_info) = &mut *current_job_clone.lock().unwrap() {
                                     job_info.status = JobStatus::Running;
                                 }
 
                                 let final_status =
                                     match executor.run_job(assigned_job, &resources_clone).await {
-                                    Ok(0) => {
-                                        println!("[JOB {}] Execution finished successfully.", job_id);
-                                        JobStatus::Succeeded
-                                    }
-                                    Ok(exit_code) => {
-                                        eprintln!("[JOB {}] Execution finished with a non-zero exit code: {}", job_id, exit_code);
-                                        JobStatus::Failed
-                                    }
-                                    Err(e) => {
-                                        eprintln!("[JOB {}] Execution failed: {}", job_id, e);
-                                        JobStatus::Failed
-                                    }
-                                };
+                                        Ok(0) => {
+                                            println!("[JOB {}] Execution finished successfully.", job_id);
+                                            JobStatus::Succeeded
+                                        }
+                                        Ok(exit_code) => {
+                                            eprintln!("[JOB {}] Execution finished with a non-zero exit code: {}", job_id, exit_code);
+                                            JobStatus::Failed
+                                        }
+                                        Err(e) => {
+                                            eprintln!("[JOB {}] Execution failed: {}", job_id, e);
+                                            JobStatus::Failed
+                                        }
+                                    };
 
                                 if let Some(job_info) = &mut *current_job_clone.lock().unwrap() {
                                     job_info.status = final_status;
                                 }
+                                heartbeat_now_clone.notify_one();
                             });
                             *job_handle_clone.lock().unwrap() = Some((job_id, handle));
                         } else {
