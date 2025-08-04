@@ -5,6 +5,9 @@
 
 Lilac is a distributed computing platform designed to run containerized jobs across a cluster of nodes. It provides a web-based UI for management, a powerful control plane for scheduling, and a lightweight agent for job execution.
 
+
+![Lilac Demo](/docs/images/demo.gif)
+
 ## Quick Start
 
 Get up and running with Lilac in just a few steps.
