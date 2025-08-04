@@ -6,6 +6,11 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+@import '@radix-ui/colors/slate.css';
+@import '@radix-ui/colors/iris.css';
+@import '@radix-ui/colors/slate-dark.css';
+@import '@radix-ui/colors/iris-dark.css';
+
 :root {
   --gray-background-1: var(--slate-1);
   --gray-background-2: var(--slate-2);

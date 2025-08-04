@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
+    "@radix-ui/colors": "^3.0.0",
     "@radix-ui/react-slot": "^1.2.3",
     "@stepperize/react": "^5.1.6",
     "@tailwindcss/vite": "^4.1.7",
