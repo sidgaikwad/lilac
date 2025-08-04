@@ -9,3 +9,6 @@ venv/
 *.toml
 !Cargo.toml
 !lilac-config.example.toml
+**/toolchain/*
+dist
+.DS_Store

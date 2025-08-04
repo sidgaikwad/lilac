@@ -13,7 +13,7 @@ ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc
 
 # Copy the agent source code
 WORKDIR /usr/src/lilac
-COPY . .
+COPY ../../agent .
 
 # Build the agent in release mode
 RUN cargo build --release --target=x86_64-unknown-linux-gnu
