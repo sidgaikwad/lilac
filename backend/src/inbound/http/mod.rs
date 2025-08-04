@@ -7,6 +7,7 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::{
+    cors::CorsLayer,
     request_id::{MakeRequestId, PropagateRequestIdLayer, RequestId, SetRequestIdLayer},
     trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnRequest, DefaultOnResponse, TraceLayer},
 };
@@ -111,6 +112,7 @@ impl HttpServer {
                     .layer(PropagateRequestIdLayer::new(X_REQUEST_ID.clone()))
                     .layer(session_layer),
             )
+            .layer(CorsLayer::very_permissive())
             .with_state(app_state);
 
         let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
