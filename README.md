@@ -47,6 +47,10 @@ docker run -d \
   --privileged \
   -e LILAC_API_ENDPOINT="<YOUR_API_ENDPOINT>" \
   -e LILAC_CLUSTER_API_KEY="<YOUR_CLUSTER_API_KEY>" \
+  # Optional: Add the following three lines to connect to a private Docker registry
+  # -e LILAC_PRIVATE_REGISTRY_URL="<YOUR_REGISTRY_URL>" \
+  # -e LILAC_PRIVATE_REGISTRY_USERNAME="<YOUR_REGISTRY_USERNAME>" \
+  # -e LILAC_PRIVATE_REGISTRY_PASSWORD="<YOUR_REGISTRY_PASSWORD_OR_TOKEN>" \
   --gpus all \
   getlilac/lilac-agent:latest
 ```
