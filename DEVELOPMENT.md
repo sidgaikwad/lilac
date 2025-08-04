@@ -9,14 +9,14 @@ Lilac's architecture is composed of three main components: a Rust-based backend 
 ```mermaid
 graph TD
     subgraph "User Interaction"
-        A[User] -->|Manages Cluster| B(Frontend UI)
-        A -->|Submits Jobs| C(lilac CLI)
+        A[User] -->|Web Browser| B[Frontend UI]
+        A -->|Terminal| C[lilac CLI]
     end
 
     subgraph "Lilac Platform"
         B -->|REST API| D{Backend Control Plane}
         C -->|REST API| D
-        D -->|Manages State| F[DB]
+        D -->|Manages State| F[PostgreSQL DB]
     end
 
     subgraph "Compute Nodes"
