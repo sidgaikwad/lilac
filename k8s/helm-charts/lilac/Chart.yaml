@@ -1,9 +1,0 @@
-apiVersion: v2
-name: lilac
-description: Helm chart to deploy Lilac to Kubernetes
-version: 0.1.0
-dependencies:
-  - condition: global.postgresql.enabled
-    name: postgresql
-    version: 16.7.14
-    repository: oci://registry-1.docker.io/bitnamicharts

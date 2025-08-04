@@ -1,6 +1,6 @@
 use secrecy::SecretString;
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 use tracing::{level_filters::LevelFilter, Level};
 use tracing_subscriber::filter::Directive;
 
@@ -11,24 +11,6 @@ pub struct TlsConfig {
     pub enabled: bool,
     pub cert_file: PathBuf,
     pub key_file: PathBuf,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(untagged)]
-#[serde(rename_all = "snake_case")]
-pub enum SsoConfig {
-    Oidc {
-        client_id: String,
-        client_secret: String,
-        issuer_url: String,
-    },
-    Oauth2 {
-        client_id: String,
-        client_secret: String,
-        auth_url: String,
-        token_url: String,
-        user_info_url: String,
-    },
 }
 
 #[derive(Clone, Debug, Deserialize, Default)]
@@ -69,19 +51,11 @@ pub struct LilacConfig {
     pub database_url: SecretString,
     pub tls: Option<TlsConfig>,
     pub http_port: u16,
-    pub sso: Option<HashMap<String, SsoConfig>>,
     pub secret_key: SecretString,
-    pub frontend_url: String,
     #[serde(default)]
     pub log_format: LogFormat,
     #[serde(default)]
     pub log_level: LogLevel,
-    #[serde(default = "default_kubernetes_namespace")]
-    pub kubernetes_namespace: String,
-}
-
-fn default_kubernetes_namespace() -> String {
-    "lilac".to_string()
 }
 
 impl LilacConfig {

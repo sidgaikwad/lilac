@@ -1,20 +1,11 @@
 target/
 node_modules/
-output/
-output_images/
 .env
-backend/data-pipeline/job_data
+venv/
 
 *.pem
 *.tgz
-lilac.toml
-# Local Kubeconfig
-backend/kubeconfig.yaml
 
-*/skypilot/*
-*/toolchain/*
-worker/*
-docs/*
-agent-old-copy/*
-sample-hello-job/*
-sample-pytorch-job/*
+*.toml
+!Cargo.toml
+!lilac-config.example.toml

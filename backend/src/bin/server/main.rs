@@ -5,8 +5,7 @@ use tower_sessions::{cookie::Key, Expiry, SessionManagerLayer};
 use server::{
     config::{LilacConfig, LogFormat},
     domain::{
-        auth::service::AuthServiceImpl, cluster::service::ClusterServiceImpl,
-        credentials::service::CredentialServiceImpl, queue::service::QueueServiceImpl,
+        auth::service::AuthServiceImpl, cluster::service::ClusterServiceImpl, queue::service::QueueServiceImpl,
         scheduler::service::SchedulerService, training_job::service::TrainingJobServiceImpl,
         user::service::UserServiceImpl,
     },
@@ -15,7 +14,6 @@ use server::{
         jwt::JwtManager,
         persistence::postgres::{
             cluster_repository::PostgresClusterRepository,
-            credential_repository::PostgresCredentialRepository,
             queue_repository::PostgresQueueRepository, session_repository::PostgresSessionStore,
             training_job_repository::PostgresTrainingJobRepository,
             user_repository::PostgresUserRepository,
@@ -54,7 +52,6 @@ async fn main() -> anyhow::Result<()> {
     let db_pool = PgPoolOptions::new()
         .connect(config.database_url.expose_secret())
         .await?;
-    let credential_repo = Arc::new(PostgresCredentialRepository::new(db_pool.clone()));
     let cluster_repo = Arc::new(PostgresClusterRepository::new(db_pool.clone()));
     let user_repo = Arc::new(PostgresUserRepository::new(db_pool.clone()));
     let jwt_manager = Arc::new(JwtManager::new(config.secret_key.expose_secret()));
@@ -66,7 +63,6 @@ async fn main() -> anyhow::Result<()> {
         cluster_repo.clone(),
         training_job_repo.clone(),
     ));
-    let credential_service = Arc::new(CredentialServiceImpl::new(credential_repo.clone()));
     let user_service = Arc::new(UserServiceImpl::new(user_repo.clone()));
     let session_store = PostgresSessionStore::new(db_pool.clone());
     session_store.migrate().await?;
@@ -108,7 +104,6 @@ async fn main() -> anyhow::Result<()> {
     // 6. Construct and run inbound adapter (HTTP server)
     let app_state = AppState {
         config: config.clone(),
-        credential_service,
         cluster_service,
         user_service,
         auth_service,

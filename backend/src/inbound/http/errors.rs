@@ -1,6 +1,6 @@
 use crate::domain::{
     auth::service::AuthServiceError, cluster::service::ClusterServiceError,
-    credentials::service::CredentialServiceError, queue::service::QueueServiceError,
+    queue::service::QueueServiceError,
     training_job::service::TrainingJobServiceError, user::service::UserServiceError,
 };
 
@@ -29,24 +29,6 @@ impl From<QueueServiceError> for ApiError {
             QueueServiceError::QueueExists { .. } => Self::Conflict("Queue already exists".into()),
             QueueServiceError::QueueNotFound(_) => Self::NotFound("Queue not found".to_string()),
             QueueServiceError::Unknown(e) => {
-                tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
-                Self::InternalServerError("Something went wrong".to_string())
-            }
-        }
-    }
-}
-
-impl From<CredentialServiceError> for ApiError {
-    fn from(err: CredentialServiceError) -> Self {
-        match err {
-            CredentialServiceError::InvalidPermissions => Self::Forbidden,
-            CredentialServiceError::CredentialExists { .. } => {
-                Self::Conflict("Cluster already exists".into())
-            }
-            CredentialServiceError::CredentialNotFound(_) => {
-                Self::NotFound("Cluster not found".to_string())
-            }
-            CredentialServiceError::Unknown(e) => {
                 tracing::error!(error = ?e, backtrace = %e.backtrace(), "unknown error occurred");
                 Self::InternalServerError("Something went wrong".to_string())
             }

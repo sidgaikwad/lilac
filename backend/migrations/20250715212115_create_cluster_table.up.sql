@@ -55,3 +55,5 @@ CREATE TRIGGER update_cluster_nodes_updated_at
         cluster_nodes
     FOR EACH ROW
 EXECUTE PROCEDURE set_updated_at_now();
+
+CREATE INDEX IF NOT EXISTS idx_cluster_nodes_cluster_id ON cluster_nodes (cluster_id);

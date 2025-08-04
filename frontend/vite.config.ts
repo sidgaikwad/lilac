@@ -14,17 +14,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8081',
+        target: process.env.VITE_LILAC_API_ENDPOINT || 'http://localhost:8081',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-      '/workspace': {
-        target: 'http://localhost',
-        changeOrigin: true,
-        rewrite: (path) => {
-          const port = path.split('/')[2];
-          return `:${port}`;
-        },
       },
     },
   },

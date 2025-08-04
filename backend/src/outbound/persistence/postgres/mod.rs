@@ -1,5 +1,4 @@
 pub mod cluster_repository;
-pub mod credential_repository;
 pub mod queue_repository;
 pub mod records;
 pub mod session_repository;

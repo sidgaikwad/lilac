@@ -1,9 +1,9 @@
 services:
-  controlplane:
+  backend:
     build:
       context: ../
-      dockerfile: ./docker/controlplane/Dockerfile.alpine
-    command: /usr/local/app/controlplane-api
+      dockerfile: ./docker/backend/Dockerfile
+    command: /usr/local/app/backend
     depends_on:
       db:
         condition: service_healthy
@@ -12,20 +12,37 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:password@db/database
     ports:
-      - '3000:3000'
+      - '8081:8081'
     volumes:
-      - ../backend/data-pipeline:/usr/local/app/data-pipeline:rw
+      - ../backend:/usr/local/app:rw
     networks:
       - default
-
+  
+  web:
+    build:
+      context: ../
+      dockerfile: ./docker/web/Dockerfile
+    command: /usr/local/app/web
+    depends_on:
+      backend:
+    env_file:
+      - ../.env
+    environment:
+      - VITE_LILAC_API_ENDPOINT="http://localhost:8081"
+    ports:
+      - '8080:8080'
+    volumes:
+      - ../backend:/usr/local/app:rw
+    networks:
+      - default
   db:
     image: postgres
     restart: always
     environment:
       PGDATA: /var/lib/postgresql/data
-      POSTGRES_USER: $POSTGRES_USER
-      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
-      POSTGRES_DB: $POSTGRES_DB
+      POSTGRES_USER: lilac-user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: lilac
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:

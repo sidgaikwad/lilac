@@ -13,5 +13,4 @@ CREATE TABLE queue_cluster_assignments (
 );
 
 ALTER TABLE training_jobs
-ADD COLUMN queue_id UUID NOT NULL REFERENCES queues(queue_id),
-DROP COLUMN priority;
+ADD COLUMN queue_id UUID REFERENCES queues(queue_id) ON DELETE SET NULL;

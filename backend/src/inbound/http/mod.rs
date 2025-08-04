@@ -18,10 +18,10 @@ use crate::{
     config::LilacConfig,
     domain::{
         auth::service::AuthService, cluster::service::ClusterService,
-        credentials::service::CredentialService, queue::service::QueueService,
+        queue::service::QueueService,
         training_job::service::TrainingJobService, user::service::UserService,
     },
-    inbound::http::routes::{clusters, credentials, queues, training_jobs},
+    inbound::http::routes::{clusters, queues, training_jobs},
     outbound::persistence::postgres::session_repository::PostgresSessionStore,
 };
 
@@ -31,18 +31,12 @@ use self::routes::{auth, users};
 pub struct AppState {
     pub config: Arc<LilacConfig>,
     pub cluster_service: Arc<dyn ClusterService>,
-    pub credential_service: Arc<dyn CredentialService>,
     pub user_service: Arc<dyn UserService>,
     pub auth_service: Arc<dyn AuthService>,
     pub training_job_service: Arc<dyn TrainingJobService>,
     pub queue_service: Arc<dyn QueueService>,
 }
 
-impl FromRef<AppState> for Arc<dyn CredentialService> {
-    fn from_ref(state: &AppState) -> Self {
-        state.credential_service.clone()
-    }
-}
 
 impl FromRef<AppState> for Arc<dyn ClusterService> {
     fn from_ref(state: &AppState) -> Self {
@@ -104,7 +98,6 @@ impl HttpServer {
             .merge(users::router())
             .merge(auth::router())
             .merge(clusters::router())
-            .merge(credentials::router())
             .merge(training_jobs::training_jobs_router())
             .merge(queues::routes())
             .layer(
@@ -112,8 +105,8 @@ impl HttpServer {
                     .layer(
                         TraceLayer::new_for_http()
                             .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
-                            .on_request(DefaultOnRequest::new().level(Level::INFO))
-                            .on_response(DefaultOnResponse::new().level(Level::INFO))
+                            .on_request(DefaultOnRequest::new().level(Level::DEBUG))
+                            .on_response(DefaultOnResponse::new().level(Level::DEBUG))
                             .on_failure(DefaultOnFailure::new().level(Level::ERROR)),
                     )
                     .layer(SetRequestIdLayer::new(X_REQUEST_ID.clone(), UuidRequestId))

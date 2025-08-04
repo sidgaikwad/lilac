@@ -1,5 +1,5 @@
 import useAuthStore from '@/store/use-auth-store';
-import { BASE_URL } from '@/services/constants';
+import { API_URL } from '@/services/constants';
 
 export async function postHttp<Req, Resp>(
   path: string,
@@ -15,7 +15,7 @@ export async function postHttp<Req, Resp>(
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  const resp = await fetch(`${BASE_URL}${path}`, {
+  const resp = await fetch(`${API_URL}${path}`, {
     method: 'POST',
     headers,
     body: JSON.stringify(request),
@@ -52,7 +52,7 @@ export async function getHttp<Req extends Record<string, string>, Resp>(
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  const resp = await fetch(`${BASE_URL}${path}?${searchParams.toString()}`, {
+  const resp = await fetch(`${API_URL}${path}?${searchParams.toString()}`, {
     method: 'GET',
     headers,
   });
@@ -74,7 +74,7 @@ export async function deleteHttp<Resp = void>(path: string): Promise<Resp> {
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  const resp = await fetch(`${BASE_URL}${path}`, {
+  const resp = await fetch(`${API_URL}${path}`, {
     method: 'DELETE',
     headers,
   });
