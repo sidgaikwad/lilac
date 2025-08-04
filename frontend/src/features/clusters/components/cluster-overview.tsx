@@ -290,7 +290,9 @@ export function ClusterOverview(props: ClusterOverviewProps) {
               {
                 accessorKey: 'lastHeartbeat',
                 header: 'Last Heartbeat',
-                cell: ({ cell }) => <RelativeTime date={new Date(cell.getValue() as string)} />,
+                cell: ({ cell }) => (
+                  <RelativeTime date={new Date(cell.getValue() as string)} />
+                ),
               },
               {
                 accessorKey: 'cpu.manufacturer',
@@ -320,7 +322,11 @@ export function ClusterOverview(props: ClusterOverviewProps) {
                   if (gpu === undefined) {
                     return cell.renderValue();
                   }
-                  return <span>{gpu.count}x{gpu.model} ({gpu.memoryMb}GB)</span>
+                  return (
+                    <span>
+                      {gpu.count}x{gpu.model} ({gpu.memoryMb}GB)
+                    </span>
+                  );
                 },
               },
             ]}

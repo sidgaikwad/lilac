@@ -96,9 +96,7 @@ export default function Breadcrumbs({
         {breadcrumbs.slice(0, -1).map((bc, index) => (
           <Fragment key={index}>
             <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                {getBreadcrubsLink(bc)}
-              </BreadcrumbLink>
+              <BreadcrumbLink asChild>{getBreadcrubsLink(bc)}</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
           </Fragment>

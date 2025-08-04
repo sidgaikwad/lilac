@@ -15,7 +15,13 @@ import { Card } from '@/components/common/card';
 
 const usernameRegex = /^[a-zA-Z0-9_-]+$/;
 const loginSchema = z.object({
-  username: z.string().min(3).refine((username) => usernameRegex.test(username), 'Must only contain -, _, or alphanumeric characters.'),
+  username: z
+    .string()
+    .min(3)
+    .refine(
+      (username) => usernameRegex.test(username),
+      'Must only contain -, _, or alphanumeric characters.'
+    ),
   password: z.string().min(1, { message: 'Password is required' }),
 });
 

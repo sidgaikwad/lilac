@@ -16,7 +16,13 @@ const registerSchema = z
   .object({
     firstName: z.string().optional(),
     lastName: z.string().optional(),
-    username: z.string().min(3).refine((username) => usernameRegex.test(username), 'Must only contain -, _, or alphanumeric characters.'),
+    username: z
+      .string()
+      .min(3)
+      .refine(
+        (username) => usernameRegex.test(username),
+        'Must only contain -, _, or alphanumeric characters.'
+      ),
     password: z
       .string()
       .min(8, { message: 'Password must be at least 8 characters' }),
@@ -52,7 +58,12 @@ function SignUpPage() {
 
   // Form submission handler now directly sets auth state
   const onSubmit = (data: RegisterFormInputs) => {
-    signUp({ firstName: data.firstName, lastName: data.lastName, username: data.username, password: data.password });
+    signUp({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      username: data.username,
+      password: data.password,
+    });
   };
 
   return (

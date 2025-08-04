@@ -1,10 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import {
-  Server,
-  KeyRound,
-  Layers,
-  Briefcase,
-} from 'lucide-react';
+import { Server, KeyRound, Layers, Briefcase } from 'lucide-react';
 import {
   Sidebar as SidebarComponent,
   SidebarContent,

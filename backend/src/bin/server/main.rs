@@ -5,9 +5,9 @@ use tower_sessions::{cookie::Key, Expiry, SessionManagerLayer};
 use server::{
     config::{LilacConfig, LogFormat},
     domain::{
-        auth::service::AuthServiceImpl, cluster::service::ClusterServiceImpl, queue::service::QueueServiceImpl,
-        scheduler::service::SchedulerService, training_job::service::TrainingJobServiceImpl,
-        user::service::UserServiceImpl,
+        auth::service::AuthServiceImpl, cluster::service::ClusterServiceImpl,
+        queue::service::QueueServiceImpl, scheduler::service::SchedulerService,
+        training_job::service::TrainingJobServiceImpl, user::service::UserServiceImpl,
     },
     inbound::http::{AppState, HttpServer},
     outbound::{

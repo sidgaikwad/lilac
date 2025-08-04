@@ -16,7 +16,14 @@ const JOB_COLUMNS: ColumnDef<QueueJob>[] = [
     accessorKey: 'jobId',
     header: 'Job ID',
     cell: ({ cell }) => {
-      return <Link to={route(Routes.JOB_DETAILS, { jobId: cell.getValue() as string })} className='font-mono'>{cell.renderValue() as string}</Link>;
+      return (
+        <Link
+          to={route(Routes.JOB_DETAILS, { jobId: cell.getValue() as string })}
+          className='font-mono'
+        >
+          {cell.renderValue() as string}
+        </Link>
+      );
     },
   },
   {

@@ -1,7 +1,7 @@
 use crate::domain::{
     auth::service::AuthServiceError, cluster::service::ClusterServiceError,
-    queue::service::QueueServiceError,
-    training_job::service::TrainingJobServiceError, user::service::UserServiceError,
+    queue::service::QueueServiceError, training_job::service::TrainingJobServiceError,
+    user::service::UserServiceError,
 };
 
 use axum::{

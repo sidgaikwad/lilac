@@ -17,8 +17,7 @@ use uuid::Uuid;
 use crate::{
     config::LilacConfig,
     domain::{
-        auth::service::AuthService, cluster::service::ClusterService,
-        queue::service::QueueService,
+        auth::service::AuthService, cluster::service::ClusterService, queue::service::QueueService,
         training_job::service::TrainingJobService, user::service::UserService,
     },
     inbound::http::routes::{clusters, queues, training_jobs},
@@ -36,7 +35,6 @@ pub struct AppState {
     pub training_job_service: Arc<dyn TrainingJobService>,
     pub queue_service: Arc<dyn QueueService>,
 }
-
 
 impl FromRef<AppState> for Arc<dyn ClusterService> {
     fn from_ref(state: &AppState) -> Self {

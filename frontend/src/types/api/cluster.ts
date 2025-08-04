@@ -1,4 +1,4 @@
-import { ResourceRequirements } from "./job";
+import { ResourceRequirements } from './job';
 
 export interface Cluster {
   clusterId: string;
@@ -60,22 +60,21 @@ export interface ClusterApiKey {
   expiresAt?: string;
 }
 
-
 export interface ClusterNode {
-  id: string,
-  clusterId: string,
-  nodeStatus: 'busy' | 'available',
-  lastHeartbeat: string,
-  memoryMb: number,
+  id: string;
+  clusterId: string;
+  nodeStatus: 'busy' | 'available';
+  lastHeartbeat: string;
+  memoryMb: number;
   cpu: {
-    manufacturer: string,
-    architecture: string,
-    millicores: number,
-  },
+    manufacturer: string;
+    architecture: string;
+    millicores: number;
+  };
   gpu?: {
-    manufacturer: string,
-    model: string,
-    count: number,
-    memoryMb: number,
-  },
+    manufacturer: string;
+    model: string;
+    count: number;
+    memoryMb: number;
+  };
 }

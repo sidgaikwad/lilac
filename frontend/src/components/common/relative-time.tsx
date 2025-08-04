@@ -1,5 +1,5 @@
-import { getFormattedTime, getRelativeTime } from "@/lib";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { getFormattedTime, getRelativeTime } from '@/lib';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 export interface RelativeTimeProps {
   date: Date | number;

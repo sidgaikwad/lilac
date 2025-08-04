@@ -16,20 +16,28 @@ const statusVariants = cva(
   {
     variants: {
       status: {
-        'in-progress': 'text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-100',
+        'in-progress':
+          'text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-100',
         info: 'text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-100',
-        success: 'text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-100',
+        success:
+          'text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-100',
         error: 'text-red-700 bg-red-100 dark:bg-red-900 dark:text-red-100',
-        warning: 'text-yellow-700 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100',
-        pending: 'text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-100',
-        loading: 'text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-100',
-        cancelled: 'text-yellow-700 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100',
+        warning:
+          'text-yellow-700 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100',
+        pending:
+          'text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-100',
+        loading:
+          'text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-100',
+        cancelled:
+          'text-yellow-700 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100',
       },
       color: {
         blue: 'text-blue-700 bg-blue-100 dark:bg-blue-900 dark:text-blue-100',
-        green: 'text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-100',
+        green:
+          'text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-100',
         red: 'text-red-700 bg-red-100 dark:bg-red-900 dark:text-red-100',
-        yellow: 'text-yellow-700 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100',
+        yellow:
+          'text-yellow-700 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100',
         gray: 'text-gray-700 bg-gray-100 dark:bg-gray-800 dark:text-gray-100',
       },
     },

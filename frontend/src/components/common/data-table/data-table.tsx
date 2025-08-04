@@ -121,9 +121,9 @@ export function DataTable<TData, TValue>({
       {withHeader && (
         <div className='m-1 flex flex-row flex-wrap items-center justify-between space-y-2'>
           <div>
-          {renderFilters && (
-            <DataTableFilters table={table} renderFilters={renderFilters} />
-          )}
+            {renderFilters && (
+              <DataTableFilters table={table} renderFilters={renderFilters} />
+            )}
           </div>
           <div className='flex flex-row items-center'>
             <DataTablePagination table={table} />

@@ -6,14 +6,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+
 import {
   Dialog,
   DialogContent,
@@ -58,9 +51,7 @@ export function ApiKeysCard() {
       header: 'Created',
       cell: ({ cell }) => {
         const date = new Date(cell.getValue());
-        return (
-          <RelativeTime date={date} />
-        );
+        return <RelativeTime date={date} />;
       },
     }),
     columnHelper.display({
@@ -90,13 +81,8 @@ export function ApiKeysCard() {
               <CardTitle>API Keys</CardTitle>
               <CardDescription>Your API keys are listed below.</CardDescription>
             </div>
-            <Button
-              onClick={() => createApiKey()}
-              disabled={isPending}
-            >
-              {isPending
-                ? 'Generating...'
-                : 'Generate New Key'}
+            <Button onClick={() => createApiKey()} disabled={isPending}>
+              {isPending ? 'Generating...' : 'Generate New Key'}
             </Button>
           </div>
         </CardHeader>
@@ -104,10 +90,7 @@ export function ApiKeysCard() {
           {isLoading ? (
             <p>Loading...</p>
           ) : (
-            <DataTable
-              columns={columns}
-              data={apiKeys ?? []}
-            />
+            <DataTable columns={columns} data={apiKeys ?? []} />
           )}
         </CardContent>
       </Card>

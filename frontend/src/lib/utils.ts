@@ -64,8 +64,11 @@ export function snakeCase(s: string, splitNumbers: boolean = true): string {
   return result;
 }
 
-export function route<Path extends Routes>(route: Path, params: {
-  [key in PathParam<Path>]: string | null;
-}) {
+export function route<Path extends Routes>(
+  route: Path,
+  params: {
+    [key in PathParam<Path>]: string | null;
+  }
+) {
   return generatePath(route, params);
 }

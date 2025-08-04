@@ -69,7 +69,9 @@ export function QueuesCard() {
                       return (
                         <span>
                           <Link to={`/clusters/${id}`}>{clustersMap[id]}</Link>
-                          {index !== queue.clusterTargets.length - 1 && <>,&nbsp;</>}
+                          {index !== queue.clusterTargets.length - 1 && (
+                            <>,&nbsp;</>
+                          )}
                         </span>
                       );
                     })}

@@ -33,8 +33,12 @@ export interface JobOverviewProps {
 
 export function JobOverview(props: JobOverviewProps) {
   const { job } = props;
-  const { data: queue, isLoading: queueLoading } = useGetQueue({ queueId: job.queueId });
-  const { data: node, isLoading: nodeLoading } = useGetClusterNode({ nodeId: job.nodeId });
+  const { data: queue, isLoading: queueLoading } = useGetQueue({
+    queueId: job.queueId,
+  });
+  const { data: node, isLoading: nodeLoading } = useGetClusterNode({
+    nodeId: job.nodeId,
+  });
 
   return (
     <Card
@@ -54,15 +58,42 @@ export function JobOverview(props: JobOverviewProps) {
               },
               {
                 key: 'Status',
-                value: <Status status={getStatusType(job.jobStatus)} className='capitalize'>{job.jobStatus}</Status>,
+                value: (
+                  <Status
+                    status={getStatusType(job.jobStatus)}
+                    className='capitalize'
+                  >
+                    {job.jobStatus}
+                  </Status>
+                ),
               },
               {
                 key: 'Queue',
-                value: queueLoading ? <Spinner className='m-1' size='xsmall' /> : <Link to={route(Routes.QUEUE_DETAILS, { queueId: job.queueId })}>{queue?.name}</Link>,
+                value: queueLoading ? (
+                  <Spinner className='m-1' size='xsmall' />
+                ) : (
+                  <Link
+                    to={route(Routes.QUEUE_DETAILS, { queueId: job.queueId })}
+                  >
+                    {queue?.name}
+                  </Link>
+                ),
               },
               {
                 key: 'Node',
-                value: job.nodeId ? nodeLoading ? <Spinner className='m-1' size='xsmall' /> : <Link to={route(Routes.NODE_DETAILS, { nodeId: job.nodeId })}>{node?.id}</Link> : <span>&ndash;</span>,
+                value: job.nodeId ? (
+                  nodeLoading ? (
+                    <Spinner className='m-1' size='xsmall' />
+                  ) : (
+                    <Link
+                      to={route(Routes.NODE_DETAILS, { nodeId: job.nodeId })}
+                    >
+                      {node?.id}
+                    </Link>
+                  )
+                ) : (
+                  <span>&ndash;</span>
+                ),
               },
               {
                 key: 'Submitted',
@@ -71,7 +102,7 @@ export function JobOverview(props: JobOverviewProps) {
             ]}
           />
           <Separator />
-          <p className='text-md font-medium '>Resource Requirements:</p>
+          <p className='text-md font-medium'>Resource Requirements:</p>
           <KeyValueDisplay
             items={[
               {
@@ -84,7 +115,15 @@ export function JobOverview(props: JobOverviewProps) {
               },
               {
                 key: 'GPUs',
-                value: job.resourceRequirements.gpus ? <div>{job.resourceRequirements.gpus.count}x{job.resourceRequirements.gpus.model} ({job.resourceRequirements.gpus.memoryGb}GB</div> : <span>&ndash;</span>,
+                value: job.resourceRequirements.gpus ? (
+                  <div>
+                    {job.resourceRequirements.gpus.count}x
+                    {job.resourceRequirements.gpus.model} (
+                    {job.resourceRequirements.gpus.memoryGb}GB
+                  </div>
+                ) : (
+                  <span>&ndash;</span>
+                ),
               },
             ]}
           />

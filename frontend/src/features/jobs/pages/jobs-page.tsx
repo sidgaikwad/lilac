@@ -20,7 +20,6 @@ import { Link } from '@/components/common/link';
 import { route } from '@/lib';
 import { Routes } from '@/constants';
 
-
 const CancelJobButton = ({
   jobId,
   status,
@@ -55,7 +54,14 @@ const JOB_COLUMNS: ColumnDef<Job>[] = [
     accessorKey: 'jobId',
     header: 'Job ID',
     cell: ({ cell }) => {
-      return <Link className='font-mono overflow-ellipsis' to={`/jobs/${cell.getValue() as string}`}>{cell.renderValue() as string}</Link>;
+      return (
+        <Link
+          className='font-mono overflow-ellipsis'
+          to={`/jobs/${cell.getValue() as string}`}
+        >
+          {cell.renderValue() as string}
+        </Link>
+      );
     },
   },
   {
@@ -103,7 +109,16 @@ const JOB_COLUMNS: ColumnDef<Job>[] = [
     accessorKey: 'queueId',
     header: 'Queue ID',
     cell: ({ cell }) => {
-      return <Link to={route(Routes.QUEUE_DETAILS, { queueId: cell.getValue() as string })} className='font-mono'>{cell.renderValue() as string}</Link>;
+      return (
+        <Link
+          to={route(Routes.QUEUE_DETAILS, {
+            queueId: cell.getValue() as string,
+          })}
+          className='font-mono'
+        >
+          {cell.renderValue() as string}
+        </Link>
+      );
     },
   },
   {
@@ -127,7 +142,6 @@ const JOB_COLUMNS: ColumnDef<Job>[] = [
     },
   },
 ];
-
 
 function JobsPage() {
   const { data: jobs, isLoading } = useListJobs({

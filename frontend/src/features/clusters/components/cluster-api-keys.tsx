@@ -61,9 +61,7 @@ export function ClusterApiKeys(props: ClusterApiKeyProps) {
       header: 'Created',
       cell: ({ cell }) => {
         const date = new Date(cell.getValue());
-        return (
-          <RelativeTime date={date} />
-        );
+        return <RelativeTime date={date} />;
       },
     }),
     columnHelper.display({

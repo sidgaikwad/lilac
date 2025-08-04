@@ -17,9 +17,7 @@ export interface GetJobResponse {
   updatedAt: string;
 }
 
-export async function getJob(
-  jobId: string
-): Promise<GetJobResponse> {
+export async function getJob(jobId: string): Promise<GetJobResponse> {
   const resp = await getHttp<Sn<GetJobResponse>>(`/training_jobs/${jobId}`);
   return camelCaseObject(resp);
 }

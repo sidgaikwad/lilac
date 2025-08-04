@@ -15,7 +15,6 @@ import { useGetAccountDetails } from '@/services';
 function AccountSettingsPage() {
   const { data: user } = useGetAccountDetails({});
 
-
   return (
     <div className='space-y-6'>
       <Card>
@@ -46,9 +45,7 @@ function AccountSettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Change Password</CardTitle>
-          <CardDescription>
-            Update your password.
-          </CardDescription>
+          <CardDescription>Update your password.</CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
           <div className='space-y-1'>
@@ -65,9 +62,7 @@ function AccountSettingsPage() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button disabled>
-            Update Password
-          </Button>
+          <Button disabled>Update Password</Button>
         </CardFooter>
       </Card>
     </div>

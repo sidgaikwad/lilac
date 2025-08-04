@@ -8,7 +8,9 @@ import { route } from '@/lib';
 import { useGetCluster } from '@/services';
 import { ClusterNode } from '@/types';
 
-function getStatusType(nodeStatus: ClusterNode['nodeStatus']): StatusProps['status'] {
+function getStatusType(
+  nodeStatus: ClusterNode['nodeStatus']
+): StatusProps['status'] {
   switch (nodeStatus) {
     case 'available':
       return 'success';
@@ -23,7 +25,9 @@ export interface NodeOverviewProps {
 
 export function NodeOverview(props: NodeOverviewProps) {
   const { node } = props;
-  const { data: cluster, isLoading: clusterLoading } = useGetCluster({ clusterId: node.clusterId });
+  const { data: cluster, isLoading: clusterLoading } = useGetCluster({
+    clusterId: node.clusterId,
+  });
 
   return (
     <Card
@@ -39,11 +43,28 @@ export function NodeOverview(props: NodeOverviewProps) {
               },
               {
                 key: 'Status',
-                value: <Status status={getStatusType(node.nodeStatus)} className='capitalize'>{node.nodeStatus}</Status>,
+                value: (
+                  <Status
+                    status={getStatusType(node.nodeStatus)}
+                    className='capitalize'
+                  >
+                    {node.nodeStatus}
+                  </Status>
+                ),
               },
               {
                 key: 'Cluster',
-                value: clusterLoading ? <Spinner className='m-1' size='xsmall' /> : <Link to={route(Routes.CLUSTER_DETAILS, { clusterId: node.clusterId })}>{cluster?.clusterName}</Link>,
+                value: clusterLoading ? (
+                  <Spinner className='m-1' size='xsmall' />
+                ) : (
+                  <Link
+                    to={route(Routes.CLUSTER_DETAILS, {
+                      clusterId: node.clusterId,
+                    })}
+                  >
+                    {cluster?.clusterName}
+                  </Link>
+                ),
               },
               {
                 key: 'Last Heartbeat',
@@ -63,11 +84,21 @@ export function NodeOverview(props: NodeOverviewProps) {
               },
               {
                 key: 'GPU Manufacturer',
-                value: node.gpu ? <span>{node.gpu.manufacturer}</span> : <span>&ndash;</span>,
+                value: node.gpu ? (
+                  <span>{node.gpu.manufacturer}</span>
+                ) : (
+                  <span>&ndash;</span>
+                ),
               },
               {
                 key: 'GPU',
-                value: node.gpu ? <span>{node.gpu?.count}x{node.gpu.model} ({node.gpu.memoryMb}GB)</span> : <span>&ndash;</span>,
+                value: node.gpu ? (
+                  <span>
+                    {node.gpu?.count}x{node.gpu.model} ({node.gpu.memoryMb}GB)
+                  </span>
+                ) : (
+                  <span>&ndash;</span>
+                ),
               },
             ]}
           />

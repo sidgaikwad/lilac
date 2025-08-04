@@ -13,7 +13,13 @@ export interface ResourceRequirements {
 export interface Job {
   jobId: string;
   jobName: string;
-  jobStatus: 'queued' | 'starting' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+  jobStatus:
+    | 'queued'
+    | 'starting'
+    | 'running'
+    | 'succeeded'
+    | 'failed'
+    | 'cancelled';
   nodeId?: string;
   queueId: string;
   resourceRequirements: ResourceRequirements;
