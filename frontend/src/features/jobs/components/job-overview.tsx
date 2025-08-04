@@ -119,7 +119,7 @@ export function JobOverview(props: JobOverviewProps) {
                   <div>
                     {job.resourceRequirements.gpus.count}x
                     {job.resourceRequirements.gpus.model} (
-                    {job.resourceRequirements.gpus.memoryGb}GB
+                    {job.resourceRequirements.gpus.memoryGb}GB)
                   </div>
                 ) : (
                   <span>&ndash;</span>

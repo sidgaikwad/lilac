@@ -319,7 +319,7 @@ export function ClusterOverview(props: ClusterOverviewProps) {
                 header: 'GPUs',
                 cell: ({ cell }) => {
                   const gpu = cell.getValue() as ClusterNode['gpu'] | undefined;
-                  if (gpu === undefined) {
+                  if (gpu === undefined || gpu == null) {
                     return cell.renderValue();
                   }
                   return (
