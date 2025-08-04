@@ -4,7 +4,7 @@
 [![Discord](https://img.shields.io/badge/Discord-7289DA?logo=discord&logoColor=white)](https://discord.com/invite/getlilac)
 [![Version](https://img.shields.io/github/v/release/getlilac/lilac)](https://github.com/getlilac/lilac/releases)
 
-Lilac is a distributed computing platform designed to run containerized jobs across a cluster of nodes. It provides a web-based UI for management, a powerful control plane for scheduling, and a lightweight agent for job execution.
+Lilac ensures your data scientists always have enough GPUs for their work. We seamlessly connect compute from any source, on-prem or cloud. It provides a web-based UI for management, a powerful control plane for scheduling, and a lightweight agent for job execution.
 
 
 ![Lilac Demo](/docs/images/demo.gif)
