@@ -26,15 +26,15 @@ graph TD
     end
 
     subgraph "Lilac Platform"
-        B -->|REST API| D{Backend (Control Plane)}
+        B -->|REST API| D{Backend}
         C -->|REST API| D
 
         D -->|Schedules Jobs| E[Agent]
-        D -->|Manages State| F[(PostgreSQL DB)]
+        D -->|Manages State| F[PostgreSQL DB]
     end
 
     subgraph "Compute Nodes"
-        E -->|Executes Jobs| G(Docker Container)
+        E -->|Executes Jobs| G[Docker Container]
     end
 ```
 
@@ -102,13 +102,48 @@ To get Lilac up and running, you'll need to set up the backend, frontend, and at
 2.  Install dependencies: `npm install`
 3.  Start the development server: `npm run dev`
 
-### Agent Setup
+### Agent & CLI Setup
 
-1.  Navigate to the `agent` directory.
-2.  Build the agent: `cargo build --release`
-3.  Copy the `lilac_agent` binary to each node in your cluster and run it. 
+The `lilac_cli` is a command-line tool used for two main purposes:
+1.  **For Users**: To submit and manage jobs.
+2.  **For Administrators**: To run the agent daemon on a compute node.
 
-More documentation for the agent exists in the /agent/README.md directory.
+#### Installing the CLI
+
+We provide a simple installer script for macOS and Linux. Run the following command to automatically download and install the latest version:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/getlilac/lilac/main/scripts/install.sh | sh
+```
+
+#### Submitting Jobs
+
+Once installed, configure the CLI with your user credentials:
+```bash
+lilac_cli configure
+```
+
+Then, you can submit a job to the cluster:
+```bash
+lilac_cli submit
+```
+
+#### Running the Agent
+
+To run the agent on a compute node, the recommended method is to use our universal Docker image, which handles all dependencies.
+
+```bash
+docker run -d \
+  --name lilac-agent \
+  --restart always \
+  --privileged \
+  -e LILAC_API_ENDPOINT="<YOUR_API_ENDPOINT>" \
+  -e LILAC_CLUSTER_API_KEY="<YOUR_CLUSTER_API_KEY>" \
+  --gpus all \
+  getlilac/lilac-agent:latest
+```
+
+For more detailed instructions on all CLI commands, agent configuration, connecting to private registries, and more, please see the comprehensive **[Agent and CLI README](./agent/README.md)**.
 
 ## Usage
 
