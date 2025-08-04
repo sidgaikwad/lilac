@@ -2,6 +2,8 @@
 
 Welcome to the Lilac CLI and Agent documentation. This guide provides instructions for both submitting training jobs and running the agent on your compute nodes.
 
+![Lilac Demo](/docs/images/demo.gif)
+
 ## Overview
 
 The `lilac` binary serves two primary purposes:
