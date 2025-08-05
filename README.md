@@ -14,7 +14,7 @@
 </div>
 
 
-Lilac ensures your data scientists always have enough GPUs for their work. We seamlessly connect compute from any source, on-prem or cloud. It provides a web-based UI for management, a powerful control plane for scheduling, and a lightweight agent for job execution.
+Lilac ensures your data scientists always have enough GPUs for their work. We seamlessly connect compute from any source, on-prem or cloud. We provide a web-based UI for management, a powerful control plane for scheduling, and a lightweight agent for job execution.
 
 
 ![Lilac Demo](/docs/images/demo.gif)
