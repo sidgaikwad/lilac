@@ -1,8 +1,18 @@
-# Lilac
+![Lilac](/docs/images/lilac.jpg)
+<div align="center">
+  <a href="https://www.ycombinator.com/companies/lilac">
+    <img alt="Y Combinator S25" src="https://img.shields.io/badge/Combinator-S25-orange?logo=ycombinator&labelColor=white" />
+  </a>
+</div>
+
+---
+<div align="center">
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Discord](https://img.shields.io/badge/Discord-7289DA?logo=discord&logoColor=white)](https://discord.com/invite/getlilac)
 [![Version](https://img.shields.io/github/v/release/getlilac/lilac)](https://github.com/getlilac/lilac/releases)
+</div>
+
 
 Lilac ensures your data scientists always have enough GPUs for their work. We seamlessly connect compute from any source, on-prem or cloud. It provides a web-based UI for management, a powerful control plane for scheduling, and a lightweight agent for job execution.
 
