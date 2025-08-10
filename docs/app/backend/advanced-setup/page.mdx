@@ -1,0 +1,78 @@
+# Setting up your own DB & Production Builds
+
+This guide covers advanced setup for running the Lilac backend. This includes connecting to your own production database and compiling the backend for production use.
+
+## Using Your Own Database
+
+If you prefer to manage your own PostgreSQL instance instead of using the one provided in the Docker Compose setup, follow these steps.
+
+### 1. Create the Database
+
+Connect to your PostgreSQL instance and create a new database for Lilac.
+
+```sql
+CREATE DATABASE lilac;
+```
+
+### 2. Configure the Connection
+
+The backend requires a `DATABASE_URL` to connect to your database. You can provide this in a `lilac.toml` file or as an environment variable.
+
+For example, in your `lilac.toml`:
+```toml
+database_url = "postgres://your-user:your-password@your-host/lilac"
+# ... other settings
+```
+
+### 3. Run Migrations
+
+The application uses `sqlx` to manage database migrations. To run the migrations against your custom database, you will need to have the `sqlx-cli` installed.
+
+```bash
+cargo install sqlx-cli
+```
+
+Once installed, you can run the migrations from the `backend` directory, pointing to your database:
+
+```bash
+DATABASE_URL="postgres://your-user:your-password@your-host/lilac" sqlx migrate run
+```
+
+## Compiling for Production
+
+For production deployments, you should compile an optimized release binary instead of using `cargo run`.
+
+### 1. Build the Release Binary
+
+From the root of the `backend` directory, run the following command to compile the server binary:
+
+```bash
+cargo build --release --bin server
+```
+
+This command compiles the application in release mode, with optimizations enabled.
+
+### 2. Locate the Binary
+
+The compiled binary will be located at `backend/target/release/server`.
+
+### 3. Configuration
+
+Before running the binary, ensure you have a `lilac.toml` file configured in the same directory where you plan to run the binary, or provide the configuration via environment variables.
+
+**`lilac.toml`:**
+```toml
+database_url = "postgres://your-user:your-password@your-host/lilac"
+http_port = 8081
+secret_key = "a_very_long_and_secret_key_that_is_at_least_64_characters_long"
+```
+
+### 4. Run the Server
+
+You can now run the compiled binary directly:
+
+```bash
+./backend/target/release/server
+```
+
+The server will start and connect to the database you configured.
