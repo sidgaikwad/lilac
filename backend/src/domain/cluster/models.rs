@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 identifier!(ClusterId);
 identifier!(NodeId);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Cluster {
     pub id: ClusterId,
     pub name: String,
@@ -17,7 +17,7 @@ pub struct Cluster {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct ClusterSummary {
     pub id: ClusterId,
     pub name: String,
@@ -205,30 +205,30 @@ pub struct UpdateNodeStatusRequest {
     pub job_info: Option<JobInfo>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct ClusterMemoryStats {
     pub total_memory_mb: i64,
     pub used_memory_mb: i64,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct ClusterCpuStats {
     pub total_millicores: i64,
     pub used_millicores: i64,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct ClusterGpuStats {
     pub total_gpus: i64,
     pub used_gpus: i64,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct ClusterJobStats {
     pub total_running_jobs: i64,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct ClusterDetails {
     pub id: ClusterId,
     pub name: String,
@@ -241,4 +241,34 @@ pub struct ClusterDetails {
     pub job_info: ClusterJobStats,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[cfg(test)]
+impl Cpu {
+    pub fn new_mock() -> Self {
+        Self {
+            manufacturer: CpuManufacturer::Intel,
+            architecture: Architecture::X86_64,
+            millicores: 1000,
+        }
+    }
+}
+
+#[cfg(test)]
+impl ClusterNode {
+    pub fn new_mock() -> Self {
+        Self {
+            id: NodeId::generate(),
+            cluster_id: ClusterId::generate(),
+            node_status: NodeStatus::Available,
+            heartbeat_timestamp: Utc::now(),
+            memory_mb: 0,
+            cpu: Cpu::new_mock(),
+            gpu: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            assigned_job_id: None,
+            reported_job_id: None,
+        }
+    }
 }

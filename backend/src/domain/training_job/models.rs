@@ -61,3 +61,24 @@ pub struct GetTrainingJobsFilters {
     pub name: Option<String>,
     pub status: Option<TrainingJobStatus>,
 }
+
+#[cfg(test)]
+impl TrainingJob {
+    pub fn new_mock() -> Self {
+        Self {
+            id: JobId::generate(),
+            name: "Default Job".to_string(),
+            definition: "default-uri".to_string(),
+            status: TrainingJobStatus::Queued,
+            node_id: None,
+            queue_id: None,
+            resource_requirements: ResourceRequirements {
+                cpu_millicores: 0,
+                memory_mb: 0,
+                gpus: None,
+            },
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        }
+    }
+}

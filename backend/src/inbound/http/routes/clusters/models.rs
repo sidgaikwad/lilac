@@ -14,7 +14,7 @@ use crate::{
     inbound::http::routes::training_jobs::models::HttpTrainingJob,
 };
 
-#[derive(serde::Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct HttpApiKey {
     pub id: ApiKeyId,
     pub cluster_id: ClusterId,
@@ -38,10 +38,10 @@ impl From<ApiKey> for HttpApiKey {
 }
 
 /// The body of a [Cluster] creation request.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateClusterHttpRequest {
-    cluster_name: String,
-    cluster_description: Option<String>,
+    pub cluster_name: String,
+    pub cluster_description: Option<String>,
 }
 
 impl From<CreateClusterHttpRequest> for CreateClusterRequest {
@@ -54,13 +54,13 @@ impl From<CreateClusterHttpRequest> for CreateClusterRequest {
 }
 
 /// The body of a [Cluster] creation response.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateClusterHttpResponse {
     pub cluster_id: ClusterId,
 }
 
 /// The body of a [Cluster] get response.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetClusterHttpResponse {
     pub cluster_id: ClusterId,
     pub cluster_name: String,
@@ -77,7 +77,7 @@ impl From<Cluster> for GetClusterHttpResponse {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HttpClusterSummary {
     pub cluster_id: ClusterId,
     pub cluster_name: String,
@@ -101,7 +101,7 @@ impl From<ClusterSummary> for HttpClusterSummary {
 }
 
 /// The body of a [Cluster] list response.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ListClustersHttpResponse {
     pub clusters: Vec<HttpClusterSummary>,
 }
@@ -115,7 +115,7 @@ impl From<Vec<ClusterSummary>> for ListClustersHttpResponse {
 }
 
 /// The body of a [ClusterNode] heartbeat request.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HttpClusterNodeHeartbeat {
     pub memory_info: i32,
     pub cpu_info: Cpu,
@@ -124,7 +124,7 @@ pub struct HttpClusterNodeHeartbeat {
 }
 
 /// The body of a [Cluster] list response.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HttpJobDetails {
     pub id: String,
     pub docker_uri: String,
@@ -139,13 +139,13 @@ impl From<TrainingJob> for HttpJobDetails {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HttpHeartbeatResponse {
     pub assigned_job: Option<HttpJobDetails>,
 }
 
 /// The body of a [ClusterNode] get request.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HttpClusterNode {
     pub id: NodeId,
     pub cluster_id: ClusterId,
@@ -171,7 +171,7 @@ impl From<ClusterNode> for HttpClusterNode {
 }
 
 /// The body of a [Cluster] list response.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ListClusterNodesHttpResponse {
     pub cluster_nodes: Vec<HttpClusterNode>,
 }
@@ -185,7 +185,7 @@ impl From<Vec<ClusterNode>> for ListClusterNodesHttpResponse {
 }
 
 /// The body of a [ClusterDetails] get response.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetClusterDetailsHttpResponse {
     pub cluster_id: ClusterId,
     pub cluster_name: String,
@@ -219,7 +219,7 @@ impl From<ClusterDetails> for GetClusterDetailsHttpResponse {
 }
 
 /// The body of a [Cluster] [TrainingJob] list response.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ListClusterJobsHttpResponse {
     pub cluster_jobs: Vec<HttpTrainingJob>,
 }
@@ -228,6 +228,18 @@ impl From<Vec<TrainingJob>> for ListClusterJobsHttpResponse {
     fn from(value: Vec<TrainingJob>) -> Self {
         Self {
             cluster_jobs: value.into_iter().map(HttpTrainingJob::from).collect(),
+        }
+    }
+}
+
+#[cfg(test)]
+impl HttpClusterNodeHeartbeat {
+    pub fn new_mock() -> Self {
+        Self {
+            memory_info: 0,
+            cpu_info: Cpu::new_mock(),
+            gpu_info: None,
+            job_info: None,
         }
     }
 }

@@ -7,7 +7,7 @@ use crate::domain::{
     training_job::models::{JobId, ResourceRequirements, TrainingJob, TrainingJobStatus},
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateTrainingJobRequest {
     pub name: String,
     pub definition: String,
@@ -17,7 +17,7 @@ pub struct CreateTrainingJobRequest {
 
 pub type CreateTrainingJobResponse = TrainingJob;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateTrainingJobStatusRequest {
     pub status: TrainingJobStatus,
 }
@@ -28,7 +28,7 @@ pub struct PostLogsRequest {
 }
 
 /// An HTTP representation of a [TrainingJob].
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HttpTrainingJob {
     pub job_id: JobId,
     pub job_name: String,
@@ -55,7 +55,7 @@ impl From<TrainingJob> for HttpTrainingJob {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListTrainingJobsHttpResponse {
     jobs: Vec<HttpTrainingJob>,
 }

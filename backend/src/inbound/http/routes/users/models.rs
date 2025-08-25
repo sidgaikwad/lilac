@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use secrecy::SecretString;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::domain::{
     self,
@@ -8,7 +8,7 @@ use crate::domain::{
 };
 
 /// The body of a [User] get response.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetUserHttpResponse {
     pub user_id: UserId,
     pub username: String,
@@ -27,7 +27,7 @@ impl From<User> for GetUserHttpResponse {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateApiKeyResponse {
     pub id: ApiKeyId,
     pub prefix: String,
@@ -47,7 +47,7 @@ impl From<NewApiKey> for CreateApiKeyResponse {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiKeyResponse {
     pub id: ApiKeyId,
     pub prefix: String,

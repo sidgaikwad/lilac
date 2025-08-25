@@ -26,3 +26,15 @@ pub struct UpdateQueueRequest {
     pub priority: i32,
     pub cluster_targets: Vec<ClusterId>,
 }
+
+#[cfg(test)]
+impl Queue {
+    pub fn new_mock() -> Self {
+        Self {
+            id: QueueId::generate(),
+            name: "default-queue".to_string(),
+            priority: 100,
+            cluster_targets: vec![],
+        }
+    }
+}

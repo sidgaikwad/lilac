@@ -11,7 +11,7 @@ use tower_http::{
     request_id::{MakeRequestId, PropagateRequestIdLayer, RequestId, SetRequestIdLayer},
     trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnRequest, DefaultOnResponse, TraceLayer},
 };
-use tower_sessions::{service::PrivateCookie, SessionManagerLayer};
+use tower_sessions::{service::PrivateCookie, SessionManagerLayer, SessionStore};
 use tracing::Level;
 use uuid::Uuid;
 
@@ -22,7 +22,6 @@ use crate::{
         training_job::service::TrainingJobService, user::service::UserService,
     },
     inbound::http::routes::{clusters, queues, training_jobs},
-    outbound::persistence::postgres::session_repository::PostgresSessionStore,
 };
 
 use self::routes::{auth, users};
@@ -94,11 +93,14 @@ impl MakeRequestId for UuidRequestId {
 }
 
 impl HttpServer {
-    pub async fn new(
+    pub async fn new<S>(
         app_state: AppState,
-        session_layer: SessionManagerLayer<PostgresSessionStore, PrivateCookie>,
+        session_layer: SessionManagerLayer<S, PrivateCookie>,
         port: u16,
-    ) -> anyhow::Result<Self> {
+    ) -> anyhow::Result<Self>
+    where
+        S: SessionStore + Clone,
+    {
         let app: Router = Router::new()
             .merge(users::router())
             .merge(auth::router())
@@ -160,5 +162,117 @@ impl AppState {
     /// Creates a new mock AppState with default configuration.
     pub fn new_mock() -> Self {
         Self::new_mock_with_config(LilacConfig::default())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        config::LilacConfig,
+        domain::{
+            auth::service::MockAuthService, cluster::service::MockClusterService,
+            queue::service::MockQueueService, training_job::service::MockTrainingJobService,
+            user::service::MockUserService,
+        },
+    };
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
+    use secrecy::{ExposeSecret, SecretString};
+    use tower::ServiceExt;
+    use tower_sessions::{cookie::Key, MemoryStore};
+
+    async fn setup_test_server() -> Router {
+        let secret_key =
+            "a_super_long_and_very_secure_secret_key_that_is_at_least_64_bytes".to_string();
+        assert!(secret_key.len() >= 64);
+
+        let config = LilacConfig {
+            secret_key: SecretString::from(secret_key),
+            ..Default::default()
+        };
+
+        let mut mock_queue_service = MockQueueService::new();
+        mock_queue_service
+            .expect_list_all_queues()
+            .returning(|| Ok(vec![]));
+
+        let app_state = AppState {
+            config: Arc::new(config.clone()),
+            cluster_service: Arc::new(MockClusterService::new()),
+            user_service: Arc::new(MockUserService::new()),
+            auth_service: Arc::new(MockAuthService::new()),
+            training_job_service: Arc::new(MockTrainingJobService::new()),
+            queue_service: Arc::new(mock_queue_service),
+        };
+
+        let session_store = MemoryStore::default();
+        let session_layer = SessionManagerLayer::new(session_store)
+            .with_private(Key::from(config.secret_key.expose_secret().as_bytes()));
+
+        let http_server = HttpServer::new(app_state, session_layer, 0).await.unwrap();
+
+        http_server.app
+    }
+
+    #[test]
+    fn test_uuid_request_id_generation() {
+        let mut uuid_generator = UuidRequestId;
+        let request = Request::builder().body(()).unwrap();
+        let request_id = uuid_generator.make_request_id(&request).unwrap();
+        let request_id_header = request_id.header_value();
+
+        let uuid_str = std::str::from_utf8(request_id_header.as_bytes()).unwrap();
+        assert!(Uuid::parse_str(uuid_str).is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_router_and_middleware_integration() {
+        let app = setup_test_server().await;
+
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/queues")
+                    .header("Origin", "https://getlilac.com")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+
+        assert!(response.headers().contains_key(&X_REQUEST_ID));
+        assert!(response
+            .headers()
+            .contains_key("access-control-allow-origin"));
+
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/account/details")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/non-existent-route")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 }

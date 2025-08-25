@@ -9,7 +9,7 @@ use crate::{domain::cluster::models::ClusterId, identifier};
 
 identifier!(UserId);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct User {
     pub id: UserId,
     pub first_name: Option<String>,
@@ -30,7 +30,9 @@ pub struct CreateUserRequest {
 
 // --- API Key Models ---
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, Default,
+)]
 pub struct ApiKeyId(Uuid);
 
 impl ApiKeyId {
@@ -61,7 +63,7 @@ impl From<Uuid> for ApiKeyId {
 
 /// Represents a newly generated API key, including the plaintext secret.
 /// This struct is only created once and given to the user. It is not stored.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct NewApiKey {
     pub id: ApiKeyId,
     pub prefix: String,
@@ -72,7 +74,7 @@ pub struct NewApiKey {
 
 /// Represents an API key as stored in the database.
 /// The actual key is hashed and stored in `key_hash`.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct ApiKey {
     pub id: ApiKeyId,
     pub user_id: Option<UserId>,

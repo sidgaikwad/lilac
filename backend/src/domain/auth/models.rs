@@ -20,7 +20,7 @@ pub struct AuthUser {
     pub username: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Token {
     pub access_token: String,
     pub token_type: String,
@@ -36,8 +36,7 @@ impl Token {
 }
 
 #[derive(Debug)]
-pub struct Claims {
-    pub sub: UserId,
+pub struct Claims { pub sub: UserId,
     pub exp: usize,
     pub iat: usize,
 }
@@ -85,6 +84,21 @@ impl Claims {
             sub: user_id,
             exp: (Utc::now() + chrono::Duration::hours(1)).timestamp() as usize,
             iat: Utc::now().timestamp() as usize,
+        }
+    }
+}
+
+#[cfg(test)]
+impl TokenClaims {
+    /// Creates mock TokenClaims for a given user ID.
+    pub fn new_mock(user_id: UserId) -> Self {
+        use chrono::Utc;
+
+        Self {
+            sub: user_id,
+            exp: (Utc::now() + chrono::Duration::hours(1)).timestamp() as usize,
+            iat: Utc::now().timestamp() as usize,
+            jti: uuid::Uuid::new_v4().to_string(),
         }
     }
 }
