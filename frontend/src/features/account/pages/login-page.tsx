@@ -75,7 +75,7 @@ function LoginPage() {
               <Input
                 id='username'
                 type='text'
-                placeholder='Enter any email'
+                placeholder='Enter your username'
                 {...register('username')}
                 aria-invalid={errors.username ? 'true' : 'false'}
                 disabled={isPending}
