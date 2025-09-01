@@ -12,6 +12,7 @@ venv/
 **/toolchain/*
 dist
 .DS_Store
+Thumbs.db
 
 # Pagefind
 public/_pagefind
@@ -21,3 +22,18 @@ docs/.next/
 docs/out/
 docs/node_modules/
 docs/public/_pagefind
+
+# Rust specific
+*.rs.bk
+
+# Editor swap/backup files
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.iml
